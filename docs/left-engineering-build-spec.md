@@ -13,17 +13,19 @@ Primary implementation rule:
 - the `Nearby Feed` is the canonical MVP discovery surface
 - venue context supports activation decisions
 - the bubble layer is optional and reuses the same discovery records
+- reality-first rule is enforced
 
 ## 1. Build Goal
 
 Ship a mobile MVP that lets a user:
-1. receive a visibility prompt after dwell-time detection
-2. activate a temporary presence session
-3. browse compatible nearby people in the nearby feed
-4. inspect a soft-anonymity profile
-5. wave or enter the approaching micro-state
-6. confirm real-world connection or cancel
-7. access safety controls at all active stages
+1. register or sign in with Google or Apple
+2. receive a visibility prompt after dwell-time detection
+3. activate a temporary presence session
+4. browse compatible nearby people in the nearby feed
+5. inspect a soft-anonymity profile
+6. wave or enter the approaching micro-state
+7. confirm real-world connection or cancel
+8. access safety controls at all active stages
 
 ## 2. Suggested Stack
 
@@ -31,7 +33,7 @@ Ship a mobile MVP that lets a user:
 - navigation: `Expo Router`
 - state: `Zustand`
 - backend: `Supabase`
-- auth: Supabase auth
+- auth: Supabase auth with Google and Apple providers
 - database: Postgres
 - realtime: Supabase realtime
 - validation: `Zod`
@@ -42,15 +44,51 @@ Ship a mobile MVP that lets a user:
 
 Implement in this order:
 
-1. Presence Activation Sheet
-2. Nearby Feed
-3. Soft-Anonymity Profile
-4. Approaching Micro-State
-5. Venue Context / Venue Pulse
-6. Safety Controls
-7. Bubble Visualization Layer
+1. Auth / Account Entry
+2. Presence Activation Sheet
+3. Nearby Feed
+4. Soft-Anonymity Profile
+5. Approaching Micro-State
+6. Venue Context / Venue Pulse
+7. Safety Controls
+8. Bubble Visualization Layer
 
 ## 4. Screen Contracts
+
+### 4.0 Auth / Account Entry
+
+Purpose:
+- let a user register or sign in with approved identity providers
+
+Providers:
+- Google
+- Apple
+
+Display fields:
+- welcome copy
+- `Continue with Google`
+- `Continue with Apple`
+- loading state
+- auth error state
+
+Primary actions:
+- `sign_in_with_google`
+- `sign_in_with_apple`
+
+Success result:
+- authenticated session created
+- user record created or linked
+- app continues to onboarding or venue flow
+
+Failure states:
+- provider cancellation
+- provider auth failure
+- backend auth failure
+
+Onboarding immediately after auth:
+- first-name-only edit screen
+- avatar-style selection screen
+- background location permission screen
 
 ### 4.1 Presence Activation Sheet
 
@@ -101,11 +139,10 @@ Purpose:
 Display fields per feed item:
 - `profile_id`
 - `first_name`
-- `avatar_style` or `avatar_url`
 - `intent`
-- `vibes[]`
+- `primary_vibe`
 - `hint_text`
-- `shared_alignment_label`
+- `session_duration_remaining`
 - `distance_bucket`
 - `session_expires_at`
 
@@ -121,7 +158,9 @@ Rules:
 - exact location never shown
 - no `save user` action
 - no chat entry point
-- shared alignment should display one factual line only
+- feed is tier-1 data only
+- no avatar shown in feed
+- shared alignment is not shown in feed
 
 Empty states:
 - no visible matches but venue active
@@ -135,8 +174,7 @@ Purpose:
 
 Display fields:
 - `first_name`
-- `alias` if used
-- `avatar_url` or stylized identity representation
+- `illustrated_avatar_style`
 - `intent`
 - `vibes[]`
 - `hint_text`
@@ -154,6 +192,7 @@ Rules:
 - first name and hint remain consistently visible
 - mutual context is above generic profile content
 - no long bio required for MVP
+- no photo render path in MVP
 
 ### 4.4 Approaching Micro-State
 
@@ -178,6 +217,7 @@ Rules:
 - timer starts from server timestamp
 - timer expiry closes state
 - if expired, user returns to feed or profile with explicit expired message
+- `confirm_connected` may trigger a one-time contact exchange prompt
 
 ### 4.5 Venue Context / Venue Pulse
 
@@ -199,6 +239,8 @@ Primary actions:
 Rules:
 - show pulse state when live density is low
 - never feel like silent failure
+- density threshold is `>= 1 other active user`
+- pulse appears only when current density is zero and venue had activity in the last 7 days
 
 ### 4.6 Safety Controls
 
@@ -218,6 +260,12 @@ Primary actions:
 - `report_user`
 - `add_safety_zone`
 - `remove_safety_zone`
+
+Rules:
+- safety zones suppress prompts only
+- block is immediate and bilateral
+- report applies immediate mutual hide for the remainder of the session
+- `hide me at this venue` may be offered after block or report
 
 ### 4.7 Bubble Visualization Layer
 
@@ -282,15 +330,22 @@ MVP rule set:
 - always visible in feed:
   - `first_name`
   - `intent`
-  - one or more `vibes`
+  - one `vibe`
   - `hint_text`
-  - one shared alignment line when applicable
+  - `session_duration_remaining`
 - profile open:
-  - avatar becomes more prominent
+  - illustrated avatar or initials avatar
+  - second vibe if present
+  - shared alignment line if applicable
   - icebreaker becomes visible
-  - extra context may be revealed if already in mockup
 - never visible:
+  - surname
+  - photo
   - exact coordinates
+  - email
+  - phone
+  - linked social account
+  - device id
   - persistent history
   - deep social graph
 
@@ -300,14 +355,20 @@ MVP rule set:
 
 Fields:
 - `id uuid pk`
+- `auth_provider text not null`
+- `provider_subject text not null`
 - `first_name text not null`
-- `alias text null`
-- `avatar_url text null`
+- `avatar_style text not null`
 - `default_intent text null`
 - `default_vibes text[] not null default '{}'`
 - `focus_mode_enabled boolean not null default false`
 - `prompts_enabled boolean not null default true`
+- `onboarding_completed boolean not null default false`
 - `created_at timestamptz not null default now()`
+
+Constraints:
+- unique `provider_subject`
+- `default_vibes` length must be <= 2
 
 ### 7.2 venues
 
@@ -371,6 +432,9 @@ Statuses:
 - `reciprocated`
 - `expired`
 - `cancelled`
+
+Constraint:
+- max one wave per sender/recipient/presence session
 
 ### 7.6 approach_attempts
 
@@ -446,12 +510,10 @@ Fields:
 - `profile_user_id`
 - `presence_session_id`
 - `first_name`
-- `alias`
-- `avatar_url`
 - `intent`
-- `vibes`
+- `primary_vibe`
 - `hint_text`
-- `shared_alignment_label`
+- `session_duration_remaining`
 - `distance_bucket`
 - `venue_name`
 - `energy_level`
@@ -463,6 +525,7 @@ Business logic:
 - exclude expired sessions
 - exclude self
 - rank by venue, intent compatibility, shared vibe overlap, recency
+- return feed-tier data only
 
 ### 8.2 venue_context_summary
 
@@ -478,6 +541,29 @@ Fields:
 ## 9. API / Backend Actions
 
 These can be implemented as Supabase RPC, edge functions, or server handlers.
+
+### 9.0 `exchange_provider_auth`
+
+Purpose:
+- create or resume an application session after Google or Apple authentication
+
+Input:
+```json
+{
+  "provider": "google",
+  "provider_access_payload": "provider-specific token payload"
+}
+```
+
+Output:
+```json
+{
+  "user_id": "uuid",
+  "is_new_user": true,
+  "first_name": "Kelvin",
+  "onboarding_completed": false
+}
+```
 
 ### 9.1 `activate_presence`
 
@@ -648,9 +734,13 @@ User becomes `prompted` when:
 - prompt is actually delivered
 
 Thresholds to keep configurable:
-- dwell time minutes
+- dwell time minutes, default `4`
 - max prompts per venue per day
-- minimum density threshold
+- minimum density threshold, default `1 other active user`
+
+Venue scope for MVP:
+- whitelist only: `cafe`, `library`, `coworking_space`, `airport`, `gym`, `university`
+- exclude parks, streets, and open proximity discovery
 
 ## 13. Error and Edge Cases
 
@@ -676,7 +766,12 @@ Thresholds to keep configurable:
 ## 14. Implementation Phases
 
 ### Phase 1
-- auth
+- Google auth
+- Apple auth
+- authenticated user bootstrap
+- first-name-only onboarding
+- avatar-style onboarding
+- background location permission gating
 - venue detection stub
 - presence activation UI
 - local mocked nearby feed
@@ -709,3 +804,4 @@ The MVP build is done when:
 - hide, block, report, and end-session flows work
 - venue pulse covers low-density cases
 - no chat or save-user paths remain in the shipped MVP
+- no photo paths exist anywhere in the shipped MVP

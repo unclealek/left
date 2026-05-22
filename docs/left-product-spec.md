@@ -52,6 +52,9 @@ Core principle:
 - the product is the real-world conversation
 - the app is scaffolding that lowers the activation energy to get there
 
+Reality-first protection rule:
+- if a feature keeps two people interacting on their phones instead of looking up, it does not ship in MVP
+
 ## 4. Target User
 
 Primary audience:
@@ -80,6 +83,8 @@ In a shared place, a user can:
 ## 6. MVP Scope
 
 Included:
+- Google sign-in
+- Apple sign-in
 - presence activation
 - venue or area-based discovery
 - nearby feed
@@ -103,7 +108,46 @@ Deferred:
 - cross-venue history
 - rich notifications beyond core session updates
 
+Explicitly excluded from MVP:
+- in-app chat
+- profile browsing outside an active session
+- activity feed
+- history of who you've seen
+- post-session rating or review
+- follow or save mechanics
+
 ## 7. User Journey
+
+### 7.0 Register / Sign In
+
+Before entering the core loop, the user must be able to create an account or sign in using:
+- Google
+- Apple
+
+MVP requirements:
+- support account creation and returning sign-in through both providers
+- preserve a single user identity across sessions
+- collect only the minimum profile data needed for the soft-anonymity model
+- derive a usable first name from the provider profile when available
+
+Post-auth minimum profile state:
+- authenticated user id
+- first name
+- avatar style
+- onboarding flag
+
+Onboarding flow is fixed to three screens:
+1. Sign in with Apple or Google. Pull first name automatically and allow edit, but first name only.
+2. Choose avatar style from four illustrated options: `geometric`, `abstract`, `minimal`, `soft`.
+3. Request background location permission with explicit explanation that location is used to detect social venues and is never shared.
+
+Onboarding exclusions:
+- no bio
+- no handle
+- no photo upload
+- no camera access
+- no tutorial
+- no vibe selection in onboarding
 
 ### 7.1 Activate
 
@@ -193,15 +237,15 @@ Purpose:
 Key UI elements:
 - first name
 - intent tag
-- vibe tag
+- one vibe tag
 - hint card
-- mutual openness indicator
+- session duration remaining
 - actions for wave, view profile, hide, report, block
 
 Functional requirements:
 - communicate enough to support approach decisions without oversharing
-- show a factual shared-alignment signal such as `You both selected AI/startups`
 - exclude persistent “save user” behavior from MVP
+- feed is locked to tier-1 identity only
 
 ### 8.3 Venue Context / Venue Pulse
 
@@ -239,8 +283,10 @@ Functional requirements:
 - do not reveal unnecessary personal detail
 - prioritize mutual context over biography
 - first name and hint card should be visible consistently
-- intent should be especially prominent when it matches the viewer
+- second vibe becomes visible here if present
+- shared alignment signal appears here if applicable
 - no full chat entry point in MVP
+- avatar must be illustrated or initials-based, never a photo
 
 ### 8.5 Approaching Micro-State
 
@@ -260,6 +306,11 @@ Functional requirements:
 - expired approach should close automatically or force re-entry
 - this state should be designed as the anxiety-reducing bridge from phone to real life
 
+`We connected!` does exactly three things:
+1. ends the approaching state and returns to the home bubble view with a soft aurora confirmation for 30 seconds
+2. logs a successful real-world interaction event for beta metrics
+3. optionally triggers a one-time contact exchange prompt
+
 ### 8.6 Safety Controls
 
 Purpose:
@@ -275,6 +326,8 @@ Required actions:
 Functional requirements:
 - available from all active social states
 - minimize taps for emergency or discomfort scenarios
+- block is immediate and bilateral
+- report auto-hides the other user for the remainder of the current session
 
 ### 8.7 Bubble Visualization Layer
 
@@ -324,21 +377,30 @@ Rules:
 
 Left should reveal only enough information to facilitate an in-person moment.
 
-Soft anonymity may include:
-- alias or first name
-- stylized avatar or masked photo treatment
-- interest and intent tags
-- identifying hint
+Progressive reveal rules are locked:
 
-It should avoid:
-- full profile dump
-- exact location sharing
-- persistent public identity by default
+Tier 1, visible in feed:
+- first name only
+- one vibe tag
+- one intent tag
+- hint card text
+- session duration remaining
 
-Progressive reveal guidance from the current design review:
-- first name and hint card are always visible
-- avatar and vibe become more prominent after profile open
-- intent should be emphasized when it matches the viewer
+Tier 2, visible only after profile open:
+- illustrated avatar or initials-based avatar
+- second vibe tag if present
+- shared alignment signal if applicable
+- icebreaker suggestion
+
+Tier 3, never visible:
+- surname
+- photo
+- exact GPS
+- email
+- phone
+- linked social account
+- device id
+- any onboarding data beyond first name and avatar style
 
 ### Approach Window
 
@@ -356,7 +418,11 @@ For MVP, waves are a lightweight interest signal.
 Rules:
 - waves are allowed
 - full chat is out of scope
-- if mutual wave logic is used, it should support real-world approach rather than open a digital conversation thread
+- wave does not gate approach
+- `I'm going over` is always available once a profile is opened
+- wave is a signal only
+- one wave per person per session maximum
+- recipient may wave back or ignore without blocking approach
 
 ## 10. Matching and Ranking
 
@@ -385,35 +451,38 @@ MVP safety principles:
 - support for user-defined safety zones
 - session expiry by default
 
-Open product decisions:
-- whether certain zones suppress discovery entirely
-- whether visibility should auto-disable at night or in specific contexts
-- whether mutual opt-in is required before approach state
+Locked safety decisions:
+- safety zones suppress prompts only
+- they do not suppress manual visibility
+- block is immediate and bilateral
+- report does not terminate the other user's session automatically
+- report applies immediate mutual hide for the current session
+- after block or report, `hide me at this venue` becomes available as a permanent venue suppression choice
 
 ## 12. Data Model
 
 ### User
 
 - `id`
-- `display_name`
 - `first_name`
-- `alias`
-- `avatar_url`
+- `avatar_style`
 - `default_vibes`
-- `safety_preferences`
+- `prompt_preferences`
 - `created_at`
 
 ### PresenceSession
 
 - `id`
 - `user_id`
-- `venue_id` or `area_id`
+- `venue_id`
 - `intent`
+- `vibes`
+- `hint_text`
 - `status`
 - `prompt_state`
 - `started_at`
 - `expires_at`
-- `visibility_mode`
+- `ended_at`
 
 ### SessionVibe
 
@@ -517,7 +586,7 @@ Recommended product stack for MVP:
 - mobile app: Expo + React Native + TypeScript
 - state: Zustand
 - backend: Supabase
-- auth: phone or magic link
+- auth: Supabase auth with Google and Apple providers
 - realtime: Supabase realtime or equivalent presence channel
 - location: device geolocation with coarse proximity buckets
 
@@ -529,17 +598,21 @@ Why:
 
 1. Freeze the MVP screen list from this spec.
 2. Confirm copy and fields for activation, profile, approach, and safety.
-3. Decide identity policy: first name, alias, and exact progressive reveal rules.
-4. Define venue model, density thresholds, and venue pulse behavior.
+3. Implement the locked progressive reveal rules.
+4. Implement the locked venue model, density thresholds, and venue pulse behavior.
 5. Remove chat and save-user assumptions from the MVP build plan.
 6. Implement the app shell around the nearby feed as the canonical discovery surface.
 7. Add presence lifecycle and expiry logic before deeper UI polish.
 8. Add the bubble visualization only as a second-pass UI layer over the same data.
 
-## 18. Open Questions
+## 18. Locked Product Rules
 
-- Is discovery always attached to a venue, or can it work outdoors between arbitrary nearby users?
-- Does `Wave` require reciprocal acceptance before `I'm going over` becomes available?
-- What exact identity is visible before mutual contact?
-- What happens after `We connected!` is tapped?
-- Are safety zones hard blocks, soft warnings, or visibility modifiers?
+- Discovery is strictly venue-based in MVP.
+- Venue whitelist is: `cafe`, `library`, `coworking_space`, `airport`, `gym`, `university`.
+- Parks and streets are excluded from MVP.
+- Dwell time before prompt eligibility is 4 minutes.
+- Meaningful density is at least 1 other active user at the venue.
+- Venue pulse appears only when live density is zero and the venue has had at least 1 active session in the last 7 days.
+- If a venue has never had activity, no venue pulse is shown.
+- Safety zones suppress prompts only. They do not force invisibility.
+- After block or report, a user may hide themselves from that venue permanently.
