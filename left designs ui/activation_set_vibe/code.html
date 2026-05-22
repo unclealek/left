@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Presence Activation - Café Regatta</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: #0a0a10;
+            margin: 0;
+            overflow: hidden;
+        }
+        .drift-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50vh;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.15;
+            animation: drift linear infinite;
+        }
+        @keyframes drift {
+            from { transform: translate(0, 0); }
+            to { transform: translate(var(--x), var(--y)); }
+        }
+        .aurora-pulse {
+            box-shadow: 0 0 20px rgba(78, 207, 179, 0.4);
+        }
+        .glass-sheet {
+            background: rgba(19, 18, 26, 0.85);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#e5e1ec",
+                        "primary": "#c6c0ff",
+                        "outline-variant": "#474554",
+                        "error": "#ffb4ab",
+                        "on-primary": "#2700a1",
+                        "on-background": "#e5e1ec",
+                        "on-surface-variant": "#c8c4d6",
+                        "surface-bright": "#3a3841",
+                        "outline": "#928fa0",
+                        "secondary-fixed-dim": "#5cdbbe",
+                        "on-secondary-container": "#003329",
+                        "surface-dim": "#13121a",
+                        "tertiary-fixed": "#ffd9df",
+                        "surface-tint": "#c6c0ff",
+                        "on-secondary-fixed-variant": "#005143",
+                        "on-tertiary": "#5f102b",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-highest": "#35343d",
+                        "secondary": "#5cdbbe",
+                        "on-tertiary-container": "#560824",
+                        "primary-fixed-dim": "#c6c0ff",
+                        "background": "#13121a",
+                        "secondary-container": "#05a68c",
+                        "primary-container": "#8b80ff",
+                        "on-tertiary-fixed": "#3f0017",
+                        "on-primary-fixed-variant": "#3f2bb8",
+                        "primary-fixed": "#e4dfff",
+                        "surface-container-high": "#2a2932",
+                        "on-secondary": "#00382e",
+                        "on-error": "#690005",
+                        "inverse-primary": "#5748d0",
+                        "error-container": "#93000a",
+                        "tertiary": "#ffb1c1",
+                        "on-primary-fixed": "#150066",
+                        "surface-container-lowest": "#0e0d15",
+                        "tertiary-container": "#d87089",
+                        "secondary-fixed": "#7bf8da",
+                        "surface": "#13121a",
+                        "inverse-on-surface": "#312f38",
+                        "on-primary-container": "#21008e",
+                        "surface-container": "#201f27",
+                        "surface-container-low": "#1c1b23",
+                        "on-secondary-fixed": "#00201a",
+                        "surface-variant": "#35343d",
+                        "tertiary-fixed-dim": "#ffb1c1",
+                        "on-tertiary-fixed-variant": "#7d2841",
+                        "inverse-surface": "#e5e1ec",
+                        "iris": "#7b6ef6",
+                        "aurora": "#4ecfb3"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "20px",
+                        "xs": "4px",
+                        "margin-desktop": "40px",
+                        "lg": "24px",
+                        "gutter": "16px",
+                        "sm": "8px",
+                        "xl": "32px",
+                        "md": "16px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["DM Sans"],
+                        "display-lg": ["DM Sans"],
+                        "body-sm": ["DM Sans"],
+                        "headline-lg-mobile": ["DM Sans"],
+                        "label-md": ["DM Sans"],
+                        "display-sm": ["DM Sans"],
+                        "body-md": ["DM Sans"],
+                        "body-lg": ["DM Sans"],
+                        "label-sm": ["DM Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "500"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "300"}],
+                        "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "500"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                        "display-sm": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface antialiased">
+<!-- Ambient Background -->
+<div class="drift-container" id="drift-bg"></div>
+<!-- Main Canvas -->
+<main class="relative z-10 flex flex-col min-h-screen max-w-md mx-auto overflow-hidden">
+<!-- Top App Bar (Shared Component) -->
+<header class="flex justify-between items-center px-margin-mobile h-16 w-full bg-surface/80 backdrop-blur-xl fixed top-0 left-0 right-0 z-50">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="location_on">location_on</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-primary">Café Regatta</span>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="schedule">schedule</span>
+</header>
+<!-- Top Zone: Hero Question -->
+<section class="flex-grow flex items-center justify-center pt-24 pb-12">
+<h1 class="font-display-sm text-display-sm font-bold text-white tracking-tight">Ready to connect?</h1>
+</section>
+<!-- Bottom Sheet -->
+<div class="glass-sheet rounded-t-[32px] border-t border-outline-variant/30 px-6 pt-3 pb-8 shadow-2xl transition-transform duration-500 ease-out translate-y-0 relative z-20">
+<!-- Handle -->
+<div class="flex justify-center mb-8">
+<div class="w-10 h-1 bg-[#2a2a38] rounded-full"></div>
+</div>
+<div class="space-y-8">
+<!-- Intent Section -->
+<div class="space-y-3">
+<p class="font-label-md text-label-md text-outline uppercase tracking-widest">I'm here for</p>
+<div class="flex flex-wrap gap-2">
+<button class="px-5 py-2.5 rounded-full bg-iris text-white font-body-md aurora-pulse transition-all">Networking</button>
+<button class="px-5 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-body-md border border-outline-variant/20 hover:bg-surface-container-highest transition-colors">Open to chat</button>
+<button class="px-5 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-body-md border border-outline-variant/20 hover:bg-surface-container-highest transition-colors">Deep work</button>
+</div>
+</div>
+<!-- Vibe Section -->
+<div class="space-y-3">
+<p class="font-label-md text-label-md text-outline uppercase tracking-widest">The vibe</p>
+<div class="flex flex-wrap gap-2">
+<button class="px-5 py-2.5 rounded-full bg-aurora text-[#00382e] font-body-md font-bold transition-all">AI/startups</button>
+<button class="px-5 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-body-md border border-outline-variant/20 hover:bg-surface-container-highest transition-colors">Design</button>
+<button class="px-5 py-2.5 rounded-full bg-surface-container-high text-on-surface-variant font-body-md border border-outline-variant/20 hover:bg-surface-container-highest transition-colors">Philosophy</button>
+</div>
+</div>
+<!-- Duration Section -->
+<div class="space-y-3">
+<p class="font-label-md text-label-md text-outline uppercase tracking-widest">Duration</p>
+<div class="bg-[#161622] p-1 rounded-xl flex items-center">
+<button class="flex-1 py-2 text-center text-on-surface-variant font-label-md">30m</button>
+<button class="flex-1 py-2 text-center bg-iris text-white rounded-lg font-label-md shadow-lg shadow-iris/20 transition-all duration-300">1h</button>
+<button class="flex-1 py-2 text-center text-on-surface-variant font-label-md">2h</button>
+</div>
+</div>
+<!-- Hint Card (Input field look) -->
+<div class="space-y-3">
+<p class="font-label-md text-label-md text-outline uppercase tracking-widest">Find me by</p>
+<div class="relative">
+<input class="w-full bg-[#161622] border-none rounded-xl py-4 px-5 text-on-surface font-body-md focus:ring-1 focus:ring-iris transition-all outline-none" readonly="" type="text" value="Grey hoodie, corner seat"/>
+<div class="absolute right-4 top-1/2 -translate-y-1/2 text-outline">
+<span class="material-symbols-outlined text-[20px]" data-icon="edit">edit</span>
+</div>
+</div>
+</div>
+<!-- Action Button -->
+<div class="pt-4">
+<button class="w-full bg-iris hover:bg-[#8a7eff] text-white py-5 rounded-xl font-headline-lg-mobile transition-all active:scale-[0.98] shadow-xl shadow-iris/20">
+                        Become visible
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Atmospheric Drifting Bubbles
+        const bg = document.getElementById('drift-bg');
+        const colors = ['#7b6ef6', '#4ecfb3', '#c6c0ff', '#5cdbbe'];
+        
+        function createBubble() {
+            const bubble = document.createElement('div');
+            const size = Math.random() * 150 + 100;
+            const startX = Math.random() * window.innerWidth;
+            const startY = Math.random() * (window.innerHeight / 2);
+            
+            bubble.classList.add('bubble');
+            bubble.style.width = `${size}px`;
+            bubble.style.height = `${size}px`;
+            bubble.style.left = `${startX}px`;
+            bubble.style.top = `${startY}px`;
+            bubble.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            const duration = Math.random() * 20 + 20;
+            bubble.style.setProperty('--x', `${(Math.random() - 0.5) * 200}px`);
+            bubble.style.setProperty('--y', `${(Math.random() - 0.5) * 200}px`);
+            bubble.style.animationDuration = `${duration}s`;
+            
+            bg.appendChild(bubble);
+            
+            setTimeout(() => {
+                bubble.remove();
+                createBubble();
+            }, duration * 1000);
+        }
+
+        // Initialize bubbles
+        for(let i=0; i<8; i++) {
+            setTimeout(createBubble, i * 1500);
+        }
+
+        // Micro-interactions for buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.classList.add('scale-95');
+                setTimeout(() => this.classList.remove('scale-95'), 100);
+            });
+        });
+    </script>
+</body></html>

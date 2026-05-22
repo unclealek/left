@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Café Regatta - Immersive Social Discovery</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#3a3841",
+                    "outline": "#928fa0",
+                    "on-background": "#e5e1ec",
+                    "on-surface-variant": "#c8c4d6",
+                    "on-primary": "#2700a1",
+                    "outline-variant": "#474554",
+                    "error": "#ffb4ab",
+                    "primary": "#c6c0ff",
+                    "on-surface": "#e5e1ec",
+                    "secondary": "#5cdbbe",
+                    "on-tertiary-container": "#560824",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-highest": "#35343d",
+                    "on-tertiary": "#5f102b",
+                    "tertiary-fixed": "#ffd9df",
+                    "on-secondary-fixed-variant": "#005143",
+                    "surface-tint": "#c6c0ff",
+                    "on-secondary-container": "#003329",
+                    "surface-dim": "#13121a",
+                    "secondary-fixed-dim": "#5cdbbe",
+                    "tertiary-container": "#d87089",
+                    "on-primary-fixed": "#150066",
+                    "surface-container-lowest": "#0e0d15",
+                    "tertiary": "#ffb1c1",
+                    "on-secondary": "#00382e",
+                    "inverse-primary": "#5748d0",
+                    "on-error": "#690005",
+                    "error-container": "#93000a",
+                    "surface-container-high": "#2a2932",
+                    "primary-container": "#8b80ff",
+                    "on-primary-fixed-variant": "#3f2bb8",
+                    "on-tertiary-fixed": "#3f0017",
+                    "primary-fixed": "#e4dfff",
+                    "secondary-container": "#05a68c",
+                    "primary-fixed-dim": "#c6c0ff",
+                    "background": "#0d0d14",
+                    "inverse-surface": "#e5e1ec",
+                    "on-tertiary-fixed-variant": "#7d2841",
+                    "tertiary-fixed-dim": "#ffb1c1",
+                    "surface-variant": "#35343d",
+                    "surface-container-low": "#1c1b23",
+                    "on-secondary-fixed": "#00201a",
+                    "surface-container": "#201f27",
+                    "surface": "#13121a",
+                    "inverse-on-surface": "#312f38",
+                    "on-primary-container": "#21008e",
+                    "secondary-fixed": "#7bf8da"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "4px",
+                    "sm": "8px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "gutter": "16px",
+                    "margin-mobile": "20px",
+                    "lg": "24px",
+                    "margin-desktop": "40px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "label-sm": ["DM Sans"],
+                    "body-lg": ["DM Sans"],
+                    "body-md": ["DM Sans"],
+                    "display-sm": ["DM Sans"],
+                    "label-md": ["DM Sans"],
+                    "headline-lg-mobile": ["DM Sans"],
+                    "body-sm": ["DM Sans"],
+                    "display-lg": ["DM Sans"],
+                    "headline-lg": ["DM Sans"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        :root {
+            --iris: #7b6ef6;
+            --aurora: #4ecfb3;
+            --amber: #f5a623;
+            --blush: #e87d96;
+            --bg-dark: #0d0d14;
+        }
+
+        body {
+            background-color: #0a0a10;
+            color: #e5e1ec;
+            font-family: 'DM Sans', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        @keyframes drift {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(4px, -3px); }
+            50% { transform: translate(-2px, 4px); }
+            75% { transform: translate(-4px, -2px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.7; }
+            100% { transform: scale(1.04); opacity: 1; }
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 0.4; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+
+        @keyframes slideup {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .drift { animation: drift 8s ease-in-out infinite; }
+        .pulse { animation: pulse 2s ease-in-out infinite alternate; }
+        .ripple { animation: ripple 3s ease-out infinite; }
+        .slide-up { animation: slideup 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        .glass-sheet {
+            background: rgba(19, 19, 28, 0.9);
+            backdrop-filter: blur(24px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .iris-glow {
+            box-shadow: 0 0 20px rgba(123, 110, 246, 0.3);
+        }
+
+        .aurora-glow {
+            box-shadow: 0 0 15px rgba(78, 207, 179, 0.3);
+        }
+
+        .phone-frame {
+            width: 200px;
+            height: 440px;
+            border-radius: 32px;
+            border: 1px solid #1e1e2e;
+            background: var(--bg-dark);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .pill-selected {
+            background-color: var(--iris) !important;
+            color: #000 !important;
+        }
+
+        .vibe-selected {
+            border-color: var(--aurora) !important;
+            color: var(--aurora) !important;
+            box-shadow: 0 0 10px rgba(78, 207, 179, 0.2);
+        }
+
+        /* Custom Scrollbar for profile */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body>
+<div class="flex gap-lg p-lg bg-[#0a0a10] rounded-xl overflow-x-auto max-w-full items-start">
+<!-- SCREEN 1: HOME -->
+<div class="flex flex-col gap-sm items-center">
+<span class="text-[10px] text-[#6b6b82] font-semibold tracking-wider uppercase">Screen 1</span>
+<div class="phone-frame">
+<!-- Header -->
+<div class="flex justify-between items-center px-4 pt-6 pb-2 w-full">
+<div class="flex flex-col">
+<span class="text-[14px] font-bold text-[#4ecfb3]">Café Regatta</span>
+<span class="text-[9px] text-[#6b6b82]">5 people visible</span>
+</div>
+<div class="px-2 py-0.5 bg-[#f5a623]/20 text-[#f5a623] rounded-full text-[7px] font-bold uppercase tracking-widest">
+                    High Energy
+                </div>
+</div>
+<!-- Canvas Space -->
+<div class="flex-1 relative overflow-hidden">
+<!-- b5 -->
+<div class="bubble drift w-7 h-7 left-[80px] top-[30px]" style="animation-delay: -1s;">
+<img class="rounded-full w-full h-full opacity-60 grayscale-[0.5]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4A9XTBeXU5FGClDasa79oJlLn20Pwl9r9AOAHHV5bDrwT2r1ZXxn0m7tLwirdpFxIqVbcga4XXVYVi8x3VOQEgUykTxUBlBpwpue_E-ptPCVN3fpXeidEbqAjNGCwH2ijEmXp4b9jFoVDlU33IncpBvdQOzsD4V6D_5UiMJiHGVXiJaOdv8XHxjf10qtxTRf8iHPlQFHYFf_Ln-3AxmDMWH3k9WV9CzAavlObS500JdTvwionYTWfQ9F04EcUpaqlvD-m3DXRLbI"/>
+</div>
+<!-- b-cluster -->
+<div class="bubble drift w-10 h-10 bg-[#2a2932] border border-white/5 left-[20px] top-[60px]" style="animation-delay: -3.5s;">
+<span class="text-[10px] font-bold text-outline">+2</span>
+</div>
+<!-- b-you -->
+<div class="bubble left-[70px] top-[100px] w-14 h-14 z-10">
+<div class="absolute inset-0 ripple rounded-full border-2 border-[#7b6ef6]/40"></div>
+<div class="absolute inset-0 ripple rounded-full border border-[#7b6ef6]/20" style="animation-delay: 1.5s;"></div>
+<img class="rounded-full w-full h-full border-2 border-[#7b6ef6] relative z-10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4xV6AFLdbm0Q8WkQqWU1XGQn768Gya03bsMzfnOGVxS8-IeHQtCVoGKbdZY8xt9NRilHblaFdF7ZO3adVFYl3jC1aWuY2Aq3EYM4jm7aXX51izv-Fo8b8Fiu7j-y9QK06QorzoHGJHpkp-Z612xBvO6Hmf5KHJ1oT7LAmObpmBSNUmRutvCoInwOyZu_MVy9mPHQ-OB6y3-u1oBpAU0ndNYXA2nS4Wka8CR7qiMlWqRY-QC705lTcYl9Buzt7RuR-FxG3bdV-cBg"/>
+</div>
+<!-- Kelvin -->
+<div class="bubble drift pulse left-[130px] top-[65px] w-11 h-11 border-2 border-[#4ecfb3] aurora-glow" style="animation-delay: -0.5s;">
+<img class="rounded-full w-full h-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAA2qmRL_Pn_Q1PSXVWjk7-chNBs8fsrHTOPeMEYrnqZfl7DInJaVF_WGfXtaABa6nyOaEtyb4dSlcfD3hLEGG0Q0Z8_6iHR1BOwEOBIUOhCLupJiIcK5aj4GFzyardF2REj-VwrsobGVMdBsgxXAuA9Iq47_DONffgKZV1W-vn__heI-onzvreocBStjJ0dvO4hiwJTAPDvFPr6t57ctvAjCY36MlCvfdFUiQRmEr7yzoyBLPhNE3stiYp_hYD6MhoLhxltwnhg2g"/>
+</div>
+<!-- Mia -->
+<div class="bubble drift left-[125px] top-[145px] w-9 h-9 border border-white/10" style="animation-delay: -4s;">
+<img class="rounded-full w-full h-full opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDce2YptQWjZySyUsoJ8fH92U37HdR-T9WLmqeaxK0P69elnxWWIWp1UaGm42fobHNZNxLSTxTcitgURZTMrmaAoSBV1A55NzNSOvK-ztYMcmr8KnuXEA9SHCPps5FzitvNNRzoX7DysuCVHMXwfiGYc2M5SoRiS9hNlqy1cW82zvtk3WRvUgrD-aIRon9vCdVuCsbDkk7rHBEPVatwP5Zptx5Tj_d-8u6naYddV0C09pzLDk3gqm7myOC-0gR9jbvoXw4701WEj0"/>
+</div>
+<!-- Leo -->
+<div class="bubble drift left-[40px] top-[170px] w-8 h-8" style="animation-delay: -2.5s;">
+<img class="rounded-full w-full h-full opacity-70" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCce-ZPkI5ep0AcdLh86vk9hzAuz_pQjMRhXrf53C5CVfmWa6fP2tyzcWZv0opMBE3axWRw7tmEqoEy7ucRoIL2cFhmA2nuceA-bSS4XbV5ZyU2-aFi41bDuGE2-FQo9xZt5g0G4tpRbywBWsMqY3VuGfOqq3q6dpjx9cmitrSYvnlWcMrQjkKjRlvq__yofrHiZwq8IzzRPFjQNw5rSUYwOT4RG6B905k5rwBBFcSYFnKUVqt7xqPYiTCNtxdjTjUIroRQF5tYxLc"/>
+</div>
+</div>
+<!-- Footer Controls -->
+<div class="p-4 flex flex-col gap-3">
+<div class="flex gap-1">
+<span class="px-2 py-1 bg-[#7b6ef6]/20 text-[#7b6ef6] rounded-full text-[9px] font-bold">AI/startups</span>
+<span class="px-2 py-1 bg-[#201f27] text-outline rounded-full text-[9px]">Design</span>
+</div>
+<button class="w-full bg-[#7b6ef6] text-black py-3 rounded-xl text-[12px] font-bold iris-glow transition-all active:scale-[0.97]">
+                    Become visible
+                </button>
+</div>
+</div>
+</div>
+<!-- SCREEN 2: ACTIVATION -->
+<div class="flex flex-col gap-sm items-center">
+<span class="text-[10px] text-[#6b6b82] font-semibold tracking-wider uppercase">Screen 2</span>
+<div class="phone-frame">
+<div class="px-4 pt-10">
+<h2 class="text-[20px] font-bold leading-tight">Ready to connect?</h2>
+</div>
+<div class="mt-auto glass-sheet rounded-t-[2.5rem] p-5 flex flex-col gap-4 slide-up">
+<div class="w-10 h-1 bg-white/10 rounded-full self-center -mt-1 mb-2"></div>
+<div>
+<label class="text-[9px] text-[#6b6b82] font-bold uppercase tracking-wider mb-2 block">Your Intent</label>
+<div class="flex flex-wrap gap-1.5" id="intent-pills">
+<button class="pill-selected px-3 py-1.5 bg-[#201f27] text-outline rounded-lg text-[10px] font-bold transition-all" onclick="togglePill(this, 'intent')">Networking</button>
+<button class="px-3 py-1.5 bg-[#201f27] text-outline rounded-lg text-[10px] transition-all" onclick="togglePill(this, 'intent')">Open to chat</button>
+<button class="px-3 py-1.5 bg-[#201f27] text-outline rounded-lg text-[10px] transition-all" onclick="togglePill(this, 'intent')">Deep work</button>
+</div>
+</div>
+<div>
+<label class="text-[9px] text-[#6b6b82] font-bold uppercase tracking-wider mb-2 block">Setting Vibe</label>
+<div class="flex flex-wrap gap-1.5" id="vibe-pills">
+<button class="vibe-selected px-3 py-1.5 border border-white/10 text-outline rounded-lg text-[10px] transition-all" onclick="toggleVibe(this)">AI/startups</button>
+<button class="px-3 py-1.5 bg-[#201f27] text-outline rounded-lg text-[10px] transition-all" onclick="toggleVibe(this)">Design</button>
+</div>
+</div>
+<div>
+<label class="text-[9px] text-[#6b6b82] font-bold uppercase tracking-wider mb-2 block">Duration</label>
+<div class="inline-block px-3 py-1.5 bg-[#7b6ef6]/10 text-[#7b6ef6] border border-[#7b6ef6]/30 rounded-lg text-[10px] font-bold">1h active</div>
+</div>
+<div class="bg-[#201f27] rounded-xl p-3 border border-white/5">
+<span class="text-[9px] text-[#6b6b82]">Quick hint for others</span>
+<p class="text-[10px] text-white mt-0.5">Grey hoodie, corner seat</p>
+</div>
+<button class="w-full bg-[#7b6ef6] text-black py-3 rounded-xl text-[12px] font-bold mt-2 shadow-lg">
+                    Become visible
+                </button>
+</div>
+</div>
+</div>
+<!-- SCREEN 3: PROFILE -->
+<div class="flex flex-col gap-sm items-center">
+<span class="text-[10px] text-[#6b6b82] font-semibold tracking-wider uppercase">Screen 3</span>
+<div class="phone-frame">
+<div class="relative h-20 opacity-30 flex items-center px-4">
+<div class="w-10 h-10 rounded-full bg-[#2a2932]"></div>
+<div class="w-12 h-12 rounded-full bg-[#4ecfb3]/20 ml-auto"></div>
+</div>
+<div class="flex-1 glass-sheet rounded-t-[2.5rem] p-5 flex flex-col gap-4 overflow-y-auto no-scrollbar">
+<div class="flex items-center gap-4 mt-2">
+<div class="relative">
+<div class="w-16 h-16 rounded-full border-2 border-[#7b6ef6] p-0.5">
+<img class="rounded-full w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7OXXhV4qRbxVMptfjHBStoGgwT6V2BKOoAYfNr4JO9uAdZ9aQzheusFSjOo2_xwx27ObvtyqgVdQ4EJ7Lp_wxGqpOZZ242z_BnkYdptkqK2DT00bR4TH9U3Ovjvz1XnjoleGXL707J-NiOIAy2ObZeq1Wizt7_3dn5y3MqoQntya7spWB6xi0UmmtZAZhl_rU8CXa19G4_2Z8JrwrFO2O7RormEd4AoceN5LjuszbPl-_BRB2hviOPDWHB31h9LPkjblyOyol-oY"/>
+</div>
+<span class="absolute bottom-0 right-0 w-5 h-5 bg-[#4ecfb3] rounded-full border-2 border-[#13131c] flex items-center justify-center">
+<span class="material-symbols-outlined text-[10px] text-black font-bold">check</span>
+</span>
+</div>
+<div class="flex flex-col">
+<h3 class="text-[18px] font-bold">Kelvin</h3>
+<div class="flex gap-1.5 mt-0.5">
+<span class="px-1.5 py-0.5 bg-[#7b6ef6]/10 text-[#7b6ef6] text-[8px] rounded font-bold uppercase">Networking</span>
+<span class="px-1.5 py-0.5 bg-[#4ecfb3]/10 text-[#4ecfb3] text-[8px] rounded font-bold uppercase">AI/startups</span>
+</div>
+</div>
+</div>
+<!-- Cards -->
+<div class="bg-[#f5a623]/5 border border-[#f5a623]/20 rounded-xl p-3">
+<span class="text-[7px] text-[#f5a623] font-bold uppercase tracking-widest">Hint</span>
+<p class="text-[11px] font-medium mt-1">Look for: <span class="text-white">Blue headphones</span></p>
+</div>
+<div class="bg-[#4ecfb3]/5 border border-[#4ecfb3]/10 rounded-xl p-3">
+<p class="text-[10px] text-[#4ecfb3] font-medium">You both selected Networking</p>
+</div>
+<div class="bg-black/20 border border-white/5 rounded-xl p-3">
+<span class="text-[7px] text-[#7b6ef6] font-bold uppercase tracking-widest">Icebreaker</span>
+<p class="text-[11px] mt-1.5 leading-relaxed text-on-surface-variant italic">"What's the most exciting project you're currently building in AI?"</p>
+</div>
+<div class="flex gap-2 mt-auto pt-4">
+<button class="flex-1 border border-[#e87d96] text-[#e87d96] py-2.5 rounded-xl text-[11px] font-bold active:scale-[0.95]">Wave</button>
+<button class="flex-[2] bg-[#7b6ef6] text-black py-2.5 rounded-xl text-[11px] font-bold iris-glow active:scale-[0.95]">I'm going over</button>
+</div>
+</div>
+</div>
+</div>
+<!-- SCREEN 4: APPROACHING -->
+<div class="flex flex-col gap-sm items-center">
+<span class="text-[10px] text-[#6b6b82] font-semibold tracking-wider uppercase">Screen 4</span>
+<div class="phone-frame">
+<div class="absolute inset-0 bg-background/90 backdrop-blur-xl z-0"></div>
+<div class="relative z-10 p-6 flex flex-col items-center justify-center h-full text-center gap-6">
+<div class="flex flex-col gap-1">
+<span class="text-[8px] text-[#6b6b82] font-bold tracking-[0.2em] uppercase">On your way to</span>
+<h2 class="text-[24px] font-bold text-[#7b6ef6]">Kelvin</h2>
+</div>
+<!-- Timer -->
+<div class="relative w-28 h-28 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90">
+<circle cx="56" cy="56" fill="transparent" r="48" stroke="rgba(255,255,255,0.05)" stroke-width="4"></circle>
+<circle class="transition-all duration-1000 ease-linear" cx="56" cy="56" fill="transparent" id="timer-progress" r="48" stroke="#7b6ef6" stroke-dasharray="301.59" stroke-dashoffset="0" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-[26px] font-bold leading-none" id="timer-text">60</span>
+<span class="text-[8px] text-[#6b6b82] uppercase font-bold tracking-widest mt-1">Sec</span>
+</div>
+</div>
+<div class="flex flex-col gap-4 w-full px-2">
+<div class="bg-white/5 rounded-2xl p-4 border border-white/5">
+<span class="text-[7px] text-[#6b6b82] uppercase font-bold tracking-widest">Look For</span>
+<p class="text-[13px] font-bold text-white mt-1">Blue headphones</p>
+</div>
+<p class="text-[11px] italic text-[#6b6b82] px-2">"What's the most exciting project you're currently building in AI?"</p>
+</div>
+<div class="flex flex-col gap-3 w-full mt-4">
+<button class="w-full bg-[#4ecfb3]/10 text-[#4ecfb3] border border-[#4ecfb3]/20 py-3 rounded-xl text-[12px] font-bold">We connected!</button>
+<button class="text-[#6b6b82] text-[11px] font-bold uppercase tracking-wider hover:text-white transition-colors">Cancel</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+    // Timer Micro-interaction for Screen 4
+    function startTimer() {
+        const timerText = document.getElementById('timer-text');
+        const timerProgress = document.getElementById('timer-progress');
+        let timeLeft = 60;
+        const total = 60;
+        const circumference = 2 * Math.PI * 48;
+
+        const interval = setInterval(() => {
+            timeLeft--;
+            if (timeLeft < 0) {
+                timeLeft = 60; // Loop for demo
+            }
+
+            timerText.textContent = timeLeft;
+
+            // Stroke offset
+            const offset = circumference - (timeLeft / total) * circumference;
+            timerProgress.style.strokeDashoffset = offset;
+
+            // Color Shifts: Iris (#7b6ef6) -> Amber (#f5a623) -> Blush (#e87d96)
+            if (timeLeft <= 15) {
+                timerProgress.style.stroke = '#e87d96'; // Blush
+                timerText.style.color = '#e87d96';
+            } else if (timeLeft <= 35) {
+                timerProgress.style.stroke = '#f5a623'; // Amber
+                timerText.style.color = '#f5a623';
+            } else {
+                timerProgress.style.stroke = '#7b6ef6'; // Iris
+                timerText.style.color = 'white';
+            }
+        }, 1000);
+    }
+
+    // Tab/Pill Switching Logic
+    function togglePill(el, group) {
+        const parent = el.parentElement;
+        parent.querySelectorAll('button').forEach(btn => btn.classList.remove('pill-selected'));
+        el.classList.add('pill-selected');
+    }
+
+    function toggleVibe(el) {
+        const parent = el.parentElement;
+        parent.querySelectorAll('button').forEach(btn => btn.classList.remove('vibe-selected'));
+        el.classList.add('vibe-selected');
+    }
+
+    // Initialize timer immediately
+    startTimer();
+</script>
+</body></html>

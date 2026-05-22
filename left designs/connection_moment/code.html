@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Connection Moment</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#34343f",
+                    "tertiary-fixed-dim": "#ffb1c1",
+                    "on-tertiary-fixed-variant": "#7d2841",
+                    "inverse-surface": "#e3e1ef",
+                    "secondary-fixed": "#7bf8da",
+                    "inverse-on-surface": "#302f3a",
+                    "surface": "#12121c",
+                    "on-primary-container": "#21008e",
+                    "surface-container": "#1f1f29",
+                    "surface-container-low": "#1b1b25",
+                    "on-secondary-fixed": "#00201a",
+                    "on-secondary": "#00382e",
+                    "error-container": "#93000a",
+                    "on-error": "#690005",
+                    "inverse-primary": "#5748d0",
+                    "tertiary": "#ffb1c1",
+                    "on-primary-fixed": "#150066",
+                    "surface-container-lowest": "#0d0d17",
+                    "tertiary-container": "#d87089",
+                    "primary-fixed-dim": "#c6c0ff",
+                    "background": "#12121c",
+                    "secondary-container": "#05a68c",
+                    "primary-container": "#8b80ff",
+                    "on-tertiary-fixed": "#3f0017",
+                    "on-primary-fixed-variant": "#3f2bb8",
+                    "primary-fixed": "#e4dfff",
+                    "surface-container-high": "#292933",
+                    "on-tertiary": "#5f102b",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-highest": "#34343f",
+                    "secondary": "#5cdbbe",
+                    "on-tertiary-container": "#560824",
+                    "secondary-fixed-dim": "#5cdbbe",
+                    "on-secondary-container": "#003329",
+                    "surface-dim": "#12121c",
+                    "surface-tint": "#c6c0ff",
+                    "on-secondary-fixed-variant": "#005143",
+                    "tertiary-fixed": "#ffd9df",
+                    "on-primary": "#2700a1",
+                    "on-background": "#e3e1ef",
+                    "on-surface-variant": "#c8c4d6",
+                    "outline": "#928fa0",
+                    "surface-bright": "#383843",
+                    "on-surface": "#e3e1ef",
+                    "primary": "#c6c0ff",
+                    "outline-variant": "#474554",
+                    "error": "#ffb4ab",
+                    "blush": "#E87D96"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-padding": "24px",
+                    "stack-gap": "12px",
+                    "gutter": "16px",
+                    "unit": "4px",
+                    "margin": "20px"
+            },
+            "fontFamily": {
+                    "body-lg": ["DM Sans"],
+                    "body-md": ["DM Sans"],
+                    "label-mono": ["JetBrains Mono"],
+                    "headline-lg": ["DM Sans"],
+                    "headline-md": ["DM Sans"],
+                    "label-caps": ["DM Sans"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-mono": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "label-caps": ["11px", {"lineHeight": "12px", "letterSpacing": "0.1em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #12121c;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .pulse-ring {
+            position: absolute;
+            border: 1px solid rgba(232, 125, 150, 0.3);
+            border-radius: 50%;
+            animation: pulse-ring-animation 6s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        @keyframes pulse-ring-animation {
+            0% { transform: scale(0.2); opacity: 0; }
+            50% { opacity: 0.5; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        .iris-glow {
+            background: radial-gradient(circle, rgba(198, 192, 255, 0.15) 0%, transparent 70%);
+        }
+
+        .blush-glow {
+            background: radial-gradient(circle, rgba(232, 125, 150, 0.1) 0%, transparent 70%);
+        }
+
+        .orb-gradient {
+            background: radial-gradient(circle at 30% 30%, #c6c0ff, #2700a1);
+        }
+
+        .orb-gradient-blush {
+            background: radial-gradient(circle at 30% 30%, #ffb1c1, #7d2841);
+        }
+
+        .floating {
+            animation: floating 4s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface">
+<!-- Top Navigation Anchor (Simulated Shell) -->
+<header class="fixed top-0 w-full flex justify-between items-center px-container-padding h-16 z-50 no-border bg-gradient-to-b from-surface/80 to-transparent backdrop-blur-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="waves">waves</span>
+<span class="font-headline-md text-headline-md font-bold tracking-tight text-primary">Anna</span>
+</div>
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="sensors">sensors</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden">
+<!-- Pulsing Background Effects -->
+<div class="absolute inset-0 z-0 flex items-center justify-center">
+<div class="pulse-ring w-64 h-64" style="animation-delay: 0s;"></div>
+<div class="pulse-ring w-64 h-64" style="animation-delay: 2s;"></div>
+<div class="pulse-ring w-64 h-64" style="animation-delay: 4s;"></div>
+<div class="absolute w-full h-full blush-glow"></div>
+</div>
+<!-- Connection Visualizer -->
+<div class="relative z-10 flex flex-col items-center max-w-[390px] w-full px-margin">
+<!-- Animated Connection Header -->
+<div class="mb-12 text-center">
+<span class="font-label-caps text-label-caps text-blush tracking-[0.2em] block mb-2 uppercase">Mutual Interest Detected</span>
+<h1 class="font-headline-lg text-headline-lg text-on-surface leading-tight">A Connection is Forming</h1>
+</div>
+<!-- Overlapping Soft Anonymity Bubbles -->
+<div class="relative w-full aspect-square flex items-center justify-center mb-16">
+<!-- User Orb -->
+<div class="absolute left-1/4 floating" style="animation-delay: -1s;">
+<div class="w-32 h-32 rounded-full orb-gradient shadow-[0_0_40px_rgba(198,192,255,0.3)] flex items-center justify-center relative overflow-hidden backdrop-blur-md">
+<img class="w-full h-full object-cover opacity-60 mix-blend-overlay" data-alt="A soft-focus close-up portrait of a person with an ethereal glow, obscured by a dense digital mist to maintain anonymity. The lighting is dominated by deep iris purples and soft blues, creating an atmospheric and safe feeling. The background is a dark, void-like space with tiny luminous particles floating around like stars." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfLDBPnYNfqaqjGPXBI4TpOmsJWDlmfwgvT75ZwGxQ5tDg_LbHp_Ga5Wdd-LUQOpndC9blwp_HXUQXQrFPK7q7oVHZd3FTuo9rv1ij8OjLhyi1Q9GHzyn-y7lEPP578At-jOmfUGbhlXYipNiFuJIJhIeZgSn5sdyzZjH_bLN5NqI882rbfn4_gXULSU2H_HgFRmdKxuHjlL2afuITQtKhQqgWU7upNGeN5Sn4YFyH6kirx80vfQr91ifipPhJUsn5we-fTgoWr5at"/>
+</div>
+</div>
+<!-- Mutual Orb -->
+<div class="absolute right-1/4 floating">
+<div class="w-32 h-32 rounded-full orb-gradient-blush shadow-[0_0_40px_rgba(232,125,150,0.3)] flex items-center justify-center relative overflow-hidden backdrop-blur-md border border-blush/20">
+<img class="w-full h-full object-cover opacity-60 mix-blend-overlay" data-alt="A silhouetted profile of an individual viewed through a textured glass pane, creating a dreamlike and anonymous visual. The color palette features vibrant blush pinks and deep magenta highlights against a midnight background. Soft light trails arc around the figure, suggesting a moment of kinetic energy and digital connection in a minimalist space." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKigIZeBWa_vhiww5VQzOIyRi4cNufDDQaNYA8UVuLptz_uPVO16Rlo_Uzj4Ansn2H12F2ftG2VS5XAYJJfz8dBWu7JZcKqMYRiFFOfiYWhNYPPoUBofp_H_Ye_kpO-hPLgZqKYNV65T1dk89hcwGbjfwk6qKg4seWw8lB9wtB5qANjylkptyY3YZwHXDN3BleAp82polQAJ6fmubRG9WU57Ap6W9nfBxp5zOzustCgdTS-ZKiLE5eD_1SQaBoi6-vXF7njPSHBg-T"/>
+</div>
+</div>
+<!-- Intersection Sparkle -->
+<div class="absolute z-20 w-8 h-8 bg-white rounded-full blur-md opacity-40 animate-pulse"></div>
+</div>
+<!-- Contextual Chips -->
+<div class="flex flex-wrap justify-center gap-3 mb-12">
+<span class="px-3 py-1 bg-surface-container rounded-full text-label-mono font-label-mono text-on-surface-variant border border-outline-variant/30">Ambient Jazz</span>
+<span class="px-3 py-1 bg-surface-container rounded-full text-label-mono font-label-mono text-on-surface-variant border border-outline-variant/30">Rainy City Aesthetics</span>
+<span class="px-3 py-1 bg-surface-container rounded-full text-label-mono font-label-mono text-on-surface-variant border border-outline-variant/30">Digital Minimalism</span>
+</div>
+<!-- Action Button -->
+<button class="w-full h-14 bg-primary text-on-primary rounded-full font-body-lg text-body-lg flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(198,192,255,0.4)] active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined" data-icon="bolt" data-weight="fill">bolt</span>
+                Open Connection
+            </button>
+<button class="mt-6 text-on-surface-variant font-label-mono text-label-mono hover:text-on-surface transition-colors">
+                Gently Dismiss
+            </button>
+</div>
+</main>
+<!-- Safety Anchor (Persistent FAB) -->
+<div class="fixed bottom-24 right-6 z-50">
+<button class="w-14 h-14 bg-error-container text-on-error-container rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(255,180,171,0.2)] hover:scale-110 active:scale-90 transition-all">
+<span class="material-symbols-outlined" data-icon="gpp_maybe">gpp_maybe</span>
+</button>
+</div>
+<!-- Navigation Shell (Bottom Bar Placeholder) -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-40px)] z-50 flex justify-around items-center p-2 bg-surface-container/60 rounded-full border border-outline-variant/30 backdrop-blur-xl shadow-lg shadow-surface-lowest/50">
+<a class="flex items-center justify-center text-on-surface-variant w-12 h-12 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="adjust">adjust</span>
+</a>
+<a class="flex items-center justify-center bg-primary text-on-primary rounded-full w-12 h-12 active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+</a>
+<a class="flex items-center justify-center text-on-surface-variant w-12 h-12 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+</a>
+<a class="flex items-center justify-center text-on-surface-variant w-12 h-12 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</a>
+</nav>
+<script>
+        // Atmospheric interaction: subtle follow-through on profile bubbles
+        document.addEventListener('mousemove', (e) => {
+            const orbs = document.querySelectorAll('.floating');
+            const x = (e.clientX - window.innerWidth / 2) / 50;
+            const y = (e.clientY - window.innerHeight / 2) / 50;
+            
+            orbs.forEach((orb, index) => {
+                const factor = (index + 1) * 0.5;
+                orb.style.transform = `translate(${x * factor}px, ${y * factor}px)`;
+            });
+        });
+
+        // Trigger pulse on button press
+        const mainBtn = document.querySelector('button.bg-primary');
+        mainBtn.addEventListener('mousedown', () => {
+            const rings = document.querySelectorAll('.pulse-ring');
+            rings.forEach(ring => {
+                ring.style.animationDuration = '1.5s';
+                ring.style.borderColor = 'rgba(198, 192, 255, 0.8)';
+            });
+        });
+        mainBtn.addEventListener('mouseup', () => {
+            const rings = document.querySelectorAll('.pulse-ring');
+            rings.forEach(ring => {
+                ring.style.animationDuration = '6s';
+                ring.style.borderColor = 'rgba(232, 125, 150, 0.3)';
+            });
+        });
+    </script>
+</body></html>

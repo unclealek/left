@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Anna - Safety &amp; Sessions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .iris-glow {
+            background: radial-gradient(circle at center, #c6c0ff 0%, #5748d0 100%);
+            box-shadow: 0 0 20px rgba(198, 192, 255, 0.3);
+        }
+        .glass-panel {
+            backdrop-filter: blur(20px);
+            background: rgba(31, 31, 41, 0.6);
+            border: 1px solid rgba(71, 69, 84, 0.3);
+        }
+        body {
+            background-color: #12121c;
+            color: #e3e1ef;
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-variant": "#34343f",
+                      "tertiary-fixed-dim": "#ffb1c1",
+                      "on-tertiary-fixed-variant": "#7d2841",
+                      "inverse-surface": "#e3e1ef",
+                      "secondary-fixed": "#7bf8da",
+                      "inverse-on-surface": "#302f3a",
+                      "surface": "#12121c",
+                      "on-primary-container": "#21008e",
+                      "surface-container": "#1f1f29",
+                      "surface-container-low": "#1b1b25",
+                      "on-secondary-fixed": "#00201a",
+                      "on-secondary": "#00382e",
+                      "error-container": "#93000a",
+                      "on-error": "#690005",
+                      "inverse-primary": "#5748d0",
+                      "tertiary": "#ffb1c1",
+                      "on-primary-fixed": "#150066",
+                      "surface-container-lowest": "#0d0d17",
+                      "tertiary-container": "#d87089",
+                      "primary-fixed-dim": "#c6c0ff",
+                      "background": "#12121c",
+                      "secondary-container": "#05a68c",
+                      "primary-container": "#8b80ff",
+                      "on-tertiary-fixed": "#3f0017",
+                      "on-primary-fixed-variant": "#3f2bb8",
+                      "primary-fixed": "#e4dfff",
+                      "surface-container-high": "#292933",
+                      "on-tertiary": "#5f102b",
+                      "on-error-container": "#ffdad6",
+                      "surface-container-highest": "#34343f",
+                      "secondary": "#5cdbbe",
+                      "on-tertiary-container": "#560824",
+                      "secondary-fixed-dim": "#5cdbbe",
+                      "on-secondary-container": "#003329",
+                      "surface-dim": "#12121c",
+                      "surface-tint": "#c6c0ff",
+                      "on-secondary-fixed-variant": "#005143",
+                      "tertiary-fixed": "#ffd9df",
+                      "on-primary": "#2700a1",
+                      "on-background": "#e3e1ef",
+                      "on-surface-variant": "#c8c4d6",
+                      "outline": "#928fa0",
+                      "surface-bright": "#383843",
+                      "on-surface": "#e3e1ef",
+                      "primary": "#c6c0ff",
+                      "outline-variant": "#474554",
+                      "error": "#ffb4ab"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-padding": "24px",
+                      "stack-gap": "12px",
+                      "gutter": "16px",
+                      "unit": "4px",
+                      "margin": "20px"
+              },
+              "fontFamily": {
+                      "body-lg": ["DM Sans"],
+                      "body-md": ["DM Sans"],
+                      "label-mono": ["JetBrains Mono"],
+                      "headline-lg": ["DM Sans"],
+                      "headline-md": ["DM Sans"],
+                      "label-caps": ["DM Sans"]
+              },
+              "fontSize": {
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "label-mono": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                      "label-caps": ["11px", {"lineHeight": "12px", "letterSpacing": "0.1em", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface bg-surface-container-lowest min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 no-border bg-gradient-to-b from-surface/80 to-transparent backdrop-blur-md flex justify-between items-center px-container-padding h-16 w-full">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-headline-md" data-icon="waves">waves</span>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-primary">Anna</h1>
+</div>
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity active:scale-95 duration-200">
+<span class="material-symbols-outlined text-headline-md" data-icon="sensors">sensors</span>
+</button>
+</header>
+<main class="pt-24 px-container-padding max-w-lg mx-auto flex flex-col gap-8">
+<!-- Status Indicator Section -->
+<section class="flex items-center justify-between p-4 rounded-xl bg-secondary-container/10 border border-secondary/20">
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-caps text-secondary">Aura Secure</span>
+</div>
+<span class="font-label-mono text-secondary-fixed text-xs">ENCRYPTED</span>
+</section>
+<!-- Main Safety Controls -->
+<section class="flex flex-col gap-stack-gap">
+<h2 class="font-headline-md text-headline-md text-on-surface">Safety Settings</h2>
+<!-- Invisible Mode Card -->
+<div class="glass-panel p-6 rounded-xl flex items-center justify-between group transition-all duration-300">
+<div class="flex flex-col gap-1">
+<h3 class="font-body-lg text-on-surface font-bold">Invisible Mode</h3>
+<p class="text-on-surface-variant text-sm">Hide your presence orb from others while remaining active.</p>
+</div>
+<button class="w-14 h-8 bg-surface-variant rounded-full relative transition-colors duration-300 overflow-hidden" onclick="toggleSwitch(this)">
+<div class="absolute inset-1 w-6 h-6 bg-outline-variant rounded-full transition-transform duration-300 ease-out flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-surface" data-icon="visibility_off">visibility_off</span>
+</div>
+</button>
+</div>
+<!-- Connection Duration Card with Warnings -->
+<div class="glass-panel p-6 rounded-xl flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex flex-col gap-1">
+<h3 class="font-body-lg text-on-surface font-bold">Connection Duration</h3>
+<p class="text-on-surface-variant text-sm">Automatic log-off for session safety.</p>
+</div>
+<span class="font-label-mono text-tertiary-container px-2 py-1 bg-on-tertiary/20 rounded-lg">EXPIRING</span>
+</div>
+<!-- Progress Bar / Energy -->
+<div class="w-full h-2 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-tertiary-container w-[15%] transition-all duration-1000 animate-pulse"></div>
+</div>
+<div class="flex justify-between items-center text-xs font-label-mono">
+<span class="text-tertiary">08:42 Remaining</span>
+<button class="text-primary hover:underline">Extend Session</button>
+</div>
+</div>
+</section>
+<!-- Safety Zones Bento -->
+<section class="flex flex-col gap-stack-gap">
+<div class="flex justify-between items-end">
+<h2 class="font-headline-md text-headline-md text-on-surface">Safety Zones</h2>
+<span class="font-label-mono text-on-surface-variant text-xs">3 ACTIVE</span>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<!-- Zone 1 -->
+<div class="glass-panel aspect-square p-4 rounded-xl flex flex-col justify-between overflow-hidden relative group">
+<div class="absolute inset-0 opacity-20 group-hover:opacity-40 transition-opacity">
+<div class="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent"></div>
+</div>
+<span class="material-symbols-outlined text-primary text-[32px] relative z-10" data-icon="home">home</span>
+<div class="relative z-10">
+<p class="font-body-md font-bold text-on-surface">Home Sanctuary</p>
+<p class="text-[10px] font-label-mono text-on-surface-variant">AUTO-INVISIBLE ON</p>
+</div>
+</div>
+<!-- Zone 2 -->
+<div class="glass-panel aspect-square p-4 rounded-xl flex flex-col justify-between overflow-hidden relative group">
+<div class="absolute inset-0 opacity-20">
+<div class="absolute inset-0 bg-gradient-to-br from-secondary/20 to-transparent"></div>
+</div>
+<span class="material-symbols-outlined text-secondary text-[32px] relative z-10" data-icon="work">work</span>
+<div class="relative z-10">
+<p class="font-body-md font-bold text-on-surface">Workspace</p>
+<p class="text-[10px] font-label-mono text-on-surface-variant">LIMITED PRESENCE</p>
+</div>
+</div>
+<!-- Zone 3 (Wide) -->
+<div class="glass-panel col-span-2 p-5 rounded-xl flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="add_location_alt">add_location_alt</span>
+</div>
+<div>
+<p class="font-body-md font-bold text-on-surface">Add New Safety Zone</p>
+<p class="text-sm text-on-surface-variant">Geofence a specific area for custom privacy.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Data History & Audit -->
+<section class="flex flex-col gap-stack-gap">
+<h2 class="font-headline-md text-headline-md text-on-surface">Recent Activity</h2>
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between py-3 border-b border-outline-variant/20">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="history">history</span>
+<span class="text-sm">Connection request blocked</span>
+</div>
+<span class="text-[10px] font-label-mono text-on-surface-variant">2M AGO</span>
+</div>
+<div class="flex items-center justify-between py-3 border-b border-outline-variant/20">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="security">security</span>
+<span class="text-sm">Safety Scan Complete</span>
+</div>
+<span class="text-[10px] font-label-mono text-on-surface-variant">1H AGO</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Persistent Safety FAB (Safety Trigger) -->
+<button class="fixed bottom-28 right-6 w-14 h-14 rounded-full iris-glow flex items-center justify-center text-on-primary z-50 active:scale-90 transition-transform shadow-2xl shadow-primary/40">
+<span class="material-symbols-outlined text-[30px]" data-icon="shield_with_heart" style="font-variation-settings: 'FILL' 1;">shield_with_heart</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-40px)] z-50 flex justify-around items-center p-2 bg-surface-container/60 rounded-full border border-outline-variant/30 backdrop-blur-xl shadow-lg shadow-surface-lowest/50">
+<a class="flex items-center justify-center text-on-surface-variant w-12 h-12 hover:text-primary transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="adjust">adjust</span>
+</a>
+<a class="flex items-center justify-center text-on-surface-variant w-12 h-12 hover:text-primary transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+</a>
+<a class="flex items-center justify-center text-on-surface-variant w-12 h-12 hover:text-primary transition-colors active:scale-90 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+</a>
+<a class="flex items-center justify-center bg-primary text-on-primary rounded-full w-12 h-12 active:scale-90 duration-150 shadow-lg" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</a>
+</nav>
+<!-- JS for Micro-interactions -->
+<script>
+        function toggleSwitch(btn) {
+            const circle = btn.querySelector('div');
+            const icon = btn.querySelector('.material-symbols-outlined');
+            const isActive = circle.classList.contains('translate-x-6');
+            
+            if (isActive) {
+                circle.classList.remove('translate-x-6');
+                circle.classList.replace('bg-primary', 'bg-outline-variant');
+                btn.classList.replace('bg-primary/20', 'bg-surface-variant');
+                icon.innerText = 'visibility_off';
+                icon.classList.replace('text-on-primary', 'text-surface');
+            } else {
+                circle.classList.add('translate-x-6');
+                circle.classList.replace('bg-outline-variant', 'bg-primary');
+                btn.classList.replace('bg-surface-variant', 'bg-primary/20');
+                icon.innerText = 'visibility';
+                icon.classList.replace('text-surface', 'text-on-primary');
+            }
+        }
+
+        // Simulating aura movement
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth) * 10;
+            const y = (e.clientY / window.innerHeight) * 10;
+            document.body.style.backgroundPosition = `${x}% ${y}%`;
+        });
+    </script>
+</body></html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Anna - Soft Anonymity Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#34343f",
+                    "tertiary-fixed-dim": "#ffb1c1",
+                    "on-tertiary-fixed-variant": "#7d2841",
+                    "inverse-surface": "#e3e1ef",
+                    "secondary-fixed": "#7bf8da",
+                    "inverse-on-surface": "#302f3a",
+                    "surface": "#12121c",
+                    "on-primary-container": "#21008e",
+                    "surface-container": "#1f1f29",
+                    "surface-container-low": "#1b1b25",
+                    "on-secondary-fixed": "#00201a",
+                    "on-secondary": "#00382e",
+                    "error-container": "#93000a",
+                    "on-error": "#690005",
+                    "inverse-primary": "#5748d0",
+                    "tertiary": "#ffb1c1",
+                    "on-primary-fixed": "#150066",
+                    "surface-container-lowest": "#0d0d17",
+                    "tertiary-container": "#d87089",
+                    "primary-fixed-dim": "#c6c0ff",
+                    "background": "#12121c",
+                    "secondary-container": "#05a68c",
+                    "primary-container": "#8b80ff",
+                    "on-tertiary-fixed": "#3f0017",
+                    "on-primary-fixed-variant": "#3f2bb8",
+                    "primary-fixed": "#e4dfff",
+                    "surface-container-high": "#292933",
+                    "on-tertiary": "#5f102b",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-highest": "#34343f",
+                    "secondary": "#5cdbbe",
+                    "on-tertiary-container": "#560824",
+                    "secondary-fixed-dim": "#5cdbbe",
+                    "on-secondary-container": "#003329",
+                    "surface-dim": "#12121c",
+                    "surface-tint": "#c6c0ff",
+                    "on-secondary-fixed-variant": "#005143",
+                    "tertiary-fixed": "#ffd9df",
+                    "on-primary": "#2700a1",
+                    "on-background": "#e3e1ef",
+                    "on-surface-variant": "#c8c4d6",
+                    "outline": "#928fa0",
+                    "surface-bright": "#383843",
+                    "on-surface": "#e3e1ef",
+                    "primary": "#c6c0ff",
+                    "outline-variant": "#474554",
+                    "error": "#ffb4ab"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-padding": "24px",
+                    "stack-gap": "12px",
+                    "gutter": "16px",
+                    "unit": "4px",
+                    "margin": "20px"
+            },
+            "fontFamily": {
+                    "body-lg": ["DM Sans"],
+                    "body-md": ["DM Sans"],
+                    "label-mono": ["JetBrains Mono"],
+                    "headline-lg": ["DM Sans"],
+                    "headline-md": ["DM Sans"],
+                    "label-caps": ["DM Sans"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-mono": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "label-caps": ["11px", {"lineHeight": "12px", "letterSpacing": "0.1em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #12121c;
+            color: #e3e1ef;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        .orb-glow {
+            background: radial-gradient(circle at 30% 30%, #c6c0ff, #5748d0, #12121c);
+            filter: blur(2px);
+            box-shadow: 0 0 60px rgba(198, 192, 255, 0.3);
+            animation: pulse-orb 4s infinite ease-in-out;
+        }
+
+        .pulse-animation {
+            animation: ripple 2s infinite ease-out;
+        }
+
+        @keyframes pulse-orb {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(2.4); opacity: 0; }
+        }
+
+        .glass-card {
+            background: rgba(31, 31, 41, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md selection:bg-primary/30">
+<!-- Top AppBar (from Shared Components) -->
+<header class="fixed top-0 w-full flex justify-between items-center px-container-padding h-16 w-full z-50 no-border bg-gradient-to-b from-surface/80 to-transparent backdrop-blur-md">
+<div class="flex items-center gap-2 text-primary dark:text-primary">
+<span class="material-symbols-outlined transition-opacity hover:opacity-80">waves</span>
+<span class="font-headline-md text-headline-md font-bold tracking-tight">Anna</span>
+</div>
+<div class="flex items-center gap-4 text-primary dark:text-primary">
+<span class="material-symbols-outlined hover:opacity-80 transition-opacity">sensors</span>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="min-h-screen pt-20 pb-32 px-margin flex flex-col items-center">
+<!-- Activity Energy Bar -->
+<div class="w-full max-w-md mb-8">
+<div class="flex justify-between items-center mb-2 px-1">
+<span class="font-label-caps text-label-caps text-tertiary">SESSION VITALITY</span>
+<span class="font-label-mono text-label-mono text-tertiary">84%</span>
+</div>
+<div class="h-1 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-tertiary-container w-[84%] shadow-[0_0_8px_rgba(216,112,137,0.5)]"></div>
+</div>
+</div>
+<!-- Expansion Card / Profile Container -->
+<div class="w-full max-w-md glass-card rounded-[2rem] border border-outline-variant/30 p-8 flex flex-col items-center relative overflow-hidden">
+<!-- Abstract Avatar (The Orb) -->
+<div class="relative w-40 h-40 mb-8">
+<div class="absolute inset-0 orb-glow rounded-full"></div>
+<div class="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent rounded-full border border-white/10"></div>
+<!-- Proximity Indicators -->
+<div class="absolute -inset-4 pulse-animation border border-primary/20 rounded-full"></div>
+<div class="absolute -inset-8 pulse-animation border border-primary/10 rounded-full" style="animation-delay: 0.5s;"></div>
+</div>
+<!-- Profile Identity -->
+<div class="text-center mb-6">
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Solar Echo</h1>
+<div class="flex items-center justify-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-mono text-label-mono text-secondary uppercase tracking-widest">Active Nearby</span>
+</div>
+</div>
+<!-- Short Bio -->
+<p class="font-body-md text-body-md text-on-surface-variant text-center leading-relaxed mb-8 max-w-[280px]">
+                Seeking resonant frequencies in the noise. Minimalist designer. Night walker. Quietly observant.
+            </p>
+<!-- Shared Interests (Bento Chips) -->
+<div class="w-full space-y-4 mb-10">
+<p class="font-label-caps text-label-caps text-outline-variant text-center">SHARED FREQUENCIES</p>
+<div class="flex flex-wrap justify-center gap-2">
+<div class="px-4 py-2 bg-surface-container-high rounded-lg border border-outline-variant/20">
+<span class="font-label-mono text-label-mono text-primary">ambient_techno</span>
+</div>
+<div class="px-4 py-2 bg-surface-container-high rounded-lg border border-outline-variant/20">
+<span class="font-label-mono text-label-mono text-primary">brutalism</span>
+</div>
+<div class="px-4 py-2 bg-surface-container-high rounded-lg border border-outline-variant/20">
+<span class="font-label-mono text-label-mono text-primary">lo-fi_architecture</span>
+</div>
+<div class="px-4 py-2 bg-surface-container-high rounded-lg border border-outline-variant/20">
+<span class="font-label-mono text-label-mono text-tertiary">analog_photography</span>
+</div>
+</div>
+</div>
+<!-- Pulse Button (CTA) -->
+<button class="w-full py-4 rounded-2xl bg-primary text-on-primary font-headline-md text-headline-md flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl shadow-primary/20" id="pulseAction">
+<span class="material-symbols-outlined">favorite</span>
+<span>Send Pulse</span>
+</button>
+<p class="mt-4 font-label-mono text-label-mono text-outline text-center opacity-60">Signals are anonymous until resonance is matched.</p>
+</div>
+<!-- Safety Controls (Prominent at Bottom) -->
+<div class="w-full max-w-md mt-10 space-y-3">
+<div class="flex items-center gap-4 p-4 rounded-2xl bg-error-container/10 border border-error/20 transition-colors hover:bg-error-container/20">
+<div class="w-12 h-12 rounded-full bg-error-container flex items-center justify-center text-on-error-container">
+<span class="material-symbols-outlined">gpp_maybe</span>
+</div>
+<div class="flex-1">
+<h3 class="font-body-md text-body-md font-bold text-error">Instant Cloak</h3>
+<p class="font-label-mono text-label-mono text-on-surface-variant">Hide your presence immediately</p>
+</div>
+<button class="material-symbols-outlined text-error">chevron_right</button>
+</div>
+<div class="flex items-center gap-4 p-4 rounded-2xl bg-surface-container border border-outline-variant/20">
+<div class="w-12 h-12 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">block</span>
+</div>
+<div class="flex-1">
+<h3 class="font-body-md text-body-md font-bold">Mute Resonance</h3>
+<p class="font-label-mono text-label-mono text-on-surface-variant">Prevent further pulses from this orb</p>
+</div>
+<button class="material-symbols-outlined">chevron_right</button>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation (from Shared Components) -->
+<!-- Determined active: "explore" as we are in a discovery/profile view -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-40px)] z-50 flex justify-around items-center p-2 bg-surface-container/60 rounded-full border border-outline-variant/30 backdrop-blur-xl shadow-lg shadow-surface-lowest/50">
+<a class="flex items-center justify-center text-on-surface-variant w-12 h-12 active:scale-90 transition-transform duration-150 hover:text-primary" href="#">
+<span class="material-symbols-outlined">adjust</span>
+</a>
+<a class="flex items-center justify-center bg-primary text-on-primary rounded-full w-12 h-12 active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">explore</span>
+</a>
+<a class="flex items-center justify-center text-on-surface-variant w-12 h-12 active:scale-90 transition-transform duration-150 hover:text-primary" href="#">
+<span class="material-symbols-outlined">chat_bubble</span>
+</a>
+<a class="flex items-center justify-center text-on-surface-variant w-12 h-12 active:scale-90 transition-transform duration-150 hover:text-primary" href="#">
+<span class="material-symbols-outlined">person</span>
+</a>
+</nav>
+<!-- Contextual Safety FAB (Shared Logic) -->
+<!-- Suppression Logic: Suppressed on Profile details to keep UI focused. -->
+<script>
+        document.getElementById('pulseAction').addEventListener('click', function() {
+            const btn = this;
+            const originalContent = btn.innerHTML;
+            
+            // Interaction feedback
+            btn.style.backgroundColor = '#05a68c'; // secondary-container color
+            btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span><span>Pulse Sent</span>';
+            
+            // Create a temporary "ripple" effect in the orb
+            const orb = document.querySelector('.orb-glow');
+            orb.style.boxShadow = '0 0 100px #7bf8da';
+            
+            setTimeout(() => {
+                btn.style.backgroundColor = '';
+                btn.innerHTML = originalContent;
+                orb.style.boxShadow = '';
+            }, 2000);
+        });
+
+        // Simple parallax for the orb
+        window.addEventListener('mousemove', (e) => {
+            const orb = document.querySelector('.orb-glow');
+            const x = (e.clientX / window.innerWidth - 0.5) * 20;
+            const y = (e.clientY / window.innerHeight - 0.5) * 20;
+            orb.style.transform = `translate(${x}px, ${y}px)`;
+        });
+    </script>
+</body></html>

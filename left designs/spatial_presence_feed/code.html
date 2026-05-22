@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Anna | Spatial Presence</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#34343f",
+                    "tertiary-fixed-dim": "#ffb1c1",
+                    "on-tertiary-fixed-variant": "#7d2841",
+                    "inverse-surface": "#e3e1ef",
+                    "secondary-fixed": "#7bf8da",
+                    "inverse-on-surface": "#302f3a",
+                    "surface": "#12121c",
+                    "on-primary-container": "#21008e",
+                    "surface-container": "#1f1f29",
+                    "surface-container-low": "#1b1b25",
+                    "on-secondary-fixed": "#00201a",
+                    "on-secondary": "#00382e",
+                    "error-container": "#93000a",
+                    "on-error": "#690005",
+                    "inverse-primary": "#5748d0",
+                    "tertiary": "#ffb1c1",
+                    "on-primary-fixed": "#150066",
+                    "surface-container-lowest": "#0d0d17",
+                    "tertiary-container": "#d87089",
+                    "primary-fixed-dim": "#c6c0ff",
+                    "background": "#12121c",
+                    "secondary-container": "#05a68c",
+                    "primary-container": "#8b80ff",
+                    "on-tertiary-fixed": "#3f0017",
+                    "on-primary-fixed-variant": "#3f2bb8",
+                    "primary-fixed": "#e4dfff",
+                    "surface-container-high": "#292933",
+                    "on-tertiary": "#5f102b",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-highest": "#34343f",
+                    "secondary": "#5cdbbe",
+                    "on-tertiary-container": "#560824",
+                    "secondary-fixed-dim": "#5cdbbe",
+                    "on-secondary-container": "#003329",
+                    "surface-dim": "#12121c",
+                    "surface-tint": "#c6c0ff",
+                    "on-secondary-fixed-variant": "#005143",
+                    "tertiary-fixed": "#ffd9df",
+                    "on-primary": "#2700a1",
+                    "on-background": "#e3e1ef",
+                    "on-surface-variant": "#c8c4d6",
+                    "outline": "#928fa0",
+                    "surface-bright": "#383843",
+                    "on-surface": "#e3e1ef",
+                    "primary": "#c6c0ff",
+                    "outline-variant": "#474554",
+                    "error": "#ffb4ab"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-padding": "24px",
+                    "stack-gap": "12px",
+                    "gutter": "16px",
+                    "unit": "4px",
+                    "margin": "20px"
+            },
+            "fontFamily": {
+                    "body-lg": ["DM Sans"],
+                    "body-md": ["DM Sans"],
+                    "label-mono": ["JetBrains Mono"],
+                    "headline-lg": ["DM Sans"],
+                    "headline-md": ["DM Sans"],
+                    "label-caps": ["DM Sans"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-mono": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "label-caps": ["11px", {"lineHeight": "12px", "letterSpacing": "0.1em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0d0d17;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        .void-bg {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0d0d17 100%);
+            z-index: -1;
+        }
+        .orb-float {
+            animation: float 8s ease-in-out infinite alternate;
+        }
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(15px, -25px); }
+        }
+        .glass-card {
+            backdrop-filter: blur(20px);
+            background: rgba(31, 31, 41, 0.4);
+            border: 1px solid rgba(146, 143, 160, 0.1);
+        }
+        .glow-pulse {
+            animation: pulse-glow 4s ease-in-out infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.6; filter: blur(40px); }
+            50% { opacity: 0.9; filter: blur(60px); }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface selection:bg-primary-container">
+<div class="void-bg"></div>
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-container-padding h-16 bg-gradient-to-b from-surface/80 to-transparent backdrop-blur-md">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="waves">waves</span>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight text-primary">Nearby Vibes</h1>
+</div>
+<button class="hover:opacity-80 transition-opacity active:scale-95 duration-200 ease-out text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="sensors">sensors</span>
+</button>
+</header>
+<!-- Presence Void Canvas -->
+<main class="relative h-screen w-full flex items-center justify-center pt-16 pb-24 overflow-hidden">
+<!-- Background Ambient Glows -->
+<div class="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-[100px]"></div>
+<div class="absolute bottom-1/3 right-1/4 w-80 h-80 bg-secondary/5 rounded-full blur-[120px]"></div>
+<!-- Spatial Bubbles (Discovery Items) -->
+<div class="relative w-full h-full max-w-md mx-auto">
+<!-- Presence Orb 1 -->
+<div class="absolute top-[15%] left-[10%] group cursor-pointer orb-float" style="animation-delay: 0s;">
+<div class="relative">
+<div class="absolute inset-0 bg-primary/40 rounded-full glow-pulse"></div>
+<div class="relative w-24 h-24 rounded-full bg-gradient-to-br from-primary-container to-primary flex items-center justify-center border border-primary/30 shadow-2xl overflow-hidden">
+<img class="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-500" data-alt="A close-up portrait of a woman with an ethereal, soft-focus aesthetic, her face partially obscured by holographic light leaks. The color palette is dominated by deep violets and glowing indigo blues, mirroring a cinematic, ambient dark-mode vibe. The lighting is low-key, emphasizing a sense of mystery and serene presence in a digital void." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDeXVhrNLb2e24uULb4N1oG_FfGtCP-_W8CHC9_Ku6rWmpmSKaiuRzBr9TxE6NPOB4tiEASNlH9yK8aov1c4xgudoCfoFA8-ZO_E-6QVomy4ZtQpWEJTLs6sUXGUk9fGnPsfpOO9YAcALUKpvon10ddYB0gqOWejd7zQagrkdKIRMaZ2nrhB6ZE6NlMeyAwhDZNmZh12mjGZltMt_NABkQ53we0VCzBlBBhJVKnrJXSbVBzeP0NMuxBKoV6jHGeRvK84mwb3dOVM5_z"/>
+</div>
+</div>
+<div class="mt-4 flex flex-col items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<span class="font-label-mono text-label-mono bg-surface-container px-2 py-1 rounded text-primary">COFFEE SHOP</span>
+<span class="font-body-md text-body-md mt-1">400m away</span>
+</div>
+</div>
+<!-- Presence Orb 2 -->
+<div class="absolute bottom-[25%] right-[5%] group cursor-pointer orb-float" style="animation-delay: -3s;">
+<div class="relative">
+<div class="absolute inset-0 bg-secondary/30 rounded-full glow-pulse" style="animation-delay: 1s;"></div>
+<div class="relative w-32 h-32 rounded-full bg-gradient-to-br from-secondary-container to-secondary flex items-center justify-center border border-secondary/30 shadow-2xl overflow-hidden">
+<img class="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-500" data-alt="A portrait of a person with minimalist features, set against a dark background with subtle atmospheric lens flares in shades of mint and teal. The aesthetic is clean and modern, representing an anonymous but grounded human presence. The mood is calm and contemplative, fitting a sophisticated spatial discovery interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxmp5W8JrLQu9Nc-b0VxLhwGZrNBRNqazDajDtYs-YOy7fWjnaqVJuA2Ygn4OwBTbhW1byLSffuzuy-KPDK1oEy_xwgC5CYTPjRvu-Y-bb6QK4YOiT5fpOi4ntzl0920ZQsVL59vcOhFDL4oUWIf7lGipP9OoVUtkBFQeSMhj027kqy69gjbl767Qd4Ckohj8HHiOjLv-e1FqF0Nu89E6cORhFTrxjLGgscOHYZ2s1XbV2XxeD3mpF-MSGyXuDQ0kD3wpxhBooIwaI"/>
+</div>
+</div>
+<div class="mt-4 flex flex-col items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<span class="font-label-mono text-label-mono bg-surface-container px-2 py-1 rounded text-secondary">COWORKING</span>
+<span class="font-body-md text-body-md mt-1">1.2km away</span>
+</div>
+</div>
+<!-- Presence Orb 3 -->
+<div class="absolute top-[40%] right-[15%] group cursor-pointer orb-float" style="animation-delay: -5.5s;">
+<div class="relative">
+<div class="absolute inset-0 bg-tertiary/20 rounded-full glow-pulse" style="animation-delay: 2s;"></div>
+<div class="relative w-20 h-20 rounded-full bg-gradient-to-br from-tertiary-container to-tertiary flex items-center justify-center border border-tertiary/30 shadow-2xl overflow-hidden">
+<img class="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-500" data-alt="A profile shot of a person looking away, illuminated by a warm, pinkish-red neon glow that contrasts with the deep charcoal shadows. The image has a grainy, film-like texture and a soft-focus background, suggesting a fleeting, ethereal connection in a vast digital space. The visual style is high-end, atmospheric minimalism." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjWjbv7Dptq_qra8x3EjVX1Nh10QvnZ6r8a2qZwBmlqI_ymJcGS1IdiQOzEGz0eDYAEFTDdz2OzkfDI-wW4m54rse6DyLHNE646ZheMefAHnc-qOZG2PtLhFFuxPUW9DtIjAdPqR9Voe-rl8-8o0z8niNxMRjBGeMOb2FXxDuSQPaO8cCv6LTr7RN-olQA2thAnRAF2ZMWhx3uAR88J661wR8VYUDsRJHmoLo3YiChnYJ6BBfBlaRluLDicI4sWjHN-sw462MB0q5l"/>
+</div>
+</div>
+<div class="mt-4 flex flex-col items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<span class="font-label-mono text-label-mono bg-surface-container px-2 py-1 rounded text-tertiary">LOUNGE</span>
+<span class="font-body-md text-body-md mt-1">Nearby</span>
+</div>
+</div>
+<!-- Central Hub (Self) -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-4">
+<div class="w-4 h-4 bg-primary rounded-full animate-ping"></div>
+<div class="text-center">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">CURRENT VIBE</p>
+<p class="font-headline-md text-headline-md text-on-surface">Invisible</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Safety FAB -->
+<button class="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-error-container text-on-error-container flex items-center justify-center shadow-lg shadow-error/20 z-50 hover:scale-105 active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="gpp_maybe">gpp_maybe</span>
+</button>
+<!-- Bottom Nav Bar -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-40px)] z-50 flex justify-around items-center p-2 bg-surface-container/60 rounded-full border border-outline-variant/30 backdrop-blur-xl shadow-lg shadow-surface-lowest/50">
+<a class="flex items-center justify-center bg-primary text-on-primary rounded-full w-12 h-12 active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="adjust">adjust</span>
+</a>
+<a class="flex items-center justify-center text-on-surface-variant w-12 h-12 hover:text-primary transition-colors active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+</a>
+<a class="flex items-center justify-center text-on-surface-variant w-12 h-12 hover:text-primary transition-colors active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+</a>
+<a class="flex items-center justify-center text-on-surface-variant w-12 h-12 hover:text-primary transition-colors active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</a>
+</nav>
+<!-- Expansion Overlay (Placeholder for Interaction) -->
+<div class="fixed inset-0 z-[100] flex items-center justify-center p-container-padding hidden transition-all duration-500 opacity-0 scale-95" id="expansion-card">
+<div class="glass-card w-full max-w-sm rounded-3xl p-8 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-1 bg-surface-variant">
+<div class="h-full bg-primary-container w-2/3 glow-pulse" style="box-shadow: 0 0 15px #8b80ff"></div>
+</div>
+<button class="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface" onclick="closeCard()">
+<span class="material-symbols-outlined">close</span>
+</button>
+<div class="flex flex-col items-center text-center gap-6">
+<div class="w-24 h-24 rounded-full border-4 border-primary/20 p-1">
+<img class="w-full h-full object-cover rounded-full" id="modal-img" src=""/>
+</div>
+<div>
+<span class="font-label-mono text-label-mono px-3 py-1 rounded-full bg-surface-container-high text-primary mb-2 inline-block" id="modal-tag"></span>
+<h2 class="font-headline-md text-headline-md mt-2">Soft Anonymity</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 px-4">This presence orb is active and open to spatial resonance. Send a pulse to connect.</p>
+</div>
+<div class="flex gap-4 w-full">
+<button class="flex-1 py-3 px-6 rounded-xl bg-primary text-on-primary font-bold transition-transform active:scale-95">Pulse</button>
+<button class="flex-1 py-3 px-6 rounded-xl border border-outline-variant text-on-surface font-bold transition-transform active:scale-95">Dismiss</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+        // Simple Interaction logic
+        const orbs = document.querySelectorAll('.group');
+        const overlay = document.getElementById('expansion-card');
+        const modalImg = document.getElementById('modal-img');
+        const modalTag = document.getElementById('modal-tag');
+
+        orbs.forEach(orb => {
+            orb.addEventListener('click', () => {
+                const img = orb.querySelector('img').src;
+                const tag = orb.querySelector('.text-label-mono').innerText;
+                
+                modalImg.src = img;
+                modalTag.innerText = tag;
+                
+                overlay.classList.remove('hidden');
+                setTimeout(() => {
+                    overlay.classList.remove('opacity-0', 'scale-95');
+                    overlay.classList.add('opacity-100', 'scale-100');
+                }, 10);
+            });
+        });
+
+        function closeCard() {
+            overlay.classList.remove('opacity-100', 'scale-100');
+            overlay.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+            }, 300);
+        }
+
+        // Space out orbs randomly for more organic feel if needed, 
+        // but currently fixed for reliable iPhone-like UI layout.
+    </script>
+</body></html>

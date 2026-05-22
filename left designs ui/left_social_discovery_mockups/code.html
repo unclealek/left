@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Café Regatta - Immersive Social Discovery</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#3a3841",
+                    "outline": "#928fa0",
+                    "on-background": "#e5e1ec",
+                    "on-surface-variant": "#c8c4d6",
+                    "on-primary": "#2700a1",
+                    "outline-variant": "#474554",
+                    "error": "#ffb4ab",
+                    "primary": "#c6c0ff",
+                    "on-surface": "#e5e1ec",
+                    "secondary": "#5cdbbe",
+                    "on-tertiary-container": "#560824",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-highest": "#35343d",
+                    "on-tertiary": "#5f102b",
+                    "tertiary-fixed": "#ffd9df",
+                    "on-secondary-fixed-variant": "#005143",
+                    "surface-tint": "#c6c0ff",
+                    "on-secondary-container": "#003329",
+                    "surface-dim": "#13121a",
+                    "secondary-fixed-dim": "#5cdbbe",
+                    "tertiary-container": "#d87089",
+                    "on-primary-fixed": "#150066",
+                    "surface-container-lowest": "#0e0d15",
+                    "tertiary": "#ffb1c1",
+                    "on-secondary": "#00382e",
+                    "inverse-primary": "#5748d0",
+                    "on-error": "#690005",
+                    "error-container": "#93000a",
+                    "surface-container-high": "#2a2932",
+                    "primary-container": "#8b80ff",
+                    "on-primary-fixed-variant": "#3f2bb8",
+                    "on-tertiary-fixed": "#3f0017",
+                    "primary-fixed": "#e4dfff",
+                    "secondary-container": "#05a68c",
+                    "primary-fixed-dim": "#c6c0ff",
+                    "background": "#13121a",
+                    "inverse-surface": "#e5e1ec",
+                    "on-tertiary-fixed-variant": "#7d2841",
+                    "tertiary-fixed-dim": "#ffb1c1",
+                    "surface-variant": "#35343d",
+                    "surface-container-low": "#1c1b23",
+                    "on-secondary-fixed": "#00201a",
+                    "surface-container": "#201f27",
+                    "surface": "#13121a",
+                    "inverse-on-surface": "#312f38",
+                    "on-primary-container": "#21008e",
+                    "secondary-fixed": "#7bf8da"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "4px",
+                    "sm": "8px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "gutter": "16px",
+                    "margin-mobile": "20px",
+                    "lg": "24px",
+                    "margin-desktop": "40px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "label-sm": ["DM Sans"],
+                    "body-lg": ["DM Sans"],
+                    "body-md": ["DM Sans"],
+                    "display-sm": ["DM Sans"],
+                    "label-md": ["DM Sans"],
+                    "headline-lg-mobile": ["DM Sans"],
+                    "body-sm": ["DM Sans"],
+                    "display-lg": ["DM Sans"],
+                    "headline-lg": ["DM Sans"]
+            },
+            "fontSize": {
+                    "label-sm": ["10px", {"lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-sm": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "500"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "300"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0a0a10;
+            color: #e5e1ec;
+            font-family: 'DM Sans', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        @keyframes drift {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(4px, -3px); }
+            50% { transform: translate(-2px, 4px); }
+            75% { transform: translate(-4px, -2px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.7; }
+            100% { transform: scale(1.04); opacity: 1; }
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 0.4; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+
+        @keyframes slideup {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .drift { animation: drift 8s ease-in-out infinite; }
+        .pulse { animation: pulse 2s ease-in-out infinite alternate; }
+        .ripple { animation: ripple 3s ease-out infinite; }
+        .slide-up { animation: slideup 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        .glass-sheet {
+            background: rgba(19, 19, 28, 0.85);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .iris-glow {
+            box-shadow: 0 0 20px rgba(123, 110, 246, 0.3);
+        }
+
+        .aurora-glow {
+            box-shadow: 0 0 20px rgba(92, 219, 190, 0.3);
+        }
+
+        .phone-frame {
+            width: 200px;
+            height: 440px;
+            border-radius: 28px;
+            border: 1.5px solid #1e1e2e;
+            background: #0d0d14;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+<div class="flex gap-md p-lg bg-[#0a0a10] rounded-xl overflow-x-auto max-w-full">
+<!-- SCREEN 1: HOME -->
+<div class="flex flex-col gap-sm items-center">
+<span class="text-[10px] text-[#6b6b82] font-semibold tracking-wider">SCREEN 1</span>
+<div class="phone-frame">
+<!-- Top App Bar (From Shared Components Logic) -->
+<div class="flex justify-between items-center px-4 h-14 w-full bg-surface/80 backdrop-blur-xl">
+<div class="flex flex-col">
+<span class="font-display-sm text-[14px] font-bold text-secondary">Café Regatta</span>
+<span class="text-[9px] text-outline">5 people visible</span>
+</div>
+<div class="px-2 py-0.5 bg-amber-500/20 text-amber-500 rounded-full text-[8px] font-bold uppercase tracking-widest">
+                        High Energy
+                    </div>
+</div>
+<!-- Canvas -->
+<div class="flex-1 relative overflow-hidden">
+<!-- b5 -->
+<div class="bubble drift w-8 h-8 bg-surface-container-high border border-outline-variant/30 left-[80px] top-[30px]" style="animation-delay: -1s;">
+<img class="rounded-full w-full h-full" data-alt="Minimalist avatar of a diverse person with soft digital bioluminescence glow. Vibrant colors, clean background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4A9XTBeXU5FGClDasa79oJlLn20Pwl9r9AOAHHV5bDrwT2r1ZXxn0m7tLwirdpFxIqVbcga4XXVYVi8x3VOQEgUykTxUBlBpwpue_E-ptPCVN3fpXeidEbqAjNGCwH2ijEmXp4b9jFoVDlU33IncpBvdQOzsD4V6D_5UiMJiHGVXiJaOdv8XHxjf10qtxTRf8iHPlQFHYFf_Ln-3AxmDMWH3k9WV9CzAavlObS500JdTvwionYTWfQ9F04EcUpaqlvD-m3DXRLbI"/>
+</div>
+<!-- b-cluster/+2 -->
+<div class="bubble drift w-10 h-10 bg-surface-container-highest border border-outline-variant/30 left-[20px] top-[60px]" style="animation-delay: -3s;">
+<span class="text-[10px] font-bold text-on-surface-variant">+2</span>
+</div>
+<!-- b-you -->
+<div class="bubble left-[70px] top-[90px] w-14 h-14 z-10">
+<div class="absolute inset-0 ripple rounded-full border-2 border-primary-container"></div>
+<div class="absolute inset-0 ripple rounded-full border border-primary-container" style="animation-delay: 1s;"></div>
+<img class="rounded-full w-full h-full border-2 border-primary-container relative z-10" data-alt="Stylish digital portrait for an app avatar, emphasizing urban explorer aesthetic and high-fidelity dark background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4xV6AFLdbm0Q8WkQqWU1XGQn768Gya03bsMzfnOGVxS8-IeHQtCVoGKbdZY8xt9NRilHblaFdF7ZO3adVFYl3jC1aWuY2Aq3EYM4jm7aXX51izv-Fo8b8Fiu7j-y9QK06QorzoHGJHpkp-Z612xBvO6Hmf5KHJ1oT7LAmObpmBSNUmRutvCoInwOyZu_MVy9mPHQ-OB6y3-u1oBpAU0ndNYXA2nS4Wka8CR7qiMlWqRY-QC705lTcYl9Buzt7RuR-FxG3bdV-cBg"/>
+</div>
+<!-- b2/K -->
+<div class="bubble drift pulse left-[130px] top-[52px] w-12 h-12 border-2 border-secondary aurora-glow" style="animation-delay: -0.5s;">
+<img class="rounded-full w-full h-full" data-alt="Artistic profile illustration with cool lighting, glowing cyan accents, against a moody deep purple background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAA2qmRL_Pn_Q1PSXVWjk7-chNBs8fsrHTOPeMEYrnqZfl7DInJaVF_WGfXtaABa6nyOaEtyb4dSlcfD3hLEGG0Q0Z8_6iHR1BOwEOBIUOhCLupJiIcK5aj4GFzyardF2REj-VwrsobGVMdBsgxXAuA9Iq47_DONffgKZV1W-vn__heI-onzvreocBStjJ0dvO4hiwJTAPDvFPr6t57ctvAjCY36MlCvfdFUiQRmEr7yzoyBLPhNE3stiYp_hYD6MhoLhxltwnhg2g"/>
+</div>
+<!-- b1/M -->
+<div class="bubble drift left-[118px] top-[140px] w-10 h-10 border border-outline-variant/30" style="animation-delay: -4s;">
+<img class="rounded-full w-full h-full" data-alt="Vector style character avatar, minimalist and modern, soft ambient shadows, deep slate environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDce2YptQWjZySyUsoJ8fH92U37HdR-T9WLmqeaxK0P69elnxWWIWp1UaGm42fobHNZNxLSTxTcitgURZTMrmaAoSBV1A55NzNSOvK-ztYMcmr8KnuXEA9SHCPps5FzitvNNRzoX7DysuCVHMXwfiGYc2M5SoRiS9hNlqy1cW82zvtk3WRvUgrD-aIRon9vCdVuCsbDkk7rHBEPVatwP5Zptx5Tj_d-8u6naYddV0C09pzLDk3gqm7myOC-0gR9jbvoXw4701WEj0"/>
+</div>
+<!-- b3 -->
+<div class="bubble drift left-[36px] top-[170px] w-10 h-10 border border-outline-variant/30" style="animation-delay: -2.5s;">
+<img class="rounded-full w-full h-full" data-alt="High-key digital art avatar of a tech-savvy youth, floating particles, deep dark UI aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCce-ZPkI5ep0AcdLh86vk9hzAuz_pQjMRhXrf53C5CVfmWa6fP2tyzcWZv0opMBE3axWRw7tmEqoEy7ucRoIL2cFhmA2nuceA-bSS4XbV5ZyU2-aFi41bDuGE2-FQo9xZt5g0G4tpRbywBWsMqY3VuGfOqq3q6dpjx9cmitrSYvnlWcMrQjkKjRlvq__yofrHiZwq8IzzRPFjQNw5rSUYwOT4RG6B905k5rwBBFcSYFnKUVqt7xqPYiTCNtxdjTjUIroRQF5tYxLc"/>
+</div>
+</div>
+<!-- Vibes & Footer -->
+<div class="p-4 flex flex-col gap-2">
+<div class="flex flex-wrap gap-1">
+<span class="px-2 py-1 bg-primary-container text-on-primary-container rounded-full text-[9px] font-semibold">AI/startups</span>
+<span class="px-2 py-1 bg-surface-container-high text-outline rounded-full text-[9px]">Design</span>
+</div>
+<button class="w-full bg-primary-container text-on-primary-container py-3 rounded-xl text-[12px] font-bold iris-glow transition-transform active:scale-95">
+                        Become visible
+                    </button>
+</div>
+</div>
+</div>
+<!-- SCREEN 2: ACTIVATION -->
+<div class="flex flex-col gap-sm items-center">
+<span class="text-[10px] text-[#6b6b82] font-semibold tracking-wider">SCREEN 2</span>
+<div class="phone-frame">
+<!-- Ambient Top -->
+<div class="relative h-24 overflow-hidden opacity-30">
+<div class="bubble w-8 h-8 bg-outline left-4 top-4"></div>
+<div class="bubble w-10 h-10 bg-outline left-20 top-8"></div>
+<div class="bubble w-6 h-6 bg-outline left-32 top-2"></div>
+</div>
+<div class="px-4 py-2">
+<h2 class="font-display-sm text-[18px] font-bold leading-tight">Ready to connect?</h2>
+</div>
+<!-- Bottom Sheet -->
+<div class="mt-auto glass-sheet rounded-t-3xl p-4 flex flex-col gap-3 slide-up">
+<div class="w-8 h-1 bg-surface-container-highest rounded-full self-center mb-1"></div>
+<div>
+<span class="text-[9px] text-outline font-bold uppercase tracking-wider">Your Intent</span>
+<div class="flex flex-wrap gap-1 mt-1">
+<span class="px-3 py-1.5 bg-primary-container text-on-primary-container rounded-lg text-[10px] font-bold">Networking</span>
+<span class="px-3 py-1.5 bg-surface-container text-outline rounded-lg text-[10px]">Open to chat</span>
+<span class="px-3 py-1.5 bg-surface-container text-outline rounded-lg text-[10px]">Deep work</span>
+</div>
+</div>
+<div>
+<span class="text-[9px] text-outline font-bold uppercase tracking-wider">Setting Vibe</span>
+<div class="flex flex-wrap gap-1 mt-1">
+<span class="px-3 py-1.5 border border-secondary/50 text-secondary rounded-lg text-[10px] aurora-glow">AI/startups</span>
+<span class="px-3 py-1.5 bg-surface-container text-outline rounded-lg text-[10px]">Design</span>
+</div>
+</div>
+<div>
+<span class="text-[9px] text-outline font-bold uppercase tracking-wider">Duration</span>
+<div class="px-3 py-1.5 bg-primary-container/20 text-primary-container border border-primary-container/30 rounded-lg text-[10px] inline-block font-bold">1h active</div>
+</div>
+<div class="bg-surface-container-low rounded-lg p-2 border border-outline-variant/20">
+<span class="text-[9px] text-outline">Quick hint for others</span>
+<p class="text-[10px] text-on-surface">Grey hoodie, corner seat</p>
+</div>
+<button class="w-full bg-primary-container text-on-primary-container py-3 rounded-xl text-[12px] font-bold mt-2">
+                        Become visible
+                    </button>
+</div>
+</div>
+</div>
+<!-- SCREEN 3: PROFILE -->
+<div class="flex flex-col gap-sm items-center">
+<span class="text-[10px] text-[#6b6b82] font-semibold tracking-wider">SCREEN 3</span>
+<div class="phone-frame">
+<!-- Ambient Top -->
+<div class="relative h-20 opacity-20">
+<div class="bubble w-8 h-8 bg-outline left-4 top-4"></div>
+<div class="bubble w-12 h-12 bg-secondary left-24 top-2"></div>
+</div>
+<!-- Profile Sheet -->
+<div class="flex-1 glass-sheet rounded-t-3xl p-4 flex flex-col gap-4 overflow-y-auto">
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="w-14 h-14 rounded-full border-2 border-primary-container p-0.5">
+<img class="rounded-full w-full h-full" data-alt="Portrait of Kelvin, a creative tech professional, wearing smart glasses. Modern minimalist digital style with cool blue and violet tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7OXXhV4qRbxVMptfjHBStoGgwT6V2BKOoAYfNr4JO9uAdZ9aQzheusFSjOo2_xwx27ObvtyqgVdQ4EJ7Lp_wxGqpOZZ242z_BnkYdptkqK2DT00bR4TH9U3Ovjvz1XnjoleGXL707J-NiOIAy2ObZeq1Wizt7_3dn5y3MqoQntya7spWB6xi0UmmtZAZhl_rU8CXa19G4_2Z8JrwrFO2O7RormEd4AoceN5LjuszbPl-_BRB2hviOPDWHB31h9LPkjblyOyol-oY"/>
+</div>
+<span class="absolute bottom-0 right-0 w-4 h-4 bg-secondary rounded-full border-2 border-surface flex items-center justify-center">
+<span class="material-symbols-outlined text-[10px] text-on-secondary" style="font-variation-settings: 'FILL' 1;">check</span>
+</span>
+</div>
+<div class="flex flex-col">
+<h3 class="font-display-sm text-[18px] font-bold">Kelvin</h3>
+<div class="flex gap-1">
+<span class="px-1.5 py-0.5 bg-primary-container/10 text-primary-container text-[8px] rounded border border-primary-container/20">Networking</span>
+<span class="px-1.5 py-0.5 bg-secondary/10 text-secondary text-[8px] rounded border border-secondary/20">AI/startups</span>
+</div>
+</div>
+</div>
+<div class="bg-amber-500/5 border border-amber-500/30 rounded-xl p-3">
+<span class="text-[8px] text-amber-500 font-bold uppercase tracking-widest">HINT</span>
+<p class="text-[11px] font-medium mt-1">Look for: Blue headphones</p>
+</div>
+<div class="bg-secondary/5 border border-secondary/20 rounded-xl p-3">
+<p class="text-[10px] text-secondary font-medium">You both selected Networking</p>
+</div>
+<div class="bg-[#0e0d15] border border-cyan-500/30 rounded-xl p-3">
+<span class="text-[8px] text-cyan-400 font-bold uppercase tracking-widest">ICEBREAKER</span>
+<p class="text-[11px] mt-1 leading-relaxed text-on-surface-variant">"What's the most exciting project you're currently building in AI?"</p>
+</div>
+<div class="flex gap-2 mt-auto">
+<button class="flex-1 border border-tertiary text-tertiary py-2.5 rounded-xl text-[11px] font-bold">Wave</button>
+<button class="flex-[2] bg-primary-container text-on-primary-container py-2.5 rounded-xl text-[11px] font-bold iris-glow">I'm going over</button>
+</div>
+</div>
+</div>
+</div>
+<!-- SCREEN 4: APPROACHING -->
+<div class="flex flex-col gap-sm items-center">
+<span class="text-[10px] text-[#6b6b82] font-semibold tracking-wider">SCREEN 4</span>
+<div class="phone-frame">
+<!-- Dimmed Content -->
+<div class="absolute inset-0 bg-background/80 backdrop-blur-md z-0"></div>
+<!-- Modal Column -->
+<div class="relative z-10 p-6 flex flex-col items-center justify-center h-full text-center gap-6">
+<div class="flex flex-col gap-1">
+<span class="text-[9px] text-outline font-bold tracking-[0.2em] uppercase">ON YOUR WAY TO</span>
+<h2 class="font-display-sm text-[22px] font-bold text-primary">Kelvin</h2>
+</div>
+<!-- Live Timer SVG -->
+<div class="relative w-24 h-24 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90">
+<circle cx="48" cy="48" fill="transparent" r="40" stroke="#1e1e2e" stroke-width="4"></circle>
+<circle class="transition-all duration-1000 ease-linear" cx="48" cy="48" fill="transparent" id="timer-progress" r="40" stroke="#7b6ef6" stroke-dasharray="251.2" stroke-dashoffset="0" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-[20px] font-bold" id="timer-text">60</span>
+<span class="text-[8px] text-outline uppercase font-bold">Sec</span>
+</div>
+</div>
+<div class="flex flex-col gap-4 w-full">
+<div class="bg-surface-container-high/50 rounded-xl p-3 border border-outline-variant/30">
+<span class="text-[8px] text-outline uppercase font-bold tracking-widest">LOOK FOR</span>
+<p class="text-[12px] font-bold text-on-surface mt-1">Blue headphones</p>
+</div>
+<p class="text-[11px] italic text-outline">"What's the most exciting project you're currently building in AI?"</p>
+</div>
+<div class="flex flex-col gap-3 w-full mt-4">
+<button class="w-full bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 py-3 rounded-xl text-[12px] font-bold">We connected!</button>
+<button class="text-outline text-[11px] font-medium">Cancel</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+        // Timer Micro-interaction for Screen 4
+        function startTimer() {
+            const timerText = document.getElementById('timer-text');
+            const timerProgress = document.getElementById('timer-progress');
+            let timeLeft = 60;
+            const total = 60;
+            const circumference = 2 * Math.PI * 40;
+
+            const interval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft < 0) {
+                    clearInterval(interval);
+                    return;
+                }
+
+                timerText.textContent = timeLeft;
+
+                // Stroke offset
+                const offset = circumference - (timeLeft / total) * circumference;
+                timerProgress.style.strokeDashoffset = offset;
+
+                // Color Shifts
+                if (timeLeft <= 10) {
+                    timerProgress.style.stroke = '#e87d96'; // Rose
+                    timerText.style.color = '#e87d96';
+                } else if (timeLeft <= 30) {
+                    timerProgress.style.stroke = '#f5a623'; // Amber
+                    timerText.style.color = '#f5a623';
+                } else {
+                    timerProgress.style.stroke = '#7b6ef6'; // Iris
+                }
+            }, 1000);
+        }
+
+        // Initialize timer immediately for demo
+        startTimer();
+
+        // Simple scale interaction for buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                btn.classList.add('scale-95');
+            });
+            btn.addEventListener('mouseup', () => {
+                btn.classList.remove('scale-95');
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.classList.remove('scale-95');
+            });
+        });
+    </script>
+</body></html>
