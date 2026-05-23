@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Left",
+    "slug": "left-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "scheme": "left",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.left.mobile",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We use your location to detect when you are in a social venue. We never share it.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "We use your location in the background to detect when you are in a social venue. We never share it."
+      }
+    },
+    "android": {
+      "package": "com.left.mobile",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION"
+      ]
+    },
+    "plugins": [
+      "expo-location"
+    ]
+  }
+}
