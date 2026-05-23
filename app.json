@@ -23,7 +23,8 @@
       ]
     },
     "plugins": [
-      "expo-location"
+      "expo-location",
+      "expo-web-browser"
     ]
   }
 }

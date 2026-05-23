@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -8,7 +8,10 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { makeRedirectUri } from "expo-auth-session";
 import { LinearGradient } from "expo-linear-gradient";
+import * as WebBrowser from "expo-web-browser";
+import type { Session } from "@supabase/supabase-js";
 import type {
   AppUser,
   ApproachAttempt,
@@ -17,9 +20,11 @@ import type {
   NearbyFeedItem,
   VenueContextSummary,
 } from "../types/left-domain";
+import { supabase } from "../lib/supabase";
 import { initialFeed, initialVenueSummary, viewerSeed } from "../mocks/seed";
 
 type Screen =
+  | "loading"
   | "auth"
   | "onboarding-name"
   | "onboarding-avatar"
@@ -31,6 +36,21 @@ type Screen =
   | "approach"
   | "safety";
 
+type UserProfileRow = {
+  id: string;
+  auth_provider: AuthProvider;
+  provider_subject: string;
+  first_name: string;
+  avatar_style: AvatarStyle;
+  default_intent: AppUser["defaultIntent"];
+  default_vibes: string[];
+  focus_mode_enabled: boolean;
+  prompts_enabled: boolean;
+  onboarding_completed: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 const avatarStyles: AvatarStyle[] = ["geometric", "abstract", "minimal", "soft"];
 const intents = [
   { id: "networking", label: "Networking" },
@@ -41,8 +61,10 @@ const intents = [
 const vibeOptions = ["AI/startups", "Design", "Travel", "Language exchange", "Creativity"];
 const durationOptions = [30, 60, 120];
 
+WebBrowser.maybeCompleteAuthSession();
+
 export function LeftApp() {
-  const [screen, setScreen] = useState<Screen>("auth");
+  const [screen, setScreen] = useState<Screen>("loading");
   const [authProvider, setAuthProvider] = useState<AuthProvider | null>(null);
   const [user, setUser] = useState<AppUser | null>(null);
   const [feed, setFeed] = useState<NearbyFeedItem[]>(initialFeed);
@@ -58,26 +80,162 @@ export function LeftApp() {
   const [approach, setApproach] = useState<ApproachAttempt | null>(null);
   const [venueHidden, setVenueHidden] = useState(false);
   const [sessionVisible, setSessionVisible] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const visibleFeed = useMemo(() => {
     if (venueHidden) return [];
     return feed;
   }, [feed, venueHidden]);
 
-  function completeAuth(provider: AuthProvider) {
-    setAuthProvider(provider);
-    setFirstNameDraft("Kelvin");
-    setScreen("onboarding-name");
+  useEffect(() => {
+    void bootstrapSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      void syncSession(session, false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  async function bootstrapSession() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    await syncSession(session, true);
   }
 
-  function finishOnboarding() {
-    setUser({
+  async function syncSession(session: Session | null, isInitialLoad: boolean) {
+    setAuthError(null);
+
+    if (!session) {
+      setUser(null);
+      setAuthProvider(null);
+      setScreen("auth");
+      return;
+    }
+
+    const provider = getProvider(session);
+    const inferredFirstName = getFirstNameFromSession(session);
+
+    setAuthProvider(provider);
+    setFirstNameDraft(inferredFirstName);
+
+    const { data, error } = await supabase.from("users").select("*").eq("id", session.user.id).maybeSingle();
+
+    if (error) {
+      setAuthError("Could not load your profile.");
+      setScreen("auth");
+      return;
+    }
+
+    const profile = data as UserProfileRow | null;
+
+    if (!profile || !profile.onboarding_completed) {
+      setUser(null);
+      setScreen("onboarding-name");
+      return;
+    }
+
+    setUser(mapProfileToAppUser(profile));
+    setFirstNameDraft(profile.first_name);
+    setAuthProvider(profile.auth_provider);
+
+    if (isInitialLoad) {
+      setScreen("loading");
+      await delay(2000);
+    }
+
+    setScreen("venue");
+  }
+
+  async function startGoogleAuth() {
+    setAuthError(null);
+
+    const redirectTo = makeRedirectUri({
+      scheme: "left",
+      path: "auth/callback",
+    });
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+      },
+    });
+
+    if (error) {
+      setAuthError("Google sign-in could not start.");
+      return;
+    }
+
+    if (!data?.url) {
+      setAuthError("Google sign-in did not return an auth URL.");
+      return;
+    }
+
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+
+    if (result.type !== "success" || !result.url) {
+      return;
+    }
+
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(result.url);
+
+    if (exchangeError) {
+      setAuthError("Google sign-in did not complete.");
+    }
+  }
+
+  async function finishOnboarding() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      setAuthError("Sign in again to finish onboarding.");
+      setScreen("auth");
+      return;
+    }
+
+    const provider = getProvider(session);
+    const nextUser: AppUser = {
       ...viewerSeed,
-      authProvider: authProvider ?? "apple",
-      firstName: firstNameDraft.trim() || "Kelvin",
+      id: session.user.id,
+      authProvider: provider,
+      providerSubject: getProviderSubject(session, provider),
+      firstName: firstNameDraft.trim() || getFirstNameFromSession(session),
       avatarStyle: avatarStyleDraft,
       onboardingCompleted: true,
-    });
+    };
+
+    const { error } = await supabase.from("users").upsert(
+      {
+        id: nextUser.id,
+        auth_provider: nextUser.authProvider,
+        provider_subject: nextUser.providerSubject,
+        first_name: nextUser.firstName,
+        avatar_style: nextUser.avatarStyle,
+        default_intent: nextUser.defaultIntent,
+        default_vibes: nextUser.defaultVibes,
+        focus_mode_enabled: nextUser.focusModeEnabled,
+        prompts_enabled: nextUser.promptsEnabled,
+        onboarding_completed: nextUser.onboardingCompleted,
+      },
+      { onConflict: "id" },
+    );
+
+    if (error) {
+      setAuthError("We could not save onboarding yet.");
+      return;
+    }
+
+    setUser(nextUser);
     setScreen("venue");
   }
 
@@ -159,9 +317,8 @@ export function LeftApp() {
     <LinearGradient colors={["#0a0911", "#12111a", "#181626"]} style={styles.shell}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.kicker}>LEFT</Text>
-        {screen === "auth" && (
-          <AuthScreen onAuth={completeAuth} />
-        )}
+        {screen === "loading" && <LoadingScreen />}
+        {screen === "auth" && <AuthScreen authError={authError} onAuth={startGoogleAuth} />}
         {screen === "onboarding-name" && (
           <NameScreen
             firstNameDraft={firstNameDraft}
@@ -178,9 +335,10 @@ export function LeftApp() {
         )}
         {screen === "onboarding-location" && (
           <LocationScreen
+            authError={authError}
             enabled={locationEnabled}
             onToggle={() => setLocationEnabled((current) => !current)}
-            onContinue={finishOnboarding}
+            onContinue={() => void finishOnboarding()}
           />
         )}
         {screen === "venue" && (
@@ -250,7 +408,22 @@ export function LeftApp() {
   );
 }
 
-function AuthScreen({ onAuth }: { onAuth: (provider: AuthProvider) => void }) {
+function LoadingScreen() {
+  return (
+    <View style={styles.loadingWrap}>
+      <Text style={styles.loadingWordmark}>{"<<"}</Text>
+      <Text style={styles.loadingBody}>Loading your Left session.</Text>
+    </View>
+  );
+}
+
+function AuthScreen({
+  authError,
+  onAuth,
+}: {
+  authError: string | null;
+  onAuth: () => void;
+}) {
   return (
     <Card>
       <Text style={styles.title}>A reality-first social activation layer.</Text>
@@ -258,8 +431,8 @@ function AuthScreen({ onAuth }: { onAuth: (provider: AuthProvider) => void }) {
         Sign in, set a first name, choose an illustrated avatar, and only show up when you
         intentionally activate.
       </Text>
-      <PrimaryButton label="Continue with Apple" onPress={() => onAuth("apple")} />
-      <GhostButton label="Continue with Google" onPress={() => onAuth("google")} />
+      <PrimaryButton label="Continue with Google" onPress={onAuth} />
+      {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
     </Card>
   );
 }
@@ -323,10 +496,12 @@ function AvatarScreen({
 }
 
 function LocationScreen({
+  authError,
   enabled,
   onToggle,
   onContinue,
 }: {
+  authError: string | null;
   enabled: boolean;
   onToggle: () => void;
   onContinue: () => void;
@@ -343,6 +518,7 @@ function LocationScreen({
         <Switch value={enabled} onValueChange={onToggle} trackColor={{ true: "#63e0c0" }} />
       </View>
       <PrimaryButton label="Finish onboarding" onPress={onContinue} />
+      {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
     </Card>
   );
 }
@@ -474,11 +650,17 @@ function FeedScreen({
       </View>
       <View style={styles.stack}>
         {feed.map((item) => (
-          <Pressable key={item.profileUserId} onPress={() => onOpenProfile(item)} style={styles.feedCard}>
+          <Pressable
+            key={item.profileUserId}
+            onPress={() => onOpenProfile(item)}
+            style={styles.feedCard}
+          >
             <View style={styles.rowBetween}>
               <View>
                 <Text style={styles.feedName}>{item.firstName}</Text>
-                <Text style={styles.feedMeta}>{formatIntent(item.intent)} • {item.primaryVibe ?? "General"}</Text>
+                <Text style={styles.feedMeta}>
+                  {formatIntent(item.intent)} • {item.primaryVibe ?? "General"}
+                </Text>
               </View>
               <Text style={styles.feedMeta}>{formatRemaining(item.sessionDurationRemaining)}</Text>
             </View>
@@ -658,7 +840,10 @@ function GhostButton({
   compact?: boolean;
 }) {
   return (
-    <Pressable onPress={onPress} style={[styles.ghostButton, compact && styles.ghostButtonCompact]}>
+    <Pressable
+      onPress={onPress}
+      style={[styles.ghostButton, compact && styles.ghostButtonCompact]}
+    >
       <Text style={styles.ghostButtonLabel}>{label}</Text>
     </Pressable>
   );
@@ -671,6 +856,44 @@ function formatIntent(intent: string) {
 function formatRemaining(value: string) {
   if (value.startsWith("00:")) return value.slice(3, 8);
   return value;
+}
+
+function getProvider(session: Session): AuthProvider {
+  return (session.user.app_metadata.provider as AuthProvider | undefined) ?? "google";
+}
+
+function getProviderSubject(session: Session, provider: AuthProvider) {
+  return session.user.identities?.find((identity) => identity.provider === provider)?.id ?? session.user.id;
+}
+
+function getFirstNameFromSession(session: Session) {
+  return (
+    (session.user.user_metadata.first_name as string | undefined) ??
+    (session.user.user_metadata.name as string | undefined)?.split(" ")[0] ??
+    session.user.email?.split("@")[0] ??
+    "Friend"
+  );
+}
+
+function mapProfileToAppUser(profile: UserProfileRow): AppUser {
+  return {
+    id: profile.id,
+    authProvider: profile.auth_provider,
+    providerSubject: profile.provider_subject,
+    firstName: profile.first_name,
+    avatarStyle: profile.avatar_style,
+    defaultIntent: profile.default_intent,
+    defaultVibes: profile.default_vibes,
+    focusModeEnabled: profile.focus_mode_enabled,
+    promptsEnabled: profile.prompts_enabled,
+    onboardingCompleted: profile.onboarding_completed,
+    createdAt: profile.created_at,
+    updatedAt: profile.updated_at,
+  };
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const styles = StyleSheet.create({
@@ -688,6 +911,24 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 2.2,
+  },
+  loadingWrap: {
+    minHeight: 420,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16,
+  },
+  loadingWordmark: {
+    color: "#f3effa",
+    fontSize: 54,
+    lineHeight: 60,
+    fontWeight: "800",
+    letterSpacing: 4,
+  },
+  loadingBody: {
+    color: "#c5bfd4",
+    fontSize: 15,
+    lineHeight: 22,
   },
   card: {
     backgroundColor: "rgba(20, 20, 31, 0.94)",
@@ -707,6 +948,11 @@ const styles = StyleSheet.create({
     color: "#c5bfd4",
     fontSize: 15,
     lineHeight: 22,
+  },
+  errorText: {
+    color: "#ffb3b3",
+    fontSize: 14,
+    lineHeight: 20,
   },
   meta: {
     color: "#8f86a7",
