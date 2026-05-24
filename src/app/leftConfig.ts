@@ -1,0 +1,70 @@
+import type { AppUser, AuthProvider, AvatarStyle } from "../types/left-domain";
+
+export type Screen =
+  | "loading"
+  | "auth"
+  | "onboarding-name"
+  | "onboarding-avatar"
+  | "onboarding-location"
+  | "venue"
+  | "activate"
+  | "feed"
+  | "profile"
+  | "approach"
+  | "safety"
+  | "settings";
+
+export type FooterDestination = "home" | "nearby" | "session" | "account";
+
+export type UserProfileRow = {
+  id: string;
+  auth_provider: AuthProvider;
+  provider_subject: string;
+  first_name: string;
+  avatar_style: AvatarStyle;
+  default_intent: AppUser["defaultIntent"];
+  default_vibes: string[];
+  focus_mode_enabled: boolean;
+  prompts_enabled: boolean;
+  onboarding_completed: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export const avatarStyles: AvatarStyle[] = ["geometric", "abstract", "minimal", "soft"];
+
+export const AVATAR_GLYPHS: Record<AvatarStyle, string> = {
+  geometric: "◆",
+  abstract: "◎",
+  minimal: "—",
+  soft: "◐",
+};
+
+export const intents = [
+  { id: "networking", label: "Networking" },
+  { id: "open_to_conversation", label: "Open to chat" },
+  { id: "group_discussion", label: "Group discussion" },
+  { id: "casual_chat", label: "Casual chat" },
+] as const;
+
+export const vibeOptions = ["AI/startups", "Design", "Travel", "Language exchange", "Creativity"];
+export const durationOptions = [30, 60, 120];
+
+export const AUTH_CALLBACK_PATH = "auth/callback";
+export const NATIVE_AUTH_REDIRECT = "left://auth/callback";
+export const SESSION_NAV_SCREENS: Screen[] = ["venue", "activate", "feed", "profile", "approach", "safety", "settings"];
+
+export function formatIntent(intent: string) {
+  return intent.replaceAll("_", " ");
+}
+
+export function formatRemaining(value: string) {
+  return value.startsWith("00:") ? value.slice(3, 8) : value;
+}
+
+export function getFooterDestination(screen: Screen): FooterDestination {
+  if (screen === "venue") return "home";
+  if (screen === "feed" || screen === "profile" || screen === "approach") return "nearby";
+  if (screen === "activate") return "session";
+  return "account";
+}

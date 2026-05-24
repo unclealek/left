@@ -167,6 +167,27 @@ export interface SafetyZone {
   updatedAt: string;
 }
 
+export type DeletionRequestStatus =
+  | "pending"
+  | "processing"
+  | "completed"
+  | "rejected"
+  | "cancelled";
+
+export interface AccountDeletionRequest {
+  id: string;
+  userId: string | null;
+  profileUserId: string | null;
+  requestedEmail: string;
+  requestedName: string | null;
+  authProvider: AuthProvider | null;
+  payload: Record<string, unknown>;
+  status: DeletionRequestStatus;
+  requestedAt: string;
+  processedAt: string | null;
+  failureReason: string | null;
+}
+
 export interface NearbyFeedItem {
   profileUserId: string;
   presenceSessionId: string;
