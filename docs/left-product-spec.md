@@ -1,7 +1,7 @@
 # Left Product Spec
 
 Status:
-- draft MVP spec synthesized from the PDF package and current design mockups
+- current MVP spec aligned to the implemented mobile app and updated product decisions
 
 Source inputs:
 - `contextual_social_app_v2_spec.pdf`
@@ -73,40 +73,45 @@ User traits:
 ## 5. Core MVP Promise
 
 In a shared place, a user can:
-1. set their intent and vibe
-2. become visible for a limited period
-3. discover nearby compatible people through ambient presence
-4. open a soft-anonymity profile with contextual cues
-5. wave or approach with a short encounter window
-6. control visibility and safety at all times
+1. sign in with Google and complete lightweight onboarding
+2. set their intent, vibes, duration, and hint
+3. become visible for a limited period
+4. discover nearby compatible people through venue-based presence
+5. open a soft-anonymity profile with contextual cues
+6. use customizable prompts during evaluation and approach
+7. wave or approach with a short encounter window
+8. control visibility, safety, and account actions at all times
 
 ## 6. MVP Scope
 
 Included:
 - Google sign-in
-- Apple sign-in
+- first-name + avatar + location onboarding
 - presence activation
-- venue or area-based discovery
+- venue-based discovery
 - nearby feed
 - venue pulse / venue context
 - optional bubble visualization layer over nearby feed data
 - soft-anonymity profile
 - shared-intent and shared-vibe matching
-- mutual openness indicator
 - approach flow with countdown timer
 - quick identification hint
 - waves-only signaling
 - persistent safety controls
 - session duration and automatic expiry
+- persistent footer navigation: `Home`, `Nearby`, `Session`, `You`
+- signed-in settings screen for profile defaults and prompt customization
+- identity-removal request flow backed by Supabase
 
 Deferred:
+- Apple sign-in
 - full chat system
 - social graph or friend graph
-- deep profile editing
 - algorithmic recommendations beyond simple contextual ranking
 - monetization
 - cross-venue history
 - rich notifications beyond core session updates
+- admin tooling for monitoring identity-removal requests
 
 Explicitly excluded from MVP:
 - in-app chat
@@ -122,10 +127,9 @@ Explicitly excluded from MVP:
 
 Before entering the core loop, the user must be able to create an account or sign in using:
 - Google
-- Apple
 
 MVP requirements:
-- support account creation and returning sign-in through both providers
+- support account creation and returning sign-in through Google
 - preserve a single user identity across sessions
 - collect only the minimum profile data needed for the soft-anonymity model
 - derive a usable first name from the provider profile when available
@@ -134,12 +138,14 @@ Post-auth minimum profile state:
 - authenticated user id
 - first name
 - avatar style
+- profile prompt
+- approach prompt
 - onboarding flag
 
 Onboarding flow is fixed to three screens:
-1. Sign in with Apple or Google. Pull first name automatically and allow edit, but first name only.
+1. Sign in with Google. Pull first name automatically and allow edit, but first name only.
 2. Choose avatar style from four illustrated options: `geometric`, `abstract`, `minimal`, `soft`.
-3. Request background location permission with explicit explanation that location is used to detect social venues and is never shared.
+3. Request location permission with explicit explanation that location is used to detect social venues and is never shared.
 
 Onboarding exclusions:
 - no bio
@@ -164,7 +170,7 @@ Result:
 
 ### 7.2 Discover
 
-The user lands in a discovery environment that shows nearby people as bubbles or presence cards.
+The user lands in a discovery environment that shows nearby people through presence cards in the nearby feed.
 
 Discovery emphasizes:
 - proximity
@@ -177,18 +183,20 @@ Result:
 
 If venue density is low, the app should show a venue pulse instead of failing silently.
 
+The bubble visualization is secondary and optional. The nearby feed remains the canonical MVP discovery surface.
+
 ### 7.3 Evaluate
 
 The user opens a soft-anonymity profile.
 
 The profile shows:
 - avatar or masked identity representation
-- first name, alias, or limited identity token
+- first name or limited identity token
 - intent
 - vibe tags
 - shared context
 - quick identifying hint
-- suggested icebreaker
+- suggested icebreaker from the viewer's saved prompt template
 
 Result:
 - the user decides to wave or approach
@@ -196,6 +204,8 @@ Result:
 ### 7.4 Approach
 
 If the user commits to approach, Left enters a focused encounter state with a countdown timer and a reminder of who to look for and what to say.
+
+The approach state uses a second customizable prompt template owned by the viewer.
 
 Result:
 - the user confirms the connection happened
@@ -208,6 +218,21 @@ At any point, the user can:
 - open safety actions
 - use safety zones
 - block or report another person
+
+### 7.6 Settings And Account
+
+The signed-in user has a dedicated `You` destination in the footer navigation.
+
+That screen currently supports:
+- editing first name
+- changing avatar style
+- setting default intent
+- setting default vibes
+- customizing the nearby-profile prompt
+- customizing the approach prompt
+- opening safety controls
+- signing out
+- requesting identity removal
 
 ## 8. Core Screens
 
@@ -224,7 +249,7 @@ Fields:
 
 Functional requirements:
 - exactly one intent
-- one or more vibes
+- up to two vibes in the current implementation
 - visible session starts only after confirmation
 - duration must auto-expire
 - activation should default from the last successful session where possible
@@ -239,8 +264,8 @@ Key UI elements:
 - intent tag
 - one vibe tag
 - hint card
-- session duration remaining
-- actions for wave, view profile, hide, report, block
+- shared alignment callout
+- actions for wave, view profile, hide, and safety entry
 
 Functional requirements:
 - communicate enough to support approach decisions without oversharing
@@ -276,7 +301,7 @@ Required content:
 - intent and vibe chips
 - shared-context callout
 - identifying hint
-- icebreaker prompt
+- icebreaker prompt from saved user settings
 - actions for wave and approach
 
 Functional requirements:
@@ -287,6 +312,7 @@ Functional requirements:
 - shared alignment signal appears here if applicable
 - no full chat entry point in MVP
 - avatar must be illustrated or initials-based, never a photo
+- prompt copy is customizable by the signed-in user from settings
 
 ### 8.5 Approaching Micro-State
 
@@ -297,8 +323,7 @@ Required content:
 - target name or alias
 - countdown timer
 - identifying hint
-- icebreaker prompt
-- explicit `I'm going over` commitment
+- icebreaker prompt from saved user settings
 - success and cancel actions
 
 Functional requirements:
@@ -340,6 +365,27 @@ Functional requirements:
 - support the ambient visual identity without becoming the primary MVP discovery surface
 - remain strictly secondary to the nearby feed in the implementation order
 
+### 8.8 Settings / You
+
+Purpose:
+- provide a signed-in destination for account defaults, prompt customization, sign-out, and identity-removal request handling
+
+Required content:
+- first name
+- avatar style
+- default intent
+- default vibes
+- nearby prompt template
+- approach prompt template
+- sign-out action
+- identity-removal request action
+
+Functional requirements:
+- profile defaults persist to `public.users`
+- prompt templates persist to `public.users`
+- account actions live under `You`, not under safety
+- identity removal follows the retained-record policy defined in `identity-removal-policy.md`
+
 ## 9. Interaction Model
 
 ### Presence
@@ -348,9 +394,9 @@ Presence in Left is intentional and temporary. A user is only visible when they 
 
 Each session includes:
 - intent
-- vibe
+- one or two vibes
 - duration
-- venue or area context
+- venue context
 - optional hint
 
 Presence state machine:
@@ -390,7 +436,7 @@ Tier 2, visible only after profile open:
 - illustrated avatar or initials-based avatar
 - second vibe tag if present
 - shared alignment signal if applicable
-- icebreaker suggestion
+- viewer-owned icebreaker suggestion
 
 Tier 3, never visible:
 - surname
@@ -459,16 +505,36 @@ Locked safety decisions:
 - report applies immediate mutual hide for the current session
 - after block or report, `hide me at this venue` becomes available as a permanent venue suppression choice
 
+## 11.1 Identity Removal Model
+
+`LEFT` currently implements identity removal, not full deletion.
+
+When a user requests account deletion in the current product:
+- direct identity fields are redacted
+- live auth/session access is cleared where supported by the auth schema
+- selected product records are retained
+- the request is logged in `public.identity_removal_requests`
+
+The exact retained vs removed behavior is documented in [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/left%20app/docs/identity-removal-policy.md).
+
 ## 12. Data Model
 
 ### User
 
 - `id`
+- `auth_provider`
+- `provider_subject`
 - `first_name`
 - `avatar_style`
+- `default_intent`
 - `default_vibes`
-- `prompt_preferences`
+- `profile_prompt`
+- `approach_prompt`
+- `focus_mode_enabled`
+- `prompts_enabled`
+- `onboarding_completed`
 - `created_at`
+- `updated_at`
 
 ### PresenceSession
 
@@ -484,41 +550,82 @@ Locked safety decisions:
 - `expires_at`
 - `ended_at`
 
-### SessionVibe
+### PromptEvent
 
-- `session_id`
-- `vibe`
-
-### DiscoveryHint
-
-- `session_id`
-- `hint_text`
+- `id`
+- `user_id`
+- `venue_id`
+- `triggered_at`
+- `reason`
+- `accepted`
+- `created_at`
 
 ### Venue
 
 - `id`
 - `name`
-- `geofence`
-- `energy_state`
+- `type`
+- `city`
+- `geofence_json`
+- `is_active`
+- `created_at`
+- `updated_at`
 
-### ConnectionAttempt
+### Wave
 
 - `id`
 - `from_user_id`
 - `to_user_id`
-- `session_id`
-- `state`
-- `wave_state`
+- `presence_session_id`
+- `status`
+- `created_at`
+- `updated_at`
+
+### ApproachAttempt
+
+- `id`
+- `from_user_id`
+- `to_user_id`
+- `presence_session_id`
+- `status`
 - `started_at`
 - `expires_at`
+- `completed_at`
+- `cancelled_at`
+- `created_at`
+- `updated_at`
 
-### SafetyEvent
+### ContactExchangeIntent
+
+- `id`
+- `approach_attempt_id`
+- `user_id`
+- `decision`
+- `created_at`
+
+### HiddenUser
 
 - `id`
 - `actor_user_id`
 - `target_user_id`
-- `type`
-- `session_id`
+- `created_at`
+
+### Block
+
+- `id`
+- `actor_user_id`
+- `target_user_id`
+- `reason`
+- `created_at`
+
+### Report
+
+- `id`
+- `actor_user_id`
+- `target_user_id`
+- `presence_session_id`
+- `category`
+- `notes`
 - `created_at`
 
 ### SafetyZone
@@ -526,35 +633,56 @@ Locked safety decisions:
 - `id`
 - `user_id`
 - `name`
-- `geofence`
-- `behavior`
+- `geofence_json`
+- `created_at`
+- `updated_at`
+
+### IdentityRemovalRequest
+
+- `id`
+- `user_id`
+- `profile_user_id`
+- `contact_email`
+- `contact_name`
+- `auth_provider`
+- `request_kind`
+- `identity_fields_to_remove`
+- `retained_record_classes`
+- `payload`
+- `status`
+- `requested_at`
+- `processed_at`
+- `failure_reason`
+- `processing_notes`
 
 ## 13. State Model
 
 Primary app states:
-- inactive
-- activating
-- prompt_eligible
-- prompted
-- visible
-- browsing
-- profile_open
-- wave_sent
-- approaching
-- connected
-- session_paused
-- session_ended
+- loading
+- auth
+- onboarding_name
+- onboarding_avatar
+- onboarding_location
+- venue
+- activate
+- feed
+- profile
+- approach
+- safety
+- settings
 
 Critical transitions:
-- inactive -> prompt_eligible
-- prompt_eligible -> prompted
-- prompted -> activating
-- activating -> visible
-- visible -> profile_open
-- profile_open -> approaching
-- approaching -> connected
-- any active state -> session_ended
-- any active state -> safety_action
+- auth -> onboarding_name
+- onboarding_location -> venue
+- venue -> activate
+- activate -> feed
+- feed -> profile
+- profile -> approach
+- approach -> feed
+- feed -> safety
+- profile -> safety
+- approach -> safety
+- any signed-in state -> settings
 
 ## 14. Success Metrics
 
@@ -584,9 +712,9 @@ The MVP should not try to solve:
 
 Recommended product stack for MVP:
 - mobile app: Expo + React Native + TypeScript
-- state: Zustand
+- state: local React state in current implementation
 - backend: Supabase
-- auth: Supabase auth with Google and Apple providers
+- auth: Supabase auth with Google provider currently implemented
 - realtime: Supabase realtime or equivalent presence channel
 - location: device geolocation with coarse proximity buckets
 
@@ -597,13 +725,14 @@ Why:
 ## 17. Immediate Next Build Steps
 
 1. Freeze the MVP screen list from this spec.
-2. Confirm copy and fields for activation, profile, approach, and safety.
-3. Implement the locked progressive reveal rules.
-4. Implement the locked venue model, density thresholds, and venue pulse behavior.
-5. Remove chat and save-user assumptions from the MVP build plan.
-6. Implement the app shell around the nearby feed as the canonical discovery surface.
-7. Add presence lifecycle and expiry logic before deeper UI polish.
-8. Add the bubble visualization only as a second-pass UI layer over the same data.
+2. Confirm copy and fields for activation, profile, approach, settings, and safety.
+3. Decide whether retained profile preference fields should also be reset during identity removal.
+4. Implement the locked progressive reveal rules.
+5. Implement the locked venue model, density thresholds, and venue pulse behavior.
+6. Remove chat and save-user assumptions from the MVP build plan.
+7. Keep the nearby feed as the canonical discovery surface.
+8. Add presence lifecycle and expiry logic before deeper UI polish.
+9. Add the bubble visualization only as a second-pass UI layer over the same data.
 
 ## 18. Locked Product Rules
 
