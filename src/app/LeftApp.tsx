@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -60,6 +61,7 @@ const intents = [
 ] as const;
 const vibeOptions = ["AI/startups", "Design", "Travel", "Language exchange", "Creativity"];
 const durationOptions = [30, 60, 120];
+const logoMarkAsset = require("../../logo.png");
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -315,8 +317,13 @@ export function LeftApp() {
 
   return (
     <LinearGradient colors={["#0a0911", "#12111a", "#181626"]} style={styles.shell}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.kicker}>LEFT</Text>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          (screen === "auth" || screen === "loading") && styles.authContent,
+        ]}
+      >
+        {screen !== "auth" && screen !== "loading" ? <Text style={styles.kicker}>LEFT</Text> : null}
         {screen === "loading" && <LoadingScreen />}
         {screen === "auth" && <AuthScreen authError={authError} onAuth={startGoogleAuth} />}
         {screen === "onboarding-name" && (
@@ -411,7 +418,9 @@ export function LeftApp() {
 function LoadingScreen() {
   return (
     <View style={styles.loadingWrap}>
-      <Text style={styles.loadingWordmark}>{"<<"}</Text>
+      <View style={styles.loadingOrb}>
+        <Image source={logoMarkAsset} style={styles.loadingMark} resizeMode="contain" />
+      </View>
       <Text style={styles.loadingBody}>Loading your Left session.</Text>
     </View>
   );
@@ -425,15 +434,49 @@ function AuthScreen({
   onAuth: () => void;
 }) {
   return (
-    <Card>
-      <Text style={styles.title}>A reality-first social activation layer.</Text>
-      <Text style={styles.body}>
-        Sign in, set a first name, choose an illustrated avatar, and only show up when you
-        intentionally activate.
-      </Text>
-      <PrimaryButton label="Continue with Google" onPress={onAuth} />
-      {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
-    </Card>
+    <View style={styles.authScreen}>
+      <LinearGradient
+        colors={["#50479e", "#6f63e8", "#151428"]}
+        locations={[0.04, 0.44, 1]}
+        start={{ x: 0, y: 0.2 }}
+        end={{ x: 1, y: 0.5 }}
+        style={styles.authBackground}
+      />
+      <View style={styles.authTopShade} />
+      <View style={styles.authBottomGlow} />
+
+      <View style={styles.authBrandBlock}>
+        <View style={styles.authMarkFrame}>
+          <Image source={logoMarkAsset} style={styles.authMark} resizeMode="contain" />
+          <Text style={styles.authMarkLabel}>LEFT</Text>
+        </View>
+      </View>
+
+      <View style={styles.authPanel}>
+        <Text style={styles.authTitle}>A reality-first social activation layer.</Text>
+        <Text style={styles.authBody}>
+          Sign in, set a first name, choose an illustrated avatar, and only show up when you
+          intentionally activate.
+        </Text>
+
+        <Pressable onPress={onAuth} style={styles.authGoogleButton}>
+          <View style={styles.authGoogleIcon}>
+            <Text style={styles.authGoogleIconText}>G</Text>
+          </View>
+          <Text style={styles.authGoogleLabel}>Continue with Google</Text>
+        </Pressable>
+
+        {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
+      </View>
+
+      <View style={styles.authFooter}>
+        <View style={styles.authFooterRow}>
+          <Text style={styles.authFooterText}>Privacy Policy</Text>
+          <Text style={styles.authFooterText}>Terms of Service</Text>
+        </View>
+        <Text style={styles.authFooterMeta}>© 2026 LEFT SOCIAL</Text>
+      </View>
+    </View>
   );
 }
 
@@ -906,6 +949,11 @@ const styles = StyleSheet.create({
     paddingBottom: 64,
     gap: 16,
   },
+  authContent: {
+    minHeight: "100%",
+    paddingTop: 32,
+    paddingBottom: 28,
+  },
   kicker: {
     color: "#7cf0d4",
     fontSize: 11,
@@ -913,22 +961,151 @@ const styles = StyleSheet.create({
     letterSpacing: 2.2,
   },
   loadingWrap: {
-    minHeight: 420,
+    minHeight: 640,
     alignItems: "center",
     justifyContent: "center",
     gap: 16,
   },
-  loadingWordmark: {
-    color: "#f3effa",
-    fontSize: 54,
-    lineHeight: 60,
-    fontWeight: "800",
-    letterSpacing: 4,
+  loadingOrb: {
+    width: 144,
+    height: 144,
+    borderRadius: 72,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    shadowColor: "#7d69ff",
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 18 },
+    elevation: 18,
+  },
+  loadingMark: {
+    width: 82,
+    height: 82,
   },
   loadingBody: {
     color: "#c5bfd4",
     fontSize: 15,
     lineHeight: 22,
+  },
+  authScreen: {
+    flex: 1,
+    minHeight: 760,
+    justifyContent: "space-between",
+    overflow: "hidden",
+  },
+  authBackground: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  authTopShade: {
+    position: "absolute",
+    inset: 0,
+    backgroundColor: "rgba(7,7,16,0.16)",
+  },
+  authBottomGlow: {
+    position: "absolute",
+    left: -40,
+    right: -40,
+    bottom: 42,
+    height: 340,
+    borderRadius: 240,
+    backgroundColor: "rgba(78,236,206,0.5)",
+  },
+  authBrandBlock: {
+    alignItems: "center",
+    marginTop: 118,
+  },
+  authMarkFrame: {
+    width: 164,
+    height: 164,
+    borderRadius: 82,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(27,24,36,0.95)",
+    backgroundColor: "rgba(133,109,255,0.08)",
+  },
+  authMark: {
+    width: 74,
+    height: 74,
+    opacity: 0.1,
+    marginTop: -14,
+  },
+  authMarkLabel: {
+    position: "absolute",
+    bottom: 28,
+    color: "#f3effa",
+    fontSize: 17,
+    fontWeight: "700",
+    letterSpacing: 2.8,
+  },
+  authPanel: {
+    marginTop: 0,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.09)",
+    backgroundColor: "rgba(22, 20, 39, 0.7)",
+    paddingHorizontal: 28,
+    paddingTop: 52,
+    paddingBottom: 58,
+    marginHorizontal: 4,
+    shadowColor: "#1fe2cc",
+    shadowOpacity: 0.16,
+    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 12,
+  },
+  authTitle: {
+    color: "#f2eefc",
+    fontSize: 33,
+    lineHeight: 40,
+    fontWeight: "700",
+    letterSpacing: -1.4,
+    marginBottom: 30,
+    maxWidth: 520,
+  },
+  authBody: {
+    color: "rgba(206,199,225,0.66)",
+    fontSize: 17,
+    lineHeight: 24,
+    marginBottom: 42,
+    maxWidth: 520,
+  },
+  authGoogleButton: {
+    minHeight: 70,
+    borderRadius: 22,
+    backgroundColor: "#7c68f6",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 14,
+    marginHorizontal: 8,
+    shadowColor: "#7e66ff",
+    shadowOpacity: 0.34,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10,
+  },
+  authGoogleIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  authGoogleIconText: {
+    color: "#ffffff",
+    fontSize: 20,
+    fontWeight: "800",
+  },
+  authGoogleLabel: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "700",
+    letterSpacing: -0.2,
   },
   card: {
     backgroundColor: "rgba(20, 20, 31, 0.94)",
@@ -953,6 +1130,27 @@ const styles = StyleSheet.create({
     color: "#ffb3b3",
     fontSize: 14,
     lineHeight: 20,
+    marginTop: 14,
+  },
+  authFooter: {
+    marginTop: 36,
+    alignItems: "center",
+    gap: 18,
+    paddingBottom: 16,
+  },
+  authFooterRow: {
+    flexDirection: "row",
+    gap: 34,
+  },
+  authFooterText: {
+    color: "rgba(177,168,200,0.58)",
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  authFooterMeta: {
+    color: "rgba(148,140,175,0.24)",
+    fontSize: 12,
+    letterSpacing: 4,
   },
   meta: {
     color: "#8f86a7",
