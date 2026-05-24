@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, ScrollView, Text, View } from "react-native";
+import { Alert, AppState, ScrollView, Text, View } from "react-native";
 import { makeRedirectUri } from "expo-auth-session";
 import * as QueryParams from "expo-auth-session/build/QueryParams";
 import * as Notifications from "expo-notifications";
@@ -26,6 +26,7 @@ import type {
   AuthProvider,
   AvatarStyle,
   NearbyFeedItem,
+  VenueType,
   VenueContextSummary,
 } from "../types/left-domain";
 import { AuthScreen } from "../screens/left/AuthScreen";
@@ -38,17 +39,26 @@ import { ProfileScreen } from "../screens/left/ProfileScreen";
 import { ApproachScreen } from "../screens/left/ApproachScreen";
 import { SafetyScreen } from "../screens/left/SafetyScreen";
 import { SettingsScreen } from "../screens/left/SettingsScreen";
+import { VenueAddScreen, VenueSelectionScreen } from "../screens/left/VenueSelectionScreen";
 import {
   consumePendingActivationLaunch,
   handleVenuePromptResponse,
   loadLastActivationDefaults,
   requestLocationAccess,
   saveLastActivationDefaults,
+  selectNearbyVenue,
   setVenueHidden as persistVenueHidden,
   setVenueMuted,
+  storeUserSubmittedVenue,
   syncLocationRegistrationState,
 } from "../features/location/location-service";
-import { getVenuePreferences, type VenuePreference } from "../features/location/location-storage";
+import {
+  getLocationRuntimeState,
+  getVenuePreferences,
+  type RuntimeCoords,
+  type RuntimeVenueCandidate,
+  type VenuePreference,
+} from "../features/location/location-storage";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -58,6 +68,10 @@ function logAuthDebug(step: string, payload?: Record<string, unknown>) {
     return;
   }
   console.info(`[auth] ${step}`);
+}
+
+function normalizeVenueName(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 export function LeftApp() {
@@ -82,8 +96,19 @@ export function LeftApp() {
   const [settingsSaveState, setSettingsSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [deletionRequestState, setDeletionRequestState] = useState<"idle" | "submitting" | "submitted" | "error">("idle");
   const [venuePreferences, setVenuePreferences] = useState<Record<string, VenuePreference>>({});
+  const [nearbyVenueOptions, setNearbyVenueOptions] = useState<RuntimeVenueCandidate[]>([]);
+  const [lastKnownCoords, setLastKnownCoords] = useState<RuntimeCoords | null>(null);
+  const [venueSelectionRequired, setVenueSelectionRequired] = useState(false);
+  const [venueDraftName, setVenueDraftName] = useState("");
+  const [venueDraftAddress, setVenueDraftAddress] = useState("");
+  const [venueDraftNotes, setVenueDraftNotes] = useState("");
+  const [venueDraftType, setVenueDraftType] = useState<VenueType>("other");
+  const [venueDraftSubmitting, setVenueDraftSubmitting] = useState(false);
 
-  const visibleFeed = useMemo(() => (venueHidden ? [] : feed), [feed, venueHidden]);
+  const visibleFeed = useMemo(() => {
+    if (venueHidden) return [];
+    return feed.map((item) => ({ ...item, venueName: venueSummary.venueName }));
+  }, [feed, venueHidden, venueSummary.venueName]);
 
   useEffect(() => {
     void bootstrapSession();
@@ -103,9 +128,35 @@ export function LeftApp() {
   }, []);
 
   useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState === "active") {
+        void refreshVenueFromRuntime();
+      }
+    });
+    const interval = setInterval(() => {
+      void refreshVenueFromRuntime();
+    }, 3000);
+    return () => {
+      subscription.remove();
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!user) return;
     void maybeLaunchFromNotification();
   }, [user]);
+
+  useEffect(() => {
+    if (!user || !venueSelectionRequired) return;
+    if (screen === "venue" || screen === "activate" || screen === "feed") {
+      setScreen("venue-select");
+    }
+  }, [screen, user, venueSelectionRequired]);
+
+  useEffect(() => {
+    void refreshVenuePreferences();
+  }, [venueSummary.venueId]);
 
   async function bootstrapSession() {
     const {
@@ -122,6 +173,7 @@ export function LeftApp() {
   async function bootstrapDeviceState() {
     const runtime = await syncLocationRegistrationState();
     setLocationEnabled(runtime.permissionGranted);
+    await refreshVenueFromRuntime();
     const defaults = await loadLastActivationDefaults();
     if (defaults) {
       setSelectedIntent(defaults.intent);
@@ -130,6 +182,35 @@ export function LeftApp() {
       setHintDraft(defaults.hintText);
     }
     await refreshVenuePreferences();
+  }
+
+  async function refreshVenueFromRuntime() {
+    const runtime = await getLocationRuntimeState();
+    setNearbyVenueOptions(runtime.nearbyVenues);
+    setLastKnownCoords(runtime.lastKnownCoords);
+    setVenueSelectionRequired(runtime.nearbyVenues.length > 1 && !runtime.selectedVenueId);
+    if (!runtime.currentVenueId || !runtime.currentVenueName) return;
+    const currentVenueId = runtime.currentVenueId;
+    const currentVenueName = runtime.currentVenueName;
+
+    setVenueSummary((current) => {
+      if (
+        current.venueId === currentVenueId &&
+        current.venueName === currentVenueName
+      ) {
+        return current;
+      }
+
+      return {
+        ...current,
+        venueId: currentVenueId,
+        venueName: currentVenueName,
+        pulseCopy:
+          runtime.nearbyVenues.length > 1 && !runtime.selectedVenueId
+            ? "We found multiple nearby venues. Confirm yours before going visible."
+            : `You're currently at ${currentVenueName}.`,
+      };
+    });
   }
 
   async function refreshVenuePreferences() {
@@ -154,6 +235,86 @@ export function LeftApp() {
     if (result.action === "cooldown") {
       await refreshVenuePreferences();
     }
+  }
+
+  async function confirmVenueSelection(venueId: string) {
+    const selected = await selectNearbyVenue(venueId);
+    if (!selected) {
+      Alert.alert("Venue unavailable", "That nearby venue is no longer available. Try again from the refreshed list.");
+      await refreshVenueFromRuntime();
+      return;
+    }
+    await refreshVenueFromRuntime();
+    setScreen("venue");
+  }
+
+  async function submitVenueSuggestion() {
+    if (!user || !lastKnownCoords) {
+      Alert.alert("Venue location missing", "Move around the venue once so Left has a recent device location.");
+      return;
+    }
+    if (!venueDraftName.trim() || !venueDraftAddress.trim()) {
+      Alert.alert("Missing venue details", "Add both a venue name and an address or landmark.");
+      return;
+    }
+
+    const submittedName = venueDraftName.trim();
+    const duplicateVenue = nearbyVenueOptions.find(
+      (venue) => normalizeVenueName(venue.name) === normalizeVenueName(submittedName),
+    );
+    if (duplicateVenue) {
+      setVenueDraftSubmitting(false);
+      await confirmVenueSelection(duplicateVenue.id);
+      Alert.alert("Venue already exists", `${duplicateVenue.name} is already pinned nearby, so Left reused it instead of creating a duplicate.`);
+      return;
+    }
+
+    setVenueDraftSubmitting(true);
+    const { data, error } = await supabase
+      .from("venue_submissions")
+      .insert({
+        submitted_by: user.id,
+        name: submittedName,
+        type: venueDraftType,
+        address_text: venueDraftAddress.trim(),
+        notes: venueDraftNotes.trim() || null,
+        proposed_geofence_json: {
+          center: {
+            latitude: lastKnownCoords.latitude,
+            longitude: lastKnownCoords.longitude,
+          },
+          radius_meters: 60,
+          source: "user_submission",
+        },
+        status: "pending",
+      })
+      .select("id, name")
+      .single();
+
+    if (error || !data) {
+      setVenueDraftSubmitting(false);
+      Alert.alert("Venue submission failed", "We could not submit that venue yet.");
+      return;
+    }
+
+    await storeUserSubmittedVenue({
+      id: `submission:${data.id}`,
+      name: data.name,
+      latitude: lastKnownCoords.latitude,
+      longitude: lastKnownCoords.longitude,
+      radiusMeters: 60,
+      source: "user_submission",
+      distanceMeters: 0,
+    });
+
+    setVenueDraftSubmitting(false);
+    setVenueDraftName("");
+    setVenueDraftAddress("");
+    setVenueDraftNotes("");
+    setVenueDraftType("other");
+    await refreshVenueFromRuntime();
+    Alert.alert("Venue submitted", "Your venue was saved as a pending submission and is available for your current session.");
+    setScreen("venue");
   }
 
   async function syncSession(session: Session | null, isInitialLoad: boolean) {
@@ -305,7 +466,11 @@ export function LeftApp() {
     setLocationEnabled(locationResult.granted);
     if (!locationResult.granted) {
       setLocationBusy(false);
-      setAuthError("Background location is required to detect social venues.");
+      setAuthError(
+        locationResult.reason === "registration_failed"
+          ? "Background location could not start on this device yet."
+          : "Background location is required to detect social venues.",
+      );
       return;
     }
 
@@ -671,8 +836,40 @@ export function LeftApp() {
         {screen === "onboarding-location" && (
           <LocationScreen authError={authError} enabled={locationEnabled} busy={locationBusy} onToggle={() => setLocationEnabled((current) => !current)} onContinue={() => void finishOnboarding()} />
         )}
+        {screen === "venue-select" && (
+          <VenueSelectionScreen
+            venues={nearbyVenueOptions}
+            currentVenueId={venueSummary.venueId}
+            onSelectVenue={(venueId) => void confirmVenueSelection(venueId)}
+            onAddVenue={() => setScreen("venue-add")}
+          />
+        )}
+        {screen === "venue-add" && (
+          <VenueAddScreen
+            name={venueDraftName}
+            address={venueDraftAddress}
+            notes={venueDraftNotes}
+            venueType={venueDraftType}
+            submitting={venueDraftSubmitting}
+            onChangeName={setVenueDraftName}
+            onChangeAddress={setVenueDraftAddress}
+            onChangeNotes={setVenueDraftNotes}
+            onChangeVenueType={setVenueDraftType}
+            onSubmit={() => void submitVenueSuggestion()}
+            onBack={() => setScreen("venue-select")}
+          />
+        )}
         {screen === "venue" && (
-          <VenueScreen venue={venueSummary} sessionVisible={sessionVisible} venueHidden={venueHidden} onActivate={() => setScreen("activate")} onOpenFeed={() => setScreen("feed")} />
+          <VenueScreen
+            venue={venueSummary}
+            sessionVisible={sessionVisible}
+            venueHidden={venueHidden}
+            canChooseVenue={nearbyVenueOptions.length > 1}
+            onActivate={() => setScreen("activate")}
+            onOpenFeed={() => setScreen("feed")}
+            onChooseVenue={() => setScreen("venue-select")}
+            onAddVenue={() => setScreen("venue-add")}
+          />
         )}
         {screen === "activate" && (
           <ActivationScreen selectedIntent={selectedIntent} selectedVibes={selectedVibes} selectedDuration={selectedDuration} hintDraft={hintDraft} onPickIntent={setSelectedIntent} onToggleVibe={toggleVibe} onPickDuration={setSelectedDuration} onChangeHint={setHintDraft} onActivate={activatePresence} />

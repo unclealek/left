@@ -7,6 +7,8 @@ const STORAGE_KEYS = {
   activationDefaults: "left/location/activation-defaults",
 } as const;
 
+const MAX_PERSISTED_VENUE_DISTANCE_METERS = 120;
+
 export type VenuePreference = {
   venueId: string;
   venueName: string;
@@ -23,11 +25,31 @@ export type LocationPromptState = {
   responded: boolean;
 };
 
+export type RuntimeVenueCandidate = {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  radiusMeters: number;
+  source: "google_places" | "local_catalog" | "user_submission";
+  distanceMeters: number | null;
+};
+
+export type RuntimeCoords = {
+  latitude: number;
+  longitude: number;
+  accuracy: number | null;
+};
+
 export type LocationRuntimeState = {
   permissionGranted: boolean;
   backgroundRegistered: boolean;
   currentVenueId: string | null;
   currentVenueName: string | null;
+  selectedVenueId: string | null;
+  selectedVenueName: string | null;
+  nearbyVenues: RuntimeVenueCandidate[];
+  lastKnownCoords: RuntimeCoords | null;
   dwellEnteredAt: string | null;
   dwellLastSeenAt: string | null;
   prompt: LocationPromptState | null;
@@ -46,6 +68,10 @@ const DEFAULT_RUNTIME_STATE: LocationRuntimeState = {
   backgroundRegistered: false,
   currentVenueId: null,
   currentVenueName: null,
+  selectedVenueId: null,
+  selectedVenueName: null,
+  nearbyVenues: [],
+  lastKnownCoords: null,
   dwellEnteredAt: null,
   dwellLastSeenAt: null,
   prompt: null,
@@ -70,12 +96,34 @@ export function getDefaultRuntimeState() {
   return DEFAULT_RUNTIME_STATE;
 }
 
+function normalizeLocationRuntimeState(
+  runtime: Partial<LocationRuntimeState> | null | undefined,
+): LocationRuntimeState {
+  const nearbyVenues = Array.isArray(runtime?.nearbyVenues)
+    ? runtime.nearbyVenues.filter(
+        (venue) =>
+          venue &&
+          typeof venue.id === "string" &&
+          ((venue.distanceMeters ?? 0) <= MAX_PERSISTED_VENUE_DISTANCE_METERS),
+      )
+    : [];
+
+  return {
+    ...DEFAULT_RUNTIME_STATE,
+    ...runtime,
+    nearbyVenues,
+    lastKnownCoords: runtime?.lastKnownCoords ?? null,
+    prompt: runtime?.prompt ?? null,
+  };
+}
+
 export async function getLocationRuntimeState() {
-  return readJson<LocationRuntimeState>(STORAGE_KEYS.runtime, DEFAULT_RUNTIME_STATE);
+  const runtime = await readJson<Partial<LocationRuntimeState>>(STORAGE_KEYS.runtime, DEFAULT_RUNTIME_STATE);
+  return normalizeLocationRuntimeState(runtime);
 }
 
 export async function saveLocationRuntimeState(next: LocationRuntimeState) {
-  await writeJson(STORAGE_KEYS.runtime, next);
+  await writeJson(STORAGE_KEYS.runtime, normalizeLocationRuntimeState(next));
 }
 
 export async function updateLocationRuntimeState(

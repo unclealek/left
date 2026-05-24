@@ -6,6 +6,8 @@ export type Screen =
   | "onboarding-name"
   | "onboarding-avatar"
   | "onboarding-location"
+  | "venue-select"
+  | "venue-add"
   | "venue"
   | "activate"
   | "feed"

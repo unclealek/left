@@ -335,6 +335,10 @@ export const styles = StyleSheet.create({
     paddingVertical: 15,
     fontSize: 16,
   },
+  multilineInput: {
+    minHeight: 110,
+    textAlignVertical: "top",
+  },
   toggleRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -412,6 +416,9 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
+  },
+  venueChoiceList: {
+    gap: 10,
   },
   pulseDot: {
     width: 7,

@@ -5,13 +5,14 @@ import {
   getActivationDefaults,
   getDefaultRuntimeState,
   getLocationRuntimeState,
+  type RuntimeVenueCandidate,
   getVenuePreferences,
   saveActivationDefaults,
   saveLocationRuntimeState,
   updateLocationRuntimeState,
   upsertVenuePreference,
 } from "./location-storage";
-import { detectVenueFromCoords } from "./venue-detection";
+import { detectVenueFromCoords, getNearbyVenues } from "./venue-detection";
 import type { AppUser } from "../../types/left-domain";
 
 export const LOCATION_TASK_NAME = "left/background-location";
@@ -36,6 +37,21 @@ function nowIso() {
 
 function isCooldownActive(cooldownUntil: string | null) {
   return !!cooldownUntil && new Date(cooldownUntil).getTime() > Date.now();
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string) {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
 }
 
 async function markPromptRejected(venueId: string, venueName: string) {
@@ -70,49 +86,70 @@ export async function registerVenuePromptCategory() {
 }
 
 export async function requestLocationAccess() {
-  const foreground = await Location.requestForegroundPermissionsAsync();
-  if (foreground.status !== "granted") {
+  try {
+    console.info("[location] requesting foreground permission");
+    const foreground = await Location.requestForegroundPermissionsAsync();
+    console.info("[location] foreground permission result", { status: foreground.status });
+    if (foreground.status !== "granted") {
+      await saveLocationRuntimeState({
+        ...getDefaultRuntimeState(),
+        permissionGranted: false,
+        backgroundRegistered: false,
+      });
+      return { granted: false, reason: "foreground_denied" as const };
+    }
+
+    console.info("[location] requesting background permission");
+    const background = await Location.requestBackgroundPermissionsAsync();
+    console.info("[location] background permission result", { status: background.status });
+    if (background.status !== "granted") {
+      await saveLocationRuntimeState({
+        ...getDefaultRuntimeState(),
+        permissionGranted: false,
+        backgroundRegistered: false,
+      });
+      return { granted: false, reason: "background_denied" as const };
+    }
+
+    await Notifications.requestPermissionsAsync();
+    await registerVenuePromptCategory();
+    const alreadyStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
+    console.info("[location] background registration state", { alreadyStarted });
+    if (!alreadyStarted) {
+      console.info("[location] starting background location updates");
+      await withTimeout(
+        Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+          accuracy: Location.Accuracy.Balanced,
+          distanceInterval: 35,
+          timeInterval: 60_000,
+          showsBackgroundLocationIndicator: false,
+          pausesUpdatesAutomatically: false,
+          foregroundService: {
+            notificationTitle: "Left is checking for social venues",
+            notificationBody: "Location stays on-device until a venue is matched.",
+          },
+        }),
+        10000,
+        "Background location registration",
+      );
+      console.info("[location] background location updates started");
+    }
+
+    await updateLocationRuntimeState((current) => ({
+      ...current,
+      permissionGranted: true,
+      backgroundRegistered: true,
+    }));
+    return { granted: true as const };
+  } catch (error) {
+    console.warn("[location] requestLocationAccess failed", error);
     await saveLocationRuntimeState({
       ...getDefaultRuntimeState(),
       permissionGranted: false,
       backgroundRegistered: false,
     });
-    return { granted: false, reason: "foreground_denied" as const };
+    return { granted: false, reason: "registration_failed" as const };
   }
-
-  const background = await Location.requestBackgroundPermissionsAsync();
-  if (background.status !== "granted") {
-    await saveLocationRuntimeState({
-      ...getDefaultRuntimeState(),
-      permissionGranted: false,
-      backgroundRegistered: false,
-    });
-    return { granted: false, reason: "background_denied" as const };
-  }
-
-  await Notifications.requestPermissionsAsync();
-  await registerVenuePromptCategory();
-  const alreadyStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
-  if (!alreadyStarted) {
-    await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-      accuracy: Location.Accuracy.Balanced,
-      distanceInterval: 35,
-      timeInterval: 60_000,
-      showsBackgroundLocationIndicator: false,
-      pausesUpdatesAutomatically: false,
-      foregroundService: {
-        notificationTitle: "Left is checking for social venues",
-        notificationBody: "Location stays on-device until a venue is matched.",
-      },
-    });
-  }
-
-  await updateLocationRuntimeState((current) => ({
-    ...current,
-    permissionGranted: true,
-    backgroundRegistered: true,
-  }));
-  return { granted: true as const };
 }
 
 export async function syncLocationRegistrationState() {
@@ -120,6 +157,12 @@ export async function syncLocationRegistrationState() {
   const background = await Location.getBackgroundPermissionsAsync();
   const backgroundRegistered = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
   const permissionGranted = foreground.status === "granted" && background.status === "granted";
+  console.info("[location] sync registration state", {
+    foreground: foreground.status,
+    background: background.status,
+    backgroundRegistered,
+    permissionGranted,
+  });
   const next = await updateLocationRuntimeState((current) => ({
     ...current,
     permissionGranted,
@@ -128,7 +171,60 @@ export async function syncLocationRegistrationState() {
   return next;
 }
 
+export async function selectNearbyVenue(venueId: string) {
+  const runtime = await getLocationRuntimeState();
+  const venue = runtime.nearbyVenues.find((candidate) => candidate.id === venueId);
+  if (!venue) return false;
+
+  console.info("[location] selecting nearby venue", {
+    venueId: venue.id,
+    venueName: venue.name,
+  });
+
+  await saveLocationRuntimeState({
+    ...runtime,
+    currentVenueId: venue.id,
+    currentVenueName: venue.name,
+    selectedVenueId: venue.id,
+    selectedVenueName: venue.name,
+    dwellEnteredAt: nowIso(),
+    dwellLastSeenAt: nowIso(),
+    prompt: null,
+  });
+  return true;
+}
+
+export async function storeUserSubmittedVenue(candidate: RuntimeVenueCandidate) {
+  const runtime = await getLocationRuntimeState();
+  const nextNearbyVenues = [
+    candidate,
+    ...runtime.nearbyVenues.filter((venue) => venue.id !== candidate.id),
+  ];
+
+  console.info("[location] storing user submitted venue", {
+    venueId: candidate.id,
+    venueName: candidate.name,
+  });
+
+  await saveLocationRuntimeState({
+    ...runtime,
+    nearbyVenues: nextNearbyVenues,
+    currentVenueId: candidate.id,
+    currentVenueName: candidate.name,
+    selectedVenueId: candidate.id,
+    selectedVenueName: candidate.name,
+    dwellEnteredAt: nowIso(),
+    dwellLastSeenAt: nowIso(),
+    prompt: null,
+  });
+}
+
 export async function processLocationFix(coords: Location.LocationObjectCoords) {
+  console.info("[location] processing location fix", {
+    latitude: coords.latitude,
+    longitude: coords.longitude,
+    accuracy: coords.accuracy ?? null,
+  });
   const runtime = await getLocationRuntimeState();
 
   if (
@@ -139,17 +235,32 @@ export async function processLocationFix(coords: Location.LocationObjectCoords) 
     await markPromptRejected(runtime.prompt.venueId, runtime.prompt.venueName);
   }
 
-  const venue = await detectVenueFromCoords(coords);
-  if (!venue) {
+  const nearbyVenues = await getNearbyVenues(coords);
+  if (!nearbyVenues.length) {
+    console.info("[location] no venue detected, clearing dwell state");
     await updateLocationRuntimeState((current) => ({
       ...current,
       currentVenueId: null,
       currentVenueName: null,
+      selectedVenueId: null,
+      selectedVenueName: null,
+      nearbyVenues: [],
+      lastKnownCoords: {
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        accuracy: coords.accuracy ?? null,
+      },
       dwellEnteredAt: null,
       dwellLastSeenAt: null,
     }));
     return;
   }
+
+  const preferredVenueId = nearbyVenues.some((venue) => venue.id === runtime.selectedVenueId)
+    ? runtime.selectedVenueId
+    : null;
+  const venue = await detectVenueFromCoords(coords, preferredVenueId);
+  if (!venue) return;
 
   const preferences = await getVenuePreferences();
   const venuePreference = preferences[venue.id];
@@ -159,21 +270,63 @@ export async function processLocationFix(coords: Location.LocationObjectCoords) 
   const nextPrompt =
     runtime.prompt && runtime.prompt.venueId === venue.id ? runtime.prompt : null;
 
+  console.info("[location] venue detected", {
+    venueId: venue.id,
+    venueName: venue.name,
+    sameVenue,
+    hidden: venuePreference?.hidden ?? false,
+    muted: venuePreference?.muted ?? false,
+    cooldownUntil: venuePreference?.cooldownUntil ?? null,
+    enteredAt,
+  });
+
   await saveLocationRuntimeState({
     ...runtime,
     permissionGranted: true,
     backgroundRegistered: true,
     currentVenueId: venue.id,
     currentVenueName: venue.name,
+    selectedVenueId: preferredVenueId,
+    selectedVenueName:
+      preferredVenueId === venue.id && runtime.selectedVenueName ? runtime.selectedVenueName : null,
+    nearbyVenues,
+    lastKnownCoords: {
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      accuracy: coords.accuracy ?? null,
+    },
     dwellEnteredAt: enteredAt,
     dwellLastSeenAt: lastSeenAt,
     prompt: nextPrompt,
   });
 
-  if (venuePreference?.muted || isCooldownActive(venuePreference?.cooldownUntil ?? null)) return;
-  if (nextPrompt && !nextPrompt.responded) return;
-  if (Date.now() - new Date(enteredAt).getTime() < VENUE_DWELL_MS) return;
+  if (venuePreference?.muted) {
+    console.info("[location] venue is muted, skipping prompt");
+    return;
+  }
+  if (isCooldownActive(venuePreference?.cooldownUntil ?? null)) {
+    console.info("[location] venue is cooling down, skipping prompt", {
+      cooldownUntil: venuePreference?.cooldownUntil,
+    });
+    return;
+  }
+  if (nextPrompt && !nextPrompt.responded) {
+    console.info("[location] outstanding prompt already exists for venue, skipping");
+    return;
+  }
+  const dwellMs = Date.now() - new Date(enteredAt).getTime();
+  if (dwellMs < VENUE_DWELL_MS) {
+    console.info("[location] dwell threshold not reached", {
+      dwellMs,
+      dwellRemainingMs: VENUE_DWELL_MS - dwellMs,
+    });
+    return;
+  }
 
+  console.info("[location] scheduling venue prompt", {
+    venueId: venue.id,
+    venueName: venue.name,
+  });
   await Notifications.scheduleNotificationAsync({
     content: {
       title: "Open to chat?",
@@ -202,6 +355,11 @@ export async function handleVenuePromptResponse(response: NotificationResponse) 
   const data = response.notification.request.content.data ?? {};
   const venueId = String(data.venueId ?? "");
   const venueName = String(data.venueName ?? "");
+  console.info("[location] notification response received", {
+    actionIdentifier: response.actionIdentifier,
+    venueId,
+    venueName,
+  });
   if (!venueId || !venueName) return { action: "unknown" as const };
 
   if (response.actionIdentifier === "yes" || response.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER) {
@@ -226,6 +384,7 @@ export async function handleVenuePromptResponse(response: NotificationResponse) 
 export async function consumePendingActivationLaunch() {
   const runtime = await getLocationRuntimeState();
   if (!runtime.launchActivationFromNotification) return false;
+  console.info("[location] consuming pending activation launch");
   await updateLocationRuntimeState((current) => ({
     ...current,
     launchActivationFromNotification: false,
@@ -239,6 +398,7 @@ export async function saveLastActivationDefaults(input: {
   durationMinutes: number;
   hintText: string;
 }) {
+  console.info("[location] saving activation defaults", input);
   await saveActivationDefaults({
     intent: input.intent,
     vibes: input.vibes,
@@ -252,6 +412,7 @@ export async function loadLastActivationDefaults() {
 }
 
 export async function setVenueHidden(venueId: string, venueName: string, hidden: boolean) {
+  console.info("[location] updating hidden venue preference", { venueId, venueName, hidden });
   return upsertVenuePreference(venueId, venueName, (current) => ({
     ...current,
     hidden,
@@ -260,6 +421,7 @@ export async function setVenueHidden(venueId: string, venueName: string, hidden:
 }
 
 export async function setVenueMuted(venueId: string, venueName: string, muted: boolean) {
+  console.info("[location] updating muted venue preference", { venueId, venueName, muted });
   return upsertVenuePreference(venueId, venueName, (current) => ({
     ...current,
     muted,

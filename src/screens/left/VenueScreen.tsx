@@ -1,20 +1,26 @@
 import { Text, View } from "react-native";
 import type { VenueContextSummary } from "../../types/left-domain";
 import { styles } from "../../app/leftTheme";
-import { Chip, EnergyPill, PrimaryButton } from "../../components/left/ui";
+import { Chip, EnergyPill, GhostButton, PrimaryButton } from "../../components/left/ui";
 
 export function VenueScreen({
   venue,
   sessionVisible,
   venueHidden,
+  canChooseVenue,
   onActivate,
   onOpenFeed,
+  onChooseVenue,
+  onAddVenue,
 }: {
   venue: VenueContextSummary;
   sessionVisible: boolean;
   venueHidden: boolean;
+  canChooseVenue: boolean;
   onActivate: () => void;
   onOpenFeed: () => void;
+  onChooseVenue: () => void;
+  onAddVenue: () => void;
 }) {
   return (
     <View style={styles.venuePage}>
@@ -41,6 +47,8 @@ export function VenueScreen({
           <PrimaryButton label="Open nearby feed" onPress={onOpenFeed} />
         )}
       </View>
+      {canChooseVenue ? <GhostButton label="Choose a different nearby venue" onPress={onChooseVenue} /> : null}
+      <GhostButton label="Can't find your venue? Add +" onPress={onAddVenue} />
     </View>
   );
 }
