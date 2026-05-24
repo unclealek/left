@@ -121,7 +121,7 @@ export function SettingsScreen({
       <View style={styles.settingsInfoCard}>
         <Text style={styles.settingsInfoTitle}>Account</Text>
         <Text style={styles.settingsInfoBody}>
-          Signed in with {user.authProvider}. Account deletion is handled as a request because auth-user deletion requires secure server-side access.
+          Signed in with {user.authProvider}. Identity removal strips direct identity fields while retaining selected product records like hints, venue history, and safety zones.
         </Text>
       </View>
 
@@ -130,10 +130,10 @@ export function SettingsScreen({
         <GhostButton
           label={
             deletionState === "submitting"
-              ? "Submitting deletion request..."
+              ? "Submitting identity removal..."
               : deletionState === "submitted"
-                ? "Deletion request submitted"
-                : "Request account deletion"
+                ? "Identity removal requested"
+                : "Request identity removal"
           }
           onPress={onRequestDeletion}
           destructive
@@ -142,10 +142,10 @@ export function SettingsScreen({
 
       {saveState === "error" ? <Text style={styles.errorText}>We could not save your profile settings yet.</Text> : null}
       {deletionState === "submitted" ? (
-        <Text style={styles.settingsSuccessText}>We recorded your deletion request and support can process it from the backend.</Text>
+        <Text style={styles.settingsSuccessText}>We recorded your identity-removal request and the backend can now process it under the retention policy.</Text>
       ) : null}
       {deletionState === "error" ? (
-        <Text style={styles.errorText}>We could not submit your deletion request yet.</Text>
+        <Text style={styles.errorText}>We could not submit your identity-removal request yet.</Text>
       ) : null}
     </View>
   );

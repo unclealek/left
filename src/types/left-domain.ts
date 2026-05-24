@@ -174,18 +174,22 @@ export type DeletionRequestStatus =
   | "rejected"
   | "cancelled";
 
-export interface AccountDeletionRequest {
+export interface IdentityRemovalRequest {
   id: string;
   userId: string | null;
   profileUserId: string | null;
-  requestedEmail: string;
-  requestedName: string | null;
+  contactEmail: string;
+  contactName: string | null;
   authProvider: AuthProvider | null;
+  requestKind: "identity_removal";
+  identityFieldsToRemove: string[];
+  retainedRecordClasses: string[];
   payload: Record<string, unknown>;
   status: DeletionRequestStatus;
   requestedAt: string;
   processedAt: string | null;
   failureReason: string | null;
+  processingNotes: string | null;
 }
 
 export interface NearbyFeedItem {

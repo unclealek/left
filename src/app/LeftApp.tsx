@@ -383,8 +383,8 @@ export function LeftApp() {
   async function requestAccountDeletion() {
     if (!user) return;
     Alert.alert(
-      "Request account deletion",
-      "This will submit a backend deletion request for your account. Your data is not deleted immediately from the device action alone.",
+      "Request identity removal",
+      "This submits a backend request to remove direct identity fields while retaining selected product records like hints, venue history, and safety zones.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -404,12 +404,21 @@ export function LeftApp() {
     const {
       data: { user: authUser },
     } = await supabase.auth.getUser();
-    const { error } = await supabase.from("account_deletion_requests").insert({
+    const { error } = await supabase.from("identity_removal_requests").insert({
       user_id: user.id,
       profile_user_id: user.id,
-      requested_email: authUser?.email ?? "unknown@left.local",
-      requested_name: user.firstName,
+      contact_email: authUser?.email ?? "unknown@left.local",
+      contact_name: user.firstName,
       auth_provider: user.authProvider,
+      request_kind: "identity_removal",
+      identity_fields_to_remove: [
+        "email",
+        "first_name",
+        "provider_subject",
+        "auth_provider_metadata",
+        "direct_auth_credentials",
+      ],
+      retained_record_classes: ["hints", "venue_history", "safety_zones"],
       payload: {
         defaultIntent: user.defaultIntent,
         defaultVibes: user.defaultVibes,
@@ -420,14 +429,17 @@ export function LeftApp() {
     if (error) {
       if (error.code === "23505") {
         setDeletionRequestState("submitted");
-        Alert.alert("Deletion request", "You already have an open deletion request.");
+        Alert.alert("Identity removal", "You already have an open identity-removal request.");
         return;
       }
       setDeletionRequestState("error");
       return;
     }
     setDeletionRequestState("submitted");
-    Alert.alert("Deletion request submitted", "We recorded your request in the backend for processing.");
+    Alert.alert(
+      "Identity removal requested",
+      "We recorded your request. Direct identity fields can now be removed by the backend while retained records stay in place.",
+    );
   }
 
   function goToFooterDestination(destination: FooterDestination) {
