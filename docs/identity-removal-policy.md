@@ -2,7 +2,18 @@
 
 `LEFT` supports identity removal rather than full historical erasure.
 
-## What Is Removed Or Redacted
+## Summary
+
+When a user submits a "user account deletion request" in the current product, `LEFT` does **not** fully erase all records tied to that user. The implemented behavior is:
+
+- remove or redact direct identity fields
+- clear live auth/session access where supported by the auth schema
+- keep selected product records and product preference fields
+- keep an audit/request record of the identity-removal action
+
+This is an identity-removal flow, not a full data-erasure flow.
+
+## Deleted Or Redacted
 
 When an identity-removal request is processed successfully, the current implementation removes or redacts direct identity fields as follows:
 
@@ -19,7 +30,7 @@ When an identity-removal request is processed successfully, the current implemen
 - `public.users.provider_subject`
   Replaced with a redacted value in the form `identity-removed-<user_id>`.
 
-The backend also attempts to remove live auth/session-related records where the project auth schema supports them, including:
+The backend also attempts to delete live auth/session-related records where the project auth schema supports them, including:
 
 - `auth.identities`
 - `auth.sessions`
@@ -30,16 +41,47 @@ The backend also attempts to remove live auth/session-related records where the 
 
 These cleanup steps are schema-aware and only run when the target table and expected `user_id` column are present.
 
-## What Stays
+## Kept
 
-The current product policy intentionally retains selected product records and links them to the existing product-side user UUID:
+The current product policy intentionally keeps the following product records and data:
 
 - hints
 - venue-linked history
 - safety zones
 - other venue/session-linked product records that are not directly redacted by the identity-removal processor
 
-This means `LEFT` is implementing identity removal, not full deletion or full anonymized archival. Direct identity fields are removed, but product records remain in place under the current retention policy.
+These retained records remain linked to the existing product-side user UUID under the current implementation.
+
+## Kept In `public.users`
+
+The current implementation does **not** remove or reset these profile/preference fields:
+
+- `public.users.avatar_style`
+- `public.users.default_intent`
+- `public.users.default_vibes`
+- `public.users.focus_mode_enabled`
+- `public.users.prompts_enabled`
+- `public.users.onboarding_completed`
+- `public.users.created_at`
+- `public.users.updated_at`
+
+These fields are currently preserved as retained product/profile state.
+
+## Kept In Related Product Tables
+
+The current implementation does **not** delete or anonymize rows from these product tables solely because an identity-removal request succeeded:
+
+- `public.presence_sessions`
+- `public.prompt_events`
+- `public.waves`
+- `public.approach_attempts`
+- `public.contact_exchange_intents`
+- `public.hidden_users`
+- `public.blocks`
+- `public.reports`
+- `public.safety_zones`
+
+If those rows contain hints, venue history, safety zones, or other product activity, they remain in place under the current retention policy.
 
 ## Request Record Retention
 
@@ -53,6 +95,8 @@ After successful processing:
 - `contact_name` is set to `null`
 - `processing_notes` records the outcome
 
+The request row itself is **not** deleted after completion.
+
 ## User Session Behavior
 
 The intended in-app flow is:
@@ -62,6 +106,17 @@ The intended in-app flow is:
 3. On successful in-app completion, the user is signed out.
 
 If backend processing is completed manually or outside the normal in-app success path, the device may still hold a cached local session until the user signs out or the session is otherwise cleared.
+
+## What This Means In Practice
+
+After a successful identity-removal request:
+
+- the user should no longer have direct identifying profile/auth fields in their account
+- the user’s live auth/session access should be cleared where supported
+- the user’s retained product history and retained preference fields still remain in the database
+- the identity-removal request itself remains stored as an audit record
+
+This means the current system removes direct identity, but it does **not** fully delete all user-associated data.
 
 ## Backend Expectations
 
