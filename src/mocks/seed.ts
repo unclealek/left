@@ -12,6 +12,7 @@ export const viewerSeed: AppUser = {
   approachPrompt: "What are you working on that feels genuinely exciting?",
   focusModeEnabled: false,
   promptsEnabled: true,
+  identityRemoved: false,
   onboardingCompleted: false,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),

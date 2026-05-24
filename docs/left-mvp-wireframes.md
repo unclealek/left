@@ -561,8 +561,10 @@ The current account-removal flow in the app is:
 2. user taps `Request identity removal`
 3. app creates `public.identity_removal_requests`
 4. app calls the backend processor
-5. direct identity fields are redacted if processing succeeds
-6. selected product records are retained under policy
+5. backend redacts direct identity fields and marks `public.users.identity_removed = true` if processing succeeds
+6. app signs the user out after the request flow completes
+7. future app bootstrap must force local sign-out if a cached session still exists for a profile marked `identity_removed = true`
+8. selected product records are retained under policy
 
 This flow is documented in more detail in [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/left%20app/docs/identity-removal-policy.md).
 

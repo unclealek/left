@@ -28,6 +28,7 @@ export type UserProfileRow = {
   approach_prompt: string;
   focus_mode_enabled: boolean;
   prompts_enabled: boolean;
+  identity_removed: boolean;
   onboarding_completed: boolean;
   created_at: string;
   updated_at: string;

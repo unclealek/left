@@ -68,6 +68,7 @@ export interface AppUser {
   approachPrompt: string;
   focusModeEnabled: boolean;
   promptsEnabled: boolean;
+  identityRemoved: boolean;
   onboardingCompleted: boolean;
   createdAt: string;
   updatedAt: string;

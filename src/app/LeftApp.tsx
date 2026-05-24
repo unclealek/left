@@ -126,8 +126,15 @@ export function LeftApp() {
     const profile = data as UserProfileRow | null;
     logAuthDebug("profile lookup complete", {
       hasProfile: !!profile,
+      identityRemoved: profile?.identity_removed ?? null,
       onboardingCompleted: profile?.onboarding_completed ?? null,
     });
+    if (profile?.identity_removed) {
+      logAuthDebug("identity removed account detected", { userId: profile.id });
+      await forceLocalSignOut();
+      setAuthError("This account has been removed.");
+      return;
+    }
     if (!profile || !profile.onboarding_completed) {
       setUser(null);
       setScreen("onboarding-name");
@@ -381,7 +388,17 @@ export function LeftApp() {
 
   async function signOut() {
     await supabase.auth.signOut();
+    clearLocalSessionState();
+  }
+
+  async function forceLocalSignOut() {
+    await supabase.auth.signOut();
+    clearLocalSessionState();
+  }
+
+  function clearLocalSessionState() {
     setUser(null);
+    setAuthProvider(null);
     setSelectedProfile(null);
     setSessionVisible(false);
     setApproach(null);
@@ -466,6 +483,14 @@ export function LeftApp() {
       Alert.alert(
         "Identity removal queued",
         "We recorded your request, but backend processing did not finish yet. Your request is still on file for follow-up.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              void signOut();
+            },
+          },
+        ],
       );
       return;
     }
@@ -616,6 +641,7 @@ function mapProfileToAppUser(profile: UserProfileRow): AppUser {
     approachPrompt: profile.approach_prompt,
     focusModeEnabled: profile.focus_mode_enabled,
     promptsEnabled: profile.prompts_enabled,
+    identityRemoved: profile.identity_removed,
     onboardingCompleted: profile.onboarding_completed,
     createdAt: profile.created_at,
     updatedAt: profile.updated_at,
