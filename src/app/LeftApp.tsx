@@ -9,6 +9,8 @@ import {
   AUTH_CALLBACK_PATH,
   NATIVE_AUTH_REDIRECT,
   SESSION_NAV_SCREENS,
+  defaultApproachPrompt,
+  defaultProfilePrompt,
   getFooterDestination,
   type FooterDestination,
   type Screen,
@@ -250,6 +252,8 @@ export function LeftApp() {
         avatar_style: nextUser.avatarStyle,
         default_intent: nextUser.defaultIntent,
         default_vibes: nextUser.defaultVibes,
+        profile_prompt: nextUser.profilePrompt,
+        approach_prompt: nextUser.approachPrompt,
         focus_mode_enabled: nextUser.focusModeEnabled,
         prompts_enabled: nextUser.promptsEnabled,
         onboarding_completed: nextUser.onboardingCompleted,
@@ -336,6 +340,8 @@ export function LeftApp() {
     avatarStyle: AvatarStyle;
     defaultIntent: AppUser["defaultIntent"];
     defaultVibes: string[];
+    profilePrompt: string;
+    approachPrompt: string;
   }) {
     if (!user) return;
     setSettingsSaveState("saving");
@@ -345,6 +351,8 @@ export function LeftApp() {
       avatarStyle: input.avatarStyle,
       defaultIntent: input.defaultIntent,
       defaultVibes: input.defaultVibes,
+      profilePrompt: input.profilePrompt.trim() || defaultProfilePrompt,
+      approachPrompt: input.approachPrompt.trim() || defaultApproachPrompt,
       updatedAt: new Date().toISOString(),
     };
     const { error } = await supabase
@@ -354,6 +362,8 @@ export function LeftApp() {
         avatar_style: nextUser.avatarStyle,
         default_intent: nextUser.defaultIntent,
         default_vibes: nextUser.defaultVibes,
+        profile_prompt: nextUser.profilePrompt,
+        approach_prompt: nextUser.approachPrompt,
       })
       .eq("id", user.id);
     if (error) {
@@ -404,28 +414,32 @@ export function LeftApp() {
     const {
       data: { user: authUser },
     } = await supabase.auth.getUser();
-    const { error } = await supabase.from("identity_removal_requests").insert({
-      user_id: user.id,
-      profile_user_id: user.id,
-      contact_email: authUser?.email ?? "unknown@left.local",
-      contact_name: user.firstName,
-      auth_provider: user.authProvider,
-      request_kind: "identity_removal",
-      identity_fields_to_remove: [
-        "email",
-        "first_name",
-        "provider_subject",
-        "auth_provider_metadata",
-        "direct_auth_credentials",
-      ],
-      retained_record_classes: ["hints", "venue_history", "safety_zones"],
-      payload: {
-        defaultIntent: user.defaultIntent,
-        defaultVibes: user.defaultVibes,
-        focusModeEnabled: user.focusModeEnabled,
-        promptsEnabled: user.promptsEnabled,
-      },
-    });
+    const { data: requestRow, error } = await supabase
+      .from("identity_removal_requests")
+      .insert({
+        user_id: user.id,
+        profile_user_id: user.id,
+        contact_email: authUser?.email ?? "unknown@left.local",
+        contact_name: user.firstName,
+        auth_provider: user.authProvider,
+        request_kind: "identity_removal",
+        identity_fields_to_remove: [
+          "email",
+          "first_name",
+          "provider_subject",
+          "auth_provider_metadata",
+          "direct_auth_credentials",
+        ],
+        retained_record_classes: ["hints", "venue_history", "safety_zones"],
+        payload: {
+          defaultIntent: user.defaultIntent,
+          defaultVibes: user.defaultVibes,
+          focusModeEnabled: user.focusModeEnabled,
+          promptsEnabled: user.promptsEnabled,
+        },
+      })
+      .select("id")
+      .single();
     if (error) {
       if (error.code === "23505") {
         setDeletionRequestState("submitted");
@@ -433,12 +447,41 @@ export function LeftApp() {
         return;
       }
       setDeletionRequestState("error");
+      Alert.alert("Identity removal failed", "We could not create your identity-removal request.");
       return;
     }
+
+    if (!requestRow?.id) {
+      setDeletionRequestState("error");
+      Alert.alert("Identity removal failed", "We could not start identity removal.");
+      return;
+    }
+
+    const { error: processingError } = await supabase.functions.invoke("process-identity-removal", {
+      body: { requestId: requestRow.id },
+    });
+
+    if (processingError) {
+      setDeletionRequestState("submitted");
+      Alert.alert(
+        "Identity removal queued",
+        "We recorded your request, but backend processing did not finish yet. Your request is still on file for follow-up.",
+      );
+      return;
+    }
+
     setDeletionRequestState("submitted");
     Alert.alert(
-      "Identity removal requested",
-      "We recorded your request. Direct identity fields can now be removed by the backend while retained records stay in place.",
+      "Identity removed",
+      "Direct identity fields were removed. Your retained records stay in place under the current policy.",
+      [
+        {
+          text: "OK",
+          onPress: () => {
+            void signOut();
+          },
+        },
+      ],
     );
   }
 
@@ -509,10 +552,10 @@ export function LeftApp() {
           <FeedScreen venue={venueSummary} feed={visibleFeed} onOpenProfile={openProfile} onWave={sendWave} onOpenSafety={() => setScreen("safety")} />
         )}
         {screen === "profile" && selectedProfile && (
-          <ProfileScreen item={selectedProfile} onBack={() => setScreen("feed")} onWave={() => sendWave(selectedProfile)} onApproach={startApproach} onHide={hideUser} onOpenSafety={() => setScreen("safety")} />
+          <ProfileScreen item={selectedProfile} profilePrompt={user?.profilePrompt ?? defaultProfilePrompt} onBack={() => setScreen("feed")} onWave={() => sendWave(selectedProfile)} onApproach={startApproach} onHide={hideUser} onOpenSafety={() => setScreen("safety")} />
         )}
         {screen === "approach" && selectedProfile && approach && (
-          <ApproachScreen item={selectedProfile} onCancel={() => setScreen("feed")} onConfirmConnected={confirmConnected} onOpenSafety={() => setScreen("safety")} />
+          <ApproachScreen item={selectedProfile} approachPrompt={user?.approachPrompt ?? defaultApproachPrompt} onCancel={() => setScreen("feed")} onConfirmConnected={confirmConnected} onOpenSafety={() => setScreen("safety")} />
         )}
         {screen === "safety" && (
           <SafetyScreen venueName={venueSummary.venueName} sessionVisible={sessionVisible} onBack={() => setScreen(selectedProfile ? "profile" : "feed")} onPauseVisibility={() => setSessionVisible(false)} onEndSession={() => { setSessionVisible(false); setScreen("venue"); }} onHideVenue={hideVenuePermanently} />
@@ -569,6 +612,8 @@ function mapProfileToAppUser(profile: UserProfileRow): AppUser {
     avatarStyle: profile.avatar_style,
     defaultIntent: profile.default_intent,
     defaultVibes: profile.default_vibes,
+    profilePrompt: profile.profile_prompt,
+    approachPrompt: profile.approach_prompt,
     focusModeEnabled: profile.focus_mode_enabled,
     promptsEnabled: profile.prompts_enabled,
     onboardingCompleted: profile.onboarding_completed,

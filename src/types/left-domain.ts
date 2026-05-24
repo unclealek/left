@@ -64,6 +64,8 @@ export interface AppUser {
   avatarStyle: AvatarStyle;
   defaultIntent: IntentType | null;
   defaultVibes: string[];
+  profilePrompt: string;
+  approachPrompt: string;
   focusModeEnabled: boolean;
   promptsEnabled: boolean;
   onboardingCompleted: boolean;

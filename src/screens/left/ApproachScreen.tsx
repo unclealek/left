@@ -6,11 +6,13 @@ import { GhostButton, InfoBlock, PrimaryButton } from "../../components/left/ui"
 
 export function ApproachScreen({
   item,
+  approachPrompt,
   onCancel,
   onConfirmConnected,
   onOpenSafety,
 }: {
   item: NearbyFeedItem;
+  approachPrompt: string;
   onCancel: () => void;
   onConfirmConnected: () => void;
   onOpenSafety: () => void;
@@ -34,9 +36,7 @@ export function ApproachScreen({
           <Text style={styles.infoText}>{item.hintText}</Text>
         </InfoBlock>
         <InfoBlock label="Icebreaker">
-          <Text style={[styles.infoText, styles.icebreakerText]}>
-            "What are you working on that feels genuinely exciting?"
-          </Text>
+          <Text style={[styles.infoText, styles.icebreakerText]}>"{approachPrompt}"</Text>
         </InfoBlock>
       </View>
       <PrimaryButton label="We connected ✓" onPress={onConfirmConnected} />

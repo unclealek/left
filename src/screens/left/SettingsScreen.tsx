@@ -22,6 +22,8 @@ export function SettingsScreen({
     avatarStyle: AvatarStyle;
     defaultIntent: AppUser["defaultIntent"];
     defaultVibes: string[];
+    profilePrompt: string;
+    approachPrompt: string;
   }) => void;
   onOpenSafety: () => void;
   onSignOut: () => void;
@@ -31,12 +33,16 @@ export function SettingsScreen({
   const [avatarStyle, setAvatarStyle] = useState<AvatarStyle>(user.avatarStyle);
   const [defaultIntent, setDefaultIntent] = useState<AppUser["defaultIntent"]>(user.defaultIntent);
   const [defaultVibes, setDefaultVibes] = useState<string[]>(user.defaultVibes);
+  const [profilePrompt, setProfilePrompt] = useState(user.profilePrompt);
+  const [approachPrompt, setApproachPrompt] = useState(user.approachPrompt);
 
   useEffect(() => {
     setFirstName(user.firstName);
     setAvatarStyle(user.avatarStyle);
     setDefaultIntent(user.defaultIntent);
     setDefaultVibes(user.defaultVibes);
+    setProfilePrompt(user.profilePrompt);
+    setApproachPrompt(user.approachPrompt);
   }, [user]);
 
   function toggleVibe(vibe: string) {
@@ -110,10 +116,34 @@ export function SettingsScreen({
         </View>
       </FieldBlock>
 
+      <FieldBlock label="Nearby prompt">
+        <TextInput
+          value={profilePrompt}
+          onChangeText={setProfilePrompt}
+          placeholder="What should Left suggest when you view someone nearby?"
+          placeholderTextColor={T.textMuted}
+          style={styles.input}
+          multiline
+          maxLength={160}
+        />
+      </FieldBlock>
+
+      <FieldBlock label="Approach prompt">
+        <TextInput
+          value={approachPrompt}
+          onChangeText={setApproachPrompt}
+          placeholder="What should Left suggest when you're walking over?"
+          placeholderTextColor={T.textMuted}
+          style={styles.input}
+          multiline
+          maxLength={160}
+        />
+      </FieldBlock>
+
       <View style={styles.settingsActionStack}>
         <PrimaryButton
           label={saveState === "saving" ? "Saving..." : saveState === "saved" ? "Saved ✓" : "Save profile defaults"}
-          onPress={() => onSave({ firstName, avatarStyle, defaultIntent, defaultVibes })}
+          onPress={() => onSave({ firstName, avatarStyle, defaultIntent, defaultVibes, profilePrompt, approachPrompt })}
         />
         <GhostButton label="Safety controls" onPress={onOpenSafety} />
       </View>

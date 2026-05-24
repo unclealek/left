@@ -7,6 +7,7 @@ import { Chip, GhostButton, InfoBlock, PrimaryButton } from "../../components/le
 
 export function ProfileScreen({
   item,
+  profilePrompt,
   onBack,
   onWave,
   onApproach,
@@ -14,6 +15,7 @@ export function ProfileScreen({
   onOpenSafety,
 }: {
   item: NearbyFeedItem;
+  profilePrompt: string;
   onBack: () => void;
   onWave: () => void;
   onApproach: () => void;
@@ -45,9 +47,7 @@ export function ProfileScreen({
           <Text style={styles.infoText}>You both selected AI/startups.</Text>
         </InfoBlock>
         <InfoBlock label="Icebreaker">
-          <Text style={[styles.infoText, styles.icebreakerText]}>
-            "Ask what they're building right now, not what they do generally."
-          </Text>
+          <Text style={[styles.infoText, styles.icebreakerText]}>"{profilePrompt}"</Text>
         </InfoBlock>
       </View>
       <View style={styles.profileActions}>

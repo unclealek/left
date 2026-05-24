@@ -24,6 +24,8 @@ export type UserProfileRow = {
   avatar_style: AvatarStyle;
   default_intent: AppUser["defaultIntent"];
   default_vibes: string[];
+  profile_prompt: string;
+  approach_prompt: string;
   focus_mode_enabled: boolean;
   prompts_enabled: boolean;
   onboarding_completed: boolean;
@@ -49,6 +51,8 @@ export const intents = [
 
 export const vibeOptions = ["AI/startups", "Design", "Travel", "Language exchange", "Creativity"];
 export const durationOptions = [30, 60, 120];
+export const defaultProfilePrompt = "Ask what they're building right now, not what they do generally.";
+export const defaultApproachPrompt = "What are you working on that feels genuinely exciting?";
 
 export const AUTH_CALLBACK_PATH = "auth/callback";
 export const NATIVE_AUTH_REDIRECT = "left://auth/callback";
