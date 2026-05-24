@@ -13,27 +13,55 @@ Source inputs:
 - `left designs/connection_moment/code.html`
 
 Purpose:
-- translate the existing visual mockups into low-fidelity product wireframes
+- translate the visual mockups into low-fidelity product wireframes
 - preserve the MVP flow without locking implementation to current styling
 - make screen structure, hierarchy, and actions explicit for engineering
-- align the wireframes with the V2 product spec and senior design review in `left_design_ui.md` and `left_design.md`
+- reflect the current implemented mobile flow, not only the original concept flow
 
 ## Core Flow
 
 ```mermaid
 flowchart TD
-  A["Background dwell-time detected"] --> B["Visibility prompt"]
-  B --> C["Set intent + vibe + duration + hint"]
-  C --> D["Become visible"]
-  D --> E["Nearby feed / venue context"]
-  E --> F["Open soft-anonymity profile"]
-  F --> G["Wave or I'm going over"]
-  G --> H["Approaching micro-state"]
-  H --> I["Real-world conversation"]
-  E --> J["Safety controls"]
-  F --> J
-  H --> J
+  A["Google auth"] --> B["Onboarding: first name"]
+  B --> C["Onboarding: avatar"]
+  C --> D["Onboarding: location"]
+  D --> E["Venue home"]
+  E --> F["Activation: intent + vibes + duration + hint"]
+  F --> G["Nearby feed"]
+  G --> H["Soft-anonymity profile"]
+  H --> I["Approach micro-state"]
+  I --> J["Real-world conversation"]
+  G --> K["Safety controls"]
+  H --> K
+  I --> K
+  E --> L["Settings / You"]
+  G --> L
+  L --> M["Identity removal request"]
 ```
+
+## Current App Shell
+
+The implemented app currently uses this top-level screen set:
+
+- loading
+- auth
+- onboarding name
+- onboarding avatar
+- onboarding location
+- venue
+- activate
+- feed
+- profile
+- approach
+- safety
+- settings
+
+The current bottom navigation is persistent across in-session screens and uses four destinations:
+
+- `Home`
+- `Nearby`
+- `Session`
+- `You`
 
 ## Canonical MVP Discovery Surface
 
@@ -48,20 +76,115 @@ Engineering implication:
 - build one discovery data model and one primary click path
 - do not split the MVP into competing map-first and feed-first experiences
 
-## MVP Screen Priority
+## Current Screen Priority
 
-The V2 design review makes the screen priority explicit. Wireframe these first:
+The current product flow makes these screens highest priority:
 
-1. Presence Activation Sheet
-2. Nearby Feed Card
-3. Approaching Micro-State
+1. Google auth and onboarding
+2. Venue home + footer navigation
+3. Presence activation
+4. Nearby feed
+5. Soft-anonymity profile
+6. Approaching micro-state
+7. Settings / identity removal
 
-The venue context, bubble visualization, and safety surfaces support this core loop.
+The venue context, safety surfaces, and account flows support this core loop.
 
-## Screen 1: Presence Activation Sheet
+## Screen 0: Auth
 
 Goal:
-- convert a prompted user into an intentionally visible participant with minimal friction
+- get the user into the product through native Google OAuth
+- bootstrap an existing profile or route a new user into onboarding
+
+Primary actions:
+- continue with Google
+
+Low-fi wireframe:
+
+```text
++--------------------------------------------------+
+| LEFT                                             |
+| ambient intro / positioning copy                 |
+|                                                  |
+| [ Continue with Google ]                         |
+|                                                  |
+| auth error state if needed                       |
++--------------------------------------------------+
+```
+
+Rules:
+- Google is the primary working auth provider today
+- auth returns into the native app via `left://auth/callback`
+- no local email/password flow in the current app
+
+## Screen 0.1: Onboarding
+
+Goal:
+- collect the minimum data needed to create a usable profile
+
+Primary actions:
+- set first name
+- choose avatar style
+- allow location
+- finish onboarding
+
+Low-fi wireframe:
+
+```text
++--------------------------------------------------+
+| Step 1: first name                               |
+| [ Kelvin____________________ ]                   |
+| [ Continue ]                                     |
++--------------------------------------------------+
+| Step 2: avatar style                             |
+| [geometric] [abstract] [minimal] [soft]          |
+| [ Continue ]                                     |
++--------------------------------------------------+
+| Step 3: location                                 |
+| [ Enable location ]                              |
+| [ Finish ]                                       |
++--------------------------------------------------+
+```
+
+Rules:
+- onboarding is three-step and linear in the current build
+- finishing onboarding persists the `public.users` profile row
+
+## Screen 1: Venue Home
+
+Goal:
+- provide the current venue pulse and the main entry into discovery
+- show the active footer summary state for venue, vibe, and intent
+
+Primary actions:
+- open activation flow
+- open nearby feed when already visible
+- switch via footer to nearby, session, or settings
+
+Low-fi wireframe:
+
+```text
++--------------------------------------------------+
+| Venue home                                       |
++--------------------------------------------------+
+| Venue name                     Energy badge      |
+| Pulse copy / visible count                       |
+| Active vibes recently                            |
+|                                                  |
+| [ Become visible ] or [ Open nearby ]            |
++--------------------------------------------------+
+| Footer: Home | Nearby | Session | You            |
++--------------------------------------------------+
+```
+
+Rules:
+- this is the main home state after auth/onboarding
+- footer stays persistent across in-session screens
+
+## Screen 2: Presence Activation Sheet
+
+Goal:
+- convert a user into an intentionally visible participant with minimal friction
 - preserve opt-in presence and temporary visibility
 
 Primary actions:
@@ -75,34 +198,34 @@ Low-fi wireframe:
 
 ```text
 +--------------------------------------------------+
-| Prompt / entry                                   |
-| Open to interaction nearby?                      |
+| Set your presence                                |
 +--------------------------------------------------+
-|                bottom sheet                      |
-|  Intent                                          |
-|  [Networking] [Open to chat] [Group discussion]  |
+| Intent                                           |
+| [Networking] [Open to chat] [Group discussion]   |
 |                                                  |
-|  Setting vibe                                    |
-|  [AI/startups] [Design] [Travel] [Other]         |
+| Vibes                                            |
+| [AI/startups] [Design] [Travel] [Creativity]     |
 |                                                  |
-|  Duration                                        |
-|  [30m] [1h active] [2h]                          |
+| Duration                                         |
+| [30m] [60m] [120m]                               |
 |                                                  |
-|  Hint card                                       |
-|  "Grey hoodie, corner seat"                      |
+| Hint card                                        |
+| "Grey hoodie, corner seat"                       |
 |                                                  |
-|  [ Become visible ]                              |
+| [ Become visible ]                               |
++--------------------------------------------------+
+| Footer: Home | Nearby | Session | You            |
 +--------------------------------------------------+
 ```
 
 Rules:
 - one primary intent at a time
-- one or more vibes allowed
+- up to two vibes in the current implementation
 - duration must expire automatically
 - hint is optional but strongly encouraged
-- defaults should preload from the last successful session
+- defaults preload from saved profile state where applicable
 
-## Screen 2: Nearby Feed Card
+## Screen 3: Nearby Feed Card
 
 Goal:
 - show enough contextual information to decide whether to approach without oversharing
@@ -119,7 +242,7 @@ Low-fi wireframe:
 ```text
 +--------------------------------------------------+
 | Venue name                     Energy badge      |
-| N visible now                                     |
+| N visible now                                    |
 +--------------------------------------------------+
 | Kelvin                                           |
 | [Networking] [AI/startups]                       |
@@ -128,7 +251,9 @@ Low-fi wireframe:
 |                                                  |
 | [ Wave ] [ View profile ] [ Hide ]               |
 +--------------------------------------------------+
-| Safety FAB                                       |
+| [ Safety ]                                       |
++--------------------------------------------------+
+| Footer: Home | Nearby | Session | You            |
 +--------------------------------------------------+
 ```
 
@@ -138,7 +263,7 @@ Rules:
 - exact coordinates are not shown
 - no persistent “save user” action in MVP
 
-## Screen 3: Soft-Anonymity Profile
+## Screen 4: Soft-Anonymity Profile
 
 Goal:
 - provide enough signal to decide whether to engage
@@ -165,11 +290,13 @@ Low-fi wireframe:
 | You both selected AI/startups                    |
 |                                                  |
 | Icebreaker                                       |
-| "What's the most exciting project..."            |
+| customizable nearby prompt                       |
 |                                                  |
 | [ Wave ]     [ I'm going over ]                  |
 +--------------------------------------------------+
-| Safety FAB                                       |
+| [ Safety ]                                       |
++--------------------------------------------------+
+| Footer: Home | Nearby | Session | You            |
 +--------------------------------------------------+
 ```
 
@@ -179,9 +306,10 @@ Rules:
 - avatar and vibe become more prominent after opening the profile
 - intent should be surfaced when it matches the viewer's context
 - mutual context should be surfaced above generic bio content
+- icebreaker prompt is user-customizable from settings
 - no chat entry point in MVP
 
-## Screen 4: Approaching Micro-State
+## Screen 5: Approaching Micro-State
 
 Goal:
 - support an in-person connection attempt with clear temporal pressure
@@ -208,11 +336,14 @@ Low-fi wireframe:
 |  Blue headphones                                 |
 |                                                  |
 |  Icebreaker prompt                               |
-|  "What's the most exciting project..."           |
+|  customizable approach prompt                    |
 |                                                  |
-|  [ I'm going over ]                              |
 |  [ We connected! ]                               |
 |  [ Cancel ]                                      |
++--------------------------------------------------+
+| [ Safety ]                                       |
++--------------------------------------------------+
+| Footer: Home | Nearby | Session | You            |
 +--------------------------------------------------+
 ```
 
@@ -221,8 +352,9 @@ Rules:
 - timer should expire automatically
 - post-expiry state must close the encounter or require explicit reset
 - this is the explicit handoff from digital confidence to physical action
+- approach prompt is user-customizable from settings
 
-## Screen 5: Venue Pulse / Empty State
+## Screen 6: Venue Pulse / Empty State
 
 Goal:
 - prevent low-density venues from feeling broken or abandoned
@@ -255,7 +387,7 @@ Rules:
 - empty state must explain low-density conditions
 - venue pulse should invite action rather than imply failure
 
-## Screen 6: Safety Controls
+## Screen 7: Safety Controls
 
 Goal:
 - give the user a visible escape hatch at all stages
@@ -292,7 +424,61 @@ Rules:
 - hiding or ending a session should be fast and reversible where safe
 - blocking/reporting should require minimal effort
 
-## Screen 7: Bubble Visualization Layer
+## Screen 8: Settings / You
+
+Goal:
+- give the signed-in user a dedicated place for profile defaults, prompt customization, sign-out, and identity removal
+
+Primary actions:
+- edit first name
+- edit avatar style
+- edit default intent
+- edit default vibes
+- edit nearby prompt
+- edit approach prompt
+- open safety controls
+- sign out
+- request identity removal
+
+Low-fi wireframe:
+
+```text
++--------------------------------------------------+
+| Your profile                                     |
+| avatar + signed-in state                         |
++--------------------------------------------------+
+| First name                                       |
+| [ Kelvin____________________ ]                   |
+|                                                  |
+| Avatar style                                     |
+| [geometric] [abstract] [minimal] [soft]          |
+|                                                  |
+| Default intent / vibes                           |
+| [Networking] [AI/startups] [Design]              |
+|                                                  |
+| Nearby prompt                                    |
+| [ Ask what they're building...__________ ]       |
+|                                                  |
+| Approach prompt                                  |
+| [ What are you working on...___________ ]        |
+|                                                  |
+| [ Save profile defaults ]                        |
+| [ Safety controls ]                              |
+|                                                  |
+| Account                                          |
+| [ Sign out ]                                     |
+| [ Request identity removal ]                     |
++--------------------------------------------------+
+| Footer: Home | Nearby | Session | You            |
++--------------------------------------------------+
+```
+
+Rules:
+- prompt customization is persisted on the user profile
+- account actions live under `You`, not under safety
+- identity removal is not full deletion; it follows the retained-record policy
+
+## Screen 9: Bubble Visualization Layer
 
 Goal:
 - reinforce the ambient visual identity of the product
@@ -325,7 +511,7 @@ Rules:
 - no discovery-only fields should exist here
 - if engineering bandwidth is limited, this layer can ship after the nearby feed
 
-## Screen 7: Connection Moment
+## Screen 10: Connection Moment
 
 Goal:
 - represent the strongest mutual-interest state before or during in-person contact
@@ -355,17 +541,34 @@ Low-fi wireframe:
 
 ## MVP Navigation Model
 
-- default entry: dwell-time prompt or current venue context
+- default entry: Google auth or saved session bootstrap
+- new user entry: onboarding name -> avatar -> location
+- signed-in default entry: venue home
 - primary conversion action: activation sheet
 - nearby feed is the primary discovery surface
-- profile opens as modal sheet from feed
+- profile opens from feed
 - bubble visualization, if present, opens the same profile objects as the feed
 - approaching micro-state is a focused full-screen mode
-- safety is always reachable from a persistent FAB or top-level action
+- safety is reachable from feed, profile, approach, and settings
+- bottom footer navigation is persistent across in-session screens
+- settings / `You` is the account and customization destination
+
+## Identity Removal Flow
+
+The current account-removal flow in the app is:
+
+1. user opens `You`
+2. user taps `Request identity removal`
+3. app creates `public.identity_removal_requests`
+4. app calls the backend processor
+5. direct identity fields are redacted if processing succeeds
+6. selected product records are retained under policy
+
+This flow is documented in more detail in [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/left%20app/docs/identity-removal-policy.md).
 
 ## Open Gaps Before Build
 
-- whether display names are first names only or aliases plus first names
+- whether retained profile preference fields should also be reset during identity removal
 - the exact progressive reveal rule for name, avatar, intent, and vibe
 - whether discovery is strictly venue-based or broader area-based
 - whether wave requires reciprocal acceptance before approach
