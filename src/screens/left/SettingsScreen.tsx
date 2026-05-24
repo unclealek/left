@@ -4,19 +4,26 @@ import type { AppUser, AvatarStyle } from "../../types/left-domain";
 import { AVATAR_GLYPHS, avatarStyles, intents, vibeOptions } from "../../app/leftConfig";
 import { T, styles } from "../../app/leftTheme";
 import { GhostButton, FieldBlock, PrimaryButton, SelectChip } from "../../components/left/ui";
+import type { VenuePreference } from "../../features/location/location-storage";
 
 export function SettingsScreen({
   user,
   saveState,
   deletionState,
+  venuePreferences,
+  locationStatus,
   onSave,
   onOpenSafety,
+  onClearVenueHidden,
+  onClearVenueMuted,
   onSignOut,
   onRequestDeletion,
 }: {
   user: AppUser;
   saveState: "idle" | "saving" | "saved" | "error";
   deletionState: "idle" | "submitting" | "submitted" | "error";
+  venuePreferences: VenuePreference[];
+  locationStatus: string;
   onSave: (input: {
     firstName: string;
     avatarStyle: AvatarStyle;
@@ -26,6 +33,8 @@ export function SettingsScreen({
     approachPrompt: string;
   }) => void;
   onOpenSafety: () => void;
+  onClearVenueHidden: (venueId: string, venueName: string) => void;
+  onClearVenueMuted: (venueId: string, venueName: string) => void;
   onSignOut: () => void;
   onRequestDeletion: () => void;
 }) {
@@ -147,6 +156,34 @@ export function SettingsScreen({
         />
         <GhostButton label="Safety controls" onPress={onOpenSafety} />
       </View>
+
+      <FieldBlock label="Location status">
+        <Text style={styles.settingsInfoBody}>{locationStatus}</Text>
+      </FieldBlock>
+
+      <FieldBlock label="Manage venues">
+        {venuePreferences.length === 0 ? (
+          <Text style={styles.settingsInfoBody}>No blocked or muted venues yet.</Text>
+        ) : (
+          venuePreferences.map((preference) => (
+            <View key={preference.venueId} style={styles.settingsDangerStack}>
+              <Text style={styles.settingsInfoTitle}>{preference.venueName}</Text>
+              {preference.hidden ? (
+                <GhostButton
+                  label="Undo hide at venue"
+                  onPress={() => onClearVenueHidden(preference.venueId, preference.venueName)}
+                />
+              ) : null}
+              {preference.muted ? (
+                <GhostButton
+                  label="Allow notifications here again"
+                  onPress={() => onClearVenueMuted(preference.venueId, preference.venueName)}
+                />
+              ) : null}
+            </View>
+          ))
+        )}
+      </FieldBlock>
 
       <View style={styles.settingsInfoCard}>
         <Text style={styles.settingsInfoTitle}>Account</Text>

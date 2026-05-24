@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
 import { makeRedirectUri } from "expo-auth-session";
 import * as QueryParams from "expo-auth-session/build/QueryParams";
+import * as Notifications from "expo-notifications";
 import * as WebBrowser from "expo-web-browser";
 import type { Session } from "@supabase/supabase-js";
 import { SessionFooterNav } from "../components/left/navigation";
@@ -37,6 +38,17 @@ import { ProfileScreen } from "../screens/left/ProfileScreen";
 import { ApproachScreen } from "../screens/left/ApproachScreen";
 import { SafetyScreen } from "../screens/left/SafetyScreen";
 import { SettingsScreen } from "../screens/left/SettingsScreen";
+import {
+  consumePendingActivationLaunch,
+  handleVenuePromptResponse,
+  loadLastActivationDefaults,
+  requestLocationAccess,
+  saveLastActivationDefaults,
+  setVenueHidden as persistVenueHidden,
+  setVenueMuted,
+  syncLocationRegistrationState,
+} from "../features/location/location-service";
+import { getVenuePreferences, type VenuePreference } from "../features/location/location-storage";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -58,6 +70,7 @@ export function LeftApp() {
   const [firstNameDraft, setFirstNameDraft] = useState("Kelvin");
   const [avatarStyleDraft, setAvatarStyleDraft] = useState<AvatarStyle>("geometric");
   const [locationEnabled, setLocationEnabled] = useState(false);
+  const [locationBusy, setLocationBusy] = useState(false);
   const [selectedIntent, setSelectedIntent] = useState<AppUser["defaultIntent"]>("networking");
   const [selectedVibes, setSelectedVibes] = useState<string[]>(["AI/startups"]);
   const [selectedDuration, setSelectedDuration] = useState(60);
@@ -68,20 +81,31 @@ export function LeftApp() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [settingsSaveState, setSettingsSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [deletionRequestState, setDeletionRequestState] = useState<"idle" | "submitting" | "submitted" | "error">("idle");
+  const [venuePreferences, setVenuePreferences] = useState<Record<string, VenuePreference>>({});
 
   const visibleFeed = useMemo(() => (venueHidden ? [] : feed), [feed, venueHidden]);
 
   useEffect(() => {
     void bootstrapSession();
+    void bootstrapDeviceState();
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       void syncSession(session, false);
     });
+    const notificationSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      void applyNotificationResponse(response);
+    });
     return () => {
       subscription.unsubscribe();
+      notificationSubscription.remove();
     };
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    void maybeLaunchFromNotification();
+  }, [user]);
 
   async function bootstrapSession() {
     const {
@@ -93,6 +117,43 @@ export function LeftApp() {
       provider: session?.user.app_metadata.provider ?? null,
     });
     await syncSession(session, true);
+  }
+
+  async function bootstrapDeviceState() {
+    const runtime = await syncLocationRegistrationState();
+    setLocationEnabled(runtime.permissionGranted);
+    const defaults = await loadLastActivationDefaults();
+    if (defaults) {
+      setSelectedIntent(defaults.intent);
+      setSelectedVibes(defaults.vibes);
+      setSelectedDuration(defaults.durationMinutes);
+      setHintDraft(defaults.hintText);
+    }
+    await refreshVenuePreferences();
+  }
+
+  async function refreshVenuePreferences() {
+    const preferences = await getVenuePreferences();
+    setVenuePreferences(preferences);
+    setVenueHidden(!!preferences[venueSummary.venueId]?.hidden);
+  }
+
+  async function maybeLaunchFromNotification() {
+    const shouldLaunch = await consumePendingActivationLaunch();
+    if (shouldLaunch) {
+      setScreen("activate");
+    }
+  }
+
+  async function applyNotificationResponse(response: Notifications.NotificationResponse) {
+    const result = await handleVenuePromptResponse(response);
+    if (result.action === "activate") {
+      setScreen("activate");
+      return;
+    }
+    if (result.action === "cooldown") {
+      await refreshVenuePreferences();
+    }
   }
 
   async function syncSession(session: Session | null, isInitialLoad: boolean) {
@@ -239,6 +300,15 @@ export function LeftApp() {
       return;
     }
 
+    setLocationBusy(true);
+    const locationResult = await requestLocationAccess();
+    setLocationEnabled(locationResult.granted);
+    if (!locationResult.granted) {
+      setLocationBusy(false);
+      setAuthError("Background location is required to detect social venues.");
+      return;
+    }
+
     const provider = getProvider(session);
     const nextUser: AppUser = {
       ...viewerSeed,
@@ -268,11 +338,13 @@ export function LeftApp() {
       { onConflict: "id" },
     );
     if (error) {
+      setLocationBusy(false);
       setAuthError("We could not save onboarding yet.");
       return;
     }
 
     setUser(nextUser);
+    setLocationBusy(false);
     setScreen("venue");
   }
 
@@ -286,6 +358,12 @@ export function LeftApp() {
   }
 
   function activatePresence() {
+    void saveLastActivationDefaults({
+      intent: selectedIntent,
+      vibes: selectedVibes,
+      durationMinutes: selectedDuration,
+      hintText: hintDraft,
+    });
     setSessionVisible(true);
     setVenueSummary((current) => ({
       ...current,
@@ -336,10 +414,31 @@ export function LeftApp() {
     setScreen("feed");
   }
 
-  function hideVenuePermanently() {
+  async function hideVenuePermanently() {
+    await persistVenueHidden(venueSummary.venueId, venueSummary.venueName, true);
     setVenueHidden(true);
     setFeed([]);
+    await refreshVenuePreferences();
     setScreen("venue");
+  }
+
+  async function muteVenueNotifications() {
+    await setVenueMuted(venueSummary.venueId, venueSummary.venueName, true);
+    await refreshVenuePreferences();
+    Alert.alert("Venue muted", `Left will no longer send dwell notifications at ${venueSummary.venueName}.`);
+  }
+
+  async function clearVenueHidden(venueId: string, venueName: string) {
+    await persistVenueHidden(venueId, venueName, false);
+    if (venueSummary.venueId === venueId) {
+      setVenueHidden(false);
+    }
+    await refreshVenuePreferences();
+  }
+
+  async function clearVenueMuted(venueId: string, venueName: string) {
+    await setVenueMuted(venueId, venueName, false);
+    await refreshVenuePreferences();
   }
 
   async function saveSettings(input: {
@@ -402,6 +501,7 @@ export function LeftApp() {
     setSelectedProfile(null);
     setSessionVisible(false);
     setApproach(null);
+    setAuthError(null);
     setSettingsSaveState("idle");
     setDeletionRequestState("idle");
     setScreen("auth");
@@ -537,6 +637,10 @@ export function LeftApp() {
     sessionVisible,
     activeDestination: getFooterDestination(screen),
   };
+  const currentVenuePreference = venuePreferences[venueSummary.venueId];
+  const locationStatus = locationEnabled
+    ? "Background location is active. Venue matching runs on-device and only venue IDs are used for app state."
+    : "Background location is not enabled yet.";
 
   return (
     <View style={styles.shell}>
@@ -565,7 +669,7 @@ export function LeftApp() {
           <AvatarScreen avatarStyle={avatarStyleDraft} onPick={setAvatarStyleDraft} onContinue={() => setScreen("onboarding-location")} />
         )}
         {screen === "onboarding-location" && (
-          <LocationScreen authError={authError} enabled={locationEnabled} onToggle={() => setLocationEnabled((current) => !current)} onContinue={() => void finishOnboarding()} />
+          <LocationScreen authError={authError} enabled={locationEnabled} busy={locationBusy} onToggle={() => setLocationEnabled((current) => !current)} onContinue={() => void finishOnboarding()} />
         )}
         {screen === "venue" && (
           <VenueScreen venue={venueSummary} sessionVisible={sessionVisible} venueHidden={venueHidden} onActivate={() => setScreen("activate")} onOpenFeed={() => setScreen("feed")} />
@@ -583,15 +687,19 @@ export function LeftApp() {
           <ApproachScreen item={selectedProfile} approachPrompt={user?.approachPrompt ?? defaultApproachPrompt} onCancel={() => setScreen("feed")} onConfirmConnected={confirmConnected} onOpenSafety={() => setScreen("safety")} />
         )}
         {screen === "safety" && (
-          <SafetyScreen venueName={venueSummary.venueName} sessionVisible={sessionVisible} onBack={() => setScreen(selectedProfile ? "profile" : "feed")} onPauseVisibility={() => setSessionVisible(false)} onEndSession={() => { setSessionVisible(false); setScreen("venue"); }} onHideVenue={hideVenuePermanently} />
+          <SafetyScreen venueName={venueSummary.venueName} venueMuted={!!currentVenuePreference?.muted} sessionVisible={sessionVisible} onBack={() => setScreen(selectedProfile ? "profile" : "feed")} onPauseVisibility={() => setSessionVisible(false)} onEndSession={() => { setSessionVisible(false); setScreen("venue"); }} onHideVenue={() => void hideVenuePermanently()} onMuteVenue={() => void muteVenueNotifications()} />
         )}
         {screen === "settings" && user && (
           <SettingsScreen
             user={user}
             saveState={settingsSaveState}
             deletionState={deletionRequestState}
+            venuePreferences={Object.values(venuePreferences).filter((preference) => preference.hidden || preference.muted)}
+            locationStatus={locationStatus}
             onSave={(input) => void saveSettings(input)}
             onOpenSafety={() => setScreen("safety")}
+            onClearVenueHidden={(venueId, venueName) => void clearVenueHidden(venueId, venueName)}
+            onClearVenueMuted={(venueId, venueName) => void clearVenueMuted(venueId, venueName)}
             onSignOut={() => void signOut()}
             onRequestDeletion={() => void requestAccountDeletion()}
           />

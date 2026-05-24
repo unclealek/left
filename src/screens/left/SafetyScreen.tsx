@@ -6,17 +6,21 @@ import { FieldBlock, GhostButton, PrimaryButton } from "../../components/left/ui
 export function SafetyScreen({
   venueName,
   sessionVisible,
+  venueMuted,
   onBack,
   onPauseVisibility,
   onEndSession,
   onHideVenue,
+  onMuteVenue,
 }: {
   venueName: string;
   sessionVisible: boolean;
+  venueMuted: boolean;
   onBack: () => void;
   onPauseVisibility: () => void;
   onEndSession: () => void;
   onHideVenue: () => void;
+  onMuteVenue: () => void;
 }) {
   return (
     <View>
@@ -33,6 +37,11 @@ export function SafetyScreen({
       </FieldBlock>
       <FieldBlock label="Venue">
         <GhostButton label={`Hide me at ${venueName}`} onPress={onHideVenue} destructive />
+        <GhostButton
+          label={venueMuted ? `Venue notifications off at ${venueName}` : "Never notify me here"}
+          onPress={onMuteVenue}
+          destructive={!venueMuted}
+        />
       </FieldBlock>
     </View>
   );

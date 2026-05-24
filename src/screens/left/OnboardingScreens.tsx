@@ -65,11 +65,13 @@ export function LocationScreen({
   enabled,
   onToggle,
   onContinue,
+  busy = false,
 }: {
   authError: string | null;
   enabled: boolean;
   onToggle: () => void;
   onContinue: () => void;
+  busy?: boolean;
 }) {
   return (
     <Card step="03" total="03">
@@ -89,7 +91,7 @@ export function LocationScreen({
           thumbColor={T.textPrimary}
         />
       </Pressable>
-      <PrimaryButton label="Finish setup" onPress={onContinue} />
+      <PrimaryButton label={busy ? "Enabling location..." : "Finish setup"} onPress={onContinue} />
       {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
     </Card>
   );

@@ -11,7 +11,10 @@
       "bundleIdentifier": "com.left.mobile",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We use your location to detect when you are in a social venue. We never share it.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "We use your location in the background to detect when you are in a social venue. We never share it."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "We use your location in the background to detect when you are in a social venue. We never share it.",
+        "UIBackgroundModes": [
+          "location"
+        ]
       }
     },
     "android": {
@@ -24,6 +27,7 @@
     },
     "plugins": [
       "expo-location",
+      "expo-notifications",
       "expo-web-browser"
     ]
   }
