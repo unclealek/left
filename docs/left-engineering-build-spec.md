@@ -1,96 +1,197 @@
 # Left Engineering Build Spec
 
 Status:
-- engineering-ready MVP build document
+- engineering-ready build spec aligned to the current app implementation
 
 Depends on:
-- `docs/left-product-spec.md`
-- `docs/left-mvp-wireframes.md`
-- `left_design.md`
-- `left_design_ui.md`
+- [left-product-spec.md](/Users/kelvinaliche/Desktop/Projects/left%20app/docs/left-product-spec.md)
+- [left-mvp-wireframes.md](/Users/kelvinaliche/Desktop/Projects/left%20app/docs/left-mvp-wireframes.md)
+- [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/left%20app/docs/identity-removal-policy.md)
 
-Primary implementation rule:
+Primary implementation rules:
 - the `Nearby Feed` is the canonical MVP discovery surface
 - venue context supports activation decisions
 - the bubble layer is optional and reuses the same discovery records
 - reality-first rule is enforced
+- account deletion is currently implemented as identity removal, not full erasure
 
 ## 1. Build Goal
 
 Ship a mobile MVP that lets a user:
-1. register or sign in with Google or Apple
-2. receive a visibility prompt after dwell-time detection
+1. sign in with Google
+2. complete lightweight onboarding
 3. activate a temporary presence session
 4. browse compatible nearby people in the nearby feed
 5. inspect a soft-anonymity profile
 6. wave or enter the approaching micro-state
 7. confirm real-world connection or cancel
-8. access safety controls at all active stages
+8. access safety controls at active stages
+9. manage profile defaults and prompt templates from `You`
+10. request identity removal from the signed-in account screen
 
-## 2. Suggested Stack
+## 2. Current Stack
 
 - mobile app: `Expo` + `React Native` + `TypeScript`
-- navigation: `Expo Router`
-- state: `Zustand`
+- app shell: custom screen orchestration in `src/app/LeftApp.tsx`
+- state: local React state in the current implementation
 - backend: `Supabase`
-- auth: Supabase auth with Google and Apple providers
+- auth: Supabase auth with Google OAuth
 - database: Postgres
-- realtime: Supabase realtime
-- validation: `Zod`
-- forms: `React Hook Form`
-- analytics: `PostHog`
+- functions: Supabase Edge Functions + SQL functions
+- styling: centralized app theme/tokens in `src/app/leftTheme.ts`
 
-## 3. Canonical Screen Set
+Current implementation notes:
+- no `Expo Router`
+- no `Zustand`
+- no `React Hook Form`
+- no `Zod`
+- no Apple auth in the implemented flow
 
-Implement in this order:
+## 3. Current App Structure
 
-1. Auth / Account Entry
-2. Presence Activation Sheet
-3. Nearby Feed
-4. Soft-Anonymity Profile
-5. Approaching Micro-State
-6. Venue Context / Venue Pulse
-7. Safety Controls
-8. Bubble Visualization Layer
+Current coordinating modules:
+- [src/app/LeftApp.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/app/LeftApp.tsx)
+- [src/app/leftConfig.ts](/Users/kelvinaliche/Desktop/Projects/left%20app/src/app/leftConfig.ts)
+- [src/app/leftTheme.ts](/Users/kelvinaliche/Desktop/Projects/left%20app/src/app/leftTheme.ts)
 
-## 4. Screen Contracts
+Reusable UI/navigation:
+- [src/components/left/ui.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/components/left/ui.tsx)
+- [src/components/left/navigation.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/components/left/navigation.tsx)
 
-### 4.0 Auth / Account Entry
+Screens:
+- [src/screens/left/AuthScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/AuthScreen.tsx)
+- [src/screens/left/LoadingScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/LoadingScreen.tsx)
+- [src/screens/left/OnboardingScreens.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/OnboardingScreens.tsx)
+- [src/screens/left/VenueScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/VenueScreen.tsx)
+- [src/screens/left/ActivationScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/ActivationScreen.tsx)
+- [src/screens/left/FeedScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/FeedScreen.tsx)
+- [src/screens/left/ProfileScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/ProfileScreen.tsx)
+- [src/screens/left/ApproachScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/ApproachScreen.tsx)
+- [src/screens/left/SafetyScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/SafetyScreen.tsx)
+- [src/screens/left/SettingsScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/SettingsScreen.tsx)
+
+## 4. Canonical Screen Set
+
+Implement and maintain in this order:
+
+1. Auth
+2. Onboarding
+3. Venue home
+4. Presence activation
+5. Nearby feed
+6. Soft-anonymity profile
+7. Approaching micro-state
+8. Safety controls
+9. Settings / You
+10. Optional bubble visualization
+
+## 5. Navigation Model
+
+Top-level screens in the current app:
+- `loading`
+- `auth`
+- `onboarding-name`
+- `onboarding-avatar`
+- `onboarding-location`
+- `venue`
+- `activate`
+- `feed`
+- `profile`
+- `approach`
+- `safety`
+- `settings`
+
+Footer navigation is persistent across in-session screens and uses four destinations:
+- `Home`
+- `Nearby`
+- `Session`
+- `You`
+
+Navigation rules:
+- `Home` routes to venue home
+- `Nearby` routes to the feed / nearby cluster
+- `Session` routes to activation or active feed depending on visibility state
+- `You` routes to settings/account
+- safety is reachable from feed, profile, approach, and settings
+
+## 6. Screen Contracts
+
+### 6.0 Auth
 
 Purpose:
-- let a user register or sign in with approved identity providers
-
-Providers:
-- Google
-- Apple
+- create or resume an application session through Google OAuth
 
 Display fields:
 - welcome copy
 - `Continue with Google`
-- `Continue with Apple`
 - loading state
 - auth error state
 
 Primary actions:
 - `sign_in_with_google`
-- `sign_in_with_apple`
 
 Success result:
 - authenticated session created
-- user record created or linked
-- app continues to onboarding or venue flow
+- app profile loaded if present
+- user routed to onboarding or venue home
 
 Failure states:
 - provider cancellation
 - provider auth failure
-- backend auth failure
+- callback parsing failure
+- profile bootstrap failure
 
-Onboarding immediately after auth:
-- first-name-only edit screen
-- avatar-style selection screen
-- background location permission screen
+Implementation notes:
+- current auth callback target is `left://auth/callback`
+- Expo Go callback URLs are not the intended production/dev-build path
 
-### 4.1 Presence Activation Sheet
+### 6.1 Onboarding
+
+Purpose:
+- create the minimum viable app profile after first sign-in
+
+Steps:
+1. first name
+2. avatar style
+3. location permission
+
+Primary actions:
+- `set_first_name`
+- `pick_avatar_style`
+- `toggle_location_permission_state`
+- `finish_onboarding`
+
+Persisted fields:
+- `first_name`
+- `avatar_style`
+- `default_intent`
+- `default_vibes`
+- `profile_prompt`
+- `approach_prompt`
+- `focus_mode_enabled`
+- `prompts_enabled`
+- `onboarding_completed`
+
+### 6.2 Venue Home
+
+Purpose:
+- signed-in landing state
+- show venue pulse and activation entry point
+
+Display fields:
+- `venue_name`
+- `energy_level`
+- `visible_count`
+- `active_vibes[]`
+- `pulse_copy`
+- footer summary state
+
+Primary actions:
+- `open_activation`
+- `open_nearby_feed`
+- footer navigation
+
+### 6.3 Presence Activation
 
 Purpose:
 - create or resume a temporary presence session
@@ -102,8 +203,6 @@ Inputs:
 - `hint_text`
 
 Display fields:
-- venue name
-- prompt copy
 - intent options
 - vibe options
 - duration options
@@ -112,7 +211,7 @@ Display fields:
 
 Validation:
 - exactly one `intent`
-- at least one `vibe`
+- up to two `vibes`
 - duration required
 - hint optional, max 80 chars
 
@@ -120,38 +219,32 @@ Primary actions:
 - `submit_presence_activation`
 - `cancel_activation`
 
-Success result:
-- session created
-- user transitions to `visible`
-- nearby feed loads
+Current implementation notes:
+- UI state is implemented
+- backend session persistence is not yet end-to-end in the current local app shell
 
-Failure states:
-- location unavailable
-- venue not eligible
-- network failure
-- validation error
-
-### 4.2 Nearby Feed
+### 6.4 Nearby Feed
 
 Purpose:
 - primary MVP discovery surface
 
 Display fields per feed item:
-- `profile_id`
+- `profile_user_id`
+- `presence_session_id`
 - `first_name`
 - `intent`
 - `primary_vibe`
 - `hint_text`
 - `session_duration_remaining`
 - `distance_bucket`
+- `venue_name`
+- `energy_level`
 - `session_expires_at`
 
 Primary actions:
-- `open_profile(profile_id)`
-- `wave(profile_id)`
-- `hide_user(profile_id)`
-- `report_user(profile_id)`
-- `block_user(profile_id)`
+- `open_profile(profile_user_id)`
+- `wave(profile_user_id)`
+- `hide_user(profile_user_id)`
 - `open_safety_controls()`
 
 Rules:
@@ -159,15 +252,9 @@ Rules:
 - no `save user` action
 - no chat entry point
 - feed is tier-1 data only
-- no avatar shown in feed
-- shared alignment is not shown in feed
+- shared alignment is shown in the current UI
 
-Empty states:
-- no visible matches but venue active
-- venue pulse / low-density state
-- user not yet visible
-
-### 4.3 Soft-Anonymity Profile
+### 6.5 Soft-Anonymity Profile
 
 Purpose:
 - increase confidence before approach
@@ -179,22 +266,21 @@ Display fields:
 - `vibes[]`
 - `hint_text`
 - `shared_alignment_label`
-- `icebreaker_prompt`
+- `profile_prompt`
 
 Primary actions:
 - `wave(profile_id)`
 - `start_approach(profile_id)`
 - `hide_user(profile_id)`
-- `report_user(profile_id)`
-- `block_user(profile_id)`
+- `open_safety_controls()`
 
 Rules:
 - first name and hint remain consistently visible
 - mutual context is above generic profile content
-- no long bio required for MVP
 - no photo render path in MVP
+- prompt is owned by the signed-in viewer and saved in user settings
 
-### 4.4 Approaching Micro-State
+### 6.6 Approaching Micro-State
 
 Purpose:
 - bridge digital confidence to physical action
@@ -203,46 +289,21 @@ Display fields:
 - `target_profile_id`
 - `target_first_name`
 - `hint_text`
-- `icebreaker_prompt`
+- `approach_prompt`
 - `approach_expires_at`
 - `seconds_remaining`
 
 Primary actions:
-- `confirm_im_going_over`
 - `confirm_connected`
 - `cancel_approach`
 - `open_safety_controls()`
 
 Rules:
-- timer starts from server timestamp
-- timer expiry closes state
-- if expired, user returns to feed or profile with explicit expired message
-- `confirm_connected` may trigger a one-time contact exchange prompt
+- timer should be server-backed in the final product
+- expired approach should close state
+- prompt is owned by the signed-in viewer and saved in user settings
 
-### 4.5 Venue Context / Venue Pulse
-
-Purpose:
-- help user decide if activation is worthwhile
-
-Display fields:
-- `venue_name`
-- `energy_level`
-- `visible_count`
-- `active_vibes[]`
-- `popular_intents[]`
-- `recent_activity_copy`
-
-Primary actions:
-- `open_activation_sheet`
-- `open_nearby_feed`
-
-Rules:
-- show pulse state when live density is low
-- never feel like silent failure
-- density threshold is `>= 1 other active user`
-- pulse appears only when current density is zero and venue had activity in the last 7 days
-
-### 4.6 Safety Controls
+### 6.7 Safety Controls
 
 Purpose:
 - immediate safety actions
@@ -250,7 +311,6 @@ Purpose:
 Display fields:
 - current visibility status
 - current session status
-- blocked users summary
 - safety zones summary
 
 Primary actions:
@@ -260,14 +320,47 @@ Primary actions:
 - `report_user`
 - `add_safety_zone`
 - `remove_safety_zone`
+- `hide_venue`
 
 Rules:
-- safety zones suppress prompts only
+- safety zones suppress prompts only at the product-policy level
 - block is immediate and bilateral
 - report applies immediate mutual hide for the remainder of the session
-- `hide me at this venue` may be offered after block or report
 
-### 4.7 Bubble Visualization Layer
+### 6.8 Settings / You
+
+Purpose:
+- signed-in account and customization destination
+
+Display fields:
+- `first_name`
+- `avatar_style`
+- `default_intent`
+- `default_vibes`
+- `profile_prompt`
+- `approach_prompt`
+- account status copy
+
+Primary actions:
+- `save_profile_defaults`
+- `open_safety_controls`
+- `sign_out`
+- `request_identity_removal`
+
+Persisted fields on save:
+- `first_name`
+- `avatar_style`
+- `default_intent`
+- `default_vibes`
+- `profile_prompt`
+- `approach_prompt`
+
+Identity-removal rules:
+- request writes to `public.identity_removal_requests`
+- app then calls the backend processor
+- retained/removed behavior is defined in [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/left%20app/docs/identity-removal-policy.md)
+
+### 6.9 Bubble Visualization Layer
 
 Purpose:
 - optional ambient layer over nearby feed data
@@ -277,132 +370,122 @@ Rules:
 - no additional business logic
 - tapping a bubble opens the same profile flow
 
-## 5. Presence State Machine
+## 7. Current State Model
 
-Canonical states:
+App-level screens:
+- `loading`
+- `auth`
+- `onboarding-name`
+- `onboarding-avatar`
+- `onboarding-location`
+- `venue`
+- `activate`
+- `feed`
+- `profile`
+- `approach`
+- `safety`
+- `settings`
 
-- `invisible`
-- `prompt_eligible`
-- `prompted`
+Presence/session-related local state:
+- `sessionVisible`
+- `selectedIntent`
+- `selectedVibes`
+- `selectedDuration`
+- `hintDraft`
+- `approach`
+- `venueHidden`
+
+Suggested future backend-backed presence states:
 - `activating`
 - `visible`
 - `discoverable`
-- `profile_open`
-- `wave_sent`
-- `approaching`
-- `interaction_active`
-- `expiring`
-- `session_ended`
 - `paused`
+- `session_ended`
 
-Core transitions:
+## 8. Identity Reveal Rules
 
-```mermaid
-stateDiagram-v2
-  [*] --> invisible
-  invisible --> prompt_eligible
-  prompt_eligible --> prompted
-  prompted --> activating
-  activating --> visible
-  visible --> discoverable
-  discoverable --> profile_open
-  profile_open --> wave_sent
-  profile_open --> approaching
-  approaching --> interaction_active
-  approaching --> discoverable
-  visible --> expiring
-  expiring --> invisible
-  visible --> paused
-  paused --> visible
-  visible --> session_ended
-  session_ended --> invisible
-```
+Always visible in feed:
+- `first_name`
+- `intent`
+- one `vibe`
+- `hint_text`
+- session timing context
 
-Implementation notes:
-- `visible` means the local user has an active presence session
-- `discoverable` means feed data is loaded and interaction is possible
-- `interaction_active` means an approach has been confirmed or connection acknowledged
+Visible after profile open:
+- illustrated avatar or initials avatar
+- second vibe if present
+- shared alignment line if applicable
+- viewer-owned icebreaker prompt
 
-## 6. Identity Reveal Rules
+Never visible:
+- surname
+- photo
+- exact coordinates
+- email
+- phone
+- linked social account
+- device id
+- deep profile content
 
-MVP rule set:
+## 9. Data Model
 
-- always visible in feed:
-  - `first_name`
-  - `intent`
-  - one `vibe`
-  - `hint_text`
-  - `session_duration_remaining`
-- profile open:
-  - illustrated avatar or initials avatar
-  - second vibe if present
-  - shared alignment line if applicable
-  - icebreaker becomes visible
-- never visible:
-  - surname
-  - photo
-  - exact coordinates
-  - email
-  - phone
-  - linked social account
-  - device id
-  - persistent history
-  - deep social graph
-
-## 7. Data Model
-
-### 7.1 users
+### 9.1 users
 
 Fields:
 - `id uuid pk`
-- `auth_provider text not null`
+- `auth_provider auth_provider not null`
 - `provider_subject text not null`
 - `first_name text not null`
-- `avatar_style text not null`
-- `default_intent text null`
+- `avatar_style avatar_style not null`
+- `default_intent intent_type null`
 - `default_vibes text[] not null default '{}'`
+- `profile_prompt text not null`
+- `approach_prompt text not null`
 - `focus_mode_enabled boolean not null default false`
 - `prompts_enabled boolean not null default true`
 - `onboarding_completed boolean not null default false`
 - `created_at timestamptz not null default now()`
+- `updated_at timestamptz not null default now()`
 
 Constraints:
 - unique `provider_subject`
-- `default_vibes` length must be <= 2
+- `default_vibes` length <= 2
 
-### 7.2 venues
+### 9.2 venues
 
 Fields:
 - `id uuid pk`
 - `name text not null`
-- `type text not null`
+- `type venue_type not null`
 - `city text null`
 - `geofence_json jsonb not null`
 - `is_active boolean not null default true`
 - `created_at timestamptz not null default now()`
+- `updated_at timestamptz not null default now()`
 
-### 7.3 presence_sessions
+### 9.3 presence_sessions
 
 Fields:
 - `id uuid pk`
 - `user_id uuid not null`
 - `venue_id uuid not null`
-- `intent text not null`
+- `intent intent_type not null`
 - `vibes text[] not null`
 - `hint_text text null`
-- `status text not null`
-- `prompt_state text not null`
+- `status presence_status not null`
+- `prompt_state prompt_state not null`
 - `started_at timestamptz not null`
 - `expires_at timestamptz not null`
 - `paused_at timestamptz null`
 - `ended_at timestamptz null`
 - `created_at timestamptz not null default now()`
+- `updated_at timestamptz not null default now()`
 
 Constraints:
 - one active presence session per user
 - `expires_at > started_at`
 
-### 7.4 prompt_events
+### 9.4 prompt_events
 
 Fields:
 - `id uuid pk`
@@ -411,52 +494,44 @@ Fields:
 - `triggered_at timestamptz not null`
 - `reason text not null`
 - `accepted boolean null`
-
-Purpose:
-- prevent over-prompting
-- support max one prompt per venue per day
-
-### 7.5 waves
-
-Fields:
-- `id uuid pk`
-- `from_user_id uuid not null`
-- `to_user_id uuid not null`
-- `presence_session_id uuid not null`
-- `status text not null`
 - `created_at timestamptz not null default now()`
 
-Statuses:
-- `sent`
-- `seen`
-- `reciprocated`
-- `expired`
-- `cancelled`
-
-Constraint:
-- max one wave per sender/recipient/presence session
-
-### 7.6 approach_attempts
+### 9.5 waves
 
 Fields:
 - `id uuid pk`
 - `from_user_id uuid not null`
 - `to_user_id uuid not null`
 - `presence_session_id uuid not null`
-- `status text not null`
+- `status wave_status not null`
+- `created_at timestamptz not null default now()`
+- `updated_at timestamptz not null default now()`
+
+### 9.6 approach_attempts
+
+Fields:
+- `id uuid pk`
+- `from_user_id uuid not null`
+- `to_user_id uuid not null`
+- `presence_session_id uuid not null`
+- `status approach_status not null`
 - `started_at timestamptz not null`
 - `expires_at timestamptz not null`
 - `completed_at timestamptz null`
 - `cancelled_at timestamptz null`
+- `created_at timestamptz not null default now()`
+- `updated_at timestamptz not null default now()`
 
-Statuses:
-- `started`
-- `confirmed_going`
-- `connected`
-- `expired`
-- `cancelled`
+### 9.7 contact_exchange_intents
 
-### 7.7 hidden_users
+Fields:
+- `id uuid pk`
+- `approach_attempt_id uuid not null`
+- `user_id uuid not null`
+- `decision contact_exchange_decision not null`
+- `created_at timestamptz not null default now()`
+
+### 9.8 hidden_users
 
 Fields:
 - `id uuid pk`
@@ -464,7 +539,7 @@ Fields:
 - `target_user_id uuid not null`
 - `created_at timestamptz not null default now()`
 
-### 7.8 blocks
+### 9.9 blocks
 
 Fields:
 - `id uuid pk`
@@ -473,35 +548,49 @@ Fields:
 - `reason text null`
 - `created_at timestamptz not null default now()`
 
-### 7.9 reports
+### 9.10 reports
 
 Fields:
 - `id uuid pk`
 - `actor_user_id uuid not null`
 - `target_user_id uuid not null`
 - `presence_session_id uuid null`
-- `category text not null`
+- `category report_category not null`
 - `notes text null`
 - `created_at timestamptz not null default now()`
 
-### 7.10 safety_zones
+### 9.11 safety_zones
 
 Fields:
 - `id uuid pk`
 - `user_id uuid not null`
 - `name text not null`
 - `geofence_json jsonb not null`
-- `behavior text not null`
 - `created_at timestamptz not null default now()`
+- `updated_at timestamptz not null default now()`
 
-Behaviors:
-- `suppress_prompts`
-- `suppress_visibility`
-- `warn_only`
+### 9.12 identity_removal_requests
 
-## 8. Derived Read Models
+Fields:
+- `id uuid pk`
+- `user_id uuid null`
+- `profile_user_id uuid null`
+- `contact_email text not null`
+- `contact_name text null`
+- `auth_provider auth_provider null`
+- `request_kind text not null`
+- `identity_fields_to_remove text[] not null`
+- `retained_record_classes text[] not null`
+- `payload jsonb not null`
+- `status text not null`
+- `requested_at timestamptz not null default now()`
+- `processed_at timestamptz null`
+- `failure_reason text null`
+- `processing_notes text null`
 
-### 8.1 nearby_feed_items
+## 10. Derived Read Models
+
+### 10.1 nearby_feed_items
 
 Purpose:
 - single query/view for the canonical discovery surface
@@ -527,7 +616,7 @@ Business logic:
 - rank by venue, intent compatibility, shared vibe overlap, recency
 - return feed-tier data only
 
-### 8.2 venue_context_summary
+### 10.2 venue_context_summary
 
 Fields:
 - `venue_id`
@@ -538,172 +627,96 @@ Fields:
 - `popular_intents`
 - `pulse_copy`
 
-## 9. API / Backend Actions
+## 11. Backend Actions
 
-These can be implemented as Supabase RPC, edge functions, or server handlers.
+These can be implemented as client writes, Supabase RPC, edge functions, or server handlers depending on sensitivity.
 
-### 9.0 `exchange_provider_auth`
+### 11.1 bootstrap_session
 
 Purpose:
-- create or resume an application session after Google or Apple authentication
+- restore the local app state from the Supabase session and `public.users`
 
-Input:
-```json
-{
-  "provider": "google",
-  "provider_access_payload": "provider-specific token payload"
-}
-```
+Current path:
+- `supabase.auth.getSession()`
+- `supabase.from("users").select("*").eq("id", session.user.id).maybeSingle()`
 
-Output:
-```json
-{
-  "user_id": "uuid",
-  "is_new_user": true,
-  "first_name": "Kelvin",
-  "onboarding_completed": false
-}
-```
+### 11.2 sign_in_with_google
 
-### 9.1 `activate_presence`
+Purpose:
+- start Google OAuth
 
-Input:
-```json
-{
-  "venue_id": "uuid",
-  "intent": "networking",
-  "vibes": ["ai_startups"],
-  "duration_minutes": 60,
-  "hint_text": "Blue headphones"
-}
-```
+Current path:
+- `supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo, skipBrowserRedirect: true } })`
+- callback completion via `supabase.auth.setSession(...)` or `exchangeCodeForSession(...)`
 
-Output:
-```json
-{
-  "presence_session_id": "uuid",
-  "status": "visible",
-  "expires_at": "timestamp"
-}
-```
+### 11.3 finish_onboarding
 
-### 9.2 `end_presence`
+Purpose:
+- upsert the user profile row after auth
 
-Input:
-- `presence_session_id`
+Current path:
+- `supabase.from("users").upsert(...)`
 
-Output:
-- success boolean
+### 11.4 save_settings
 
-### 9.3 `pause_presence`
+Purpose:
+- update signed-in user defaults
 
-Input:
-- `presence_session_id`
+Current path:
+- `supabase.from("users").update(...)`
 
-Output:
-- updated session status
+Updated fields:
+- `first_name`
+- `avatar_style`
+- `default_intent`
+- `default_vibes`
+- `profile_prompt`
+- `approach_prompt`
 
-### 9.4 `get_nearby_feed`
+### 11.5 request_identity_removal
 
-Input:
-- `venue_id`
+Purpose:
+- create an audit request and invoke backend identity removal
 
-Output:
-- list of `nearby_feed_items`
+Current path:
+- insert into `identity_removal_requests`
+- invoke Edge Function `process-identity-removal`
+- backend SQL processor `public.process_identity_removal_request(...)`
 
-### 9.5 `get_profile_context`
+Key files:
+- [supabase/functions/process-identity-removal/index.ts](/Users/kelvinaliche/Desktop/Projects/left%20app/supabase/functions/process-identity-removal/index.ts)
+- [supabase/migrations/0004_process_identity_removal.sql](/Users/kelvinaliche/Desktop/Projects/left%20app/supabase/migrations/0004_process_identity_removal.sql)
+- [supabase/migrations/0006_fix_identity_removal_auth_casts.sql](/Users/kelvinaliche/Desktop/Projects/left%20app/supabase/migrations/0006_fix_identity_removal_auth_casts.sql)
+- [supabase/migrations/0007_harden_identity_removal_auth_schema.sql](/Users/kelvinaliche/Desktop/Projects/left%20app/supabase/migrations/0007_harden_identity_removal_auth_schema.sql)
 
-Input:
-- `target_user_id`
-- `presence_session_id`
+### 11.6 sign_out
 
-Output:
-- profile payload with shared alignment and icebreaker
+Current path:
+- `supabase.auth.signOut()`
 
-### 9.6 `send_wave`
-
-Input:
-- `target_user_id`
-- `presence_session_id`
-
-Output:
-- wave status
-
-### 9.7 `start_approach`
-
-Input:
-- `target_user_id`
-- `presence_session_id`
-
-Output:
-```json
-{
-  "approach_attempt_id": "uuid",
-  "started_at": "timestamp",
-  "expires_at": "timestamp",
-  "status": "started"
-}
-```
-
-### 9.8 `confirm_connected`
-
-Input:
-- `approach_attempt_id`
-
-Output:
-- updated approach status
-
-### 9.9 `hide_user`
-
-Input:
-- `target_user_id`
-
-Output:
-- success boolean
-
-### 9.10 `block_user`
-
-Input:
-- `target_user_id`
-- `reason`
-
-Output:
-- success boolean
-
-### 9.11 `report_user`
-
-Input:
-- `target_user_id`
-- `presence_session_id`
-- `category`
-- `notes`
-
-Output:
-- report id
-
-## 10. Client Events
+## 12. Client Events
 
 Track at minimum:
 
-- `prompt_received`
-- `prompt_opened`
+- `google_auth_started`
+- `google_auth_completed`
+- `onboarding_completed`
 - `presence_activated`
-- `presence_cancelled`
 - `nearby_feed_loaded`
 - `profile_opened`
 - `wave_sent`
 - `approach_started`
 - `approach_cancelled`
 - `approach_connected`
-- `session_expiring_seen`
-- `session_ended`
 - `safety_opened`
 - `user_hidden`
-- `user_blocked`
-- `user_reported`
+- `identity_removal_requested`
+- `identity_removal_completed`
+- `identity_removal_failed`
+- `settings_saved`
 - `venue_pulse_seen`
 
-## 11. Ranking Logic
+## 13. Ranking Logic
 
 MVP ranking order:
 
@@ -721,19 +734,18 @@ Distance buckets:
 
 Do not expose exact meters in MVP.
 
-## 12. Prompt Eligibility Rules
+## 14. Prompt Eligibility Rules
 
-User becomes `prompt_eligible` when:
-- device is inside eligible venue geofence
-- dwell time >= threshold
-- user has not been prompted at same venue today
-- prompts are enabled
-- focus mode is off
+Product-policy goal:
+- users may become prompt-eligible based on venue, dwell time, prompt settings, and focus mode
 
-User becomes `prompted` when:
-- prompt is actually delivered
+Current implementation reality:
+- dwell-time prompting is not yet implemented end to end in the local app shell
+- `prompt_events` and `prompts_enabled` exist in the model
+- `focus_mode_enabled` exists in the model
+- the current app uses direct activation from venue home rather than a live dwell-time prompt
 
-Thresholds to keep configurable:
+Configurable targets for later implementation:
 - dwell time minutes, default `4`
 - max prompts per venue per day
 - minimum density threshold, default `1 other active user`
@@ -742,7 +754,7 @@ Venue scope for MVP:
 - whitelist only: `cafe`, `library`, `coworking_space`, `airport`, `gym`, `university`
 - exclude parks, streets, and open proximity discovery
 
-## 13. Error and Edge Cases
+## 15. Error and Edge Cases
 
 ### No density
 - show venue pulse
@@ -763,24 +775,32 @@ Venue scope for MVP:
 - immediately end local interaction state
 - remove target from feed
 
-## 14. Implementation Phases
+### Identity removal request fails
+- keep the request row
+- surface queued/failure state to the user
+- allow follow-up or operator intervention
+
+## 16. Implementation Phases
 
 ### Phase 1
 - Google auth
-- Apple auth
 - authenticated user bootstrap
 - first-name-only onboarding
 - avatar-style onboarding
-- background location permission gating
-- venue detection stub
+- location permission gating
+- venue home
 - presence activation UI
 - local mocked nearby feed
-- profile modal
+- profile screen
 - approaching UI
+- safety screen
+- settings screen
 
 ### Phase 2
-- Supabase schema
-- realtime presence sessions
+- Supabase schema alignment
+- persisted settings save
+- prompt template persistence
+- identity-removal request + processor
 - feed ranking query
 - waves
 - hide/block/report
@@ -788,20 +808,24 @@ Venue scope for MVP:
 
 ### Phase 3
 - dwell-time prompt logic
+- realtime presence sessions
 - expiring session banners
-- safety zones
+- safety zones full behavior
 - bubble visualization layer
+- optional admin/ops tooling for identity-removal monitoring
 
-## 15. Definition of Done
+## 17. Definition Of Done
 
-The MVP build is done when:
-- a signed-in user can activate visibility
-- an active presence session appears in the nearby feed
-- another visible user can be opened as a profile
-- wave and approach flows work end-to-end
-- approach timer expires correctly from server time
-- session expiry removes users from discovery
-- hide, block, report, and end-session flows work
-- venue pulse covers low-density cases
+The current MVP build is done when:
+- a signed-in user can authenticate with Google
+- a new user can finish onboarding
+- a signed-in user lands on venue home
+- footer navigation works across in-session screens
+- presence activation flow is usable
+- nearby feed, profile, and approach flows work end to end in the app shell
+- prompt templates can be customized and are reflected in profile/approach UI
+- safety controls are reachable from active social states
+- sign-out works
+- identity-removal request flow works against deployed Supabase backend
 - no chat or save-user paths remain in the shipped MVP
 - no photo paths exist anywhere in the shipped MVP
