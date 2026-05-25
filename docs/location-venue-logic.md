@@ -208,12 +208,30 @@ Database write enablement:
 - [supabase/migrations/0001_left_mvp.sql](/Users/kelvinaliche/Desktop/Projects/leftApp/supabase/migrations/0001_left_mvp.sql:95)
 - [supabase/migrations/0009_user_venue_inserts.sql](/Users/kelvinaliche/Desktop/Projects/leftApp/supabase/migrations/0009_user_venue_inserts.sql:1)
 - [supabase/migrations/0010_venue_submissions.sql](/Users/kelvinaliche/Desktop/Projects/leftApp/supabase/migrations/0010_venue_submissions.sql:1)
+- [supabase/migrations/0011_venue_submission_review.sql](/Users/kelvinaliche/Desktop/Projects/leftApp/supabase/migrations/0011_venue_submission_review.sql:1)
 
 Important caveat:
 
 - user-added venues are now stored as pending submissions in the backend
 - automatic nearby lookup now merges backend venues with Google Places candidates
-- pending submissions do not automatically become reusable for other users until they are promoted into `public.venues`
+- pending submissions become reusable for other users only after approval promotes them into `public.venues`
+- promotion now has a database-side duplicate check based on normalized name plus geofence proximity
+
+## Submission Review Workflow
+
+Venue submissions now have a promotion path in SQL:
+
+- `public.approve_venue_submission(submission_id uuid, matched_venue_id uuid default null)`
+- `public.reject_venue_submission(submission_id uuid)`
+
+Approval behavior:
+
+- if a canonical venue is explicitly supplied, the submission is marked `duplicate` and linked to that venue
+- otherwise the function checks canonical `public.venues` for a nearby normalized-name match
+- if a duplicate is found, the submission is marked `duplicate`
+- if no duplicate is found, a canonical venue row is created in `public.venues` and the submission is marked `approved`
+
+These review functions are granted to `service_role`, so they are intended for backend jobs, admin tooling, or future moderation surfaces rather than direct client use.
 
 ## Venue Safety Preferences
 
@@ -297,7 +315,7 @@ If this is missing, venue detection falls back to the local venue catalog.
 Important gaps remain:
 
 - venue preferences are stored locally only, not synced per user in Supabase
-- pending venue submissions still need an approval or promotion workflow into canonical `public.venues`
+- there is not yet an admin UI or backend job that actually calls the new submission review functions
 - the local fallback catalog is still tiny
 - venue density, pulse copy, and nearby feed are still partly mock-driven
 - location-driven venue detection is not yet connected to backend presence session creation
@@ -306,7 +324,7 @@ Important gaps remain:
 ## Recommended Next Steps
 
 1. Add a backend table for per-user venue preferences so hide/mute rules persist across reinstalls and devices.
-2. Add an approval workflow that promotes accepted `venue_submissions` rows into canonical `public.venues`.
+2. Add an admin UI or backend job that calls the submission review functions.
 3. Strengthen deduplication beyond exact-name matching.
 4. Connect successful venue detection to actual presence-session creation and nearby feed loading.
 5. Replace the local fallback catalog with a real venue ingestion strategy for development and production.
