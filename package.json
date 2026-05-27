@@ -8,6 +8,8 @@
     "ios": "expo run:ios",
     "android": "expo run:android",
     "web": "expo start --web",
+    "admin:web": "npm --prefix admin run dev",
+    "admin:build": "npm --prefix admin run build",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -209,6 +209,7 @@ Database write enablement:
 - [supabase/migrations/0009_user_venue_inserts.sql](/Users/kelvinaliche/Desktop/Projects/leftApp/supabase/migrations/0009_user_venue_inserts.sql:1)
 - [supabase/migrations/0010_venue_submissions.sql](/Users/kelvinaliche/Desktop/Projects/leftApp/supabase/migrations/0010_venue_submissions.sql:1)
 - [supabase/migrations/0011_venue_submission_review.sql](/Users/kelvinaliche/Desktop/Projects/leftApp/supabase/migrations/0011_venue_submission_review.sql:1)
+- [supabase/migrations/0012_admin_reviewers.sql](/Users/kelvinaliche/Desktop/Projects/leftApp/supabase/migrations/0012_admin_reviewers.sql:1)
 
 Important caveat:
 
@@ -231,7 +232,35 @@ Approval behavior:
 - if a duplicate is found, the submission is marked `duplicate`
 - if no duplicate is found, a canonical venue row is created in `public.venues` and the submission is marked `approved`
 
-These review functions are granted to `service_role`, so they are intended for backend jobs, admin tooling, or future moderation surfaces rather than direct client use.
+These review functions are now callable by authenticated reviewers and `service_role`, but they still enforce reviewer membership before mutating data.
+
+## Admin Moderation View
+
+The app now includes a reviewer-only venue moderation screen:
+
+- [src/screens/left/AdminVenuesScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/AdminVenuesScreen.tsx:1)
+
+Access model:
+
+- reviewer membership lives in `public.admin_reviewers`
+- the helper function `public.is_admin_reviewer(...)` checks reviewer status
+- authenticated reviewers can read pending venue submissions
+- authenticated reviewers can call the approval and rejection review functions
+
+Current admin behavior:
+
+- list pending venue submissions
+- inspect submission details
+- inspect nearby canonical venues
+- approve a submission as a brand-new canonical venue
+- mark a submission as a duplicate of an existing canonical venue
+- reject a submission
+
+Reviewer setup reminder:
+
+- a reviewer must exist in both `auth.users` and `public.users` before they can be inserted into `public.admin_reviewers`
+- right now this may require a manual `public.users` insert for admin-only accounts created outside the normal app onboarding flow
+- future fix: automatically bootstrap `public.users` rows for admin accounts after sign-in so reviewer setup does not require manual SQL
 
 ## Venue Safety Preferences
 
@@ -315,7 +344,6 @@ If this is missing, venue detection falls back to the local venue catalog.
 Important gaps remain:
 
 - venue preferences are stored locally only, not synced per user in Supabase
-- there is not yet an admin UI or backend job that actually calls the new submission review functions
 - the local fallback catalog is still tiny
 - venue density, pulse copy, and nearby feed are still partly mock-driven
 - location-driven venue detection is not yet connected to backend presence session creation
@@ -324,12 +352,11 @@ Important gaps remain:
 ## Recommended Next Steps
 
 1. Add a backend table for per-user venue preferences so hide/mute rules persist across reinstalls and devices.
-2. Add an admin UI or backend job that calls the submission review functions.
-3. Strengthen deduplication beyond exact-name matching.
-4. Connect successful venue detection to actual presence-session creation and nearby feed loading.
-5. Replace the local fallback catalog with a real venue ingestion strategy for development and production.
-6. Add explicit handling for the `Pause visibility` state so it affects server-visible presence, not just local UI.
-7. Add analytics/logging around permission denial, venue detection, venue selection, prompt firing, and prompt response outcomes.
+2. Strengthen deduplication beyond exact-name matching.
+3. Connect successful venue detection to actual presence-session creation and nearby feed loading.
+4. Replace the local fallback catalog with a real venue ingestion strategy for development and production.
+5. Add explicit handling for the `Pause visibility` state so it affects server-visible presence, not just local UI.
+6. Add analytics/logging around permission denial, venue detection, venue selection, prompt firing, and prompt response outcomes.
 
 ## Summary
 

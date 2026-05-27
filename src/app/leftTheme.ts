@@ -679,6 +679,26 @@ export const styles = StyleSheet.create({
     gap: 10,
     marginTop: 4,
   },
+  adminPage: {
+    gap: 18,
+  },
+  adminHeader: {
+    gap: 12,
+  },
+  adminSubmissionList: {
+    gap: 10,
+  },
+  adminDetailGrid: {
+    gap: 16,
+  },
+  adminCandidateCard: {
+    gap: 8,
+    padding: 14,
+    borderRadius: T.radiusSm,
+    borderWidth: 1,
+    borderColor: T.border,
+    backgroundColor: T.surfaceCard,
+  },
   approachHero: {
     alignItems: "center",
     gap: 8,

@@ -85,6 +85,20 @@ export interface Venue {
   updatedAt: string;
 }
 
+export interface VenueSubmission {
+  id: string;
+  submittedBy: string;
+  name: string;
+  type: VenueType;
+  addressText: string;
+  notes: string | null;
+  proposedGeofenceJson: Record<string, unknown>;
+  status: "pending" | "approved" | "rejected" | "duplicate";
+  matchedVenueId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PresenceSession {
   id: string;
   userId: string;
