@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, AppState, ScrollView, Text, View } from "react-native";
+import { Alert, AppState, Image, ScrollView, Text, View } from "react-native";
 import { makeRedirectUri } from "expo-auth-session";
 import * as QueryParams from "expo-auth-session/build/QueryParams";
 import * as Notifications from "expo-notifications";
@@ -92,6 +92,8 @@ export function LeftApp() {
   const [approach, setApproach] = useState<ApproachAttempt | null>(null);
   const [venueHidden, setVenueHidden] = useState(false);
   const [sessionVisible, setSessionVisible] = useState(false);
+  const [sessionStartedAt, setSessionStartedAt] = useState<string | null>(null);
+  const [sessionNowMs, setSessionNowMs] = useState(() => Date.now());
   const [authError, setAuthError] = useState<string | null>(null);
   const [settingsSaveState, setSettingsSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [deletionRequestState, setDeletionRequestState] = useState<"idle" | "submitting" | "submitted" | "error">("idle");
@@ -109,6 +111,11 @@ export function LeftApp() {
     if (venueHidden) return [];
     return feed.map((item) => ({ ...item, venueName: venueSummary.venueName }));
   }, [feed, venueHidden, venueSummary.venueName]);
+
+  const elapsedSessionSeconds = useMemo(() => {
+    if (!sessionVisible || !sessionStartedAt) return 0;
+    return Math.max(0, Math.floor((sessionNowMs - new Date(sessionStartedAt).getTime()) / 1000));
+  }, [sessionNowMs, sessionStartedAt, sessionVisible]);
 
   useEffect(() => {
     void bootstrapSession();
@@ -153,6 +160,14 @@ export function LeftApp() {
       setScreen("venue-select");
     }
   }, [screen, user, venueSelectionRequired]);
+
+  useEffect(() => {
+    if (!sessionVisible || !sessionStartedAt) return;
+    const interval = setInterval(() => {
+      setSessionNowMs(Date.now());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [sessionStartedAt, sessionVisible]);
 
   useEffect(() => {
     void refreshVenuePreferences();
@@ -523,19 +538,22 @@ export function LeftApp() {
   }
 
   function activatePresence() {
+    const startedAt = new Date().toISOString();
     void saveLastActivationDefaults({
       intent: selectedIntent,
       vibes: selectedVibes,
       durationMinutes: selectedDuration,
       hintText: hintDraft,
     });
+    setSessionNowMs(Date.now());
+    setSessionStartedAt(startedAt);
     setSessionVisible(true);
     setVenueSummary((current) => ({
       ...current,
       visibleCount: Math.max(1, current.visibleCount),
       pulseCopy: "1 person is active nearby right now.",
     }));
-    setScreen("feed");
+    setScreen("activate");
   }
 
   function openProfile(item: NearbyFeedItem) {
@@ -664,12 +682,18 @@ export function LeftApp() {
     setUser(null);
     setAuthProvider(null);
     setSelectedProfile(null);
-    setSessionVisible(false);
+    endSessionState();
     setApproach(null);
     setAuthError(null);
     setSettingsSaveState("idle");
     setDeletionRequestState("idle");
     setScreen("auth");
+  }
+
+  function endSessionState() {
+    setSessionVisible(false);
+    setSessionStartedAt(null);
+    setSessionNowMs(Date.now());
   }
 
   async function requestAccountDeletion() {
@@ -788,7 +812,7 @@ export function LeftApp() {
     }
     if (destination === "session") {
       setSelectedProfile(null);
-      setScreen(sessionVisible ? "feed" : "activate");
+      setScreen("activate");
       return;
     }
     setSelectedProfile(null);
@@ -820,7 +844,7 @@ export function LeftApp() {
       >
         {screen !== "auth" && screen !== "loading" && (
           <View style={styles.topBar}>
-            <Text style={styles.wordmark}>LEFT</Text>
+            <Image source={require("../../Logo-text.png")} style={styles.topBarLogo} resizeMode="contain" />
             <View style={styles.statusDot} />
           </View>
         )}
@@ -862,17 +886,36 @@ export function LeftApp() {
         {screen === "venue" && (
           <VenueScreen
             venue={venueSummary}
+            feed={visibleFeed}
             sessionVisible={sessionVisible}
             venueHidden={venueHidden}
             canChooseVenue={nearbyVenueOptions.length > 1}
             onActivate={() => setScreen("activate")}
             onOpenFeed={() => setScreen("feed")}
+            onOpenProfile={openProfile}
             onChooseVenue={() => setScreen("venue-select")}
             onAddVenue={() => setScreen("venue-add")}
           />
         )}
         {screen === "activate" && (
-          <ActivationScreen selectedIntent={selectedIntent} selectedVibes={selectedVibes} selectedDuration={selectedDuration} hintDraft={hintDraft} onPickIntent={setSelectedIntent} onToggleVibe={toggleVibe} onPickDuration={setSelectedDuration} onChangeHint={setHintDraft} onActivate={activatePresence} />
+          <ActivationScreen
+            sessionVisible={sessionVisible}
+            selectedIntent={selectedIntent}
+            selectedVibes={selectedVibes}
+            selectedDuration={selectedDuration}
+            hintDraft={hintDraft}
+            elapsedSeconds={elapsedSessionSeconds}
+            onPickIntent={setSelectedIntent}
+            onToggleVibe={toggleVibe}
+            onPickDuration={setSelectedDuration}
+            onChangeHint={setHintDraft}
+            onActivate={activatePresence}
+            onOpenFeed={() => setScreen("feed")}
+            onEndSession={() => {
+              endSessionState();
+              setScreen("venue");
+            }}
+          />
         )}
         {screen === "feed" && (
           <FeedScreen venue={venueSummary} feed={visibleFeed} onOpenProfile={openProfile} onWave={sendWave} onOpenSafety={() => setScreen("safety")} />
@@ -884,7 +927,7 @@ export function LeftApp() {
           <ApproachScreen item={selectedProfile} approachPrompt={user?.approachPrompt ?? defaultApproachPrompt} onCancel={() => setScreen("feed")} onConfirmConnected={confirmConnected} onOpenSafety={() => setScreen("safety")} />
         )}
         {screen === "safety" && (
-          <SafetyScreen venueName={venueSummary.venueName} venueMuted={!!currentVenuePreference?.muted} sessionVisible={sessionVisible} onBack={() => setScreen(selectedProfile ? "profile" : "feed")} onPauseVisibility={() => setSessionVisible(false)} onEndSession={() => { setSessionVisible(false); setScreen("venue"); }} onHideVenue={() => void hideVenuePermanently()} onMuteVenue={() => void muteVenueNotifications()} />
+          <SafetyScreen venueName={venueSummary.venueName} venueMuted={!!currentVenuePreference?.muted} sessionVisible={sessionVisible} onBack={() => setScreen(selectedProfile ? "profile" : "feed")} onPauseVisibility={endSessionState} onEndSession={() => { endSessionState(); setScreen("venue"); }} onHideVenue={() => void hideVenuePermanently()} onMuteVenue={() => void muteVenueNotifications()} />
         )}
         {screen === "settings" && user && (
           <SettingsScreen

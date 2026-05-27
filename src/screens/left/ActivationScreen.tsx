@@ -1,20 +1,53 @@
 import { Text, TextInput, View } from "react-native";
 import type { AppUser } from "../../types/left-domain";
-import { durationOptions, intents, vibeOptions } from "../../app/leftConfig";
+import { durationOptions, formatElapsedDuration, intents, vibeOptions } from "../../app/leftConfig";
 import { T, styles } from "../../app/leftTheme";
 import { Card, FieldBlock, PrimaryButton, SelectChip } from "../../components/left/ui";
 
 export function ActivationScreen(props: {
+  sessionVisible: boolean;
   selectedIntent: AppUser["defaultIntent"];
   selectedVibes: string[];
   selectedDuration: number;
   hintDraft: string;
+  elapsedSeconds: number;
   onPickIntent: (v: AppUser["defaultIntent"]) => void;
   onToggleVibe: (v: string) => void;
   onPickDuration: (v: number) => void;
   onChangeHint: (v: string) => void;
   onActivate: () => void;
+  onOpenFeed: () => void;
+  onEndSession: () => void;
 }) {
+  if (props.sessionVisible) {
+    const elapsedLabel = formatElapsedDuration(props.elapsedSeconds);
+
+    return (
+      <Card>
+        <Text style={styles.cardTitle}>You are{"\n"}visible now.</Text>
+        <View style={styles.approachHero}>
+          <Text style={styles.approachLabel}>Session live</Text>
+          <View style={styles.timerRing}>
+            <Text style={styles.timerNum}>{elapsedLabel}</Text>
+            <Text style={styles.timerUnit}>elapsed</Text>
+          </View>
+        </View>
+        <FieldBlock label="Current session">
+          <Text style={styles.cardBody}>
+            {props.selectedVibes[0] ?? "Open"} · {props.selectedDuration}m window
+          </Text>
+          <Text style={styles.cardBody}>Intent: {(props.selectedIntent ?? "networking").replaceAll("_", " ")}</Text>
+          <Text style={styles.cardBody}>
+            Hint: {props.hintDraft.trim() || "No hint added."}
+          </Text>
+        </FieldBlock>
+        <PrimaryButton label="Open nearby feed" onPress={props.onOpenFeed} />
+        <View style={{ height: 12 }} />
+        <PrimaryButton label="End visibility" onPress={props.onEndSession} />
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <Text style={styles.cardTitle}>Set your{"\n"}presence.</Text>

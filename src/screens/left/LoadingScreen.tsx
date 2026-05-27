@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { T, styles } from "../../app/leftTheme";
 
@@ -11,7 +11,7 @@ export function LoadingScreen() {
           <Text style={styles.loadingChevron}>{"<"}</Text>
           <View style={styles.loadingDot} />
         </View>
-        <Text style={styles.loadingWordmark}>LEFT</Text>
+        <Image source={require("../../../Logo-text.png")} style={styles.loadingLogo} resizeMode="contain" />
       </View>
       <Text style={styles.loadingCaption}>Loading your session.</Text>
     </View>
