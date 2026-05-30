@@ -1,8 +1,12 @@
 .env
+.env.production
 .env.local
+admin/.env
+admin/.env.production
 node_modules
 .expo
 dist
+dist-mobile-check
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
