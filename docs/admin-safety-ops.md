@@ -21,7 +21,7 @@ Safety review uses the same reviewer model as venue moderation:
 - only authenticated reviewer users can read `public.safety_report_review`
 - only authenticated reviewer users can call `public.review_safety_report(...)`
 
-The reviewer must exist in both `auth.users` and `public.users` before being inserted into `public.admin_reviewers`.
+The reviewer must exist in `auth.users` before being inserted into `public.admin_reviewers`. Admin-only email/password accounts do not need a matching `public.users` app profile row.
 
 ## Report Lifecycle
 
@@ -129,4 +129,3 @@ where id = 'PRESENCE_SESSION_UUID_HERE';
 - Report review status does not automatically trigger enforcement actions.
 - Review notes should avoid sensitive personal information beyond what is needed for moderation.
 - RLS and integration tests should be added for the review view and function before scaling moderation beyond trusted operators.
-

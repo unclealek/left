@@ -28,6 +28,7 @@ function formatVenueType(value: string) {
 }
 
 export function App() {
+  const [authInitialized, setAuthInitialized] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [isReviewer, setIsReviewer] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -47,6 +48,7 @@ export function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setAuthInitialized(true);
       setSession(nextSession);
       if (nextSession) {
         void loadReviewerData(nextSession);
@@ -94,15 +96,19 @@ export function App() {
   }, [selectedSubmission, venues]);
 
   async function bootstrap() {
-    const {
-      data: { session: nextSession },
-    } = await supabase.auth.getSession();
-    setSession(nextSession);
-    if (nextSession) {
-      await loadReviewerData(nextSession);
-      return;
+    try {
+      const {
+        data: { session: nextSession },
+      } = await supabase.auth.getSession();
+      setSession(nextSession);
+      if (nextSession) {
+        await loadReviewerData(nextSession);
+        return;
+      }
+      setLoading(false);
+    } finally {
+      setAuthInitialized(true);
     }
-    setLoading(false);
   }
 
   async function loadReviewerData(activeSession: Session) {
@@ -239,7 +245,11 @@ export function App() {
         ) : null}
       </div>
 
-      {!session ? (
+      {!authInitialized ? (
+        <div className="panel">
+          <p>Restoring admin session…</p>
+        </div>
+      ) : !session ? (
         <div className="panel auth-panel">
           <h2>Reviewer sign-in</h2>
           <p>Use your admin email and password to access venue moderation.</p>

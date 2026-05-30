@@ -258,9 +258,9 @@ Current admin behavior:
 
 Reviewer setup reminder:
 
-- a reviewer must exist in both `auth.users` and `public.users` before they can be inserted into `public.admin_reviewers`
-- right now this may require a manual `public.users` insert for admin-only accounts created outside the normal app onboarding flow
-- future fix: automatically bootstrap `public.users` rows for admin accounts after sign-in so reviewer setup does not require manual SQL
+- a reviewer must exist in `auth.users` before they can be inserted into `public.admin_reviewers`
+- admin-only email/password reviewers do not need a matching `public.users` app profile row
+- migration `0014_admin_reviewers_auth_users_fk.sql` records the `admin_reviewers.user_id -> auth.users.id` foreign key
 
 ## Venue Safety Preferences
 
