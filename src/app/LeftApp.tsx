@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, AppState, Image, ScrollView, Text, View } from "react-native";
+import { Alert, AppState, ScrollView, Text, View } from "react-native";
 import { makeRedirectUri } from "expo-auth-session";
 import * as QueryParams from "expo-auth-session/build/QueryParams";
 import * as Notifications from "expo-notifications";
@@ -25,7 +25,11 @@ import type {
   ApproachAttempt,
   AuthProvider,
   AvatarStyle,
+  DistanceBucket,
+  EnergyLevel,
+  IntentType,
   NearbyFeedItem,
+  ReportCategory,
   VenueType,
   VenueContextSummary,
 } from "../types/left-domain";
@@ -74,6 +78,46 @@ function normalizeVenueName(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+function isUuid(value: string | null | undefined) {
+  return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+type PresenceSessionRow = {
+  id: string;
+  venue_id: string;
+  intent: IntentType;
+  vibes: string[];
+  hint_text: string | null;
+  started_at: string;
+  expires_at: string;
+  status: string;
+  venues?: { name?: string | null } | null;
+};
+
+type VenueContextSummaryRow = {
+  venue_id: string;
+  venue_name: string;
+  visible_count: number;
+  energy_level: EnergyLevel;
+  active_vibes: string[];
+  popular_intents: IntentType[];
+  pulse_copy: string | null;
+};
+
+type NearbyFeedRow = {
+  profile_user_id: string;
+  presence_session_id: string;
+  first_name: string;
+  intent: IntentType;
+  hint_text: string | null;
+  primary_vibe: string | null;
+  session_duration_remaining: string | Record<string, number> | null;
+  distance_bucket: DistanceBucket;
+  venue_name: string;
+  energy_level: EnergyLevel;
+  session_expires_at: string;
+};
+
 export function LeftApp() {
   const [screen, setScreen] = useState<Screen>("loading");
   const [authProvider, setAuthProvider] = useState<AuthProvider | null>(null);
@@ -94,6 +138,7 @@ export function LeftApp() {
   const [sessionVisible, setSessionVisible] = useState(false);
   const [sessionStartedAt, setSessionStartedAt] = useState<string | null>(null);
   const [sessionNowMs, setSessionNowMs] = useState(() => Date.now());
+  const [activePresenceSessionId, setActivePresenceSessionId] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [settingsSaveState, setSettingsSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [deletionRequestState, setDeletionRequestState] = useState<"idle" | "submitting" | "submitted" | "error">("idle");
@@ -106,6 +151,9 @@ export function LeftApp() {
   const [venueDraftNotes, setVenueDraftNotes] = useState("");
   const [venueDraftType, setVenueDraftType] = useState<VenueType>("other");
   const [venueDraftSubmitting, setVenueDraftSubmitting] = useState(false);
+  const [reportCategory, setReportCategory] = useState<ReportCategory>("unsafe_behavior");
+  const [reportNotes, setReportNotes] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
 
   const visibleFeed = useMemo(() => {
     if (venueHidden) return [];
@@ -151,6 +199,16 @@ export function LeftApp() {
 
   useEffect(() => {
     if (!user) return;
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState === "active") {
+        void recoverActivePresenceSession(user);
+      }
+    });
+    return () => subscription.remove();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
     void maybeLaunchFromNotification();
   }, [user]);
 
@@ -172,6 +230,12 @@ export function LeftApp() {
   useEffect(() => {
     void refreshVenuePreferences();
   }, [venueSummary.venueId]);
+
+  useEffect(() => {
+    if (!user || !isUuid(user.id) || !isUuid(venueSummary.venueId)) return;
+    void refreshVenueContext(venueSummary.venueId);
+    void refreshNearbyFeed(user.id, venueSummary.venueId);
+  }, [user?.id, venueSummary.venueId, activePresenceSessionId]);
 
   async function bootstrapSession() {
     const {
@@ -226,6 +290,104 @@ export function LeftApp() {
             : `You're currently at ${currentVenueName}.`,
       };
     });
+  }
+
+  async function recoverActivePresenceSession(appUser: AppUser) {
+    if (!isUuid(appUser.id)) return false;
+
+    const { data, error } = await supabase
+      .from("presence_sessions")
+      .select("id, venue_id, intent, vibes, hint_text, started_at, expires_at, status, venues(name)")
+      .eq("user_id", appUser.id)
+      .is("ended_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .in("status", ["visible", "discoverable", "expiring"])
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.warn("[presence] active session recovery failed", error.message);
+      return false;
+    }
+
+    const activeSession = data as PresenceSessionRow | null;
+    if (!activeSession) {
+      setActivePresenceSessionId(null);
+      setSessionVisible(false);
+      setSessionStartedAt(null);
+      return false;
+    }
+
+    const durationMinutes = Math.max(
+      1,
+      Math.round((new Date(activeSession.expires_at).getTime() - new Date(activeSession.started_at).getTime()) / 60_000),
+    );
+
+    setActivePresenceSessionId(activeSession.id);
+    setSessionStartedAt(activeSession.started_at);
+    setSessionNowMs(Date.now());
+    setSessionVisible(true);
+    setSelectedIntent(activeSession.intent);
+    setSelectedVibes(activeSession.vibes.length > 0 ? activeSession.vibes : ["Open"]);
+    setSelectedDuration(durationMinutes);
+    setHintDraft(activeSession.hint_text ?? "");
+    setVenueSummary((current) => ({
+      ...current,
+      venueId: activeSession.venue_id,
+      venueName: activeSession.venues?.name ?? current.venueName,
+    }));
+
+    await Promise.all([
+      refreshVenueContext(activeSession.venue_id),
+      refreshNearbyFeed(appUser.id, activeSession.venue_id),
+    ]);
+
+    return true;
+  }
+
+  async function refreshVenueContext(venueId: string) {
+    if (!isUuid(venueId)) return;
+
+    const { data, error } = await supabase
+      .from("venue_context_summary")
+      .select("venue_id, venue_name, visible_count, energy_level, active_vibes, popular_intents, pulse_copy")
+      .eq("venue_id", venueId)
+      .maybeSingle();
+
+    if (error) {
+      console.warn("[presence] venue context refresh failed", error.message);
+      return;
+    }
+
+    const context = data as VenueContextSummaryRow | null;
+    if (!context) return;
+
+    setVenueSummary({
+      venueId: context.venue_id,
+      venueName: context.venue_name,
+      visibleCount: context.visible_count,
+      energyLevel: context.energy_level,
+      activeVibes: context.active_vibes,
+      popularIntents: context.popular_intents,
+      pulseCopy: context.pulse_copy ?? "No pulse yet.",
+    });
+  }
+
+  async function refreshNearbyFeed(userId: string, venueId: string) {
+    if (!isUuid(userId) || !isUuid(venueId)) return;
+
+    const { data, error } = await supabase.rpc("get_nearby_feed", {
+      p_viewer_user_id: userId,
+      p_venue_id: venueId,
+    });
+
+    if (error) {
+      console.warn("[presence] nearby feed refresh failed", error.message);
+      return;
+    }
+
+    setFeed(((data ?? []) as NearbyFeedRow[]).map(mapNearbyFeedRow));
   }
 
   async function refreshVenuePreferences() {
@@ -378,14 +540,16 @@ export function LeftApp() {
       return;
     }
 
-    setUser(mapProfileToAppUser(profile));
+    const appUser = mapProfileToAppUser(profile);
+    setUser(appUser);
     setFirstNameDraft(profile.first_name);
     setAuthProvider(profile.auth_provider);
     if (isInitialLoad) {
       setScreen("loading");
       await delay(2000);
     }
-    setScreen("venue");
+    const recoveredActiveSession = await recoverActivePresenceSession(appUser);
+    setScreen(recoveredActiveSession ? "activate" : "venue");
   }
 
   async function startGoogleAuth() {
@@ -537,14 +701,59 @@ export function LeftApp() {
     });
   }
 
-  function activatePresence() {
-    const startedAt = new Date().toISOString();
+  async function activatePresence() {
+    if (!user) return;
+    const startedAtDate = new Date();
+    const startedAt = startedAtDate.toISOString();
+    const expiresAt = new Date(startedAtDate.getTime() + selectedDuration * 60_000).toISOString();
+    const intent = selectedIntent ?? "networking";
+    const vibes = selectedVibes.length > 0 ? selectedVibes : ["Open"];
+    const hintText = hintDraft.trim() || null;
+
     void saveLastActivationDefaults({
-      intent: selectedIntent,
-      vibes: selectedVibes,
+      intent,
+      vibes,
       durationMinutes: selectedDuration,
       hintText: hintDraft,
     });
+
+    if (isUuid(user.id) && isUuid(venueSummary.venueId)) {
+      const now = new Date().toISOString();
+      await supabase
+        .from("presence_sessions")
+        .update({ status: "session_ended", ended_at: now })
+        .eq("user_id", user.id)
+        .is("ended_at", null)
+        .in("status", ["activating", "visible", "discoverable", "expiring", "paused"]);
+
+      const { data, error } = await supabase
+        .from("presence_sessions")
+        .insert({
+          user_id: user.id,
+          venue_id: venueSummary.venueId,
+          intent,
+          vibes,
+          hint_text: hintText,
+          status: "visible",
+          prompt_state: "none",
+          started_at: startedAt,
+          expires_at: expiresAt,
+        })
+        .select("id")
+        .single();
+
+      if (error) {
+        Alert.alert("Could not start visibility", "Your session was not saved. Try again before becoming visible.");
+        return;
+      }
+
+      setActivePresenceSessionId(data.id);
+      await refreshVenueContext(venueSummary.venueId);
+      await refreshNearbyFeed(user.id, venueSummary.venueId);
+    } else {
+      setActivePresenceSessionId(null);
+    }
+
     setSessionNowMs(Date.now());
     setSessionStartedAt(startedAt);
     setSessionVisible(true);
@@ -561,40 +770,162 @@ export function LeftApp() {
     setScreen("profile");
   }
 
-  function sendWave(item: NearbyFeedItem) {
+  async function sendWave(item: NearbyFeedItem) {
+    if (!user) return;
+    if (isUuid(user.id) && isUuid(item.profileUserId) && isUuid(item.presenceSessionId)) {
+      const { error } = await supabase
+        .from("waves")
+        .upsert(
+          {
+            from_user_id: user.id,
+            to_user_id: item.profileUserId,
+            presence_session_id: item.presenceSessionId,
+            status: "sent",
+          },
+          { onConflict: "from_user_id,to_user_id,presence_session_id" },
+        );
+
+      if (error) {
+        Alert.alert("Could not send wave", "Please try again.");
+        return;
+      }
+    }
+
     setSelectedProfile(item);
   }
 
-  function startApproach() {
+  async function startApproach() {
     if (!selectedProfile || !user) return;
+    const startedAt = new Date();
+    const expiresAt = new Date(startedAt.getTime() + 60_000);
+    let approachId = "approach-1";
+
+    if (isUuid(user.id) && isUuid(selectedProfile.profileUserId) && isUuid(selectedProfile.presenceSessionId)) {
+      const { data, error } = await supabase
+        .from("approach_attempts")
+        .insert({
+          from_user_id: user.id,
+          to_user_id: selectedProfile.profileUserId,
+          presence_session_id: selectedProfile.presenceSessionId,
+          status: "started",
+          started_at: startedAt.toISOString(),
+          expires_at: expiresAt.toISOString(),
+        })
+        .select("id")
+        .single();
+
+      if (error) {
+        Alert.alert("Could not start approach", "Please try again.");
+        return;
+      }
+
+      approachId = data.id;
+    }
+
     setApproach({
-      id: "approach-1",
+      id: approachId,
       fromUserId: user.id,
       toUserId: selectedProfile.profileUserId,
       presenceSessionId: selectedProfile.presenceSessionId,
       status: "started",
-      startedAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      startedAt: startedAt.toISOString(),
+      expiresAt: expiresAt.toISOString(),
       completedAt: null,
       cancelledAt: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: startedAt.toISOString(),
+      updatedAt: startedAt.toISOString(),
     });
     setScreen("approach");
   }
 
-  function confirmConnected() {
+  async function confirmConnected() {
+    const completedAt = new Date().toISOString();
+    if (approach && isUuid(approach.id)) {
+      const { error } = await supabase
+        .from("approach_attempts")
+        .update({ status: "connected", completed_at: completedAt })
+        .eq("id", approach.id);
+
+      if (error) {
+        Alert.alert("Could not confirm connection", "Please try again.");
+        return;
+      }
+    }
+
     setApproach((current) =>
-      current ? { ...current, status: "connected", completedAt: new Date().toISOString() } : current,
+      current ? { ...current, status: "connected", completedAt } : current,
     );
     setScreen("feed");
   }
 
-  function hideUser() {
+  async function hideUser() {
     if (!selectedProfile) return;
+    const targetUserId = selectedProfile.profileUserId;
+    if (user && isUuid(user.id) && isUuid(targetUserId)) {
+      const { error } = await supabase
+        .from("hidden_users")
+        .upsert({ actor_user_id: user.id, target_user_id: targetUserId }, { onConflict: "actor_user_id,target_user_id" });
+
+      if (error) {
+        Alert.alert("Could not hide person", "Please try again.");
+        return;
+      }
+    }
+
     setFeed((current) => current.filter((item) => item.profileUserId !== selectedProfile.profileUserId));
     setSelectedProfile(null);
     setScreen("feed");
+  }
+
+  async function blockUser() {
+    if (!selectedProfile || !user) return;
+    const targetUserId = selectedProfile.profileUserId;
+
+    if (isUuid(user.id) && isUuid(targetUserId)) {
+      const { error } = await supabase
+        .from("blocks")
+        .upsert({ actor_user_id: user.id, target_user_id: targetUserId, reason: "user_blocked_from_profile" }, { onConflict: "actor_user_id,target_user_id" });
+
+      if (error) {
+        Alert.alert("Could not block person", "Please try again.");
+        return;
+      }
+    }
+
+    setFeed((current) => current.filter((item) => item.profileUserId !== targetUserId));
+    setSelectedProfile(null);
+    setScreen("feed");
+  }
+
+  async function reportUser(category: ReportCategory = reportCategory, notes = reportNotes) {
+    if (!selectedProfile || !user) return;
+    const targetUserId = selectedProfile.profileUserId;
+    const presenceSessionId = isUuid(selectedProfile.presenceSessionId) ? selectedProfile.presenceSessionId : null;
+
+    setReportSubmitting(true);
+    if (isUuid(user.id) && isUuid(targetUserId)) {
+      const { error } = await supabase.from("reports").insert({
+        actor_user_id: user.id,
+        target_user_id: targetUserId,
+        presence_session_id: presenceSessionId,
+        category,
+        notes: notes?.trim() || null,
+      });
+
+      if (error) {
+        setReportSubmitting(false);
+        Alert.alert("Could not submit report", "Please try again.");
+        return;
+      }
+    }
+
+    setReportSubmitting(false);
+    setReportCategory("unsafe_behavior");
+    setReportNotes("");
+    setFeed((current) => current.filter((item) => item.profileUserId !== targetUserId));
+    setSelectedProfile(null);
+    setScreen("feed");
+    Alert.alert("Report submitted", "This person is hidden from your current session.");
   }
 
   async function hideVenuePermanently() {
@@ -682,18 +1013,39 @@ export function LeftApp() {
     setUser(null);
     setAuthProvider(null);
     setSelectedProfile(null);
-    endSessionState();
+    void endSessionState();
     setApproach(null);
     setAuthError(null);
     setSettingsSaveState("idle");
     setDeletionRequestState("idle");
+    setReportSubmitting(false);
+    setReportCategory("unsafe_behavior");
+    setReportNotes("");
     setScreen("auth");
   }
 
-  function endSessionState() {
+  async function endSessionState(status: "paused" | "session_ended" = "session_ended") {
+    const sessionId = activePresenceSessionId;
+    const endedAt = new Date().toISOString();
     setSessionVisible(false);
     setSessionStartedAt(null);
+    setActivePresenceSessionId(null);
     setSessionNowMs(Date.now());
+
+    if (isUuid(sessionId)) {
+      const { error } = await supabase
+        .from("presence_sessions")
+        .update({
+          status,
+          paused_at: status === "paused" ? endedAt : null,
+          ended_at: status === "session_ended" ? endedAt : null,
+        })
+        .eq("id", sessionId);
+
+      if (error) {
+        Alert.alert("Could not update visibility", "Your local session is hidden, but the server did not confirm the change.");
+      }
+    }
   }
 
   async function requestAccountDeletion() {
@@ -842,13 +1194,6 @@ export function LeftApp() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {screen !== "auth" && screen !== "loading" && (
-          <View style={styles.topBar}>
-            <Image source={require("../../Logo-text.png")} style={styles.topBarLogo} resizeMode="contain" />
-            <View style={styles.statusDot} />
-          </View>
-        )}
-
         {screen === "loading" && <LoadingScreen />}
         {screen === "auth" && <AuthScreen authError={authError} onAuth={startGoogleAuth} />}
         {screen === "onboarding-name" && (
@@ -921,13 +1266,28 @@ export function LeftApp() {
           <FeedScreen venue={venueSummary} feed={visibleFeed} onOpenProfile={openProfile} onWave={sendWave} onOpenSafety={() => setScreen("safety")} />
         )}
         {screen === "profile" && selectedProfile && (
-          <ProfileScreen item={selectedProfile} profilePrompt={user?.profilePrompt ?? defaultProfilePrompt} onBack={() => setScreen("feed")} onWave={() => sendWave(selectedProfile)} onApproach={startApproach} onHide={hideUser} onOpenSafety={() => setScreen("safety")} />
+          <ProfileScreen
+            item={selectedProfile}
+            profilePrompt={user?.profilePrompt ?? defaultProfilePrompt}
+            reportCategory={reportCategory}
+            reportNotes={reportNotes}
+            reportSubmitting={reportSubmitting}
+            onBack={() => setScreen("feed")}
+            onWave={() => void sendWave(selectedProfile)}
+            onApproach={() => void startApproach()}
+            onHide={() => void hideUser()}
+            onBlock={() => void blockUser()}
+            onChangeReportCategory={setReportCategory}
+            onChangeReportNotes={setReportNotes}
+            onReport={() => void reportUser()}
+            onOpenSafety={() => setScreen("safety")}
+          />
         )}
         {screen === "approach" && selectedProfile && approach && (
-          <ApproachScreen item={selectedProfile} approachPrompt={user?.approachPrompt ?? defaultApproachPrompt} onCancel={() => setScreen("feed")} onConfirmConnected={confirmConnected} onOpenSafety={() => setScreen("safety")} />
+          <ApproachScreen item={selectedProfile} approachPrompt={user?.approachPrompt ?? defaultApproachPrompt} onCancel={() => setScreen("feed")} onConfirmConnected={() => void confirmConnected()} onOpenSafety={() => setScreen("safety")} />
         )}
         {screen === "safety" && (
-          <SafetyScreen venueName={venueSummary.venueName} venueMuted={!!currentVenuePreference?.muted} sessionVisible={sessionVisible} onBack={() => setScreen(selectedProfile ? "profile" : "feed")} onPauseVisibility={endSessionState} onEndSession={() => { endSessionState(); setScreen("venue"); }} onHideVenue={() => void hideVenuePermanently()} onMuteVenue={() => void muteVenueNotifications()} />
+          <SafetyScreen venueName={venueSummary.venueName} venueMuted={!!currentVenuePreference?.muted} sessionVisible={sessionVisible} onBack={() => setScreen(selectedProfile ? "profile" : "feed")} onPauseVisibility={() => void endSessionState("paused")} onEndSession={() => { void endSessionState(); setScreen("venue"); }} onHideVenue={() => void hideVenuePermanently()} onMuteVenue={() => void muteVenueNotifications()} />
         )}
         {screen === "settings" && user && (
           <SettingsScreen
@@ -994,6 +1354,33 @@ function mapProfileToAppUser(profile: UserProfileRow): AppUser {
     createdAt: profile.created_at,
     updatedAt: profile.updated_at,
   };
+}
+
+function mapNearbyFeedRow(row: NearbyFeedRow): NearbyFeedItem {
+  return {
+    profileUserId: row.profile_user_id,
+    presenceSessionId: row.presence_session_id,
+    firstName: row.first_name,
+    intent: row.intent,
+    hintText: row.hint_text,
+    primaryVibe: row.primary_vibe,
+    sessionDurationRemaining: formatIntervalValue(row.session_duration_remaining),
+    distanceBucket: row.distance_bucket,
+    venueName: row.venue_name,
+    energyLevel: row.energy_level,
+    sessionExpiresAt: row.session_expires_at,
+  };
+}
+
+function formatIntervalValue(value: NearbyFeedRow["session_duration_remaining"]) {
+  if (!value) return "00:00:00";
+  if (typeof value === "string") return value;
+
+  const hours = value.hours ?? 0;
+  const minutes = value.minutes ?? 0;
+  const seconds = Math.floor(value.seconds ?? 0);
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 function delay(ms: number) {

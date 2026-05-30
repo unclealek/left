@@ -110,7 +110,7 @@ Footer navigation is persistent across in-session screens and uses four destinat
 Navigation rules:
 - `Home` routes to venue home
 - `Nearby` routes to the feed / nearby cluster
-- `Session` routes to activation or active feed depending on visibility state
+- `Session` routes to activation before visibility and the live session timer after visibility starts
 - `You` routes to settings/account
 - safety is reachable from feed, profile, approach, and settings
 
@@ -220,8 +220,10 @@ Primary actions:
 - `cancel_activation`
 
 Current implementation notes:
-- UI state is implemented
-- backend session persistence is not yet end-to-end in the current local app shell
+- activation inserts a `public.presence_sessions` row when the signed-in user and current venue are UUID-backed
+- one existing active session is ended before a new visible session is created
+- the app restores active visible sessions from Supabase on auth bootstrap and app resume
+- local mock IDs still use local state so seeded development screens keep working
 
 ### 6.4 Nearby Feed
 
@@ -253,6 +255,8 @@ Rules:
 - no chat entry point
 - feed is tier-1 data only
 - shared alignment is shown in the current UI
+- UUID-backed sessions load feed records from `public.get_nearby_feed(...)`
+- mock/local sessions fall back to seeded feed data
 
 ### 6.5 Soft-Anonymity Profile
 
@@ -272,6 +276,8 @@ Primary actions:
 - `wave(profile_id)`
 - `start_approach(profile_id)`
 - `hide_user(profile_id)`
+- `block_user(profile_id)`
+- `report_user(profile_id, category, notes)`
 - `open_safety_controls()`
 
 Rules:
@@ -299,7 +305,7 @@ Primary actions:
 - `open_safety_controls()`
 
 Rules:
-- timer should be server-backed in the final product
+- approach attempts are persisted to `public.approach_attempts` when UUID-backed records are available
 - expired approach should close state
 - prompt is owned by the signed-in viewer and saved in user settings
 
@@ -326,6 +332,8 @@ Rules:
 - safety zones suppress prompts only at the product-policy level
 - block is immediate and bilateral
 - report applies immediate mutual hide for the remainder of the session
+- pause and end update the active `public.presence_sessions` row when available
+- reports are reviewable through `public.safety_report_review`
 
 ### 6.8 Settings / You
 
@@ -507,6 +515,9 @@ Fields:
 - `created_at timestamptz not null default now()`
 - `updated_at timestamptz not null default now()`
 
+Constraints:
+- one wave per sender, target, and presence session
+
 ### 9.6 approach_attempts
 
 Fields:
@@ -557,7 +568,15 @@ Fields:
 - `presence_session_id uuid null`
 - `category report_category not null`
 - `notes text null`
+- `status safety_report_status not null default 'pending'`
+- `reviewed_by uuid null`
+- `reviewed_at timestamptz null`
+- `moderation_notes text null`
 - `created_at timestamptz not null default now()`
+
+Operational objects:
+- `public.safety_report_review` exposes joined report, reporter, target, session, venue, and related-count context for Supabase review.
+- `public.review_safety_report(report_id, next_status, notes)` marks a report as `reviewing`, `resolved`, or `dismissed`.
 
 ### 9.11 safety_zones
 
@@ -790,7 +809,7 @@ Venue scope for MVP:
 - location permission gating
 - venue home
 - presence activation UI
-- local mocked nearby feed
+- seeded nearby feed fallback for non-UUID development data
 - profile screen
 - approaching UI
 - safety screen
@@ -805,6 +824,10 @@ Venue scope for MVP:
 - waves
 - hide/block/report
 - venue pulse
+- persisted presence activation, pause, and end
+- active session recovery on bootstrap/resume
+- Supabase-backed nearby feed and venue context refresh
+- safety report review view and reviewer function
 
 ### Phase 3
 - dwell-time prompt logic
@@ -812,7 +835,7 @@ Venue scope for MVP:
 - expiring session banners
 - safety zones full behavior
 - bubble visualization layer
-- optional admin/ops tooling for identity-removal monitoring
+- optional admin UI for safety report moderation if Supabase table/view review becomes insufficient
 
 ## 17. Definition Of Done
 
@@ -823,6 +846,8 @@ The current MVP build is done when:
 - footer navigation works across in-session screens
 - presence activation flow is usable
 - nearby feed, profile, and approach flows work end to end in the app shell
+- active sessions persist and recover when backed by real Supabase UUID records
+- hide, block, report, wave, and approach writes persist when backed by real Supabase UUID records
 - prompt templates can be customized and are reflected in profile/approach UI
 - safety controls are reachable from active social states
 - sign-out works

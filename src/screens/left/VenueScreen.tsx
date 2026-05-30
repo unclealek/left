@@ -44,7 +44,9 @@ export function VenueScreen({
       <LinearGradient colors={["#12111b", "#0e0d15", "#0a0911"]} style={styles.venueHeroCard}>
         <View style={styles.venueHeaderRow}>
           <View style={styles.venueHeaderCopy}>
-            <Text style={styles.venueName}>{venue.venueName}</Text>
+            <Text style={styles.venueName} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.82}>
+              {venue.venueName}
+            </Text>
             <Text style={styles.venueVisibleCount}>
               {venue.visibleCount} {venue.visibleCount === 1 ? "person" : "people"} visible
             </Text>

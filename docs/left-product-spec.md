@@ -253,6 +253,8 @@ Functional requirements:
 - visible session starts only after confirmation
 - duration must auto-expire
 - activation should default from the last successful session where possible
+- active sessions should restore on app restart or resume when the backend session is still valid
+- the live session view shows elapsed visible time after activation
 
 ### 8.2 Nearby Feed
 
@@ -271,6 +273,8 @@ Functional requirements:
 - communicate enough to support approach decisions without oversharing
 - exclude persistent “save user” behavior from MVP
 - feed is locked to tier-1 identity only
+- feed records should come from venue-scoped active presence sessions when backend IDs are available
+- hidden and blocked users should disappear from discovery
 
 ### 8.3 Venue Context / Venue Pulse
 
@@ -290,6 +294,7 @@ Functional requirements:
 - answer `is it worth activating here?` in one glance
 - if density is low, explain that state without silent failure
 - avoid exact positions and exact GPS exposure
+- bubble taps open the same profile cards as nearby feed items
 
 ### 8.4 Soft-Anonymity Profile
 
@@ -327,7 +332,8 @@ Required content:
 - success and cancel actions
 
 Functional requirements:
-- timer must use server-backed expiry
+- approach attempts should persist to the backend when backed by real user/session IDs
+- timer should use server-backed expiry in production paths
 - expired approach should close automatically or force re-entry
 - this state should be designed as the anxiety-reducing bridge from phone to real life
 
@@ -353,6 +359,8 @@ Functional requirements:
 - minimize taps for emergency or discomfort scenarios
 - block is immediate and bilateral
 - report auto-hides the other user for the remainder of the current session
+- report captures a category and optional notes
+- pause and end update the current presence session when backend-backed
 
 ### 8.7 Bubble Visualization Layer
 
@@ -504,6 +512,8 @@ Locked safety decisions:
 - report does not terminate the other user's session automatically
 - report applies immediate mutual hide for the current session
 - after block or report, `hide me at this venue` becomes available as a permanent venue suppression choice
+- reports remain reviewable by operators through Supabase using the safety report review view
+- a dedicated safety admin UI is optional until volume or staffing requires it
 
 ## 11.1 Identity Removal Model
 

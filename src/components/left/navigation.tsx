@@ -7,7 +7,8 @@ export function BackNavButton({ label, onPress }: { label: string; onPress: () =
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.backNavButton, pressed && styles.backNavButtonPressed]}>
       <View style={styles.backNavIconWrap}>
-        <Text style={styles.backNavIcon}>‹</Text>
+        <Text style={styles.backNavIcon}>{"<"}</Text>
+        <View style={styles.backNavDot} />
       </View>
       <Text style={styles.backNavLabel}>{label}</Text>
     </Pressable>

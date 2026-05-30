@@ -311,14 +311,14 @@ The backend currently handles:
 - user profiles
 - presence sessions
 - nearby feed model
-- safety-related records already in schema
+- safety-related records including hidden users, blocks, reports, waves, and approach attempts
 - user-added venue submissions created through `Add +`
 
 Relevant schema file:
 
 - [supabase/migrations/0001_left_mvp.sql](/Users/kelvinaliche/Desktop/Projects/leftApp/supabase/migrations/0001_left_mvp.sql:95)
 
-The location stack and the Supabase social model are still not fully connected. Venue selection is local-first and not yet used to drive real backend presence activation.
+When the signed-in user and selected venue are real UUID-backed records, successful visibility activation now creates a backend `presence_sessions` row. The app also refreshes venue context and nearby feed data from Supabase. Local/mock venue IDs still use the seeded development path.
 
 ## Configuration
 
@@ -345,18 +345,17 @@ Important gaps remain:
 
 - venue preferences are stored locally only, not synced per user in Supabase
 - the local fallback catalog is still tiny
-- venue density, pulse copy, and nearby feed are still partly mock-driven
-- location-driven venue detection is not yet connected to backend presence session creation
+- venue density, pulse copy, and nearby feed are Supabase-backed only when real UUID venue/user records are available
+- location-driven venue detection still has a local/mock fallback path for development
 - Expo Go is not a reliable environment for testing this flow; it should be tested in a dev build or native run
 
 ## Recommended Next Steps
 
 1. Add a backend table for per-user venue preferences so hide/mute rules persist across reinstalls and devices.
 2. Strengthen deduplication beyond exact-name matching.
-3. Connect successful venue detection to actual presence-session creation and nearby feed loading.
-4. Replace the local fallback catalog with a real venue ingestion strategy for development and production.
-5. Add explicit handling for the `Pause visibility` state so it affects server-visible presence, not just local UI.
-6. Add analytics/logging around permission denial, venue detection, venue selection, prompt firing, and prompt response outcomes.
+3. Replace the local fallback catalog with a real venue ingestion strategy for development and production.
+4. Add analytics/logging around permission denial, venue detection, venue selection, prompt firing, and prompt response outcomes.
+5. Add automated integration tests for presence activation, pause/end, feed filtering, and report creation.
 
 ## Summary
 
@@ -370,5 +369,8 @@ The app now has a real device-side venue foundation:
 - venue dwell prompting exists
 - venue safety preferences are persisted locally
 - activation defaults are persisted locally
+- UUID-backed activation creates a backend presence session
+- UUID-backed feed and venue context refresh from Supabase
+- UUID-backed pause/end visibility updates the backend session
 
-What is still missing is the full bridge from venue detection into real backend presence creation and the live nearby feed.
+What is still missing is full production hardening around venue preferences, test coverage, analytics, and a production venue catalog.

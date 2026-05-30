@@ -1,25 +1,47 @@
-import { Text, View } from "react-native";
-import type { NearbyFeedItem } from "../../types/left-domain";
+import { Text, TextInput, View } from "react-native";
+import type { NearbyFeedItem, ReportCategory } from "../../types/left-domain";
 import { formatIntent } from "../../app/leftConfig";
-import { styles } from "../../app/leftTheme";
+import { T, styles } from "../../app/leftTheme";
 import { BackNavButton } from "../../components/left/navigation";
-import { Chip, GhostButton, InfoBlock, PrimaryButton } from "../../components/left/ui";
+import { Chip, GhostButton, InfoBlock, PrimaryButton, SelectChip } from "../../components/left/ui";
+
+const reportCategories: Array<{ id: ReportCategory; label: string }> = [
+  { id: "unsafe_behavior", label: "Unsafe" },
+  { id: "harassment", label: "Harassment" },
+  { id: "impersonation", label: "Impersonation" },
+  { id: "spam", label: "Spam" },
+  { id: "other", label: "Other" },
+];
 
 export function ProfileScreen({
   item,
   profilePrompt,
+  reportCategory,
+  reportNotes,
+  reportSubmitting,
   onBack,
   onWave,
   onApproach,
   onHide,
+  onBlock,
+  onChangeReportCategory,
+  onChangeReportNotes,
+  onReport,
   onOpenSafety,
 }: {
   item: NearbyFeedItem;
   profilePrompt: string;
+  reportCategory: ReportCategory;
+  reportNotes: string;
+  reportSubmitting: boolean;
   onBack: () => void;
   onWave: () => void;
   onApproach: () => void;
   onHide: () => void;
+  onBlock: () => void;
+  onChangeReportCategory: (category: ReportCategory) => void;
+  onChangeReportNotes: (notes: string) => void;
+  onReport: () => void;
   onOpenSafety: () => void;
 }) {
   return (
@@ -56,6 +78,29 @@ export function ProfileScreen({
       </View>
       <View style={styles.profileDestructive}>
         <GhostButton label="Hide this person" onPress={onHide} destructive />
+        <GhostButton label="Block" onPress={onBlock} destructive />
+      </View>
+      <View style={styles.reportPanel}>
+        <Text style={styles.reportPanelTitle}>Report {item.firstName}</Text>
+        <View style={styles.reportChipWrap}>
+          {reportCategories.map((category) => (
+            <SelectChip
+              key={category.id}
+              label={category.label}
+              active={reportCategory === category.id}
+              onPress={() => onChangeReportCategory(category.id)}
+            />
+          ))}
+        </View>
+        <TextInput
+          value={reportNotes}
+          onChangeText={onChangeReportNotes}
+          placeholder="Add optional context"
+          placeholderTextColor={T.textMuted}
+          style={[styles.input, styles.multilineInput]}
+          multiline
+        />
+        <GhostButton label={reportSubmitting ? "Submitting..." : "Submit report"} onPress={onReport} destructive />
       </View>
     </View>
   );
