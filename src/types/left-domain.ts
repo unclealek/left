@@ -55,6 +55,16 @@ export type VenueType =
 
 export type DistanceBucket = "same_area" | "nearby" | "within_venue";
 export type EnergyLevel = "quiet" | "warm" | "high";
+export type SocialInteractionEventType =
+  | "became_visible"
+  | "profile_viewed"
+  | "wave_sent"
+  | "approach_started"
+  | "approach_connected"
+  | "prompt_dismissed"
+  | "user_hidden"
+  | "user_blocked"
+  | "user_reported";
 
 export interface AppUser {
   id: string;
@@ -123,6 +133,17 @@ export interface PromptEvent {
   triggeredAt: string;
   reason: string;
   accepted: boolean | null;
+  createdAt: string;
+}
+
+export interface SocialInteractionEvent {
+  id: string;
+  actorUserId: string;
+  targetUserId: string | null;
+  venueId: string | null;
+  visibilitySessionId: string | null;
+  eventType: SocialInteractionEventType;
+  metadata: Record<string, unknown>;
   createdAt: string;
 }
 

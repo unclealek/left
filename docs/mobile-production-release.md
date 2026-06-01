@@ -50,6 +50,23 @@ NODE_ENV=production npx expo export --platform all --output-dir dist-mobile-chec
 rm -rf dist-mobile-check
 ```
 
+Current local verification status:
+
+- TypeScript check passes.
+- Expo dependency check passes.
+- Production iOS export passes.
+- Android preview build has completed successfully on EAS.
+
+For local iOS builds, CocoaPods requires a UTF-8 terminal locale. If `npx expo run:ios` fails with `Unicode Normalization not appropriate for ASCII-8BIT`, run:
+
+```bash
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+npx expo run:ios
+```
+
+Add the two `export` lines to `~/.zshrc` if you want the fix to persist.
+
 ## Build Commands
 
 ```bash
@@ -70,6 +87,16 @@ left://auth/callback
 
 The staging LAN callback URL should not be required for store builds.
 
+## App Icon
+
+The app uses `Logo-text.png` for Expo-managed icon and splash config. Because the repository includes a native `ios/` directory, iOS also uses the native icon asset at:
+
+```text
+ios/Left/Images.xcassets/AppIcon.appiconset/App-Icon-1024x1024@1x.png
+```
+
+If the simulator still shows an old icon after rebuilding, delete the installed `Left` app from the simulator and reinstall it.
+
 ## Release Test Pass
 
 Test these on a real device before submitting:
@@ -77,6 +104,7 @@ Test these on a real device before submitting:
 - Google sign-in and session restore.
 - Venue detection and home feed loading.
 - Become visible, visible timer, and visibility session recovery.
+- Social Momentum card behavior: observing, warming up, dismiss, and suppression after block/report.
 - Hide, block, report, and safety controls.
 - Account deletion request flow.
 - Logout and fresh sign-in.

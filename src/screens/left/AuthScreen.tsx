@@ -1,4 +1,4 @@
-import { Image, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { styles } from "../../app/leftTheme";
 
@@ -13,7 +13,11 @@ export function AuthScreen({ authError, onAuth }: { authError: string | null; on
           <Text style={styles.authMarkChevron}>{"<"}</Text>
           <View style={styles.authMarkDot} />
         </View>
-        <Image source={require("../../../Logo-text.png")} style={styles.authLogo} resizeMode="contain" />
+        <View style={styles.authWordmarkWrap}>
+          <View style={styles.authWordmarkRule} />
+          <Text style={styles.authWordmark}>LEFT</Text>
+          <View style={styles.authWordmarkRule} />
+        </View>
       </View>
       <View style={styles.authCard}>
         <View style={styles.authCardAccentLine} />

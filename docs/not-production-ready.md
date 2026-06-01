@@ -6,9 +6,9 @@ Status:
 
 ## 1. App Architecture
 
-- `src/app/LeftApp.tsx` contains too much core app logic in one component.
-- Presence, feed, safety, auth, settings, venue submission, and identity removal are mixed together.
-- Extract presence, feed, safety, venue, and account behavior into focused services or hooks.
+- `src/app/LeftApp.tsx` is still large, but the highest-risk persistence logic has been extracted.
+- Current services: `features/auth`, `features/account`, `features/presence`, `features/interactions`, `features/social-momentum`, and `features/venues`.
+- Remaining architecture work is mostly UI orchestration cleanup, for example extracting hooks like `useAuthFlow`, `usePresenceSession`, `useSafetyActions`, and `useVenueSubmission`.
 - UUID-guarded mock fallbacks should be isolated from production builds or made explicit in environment config.
 
 ## 2. Safety And Reporting
@@ -59,9 +59,10 @@ Status:
 
 ## 8. Supabase Migrations
 
-- Latest migration was statically reviewed only.
+- Latest migration `0015_social_momentum_events.sql` was statically reviewed only.
 - Supabase CLI is not installed in the current shell, so migrations have not been applied/tested locally.
-- Validate with a clean local Supabase reset before production use.
+- Apply migrations to staging first and verify Social Momentum event writes before production use.
+- Validate with a clean local Supabase reset or hosted staging project before production use.
 
 ## 9. Location And Venue Logic
 
@@ -94,8 +95,7 @@ Status:
 ## Highest Priority Blockers
 
 1. Add tests for Supabase RLS and safety/presence flows.
-2. Validate all migrations with Supabase CLI.
+2. Apply and validate `0015_social_momentum_events.sql` in staging.
 3. Enforce session expiry and approach cancellation/expiry.
 4. Remove or clearly isolate mock fallback paths from production builds.
 5. Add loading, disabled, and error states for safety, wave, approach, and report actions.
-

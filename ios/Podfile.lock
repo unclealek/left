@@ -10,7 +10,7 @@ PODS:
     - ExpoModulesCore
   - EXNotifications (0.32.17):
     - ExpoModulesCore
-  - Expo (54.0.34):
+  - Expo (54.0.35):
     - boost
     - DoubleConversion
     - ExpoModulesCore
@@ -252,9 +252,9 @@ PODS:
     - ExpoModulesCore
   - ExpoCrypto (15.0.9):
     - ExpoModulesCore
-  - ExpoFileSystem (19.0.22):
+  - ExpoFileSystem (19.0.23):
     - ExpoModulesCore
-  - ExpoFont (14.0.11):
+  - ExpoFont (14.0.12):
     - ExpoModulesCore
   - ExpoKeepAwake (15.0.8):
     - ExpoModulesCore
@@ -2978,15 +2978,15 @@ SPEC CHECKSUMS:
   EXJSONUtils: 1d3e4590438c3ee593684186007028a14b3686cd
   EXManifests: 4eb6d80e7f6e07b4db68d2e1a5da58a915825b68
   EXNotifications: 6b4dced0f3dfd0dfb9d7c5d47a5ccd86764fc73c
-  Expo: 4c6df7e26ded8f66b3b71b60f2e7142c1f3db4e6
+  Expo: bd42dee163de28c9715b2cd0b9e6390727a514c4
   expo-dev-client: 11d439b492da4debb14d8c1d1ac5c725ecc71a37
   expo-dev-launcher: c7b3d7d6335640e360e633fa20f6486a03483df8
   expo-dev-menu: d382cba24266d4c293b385c46ddb7fd3ad3ff918
   expo-dev-menu-interface: 600df12ea01efecdd822daaf13cc0ac091775533
   ExpoAsset: cc98e16f65a64e58079d9ccad3b5eec2b57b9263
   ExpoCrypto: 069f975653b104f248ff5af13c1903b1ca5a4e40
-  ExpoFileSystem: dc2c00cc568d432efc36ea1d994c25050909d23d
-  ExpoFont: c625dbd97ed57e9089b172b2a7bb99003d074664
+  ExpoFileSystem: 72c7bedb30b6c8565322f9c6377663a1476d7703
+  ExpoFont: cc2be150f9c107bc8cd072eb0cd15388d6081479
   ExpoKeepAwake: 44bf6715bc1d2ddb17afe19d927cd039cda123f0
   ExpoLinearGradient: 814a21fc4056c3cf606e4f19e31e47074c5b5a86
   ExpoLinking: 4f1fc07ec4b3c10d60ec91617db973575104ec7e

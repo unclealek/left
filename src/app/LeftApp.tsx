@@ -1,14 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Alert, AppState, ScrollView, Text, View } from "react-native";
-import { makeRedirectUri } from "expo-auth-session";
-import * as QueryParams from "expo-auth-session/build/QueryParams";
 import * as Notifications from "expo-notifications";
-import * as WebBrowser from "expo-web-browser";
 import type { Session } from "@supabase/supabase-js";
 import { SessionFooterNav } from "../components/left/navigation";
 import {
-  AUTH_CALLBACK_PATH,
-  NATIVE_AUTH_REDIRECT,
   SESSION_NAV_SCREENS,
   defaultApproachPrompt,
   defaultProfilePrompt,
@@ -25,11 +20,10 @@ import type {
   ApproachAttempt,
   AuthProvider,
   AvatarStyle,
-  DistanceBucket,
-  EnergyLevel,
   IntentType,
   NearbyFeedItem,
   ReportCategory,
+  SocialInteractionEventType,
   VenueType,
   VenueContextSummary,
 } from "../types/left-domain";
@@ -63,8 +57,41 @@ import {
   type RuntimeVenueCandidate,
   type VenuePreference,
 } from "../features/location/location-storage";
-
-WebBrowser.maybeCompleteAuthSession();
+import {
+  fetchUserProfile,
+  submitIdentityRemovalRequest,
+  updateUserSettings,
+  upsertOnboardingProfile,
+} from "../features/account/account-service";
+import {
+  blockUserForActor,
+  createApproachAttempt,
+  hideUserForActor,
+  markApproachConnected,
+  reportUserForActor,
+  sendWaveToUser,
+} from "../features/interactions/interaction-service";
+import {
+  createPresenceSession,
+  endOpenPresenceSessionsForUser,
+  fetchActivePresenceSession,
+  fetchNearbyFeed,
+  fetchVenueContextSummary,
+  updatePresenceSessionEndState,
+} from "../features/presence/presence-service";
+import {
+  deriveSocialMomentum,
+  fetchSocialMomentumEvents,
+  recordSocialInteractionEvent as persistSocialInteractionEvent,
+} from "../features/social-momentum/social-momentum-service";
+import { submitVenueForReview } from "../features/venues/venue-submission-service";
+import {
+  getCurrentSession,
+  getFirstNameFromSession,
+  getProvider,
+  getProviderSubject,
+  startGoogleAuthSession,
+} from "../features/auth/auth-service";
 
 function logAuthDebug(step: string, payload?: Record<string, unknown>) {
   if (payload) {
@@ -78,45 +105,9 @@ function normalizeVenueName(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-function isUuid(value: string | null | undefined) {
+function isUuid(value: string | null | undefined): value is string {
   return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
-
-type PresenceSessionRow = {
-  id: string;
-  venue_id: string;
-  intent: IntentType;
-  vibes: string[];
-  hint_text: string | null;
-  started_at: string;
-  expires_at: string;
-  status: string;
-  venues?: { name?: string | null } | null;
-};
-
-type VenueContextSummaryRow = {
-  venue_id: string;
-  venue_name: string;
-  visible_count: number;
-  energy_level: EnergyLevel;
-  active_vibes: string[];
-  popular_intents: IntentType[];
-  pulse_copy: string | null;
-};
-
-type NearbyFeedRow = {
-  profile_user_id: string;
-  presence_session_id: string;
-  first_name: string;
-  intent: IntentType;
-  hint_text: string | null;
-  primary_vibe: string | null;
-  session_duration_remaining: string | Record<string, number> | null;
-  distance_bucket: DistanceBucket;
-  venue_name: string;
-  energy_level: EnergyLevel;
-  session_expires_at: string;
-};
 
 export function LeftApp() {
   const [screen, setScreen] = useState<Screen>("loading");
@@ -154,6 +145,7 @@ export function LeftApp() {
   const [reportCategory, setReportCategory] = useState<ReportCategory>("unsafe_behavior");
   const [reportNotes, setReportNotes] = useState("");
   const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [socialMomentumEvents, setSocialMomentumEvents] = useState<SocialInteractionEventType[]>([]);
 
   const visibleFeed = useMemo(() => {
     if (venueHidden) return [];
@@ -164,6 +156,16 @@ export function LeftApp() {
     if (!sessionVisible || !sessionStartedAt) return 0;
     return Math.max(0, Math.floor((sessionNowMs - new Date(sessionStartedAt).getTime()) / 1000));
   }, [sessionNowMs, sessionStartedAt, sessionVisible]);
+
+  const socialMomentum = useMemo(
+    () =>
+      deriveSocialMomentum({
+        sessionVisible,
+        elapsedSessionSeconds,
+        eventTypes: socialMomentumEvents,
+      }),
+    [elapsedSessionSeconds, sessionVisible, socialMomentumEvents],
+  );
 
   useEffect(() => {
     void bootstrapSession();
@@ -238,9 +240,7 @@ export function LeftApp() {
   }, [user?.id, venueSummary.venueId, activePresenceSessionId]);
 
   async function bootstrapSession() {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const session = await getCurrentSession();
     logAuthDebug("bootstrap session", {
       hasSession: !!session,
       userId: session?.user.id ?? null,
@@ -293,101 +293,81 @@ export function LeftApp() {
   }
 
   async function recoverActivePresenceSession(appUser: AppUser) {
-    if (!isUuid(appUser.id)) return false;
-
-    const { data, error } = await supabase
-      .from("presence_sessions")
-      .select("id, venue_id, intent, vibes, hint_text, started_at, expires_at, status, venues(name)")
-      .eq("user_id", appUser.id)
-      .is("ended_at", null)
-      .gt("expires_at", new Date().toISOString())
-      .in("status", ["visible", "discoverable", "expiring"])
-      .order("started_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      console.warn("[presence] active session recovery failed", error.message);
-      return false;
-    }
-
-    const activeSession = data as PresenceSessionRow | null;
+    const activeSession = await fetchActivePresenceSession(appUser.id);
     if (!activeSession) {
       setActivePresenceSessionId(null);
       setSessionVisible(false);
       setSessionStartedAt(null);
+      setSocialMomentumEvents([]);
       return false;
     }
 
-    const durationMinutes = Math.max(
-      1,
-      Math.round((new Date(activeSession.expires_at).getTime() - new Date(activeSession.started_at).getTime()) / 60_000),
-    );
-
     setActivePresenceSessionId(activeSession.id);
-    setSessionStartedAt(activeSession.started_at);
+    await refreshSocialMomentumEvents(activeSession.id, appUser.id);
+    setSessionStartedAt(activeSession.startedAt);
     setSessionNowMs(Date.now());
     setSessionVisible(true);
     setSelectedIntent(activeSession.intent);
     setSelectedVibes(activeSession.vibes.length > 0 ? activeSession.vibes : ["Open"]);
-    setSelectedDuration(durationMinutes);
-    setHintDraft(activeSession.hint_text ?? "");
+    setSelectedDuration(activeSession.durationMinutes);
+    setHintDraft(activeSession.hintText ?? "");
     setVenueSummary((current) => ({
       ...current,
-      venueId: activeSession.venue_id,
-      venueName: activeSession.venues?.name ?? current.venueName,
+      venueId: activeSession.venueId,
+      venueName: activeSession.venueName ?? current.venueName,
     }));
 
     await Promise.all([
-      refreshVenueContext(activeSession.venue_id),
-      refreshNearbyFeed(appUser.id, activeSession.venue_id),
+      refreshVenueContext(activeSession.venueId),
+      refreshNearbyFeed(appUser.id, activeSession.venueId),
     ]);
 
     return true;
   }
 
   async function refreshVenueContext(venueId: string) {
-    if (!isUuid(venueId)) return;
-
-    const { data, error } = await supabase
-      .from("venue_context_summary")
-      .select("venue_id, venue_name, visible_count, energy_level, active_vibes, popular_intents, pulse_copy")
-      .eq("venue_id", venueId)
-      .maybeSingle();
-
-    if (error) {
-      console.warn("[presence] venue context refresh failed", error.message);
-      return;
-    }
-
-    const context = data as VenueContextSummaryRow | null;
+    const context = await fetchVenueContextSummary(venueId);
     if (!context) return;
 
-    setVenueSummary({
-      venueId: context.venue_id,
-      venueName: context.venue_name,
-      visibleCount: context.visible_count,
-      energyLevel: context.energy_level,
-      activeVibes: context.active_vibes,
-      popularIntents: context.popular_intents,
-      pulseCopy: context.pulse_copy ?? "No pulse yet.",
-    });
+    setVenueSummary(context);
   }
 
   async function refreshNearbyFeed(userId: string, venueId: string) {
-    if (!isUuid(userId) || !isUuid(venueId)) return;
+    setFeed(await fetchNearbyFeed(userId, venueId));
+  }
 
-    const { data, error } = await supabase.rpc("get_nearby_feed", {
-      p_viewer_user_id: userId,
-      p_venue_id: venueId,
-    });
-
-    if (error) {
-      console.warn("[presence] nearby feed refresh failed", error.message);
+  async function refreshSocialMomentumEvents(visibilitySessionId: string | null, actorUserId = user?.id ?? null) {
+    if (!isUuid(actorUserId) || !isUuid(visibilitySessionId)) {
+      setSocialMomentumEvents([]);
       return;
     }
 
-    setFeed(((data ?? []) as NearbyFeedRow[]).map(mapNearbyFeedRow));
+    setSocialMomentumEvents(await fetchSocialMomentumEvents(actorUserId, visibilitySessionId));
+  }
+
+  async function recordSocialInteractionEvent(
+    eventType: SocialInteractionEventType,
+    options: {
+      targetUserId?: string | null;
+      visibilitySessionId?: string | null;
+      metadata?: Record<string, unknown>;
+    } = {},
+  ) {
+    if (!user || !isUuid(user.id)) return;
+    const targetUserId = isUuid(options.targetUserId) ? options.targetUserId : null;
+    const visibilitySessionId = isUuid(options.visibilitySessionId) ? options.visibilitySessionId : activePresenceSessionId;
+    const venueId = isUuid(venueSummary.venueId) ? venueSummary.venueId : null;
+
+    setSocialMomentumEvents((current) => [...current, eventType]);
+
+    await persistSocialInteractionEvent({
+      actorUserId: user.id,
+      eventType,
+      targetUserId,
+      venueId,
+      visibilitySessionId,
+      metadata: options.metadata,
+    });
   }
 
   async function refreshVenuePreferences() {
@@ -447,36 +427,25 @@ export function LeftApp() {
     }
 
     setVenueDraftSubmitting(true);
-    const { data, error } = await supabase
-      .from("venue_submissions")
-      .insert({
-        submitted_by: user.id,
-        name: submittedName,
-        type: venueDraftType,
-        address_text: venueDraftAddress.trim(),
-        notes: venueDraftNotes.trim() || null,
-        proposed_geofence_json: {
-          center: {
-            latitude: lastKnownCoords.latitude,
-            longitude: lastKnownCoords.longitude,
-          },
-          radius_meters: 60,
-          source: "user_submission",
-        },
-        status: "pending",
-      })
-      .select("id, name")
-      .single();
+    const submittedVenue = await submitVenueForReview({
+      submittedBy: user.id,
+      name: submittedName,
+      type: venueDraftType,
+      addressText: venueDraftAddress.trim(),
+      notes: venueDraftNotes.trim() || null,
+      latitude: lastKnownCoords.latitude,
+      longitude: lastKnownCoords.longitude,
+    });
 
-    if (error || !data) {
+    if (!submittedVenue) {
       setVenueDraftSubmitting(false);
       Alert.alert("Venue submission failed", "We could not submit that venue yet.");
       return;
     }
 
     await storeUserSubmittedVenue({
-      id: `submission:${data.id}`,
-      name: data.name,
+      id: `submission:${submittedVenue.id}`,
+      name: submittedVenue.name,
       latitude: lastKnownCoords.latitude,
       longitude: lastKnownCoords.longitude,
       radiusMeters: 60,
@@ -514,7 +483,7 @@ export function LeftApp() {
     setAuthProvider(provider);
     setFirstNameDraft(inferredFirstName);
 
-    const { data, error } = await supabase.from("users").select("*").eq("id", session.user.id).maybeSingle();
+    const { profile, error } = await fetchUserProfile(session.user.id);
     if (error) {
       logAuthDebug("profile lookup failed", { message: error.message, code: error.code });
       setAuthError("Could not load your profile.");
@@ -522,7 +491,6 @@ export function LeftApp() {
       return;
     }
 
-    const profile = data as UserProfileRow | null;
     logAuthDebug("profile lookup complete", {
       hasProfile: !!profile,
       identityRemoved: profile?.identity_removed ?? null,
@@ -554,86 +522,12 @@ export function LeftApp() {
 
   async function startGoogleAuth() {
     setAuthError(null);
-    const redirectTo = makeRedirectUri({
-      scheme: "left",
-      path: AUTH_CALLBACK_PATH,
-      native: NATIVE_AUTH_REDIRECT,
-    });
-    logAuthDebug("starting google auth", {
-      redirectTo,
-      expectedNativeRedirect: NATIVE_AUTH_REDIRECT,
-      usingExpoGo: redirectTo.startsWith("exp://"),
-    });
-    if (redirectTo.startsWith("exp://")) {
-      logAuthDebug("expo go redirect detected", {
-        message: "OAuth redirects are more reliable in a development build or standalone app with the native left:// scheme.",
-      });
-    }
-
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo, skipBrowserRedirect: true },
-    });
-    if (error) {
-      logAuthDebug("oauth url generation failed", { message: error.message, code: error.code, status: error.status });
-      setAuthError("Google sign-in could not start.");
-      return;
-    }
-    if (!data?.url) {
-      logAuthDebug("oauth url missing");
-      setAuthError("Google sign-in did not return an auth URL.");
-      return;
-    }
-
-    logAuthDebug("oauth url generated", { authUrl: data.url });
-    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-    logAuthDebug("browser auth result", result.type === "success" ? { type: result.type, url: result.url } : { type: result.type });
-    if (result.type !== "success" || !result.url) return;
-
-    const { params, errorCode } = QueryParams.getQueryParams(result.url);
-    if (errorCode) {
-      logAuthDebug("callback query parsing failed", { errorCode, url: result.url });
-      setAuthError("Google sign-in did not complete.");
-      return;
-    }
-
-    const accessToken = typeof params.access_token === "string" ? params.access_token : null;
-    const refreshToken = typeof params.refresh_token === "string" ? params.refresh_token : null;
-    const authCode = typeof params.code === "string" ? params.code : null;
-
-    if (accessToken && refreshToken) {
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
-      if (sessionError) {
-        logAuthDebug("session set failed", { message: sessionError.message, code: sessionError.code, status: sessionError.status });
-        setAuthError("Google sign-in did not complete.");
-        return;
-      }
-      logAuthDebug("session set from callback tokens");
-      return;
-    }
-
-    if (authCode) {
-      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(authCode);
-      if (exchangeError) {
-        logAuthDebug("session exchange failed", { message: exchangeError.message, code: exchangeError.code, status: exchangeError.status });
-        setAuthError("Google sign-in did not complete.");
-        return;
-      }
-      logAuthDebug("session exchange complete");
-      return;
-    }
-
-    logAuthDebug("callback missing auth tokens and code", { url: result.url, params });
-    setAuthError("Google sign-in did not complete.");
+    const result = await startGoogleAuthSession(logAuthDebug);
+    if (result.status === "failed") setAuthError(result.message);
   }
 
   async function finishOnboarding() {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const session = await getCurrentSession();
     if (!session) {
       setAuthError("Sign in again to finish onboarding.");
       setScreen("auth");
@@ -664,24 +558,8 @@ export function LeftApp() {
       onboardingCompleted: true,
     };
 
-    const { error } = await supabase.from("users").upsert(
-      {
-        id: nextUser.id,
-        auth_provider: nextUser.authProvider,
-        provider_subject: nextUser.providerSubject,
-        first_name: nextUser.firstName,
-        avatar_style: nextUser.avatarStyle,
-        default_intent: nextUser.defaultIntent,
-        default_vibes: nextUser.defaultVibes,
-        profile_prompt: nextUser.profilePrompt,
-        approach_prompt: nextUser.approachPrompt,
-        focus_mode_enabled: nextUser.focusModeEnabled,
-        prompts_enabled: nextUser.promptsEnabled,
-        onboarding_completed: nextUser.onboardingCompleted,
-      },
-      { onConflict: "id" },
-    );
-    if (error) {
+    const saved = await upsertOnboardingProfile(nextUser);
+    if (!saved) {
       setLocationBusy(false);
       setAuthError("We could not save onboarding yet.");
       return;
@@ -718,40 +596,29 @@ export function LeftApp() {
     });
 
     if (isUuid(user.id) && isUuid(venueSummary.venueId)) {
-      const now = new Date().toISOString();
-      await supabase
-        .from("presence_sessions")
-        .update({ status: "session_ended", ended_at: now })
-        .eq("user_id", user.id)
-        .is("ended_at", null)
-        .in("status", ["activating", "visible", "discoverable", "expiring", "paused"]);
+      await endOpenPresenceSessionsForUser(user.id);
+      const presenceSessionId = await createPresenceSession({
+        userId: user.id,
+        venueId: venueSummary.venueId,
+        intent,
+        vibes,
+        hintText,
+        startedAt,
+        expiresAt,
+      });
 
-      const { data, error } = await supabase
-        .from("presence_sessions")
-        .insert({
-          user_id: user.id,
-          venue_id: venueSummary.venueId,
-          intent,
-          vibes,
-          hint_text: hintText,
-          status: "visible",
-          prompt_state: "none",
-          started_at: startedAt,
-          expires_at: expiresAt,
-        })
-        .select("id")
-        .single();
-
-      if (error) {
+      if (!presenceSessionId) {
         Alert.alert("Could not start visibility", "Your session was not saved. Try again before becoming visible.");
         return;
       }
 
-      setActivePresenceSessionId(data.id);
+      setActivePresenceSessionId(presenceSessionId);
+      void recordSocialInteractionEvent("became_visible", { visibilitySessionId: presenceSessionId });
       await refreshVenueContext(venueSummary.venueId);
       await refreshNearbyFeed(user.id, venueSummary.venueId);
     } else {
       setActivePresenceSessionId(null);
+      setSocialMomentumEvents([]);
     }
 
     setSessionNowMs(Date.now());
@@ -767,30 +634,45 @@ export function LeftApp() {
 
   function openProfile(item: NearbyFeedItem) {
     setSelectedProfile(item);
+    void recordSocialInteractionEvent("profile_viewed", {
+      targetUserId: item.profileUserId,
+      visibilitySessionId: activePresenceSessionId ?? item.presenceSessionId,
+    });
     setScreen("profile");
+  }
+
+  function handleSocialMomentumPrimary() {
+    if (socialMomentum?.state === "warming_up" && visibleFeed[0]) {
+      void sendWave(visibleFeed[0]);
+      setScreen("profile");
+      return;
+    }
+    setScreen("feed");
+  }
+
+  function dismissSocialMomentumPrompt() {
+    void recordSocialInteractionEvent("prompt_dismissed");
   }
 
   async function sendWave(item: NearbyFeedItem) {
     if (!user) return;
     if (isUuid(user.id) && isUuid(item.profileUserId) && isUuid(item.presenceSessionId)) {
-      const { error } = await supabase
-        .from("waves")
-        .upsert(
-          {
-            from_user_id: user.id,
-            to_user_id: item.profileUserId,
-            presence_session_id: item.presenceSessionId,
-            status: "sent",
-          },
-          { onConflict: "from_user_id,to_user_id,presence_session_id" },
-        );
+      const sent = await sendWaveToUser({
+        fromUserId: user.id,
+        toUserId: item.profileUserId,
+        presenceSessionId: item.presenceSessionId,
+      });
 
-      if (error) {
+      if (!sent) {
         Alert.alert("Could not send wave", "Please try again.");
         return;
       }
     }
 
+    void recordSocialInteractionEvent("wave_sent", {
+      targetUserId: item.profileUserId,
+      visibilitySessionId: activePresenceSessionId ?? item.presenceSessionId,
+    });
     setSelectedProfile(item);
   }
 
@@ -801,27 +683,27 @@ export function LeftApp() {
     let approachId = "approach-1";
 
     if (isUuid(user.id) && isUuid(selectedProfile.profileUserId) && isUuid(selectedProfile.presenceSessionId)) {
-      const { data, error } = await supabase
-        .from("approach_attempts")
-        .insert({
-          from_user_id: user.id,
-          to_user_id: selectedProfile.profileUserId,
-          presence_session_id: selectedProfile.presenceSessionId,
-          status: "started",
-          started_at: startedAt.toISOString(),
-          expires_at: expiresAt.toISOString(),
-        })
-        .select("id")
-        .single();
+      const persistedApproachId = await createApproachAttempt({
+        fromUserId: user.id,
+        toUserId: selectedProfile.profileUserId,
+        presenceSessionId: selectedProfile.presenceSessionId,
+        startedAt: startedAt.toISOString(),
+        expiresAt: expiresAt.toISOString(),
+      });
 
-      if (error) {
+      if (!persistedApproachId) {
         Alert.alert("Could not start approach", "Please try again.");
         return;
       }
 
-      approachId = data.id;
+      approachId = persistedApproachId;
     }
 
+    void recordSocialInteractionEvent("approach_started", {
+      targetUserId: selectedProfile.profileUserId,
+      visibilitySessionId: activePresenceSessionId ?? selectedProfile.presenceSessionId,
+      metadata: { approachId },
+    });
     setApproach({
       id: approachId,
       fromUserId: user.id,
@@ -841,17 +723,22 @@ export function LeftApp() {
   async function confirmConnected() {
     const completedAt = new Date().toISOString();
     if (approach && isUuid(approach.id)) {
-      const { error } = await supabase
-        .from("approach_attempts")
-        .update({ status: "connected", completed_at: completedAt })
-        .eq("id", approach.id);
+      const updated = await markApproachConnected({
+        approachId: approach.id,
+        completedAt,
+      });
 
-      if (error) {
+      if (!updated) {
         Alert.alert("Could not confirm connection", "Please try again.");
         return;
       }
     }
 
+    void recordSocialInteractionEvent("approach_connected", {
+      targetUserId: approach?.toUserId ?? selectedProfile?.profileUserId ?? null,
+      visibilitySessionId: activePresenceSessionId ?? approach?.presenceSessionId ?? null,
+      metadata: { approachId: approach?.id ?? null },
+    });
     setApproach((current) =>
       current ? { ...current, status: "connected", completedAt } : current,
     );
@@ -862,16 +749,21 @@ export function LeftApp() {
     if (!selectedProfile) return;
     const targetUserId = selectedProfile.profileUserId;
     if (user && isUuid(user.id) && isUuid(targetUserId)) {
-      const { error } = await supabase
-        .from("hidden_users")
-        .upsert({ actor_user_id: user.id, target_user_id: targetUserId }, { onConflict: "actor_user_id,target_user_id" });
+      const hidden = await hideUserForActor({
+        actorUserId: user.id,
+        targetUserId,
+      });
 
-      if (error) {
+      if (!hidden) {
         Alert.alert("Could not hide person", "Please try again.");
         return;
       }
     }
 
+    void recordSocialInteractionEvent("user_hidden", {
+      targetUserId,
+      visibilitySessionId: activePresenceSessionId ?? selectedProfile.presenceSessionId,
+    });
     setFeed((current) => current.filter((item) => item.profileUserId !== selectedProfile.profileUserId));
     setSelectedProfile(null);
     setScreen("feed");
@@ -882,16 +774,22 @@ export function LeftApp() {
     const targetUserId = selectedProfile.profileUserId;
 
     if (isUuid(user.id) && isUuid(targetUserId)) {
-      const { error } = await supabase
-        .from("blocks")
-        .upsert({ actor_user_id: user.id, target_user_id: targetUserId, reason: "user_blocked_from_profile" }, { onConflict: "actor_user_id,target_user_id" });
+      const blocked = await blockUserForActor({
+        actorUserId: user.id,
+        targetUserId,
+        reason: "user_blocked_from_profile",
+      });
 
-      if (error) {
+      if (!blocked) {
         Alert.alert("Could not block person", "Please try again.");
         return;
       }
     }
 
+    void recordSocialInteractionEvent("user_blocked", {
+      targetUserId,
+      visibilitySessionId: activePresenceSessionId ?? selectedProfile.presenceSessionId,
+    });
     setFeed((current) => current.filter((item) => item.profileUserId !== targetUserId));
     setSelectedProfile(null);
     setScreen("feed");
@@ -904,21 +802,26 @@ export function LeftApp() {
 
     setReportSubmitting(true);
     if (isUuid(user.id) && isUuid(targetUserId)) {
-      const { error } = await supabase.from("reports").insert({
-        actor_user_id: user.id,
-        target_user_id: targetUserId,
-        presence_session_id: presenceSessionId,
+      const reported = await reportUserForActor({
+        actorUserId: user.id,
+        targetUserId,
+        presenceSessionId,
         category,
-        notes: notes?.trim() || null,
+        notes,
       });
 
-      if (error) {
+      if (!reported) {
         setReportSubmitting(false);
         Alert.alert("Could not submit report", "Please try again.");
         return;
       }
     }
 
+    void recordSocialInteractionEvent("user_reported", {
+      targetUserId,
+      visibilitySessionId: activePresenceSessionId ?? presenceSessionId,
+      metadata: { category },
+    });
     setReportSubmitting(false);
     setReportCategory("unsafe_behavior");
     setReportNotes("");
@@ -975,18 +878,16 @@ export function LeftApp() {
       approachPrompt: input.approachPrompt.trim() || defaultApproachPrompt,
       updatedAt: new Date().toISOString(),
     };
-    const { error } = await supabase
-      .from("users")
-      .update({
-        first_name: nextUser.firstName,
-        avatar_style: nextUser.avatarStyle,
-        default_intent: nextUser.defaultIntent,
-        default_vibes: nextUser.defaultVibes,
-        profile_prompt: nextUser.profilePrompt,
-        approach_prompt: nextUser.approachPrompt,
-      })
-      .eq("id", user.id);
-    if (error) {
+    const saved = await updateUserSettings({
+      userId: user.id,
+      firstName: nextUser.firstName,
+      avatarStyle: nextUser.avatarStyle,
+      defaultIntent: nextUser.defaultIntent,
+      defaultVibes: nextUser.defaultVibes,
+      profilePrompt: nextUser.profilePrompt,
+      approachPrompt: nextUser.approachPrompt,
+    });
+    if (!saved) {
       setSettingsSaveState("error");
       return;
     }
@@ -1026,23 +927,16 @@ export function LeftApp() {
 
   async function endSessionState(status: "paused" | "session_ended" = "session_ended") {
     const sessionId = activePresenceSessionId;
-    const endedAt = new Date().toISOString();
     setSessionVisible(false);
     setSessionStartedAt(null);
     setActivePresenceSessionId(null);
+    setSocialMomentumEvents([]);
     setSessionNowMs(Date.now());
 
     if (isUuid(sessionId)) {
-      const { error } = await supabase
-        .from("presence_sessions")
-        .update({
-          status,
-          paused_at: status === "paused" ? endedAt : null,
-          ended_at: status === "session_ended" ? endedAt : null,
-        })
-        .eq("id", sessionId);
+      const updated = await updatePresenceSessionEndState(sessionId, status);
 
-      if (error) {
+      if (!updated) {
         Alert.alert("Could not update visibility", "Your local session is hidden, but the server did not confirm the change.");
       }
     }
@@ -1069,57 +963,21 @@ export function LeftApp() {
   async function submitAccountDeletionRequest() {
     if (!user) return;
     setDeletionRequestState("submitting");
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
-    const { data: requestRow, error } = await supabase
-      .from("identity_removal_requests")
-      .insert({
-        user_id: user.id,
-        profile_user_id: user.id,
-        contact_email: authUser?.email ?? "unknown@left.local",
-        contact_name: user.firstName,
-        auth_provider: user.authProvider,
-        request_kind: "identity_removal",
-        identity_fields_to_remove: [
-          "email",
-          "first_name",
-          "provider_subject",
-          "auth_provider_metadata",
-          "direct_auth_credentials",
-        ],
-        retained_record_classes: ["hints", "venue_history", "safety_zones"],
-        payload: {
-          defaultIntent: user.defaultIntent,
-          defaultVibes: user.defaultVibes,
-          focusModeEnabled: user.focusModeEnabled,
-          promptsEnabled: user.promptsEnabled,
-        },
-      })
-      .select("id")
-      .single();
-    if (error) {
-      if (error.code === "23505") {
-        setDeletionRequestState("submitted");
-        Alert.alert("Identity removal", "You already have an open identity-removal request.");
-        return;
-      }
+    const result = await submitIdentityRemovalRequest(user);
+
+    if (result === "duplicate") {
+      setDeletionRequestState("submitted");
+      Alert.alert("Identity removal", "You already have an open identity-removal request.");
+      return;
+    }
+
+    if (result === "failed") {
       setDeletionRequestState("error");
       Alert.alert("Identity removal failed", "We could not create your identity-removal request.");
       return;
     }
 
-    if (!requestRow?.id) {
-      setDeletionRequestState("error");
-      Alert.alert("Identity removal failed", "We could not start identity removal.");
-      return;
-    }
-
-    const { error: processingError } = await supabase.functions.invoke("process-identity-removal", {
-      body: { requestId: requestRow.id },
-    });
-
-    if (processingError) {
+    if (result === "queued") {
       setDeletionRequestState("submitted");
       Alert.alert(
         "Identity removal queued",
@@ -1232,12 +1090,15 @@ export function LeftApp() {
           <VenueScreen
             venue={venueSummary}
             feed={visibleFeed}
+            socialMomentum={socialMomentum}
             sessionVisible={sessionVisible}
             venueHidden={venueHidden}
             canChooseVenue={nearbyVenueOptions.length > 1}
             onActivate={() => setScreen("activate")}
             onOpenFeed={() => setScreen("feed")}
             onOpenProfile={openProfile}
+            onSocialMomentumPrimary={handleSocialMomentumPrimary}
+            onDismissSocialMomentum={dismissSocialMomentumPrompt}
             onChooseVenue={() => setScreen("venue-select")}
             onAddVenue={() => setScreen("venue-add")}
           />
@@ -1319,23 +1180,6 @@ export function LeftApp() {
   );
 }
 
-function getProvider(session: Session): AuthProvider {
-  return (session.user.app_metadata.provider as AuthProvider | undefined) ?? "google";
-}
-
-function getProviderSubject(session: Session, provider: AuthProvider) {
-  return session.user.identities?.find((identity) => identity.provider === provider)?.id ?? session.user.id;
-}
-
-function getFirstNameFromSession(session: Session) {
-  return (
-    (session.user.user_metadata.first_name as string | undefined) ??
-    (session.user.user_metadata.name as string | undefined)?.split(" ")[0] ??
-    session.user.email?.split("@")[0] ??
-    "Friend"
-  );
-}
-
 function mapProfileToAppUser(profile: UserProfileRow): AppUser {
   return {
     id: profile.id,
@@ -1354,33 +1198,6 @@ function mapProfileToAppUser(profile: UserProfileRow): AppUser {
     createdAt: profile.created_at,
     updatedAt: profile.updated_at,
   };
-}
-
-function mapNearbyFeedRow(row: NearbyFeedRow): NearbyFeedItem {
-  return {
-    profileUserId: row.profile_user_id,
-    presenceSessionId: row.presence_session_id,
-    firstName: row.first_name,
-    intent: row.intent,
-    hintText: row.hint_text,
-    primaryVibe: row.primary_vibe,
-    sessionDurationRemaining: formatIntervalValue(row.session_duration_remaining),
-    distanceBucket: row.distance_bucket,
-    venueName: row.venue_name,
-    energyLevel: row.energy_level,
-    sessionExpiresAt: row.session_expires_at,
-  };
-}
-
-function formatIntervalValue(value: NearbyFeedRow["session_duration_remaining"]) {
-  if (!value) return "00:00:00";
-  if (typeof value === "string") return value;
-
-  const hours = value.hours ?? 0;
-  const minutes = value.minutes ?? 0;
-  const seconds = Math.floor(value.seconds ?? 0);
-
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 function delay(ms: number) {

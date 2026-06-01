@@ -4,8 +4,14 @@
     "slug": "left-mobile",
     "version": "0.1.0",
     "orientation": "portrait",
+    "icon": "./Logo-text.png",
     "userInterfaceStyle": "dark",
     "scheme": "left",
+    "splash": {
+      "image": "./Logo-text.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#08080F"
+    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.left.mobile",
@@ -19,6 +25,10 @@
     },
     "android": {
       "package": "com.left.mobile",
+      "adaptiveIcon": {
+        "foregroundImage": "./Logo-text.png",
+        "backgroundColor": "#08080F"
+      },
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
