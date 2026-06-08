@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Alert, AppState, ScrollView, Text, View } from "react-native";
 import * as Notifications from "expo-notifications";
 import type { Session } from "@supabase/supabase-js";
+import { BackgroundWaveLayer } from "../components/left/BackgroundWaveLayer";
 import { SessionFooterNav } from "../components/left/navigation";
 import {
   SESSION_NAV_SCREENS,
@@ -35,6 +36,7 @@ import { ActivationScreen } from "../screens/left/ActivationScreen";
 import { FeedScreen } from "../screens/left/FeedScreen";
 import { ProfileScreen } from "../screens/left/ProfileScreen";
 import { ApproachScreen } from "../screens/left/ApproachScreen";
+import { ApproachFeedbackPrompt } from "../screens/left/ApproachFeedbackPrompt";
 import { SafetyScreen } from "../screens/left/SafetyScreen";
 import { SettingsScreen } from "../screens/left/SettingsScreen";
 import { VenueAddScreen, VenueSelectionScreen } from "../screens/left/VenueSelectionScreen";
@@ -69,8 +71,16 @@ import {
   hideUserForActor,
   markApproachConnected,
   reportUserForActor,
-  sendWaveToUser,
 } from "../features/interactions/interaction-service";
+import {
+  clearPendingApproachFeedback,
+  clearStoredActiveApproach,
+  getPendingApproachFeedback,
+  getStoredActiveApproach,
+  savePendingApproachFeedback,
+  saveStoredActiveApproach,
+  type PendingApproachFeedback,
+} from "../features/interactions/approach-feedback-storage";
 import {
   createPresenceSession,
   endOpenPresenceSessionsForUser,
@@ -109,6 +119,16 @@ function isUuid(value: string | null | undefined): value is string {
   return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
+const PRIVATE_VENUE_SUMMARY: VenueContextSummary = {
+  venueId: "private",
+  venueName: "Visibility off",
+  visibleCount: 0,
+  energyLevel: "quiet",
+  activeVibes: [],
+  popularIntents: [],
+  pulseCopy: "Your venue stays private until you become visible. Turn on visibility to detect your venue and unlock nearby people.",
+};
+
 export function LeftApp() {
   const [screen, setScreen] = useState<Screen>("loading");
   const [authProvider, setAuthProvider] = useState<AuthProvider | null>(null);
@@ -146,11 +166,25 @@ export function LeftApp() {
   const [reportNotes, setReportNotes] = useState("");
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [socialMomentumEvents, setSocialMomentumEvents] = useState<SocialInteractionEventType[]>([]);
+  const [pendingApproachFeedback, setPendingApproachFeedback] = useState<PendingApproachFeedback | null>(null);
+  const [feedbackWentOver, setFeedbackWentOver] = useState<boolean | null>(null);
+  const [feedbackUsedIcebreaker, setFeedbackUsedIcebreaker] = useState<boolean | null>(null);
 
   const visibleFeed = useMemo(() => {
-    if (venueHidden) return [];
+    if (!sessionVisible || venueHidden) return [];
     return feed.map((item) => ({ ...item, venueName: venueSummary.venueName }));
-  }, [feed, venueHidden, venueSummary.venueName]);
+  }, [feed, sessionVisible, venueHidden, venueSummary.venueName]);
+  const displayVenueSummary = useMemo(() => {
+    if (!sessionVisible) return PRIVATE_VENUE_SUMMARY;
+    if (venueHidden) {
+      return {
+        ...venueSummary,
+        visibleCount: 0,
+        pulseCopy: "This venue is hidden from discovery for now.",
+      };
+    }
+    return venueSummary;
+  }, [sessionVisible, venueHidden, venueSummary]);
 
   const elapsedSessionSeconds = useMemo(() => {
     if (!sessionVisible || !sessionStartedAt) return 0;
@@ -166,6 +200,10 @@ export function LeftApp() {
       }),
     [elapsedSessionSeconds, sessionVisible, socialMomentumEvents],
   );
+  const approachRemainingSeconds = useMemo(() => {
+    if (!approach || approach.status !== "started") return 0;
+    return Math.max(0, Math.ceil((new Date(approach.expiresAt).getTime() - sessionNowMs) / 1000));
+  }, [approach, sessionNowMs]);
 
   useEffect(() => {
     void bootstrapSession();
@@ -185,6 +223,7 @@ export function LeftApp() {
   }, []);
 
   useEffect(() => {
+    if (!sessionVisible && !venueSelectionRequired && screen !== "venue-select" && screen !== "venue-add") return;
     const subscription = AppState.addEventListener("change", (nextState) => {
       if (nextState === "active") {
         void refreshVenueFromRuntime();
@@ -197,7 +236,7 @@ export function LeftApp() {
       subscription.remove();
       clearInterval(interval);
     };
-  }, []);
+  }, [screen, sessionVisible, venueSelectionRequired]);
 
   useEffect(() => {
     if (!user) return;
@@ -215,11 +254,26 @@ export function LeftApp() {
   }, [user]);
 
   useEffect(() => {
-    if (!user || !venueSelectionRequired) return;
+    if (!user) return;
+    void syncApproachFollowUp(user);
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      if (nextState === "active") {
+        void syncApproachFollowUp(user);
+      }
+    });
+    return () => subscription.remove();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user || !sessionVisible || !venueSelectionRequired) return;
     if (screen === "venue" || screen === "activate" || screen === "feed") {
       setScreen("venue-select");
     }
-  }, [screen, user, venueSelectionRequired]);
+  }, [screen, sessionVisible, user, venueSelectionRequired]);
 
   useEffect(() => {
     if (!sessionVisible || !sessionStartedAt) return;
@@ -234,10 +288,25 @@ export function LeftApp() {
   }, [venueSummary.venueId]);
 
   useEffect(() => {
-    if (!user || !isUuid(user.id) || !isUuid(venueSummary.venueId)) return;
+    if (!user || !sessionVisible || !isUuid(user.id) || !isUuid(venueSummary.venueId)) {
+      if (!sessionVisible) setFeed([]);
+      return;
+    }
     void refreshVenueContext(venueSummary.venueId);
     void refreshNearbyFeed(user.id, venueSummary.venueId);
-  }, [user?.id, venueSummary.venueId, activePresenceSessionId]);
+  }, [user?.id, venueSummary.venueId, activePresenceSessionId, sessionVisible]);
+
+  useEffect(() => {
+    if (!approach || approach.status !== "started" || approachRemainingSeconds > 0) return;
+    void handleApproachWindowElapsed();
+  }, [approach, approachRemainingSeconds]);
+
+  useEffect(() => {
+    if (!pendingApproachFeedback) {
+      setFeedbackWentOver(null);
+      setFeedbackUsedIcebreaker(null);
+    }
+  }, [pendingApproachFeedback]);
 
   async function bootstrapSession() {
     const session = await getCurrentSession();
@@ -376,6 +445,92 @@ export function LeftApp() {
     setVenueHidden(!!preferences[venueSummary.venueId]?.hidden);
   }
 
+  async function syncApproachFollowUp(appUser: AppUser) {
+    const pending = await getPendingApproachFeedback(appUser.id);
+    if (pending) {
+      setPendingApproachFeedback(pending);
+      return;
+    }
+
+    const storedApproach = await getStoredActiveApproach(appUser.id);
+    if (!storedApproach) return;
+    if (Date.now() < new Date(storedApproach.expiresAt).getTime()) return;
+
+    const nextPending: PendingApproachFeedback = {
+      userId: storedApproach.userId,
+      approachId: storedApproach.approachId,
+      targetUserId: storedApproach.targetUserId,
+      targetFirstName: storedApproach.targetFirstName,
+      presenceSessionId: storedApproach.presenceSessionId,
+      approachPrompt: storedApproach.approachPrompt,
+      startedAt: storedApproach.startedAt,
+      expiresAt: storedApproach.expiresAt,
+      createdAt: new Date().toISOString(),
+    };
+
+    await savePendingApproachFeedback(nextPending);
+    await clearStoredActiveApproach();
+    setPendingApproachFeedback(nextPending);
+  }
+
+  async function handleApproachWindowElapsed() {
+    if (!approach || approach.status !== "started" || !user) return;
+
+    const storedApproach = await getStoredActiveApproach(user.id);
+    const nextPending: PendingApproachFeedback | null = storedApproach
+      ? {
+          userId: storedApproach.userId,
+          approachId: storedApproach.approachId,
+          targetUserId: storedApproach.targetUserId,
+          targetFirstName: storedApproach.targetFirstName,
+          presenceSessionId: storedApproach.presenceSessionId,
+          approachPrompt: storedApproach.approachPrompt,
+          startedAt: storedApproach.startedAt,
+          expiresAt: storedApproach.expiresAt,
+          createdAt: new Date().toISOString(),
+        }
+      : selectedProfile
+        ? {
+            userId: user.id,
+            approachId: approach.id,
+            targetUserId: selectedProfile.profileUserId,
+            targetFirstName: selectedProfile.firstName,
+            presenceSessionId: approach.presenceSessionId,
+            approachPrompt: user.approachPrompt || defaultApproachPrompt,
+            startedAt: approach.startedAt,
+            expiresAt: approach.expiresAt,
+            createdAt: new Date().toISOString(),
+          }
+        : null;
+
+    if (!nextPending) return;
+
+    await savePendingApproachFeedback(nextPending);
+    await clearStoredActiveApproach();
+    setApproach((current) => (current ? { ...current, status: "confirmed_going", updatedAt: new Date().toISOString() } : current));
+    if (screen === "approach") {
+      setScreen("feed");
+    }
+  }
+
+  async function submitApproachFeedback() {
+    if (!pendingApproachFeedback) return;
+    if (feedbackWentOver === null) return;
+    if (feedbackWentOver === true && feedbackUsedIcebreaker === null) return;
+
+    await clearPendingApproachFeedback();
+    setPendingApproachFeedback(null);
+    setApproach(null);
+    Alert.alert(
+      "Feedback saved",
+      feedbackWentOver
+        ? feedbackUsedIcebreaker
+          ? "Great — noted that you went over and used the icebreaker."
+          : "Got it — noted that you went over without using the icebreaker."
+        : "Got it — noted that you didn’t end up going over.",
+    );
+  }
+
   async function maybeLaunchFromNotification() {
     const shouldLaunch = await consumePendingActivationLaunch();
     if (shouldLaunch) {
@@ -402,7 +557,7 @@ export function LeftApp() {
       return;
     }
     await refreshVenueFromRuntime();
-    setScreen("venue");
+    setScreen(sessionVisible ? "venue" : "activate");
   }
 
   async function submitVenueSuggestion() {
@@ -581,6 +736,14 @@ export function LeftApp() {
 
   async function activatePresence() {
     if (!user) return;
+    if (venueSelectionRequired) {
+      setScreen("venue-select");
+      return;
+    }
+    if (!isUuid(venueSummary.venueId)) {
+      Alert.alert("Venue not ready", "Left needs a confirmed nearby venue before visibility can start.");
+      return;
+    }
     const startedAtDate = new Date();
     const startedAt = startedAtDate.toISOString();
     const expiresAt = new Date(startedAtDate.getTime() + selectedDuration * 60_000).toISOString();
@@ -642,38 +805,11 @@ export function LeftApp() {
   }
 
   function handleSocialMomentumPrimary() {
-    if (socialMomentum?.state === "warming_up" && visibleFeed[0]) {
-      void sendWave(visibleFeed[0]);
-      setScreen("profile");
-      return;
-    }
     setScreen("feed");
   }
 
   function dismissSocialMomentumPrompt() {
     void recordSocialInteractionEvent("prompt_dismissed");
-  }
-
-  async function sendWave(item: NearbyFeedItem) {
-    if (!user) return;
-    if (isUuid(user.id) && isUuid(item.profileUserId) && isUuid(item.presenceSessionId)) {
-      const sent = await sendWaveToUser({
-        fromUserId: user.id,
-        toUserId: item.profileUserId,
-        presenceSessionId: item.presenceSessionId,
-      });
-
-      if (!sent) {
-        Alert.alert("Could not send wave", "Please try again.");
-        return;
-      }
-    }
-
-    void recordSocialInteractionEvent("wave_sent", {
-      targetUserId: item.profileUserId,
-      visibilitySessionId: activePresenceSessionId ?? item.presenceSessionId,
-    });
-    setSelectedProfile(item);
   }
 
   async function startApproach() {
@@ -699,6 +835,17 @@ export function LeftApp() {
       approachId = persistedApproachId;
     }
 
+    await saveStoredActiveApproach({
+      userId: user.id,
+      approachId,
+      targetUserId: selectedProfile.profileUserId,
+      targetFirstName: selectedProfile.firstName,
+      presenceSessionId: selectedProfile.presenceSessionId,
+      approachPrompt: user.approachPrompt || defaultApproachPrompt,
+      startedAt: startedAt.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+    });
+
     void recordSocialInteractionEvent("approach_started", {
       targetUserId: selectedProfile.profileUserId,
       visibilitySessionId: activePresenceSessionId ?? selectedProfile.presenceSessionId,
@@ -722,6 +869,9 @@ export function LeftApp() {
 
   async function confirmConnected() {
     const completedAt = new Date().toISOString();
+    await clearStoredActiveApproach();
+    await clearPendingApproachFeedback();
+    setPendingApproachFeedback(null);
     if (approach && isUuid(approach.id)) {
       const updated = await markApproachConnected({
         approachId: approach.id,
@@ -932,6 +1082,8 @@ export function LeftApp() {
     setActivePresenceSessionId(null);
     setSocialMomentumEvents([]);
     setSessionNowMs(Date.now());
+    setSelectedProfile(null);
+    setFeed([]);
 
     if (isUuid(sessionId)) {
       const updated = await updatePresenceSessionEndState(sessionId, status);
@@ -1017,7 +1169,7 @@ export function LeftApp() {
     }
     if (destination === "nearby") {
       setSelectedProfile(null);
-      setScreen("feed");
+      setScreen(sessionVisible ? "feed" : "activate");
       return;
     }
     if (destination === "session") {
@@ -1030,7 +1182,7 @@ export function LeftApp() {
   }
 
   const footerSummary = {
-    venueName: venueSummary.venueName,
+    venueName: displayVenueSummary.venueName,
     intent: selectedIntent,
     vibe: selectedVibes[0] ?? "Open",
     sessionVisible,
@@ -1043,6 +1195,7 @@ export function LeftApp() {
 
   return (
     <View style={styles.shell}>
+      <BackgroundWaveLayer />
       <View style={styles.grain} pointerEvents="none" />
       <ScrollView
         contentContainerStyle={[
@@ -1088,14 +1241,15 @@ export function LeftApp() {
         )}
         {screen === "venue" && (
           <VenueScreen
-            venue={venueSummary}
+            venue={displayVenueSummary}
             feed={visibleFeed}
-            socialMomentum={socialMomentum}
+            socialMomentum={sessionVisible ? socialMomentum : null}
             sessionVisible={sessionVisible}
             venueHidden={venueHidden}
-            canChooseVenue={nearbyVenueOptions.length > 1}
+            allowVenueActions={sessionVisible}
+            canChooseVenue={sessionVisible && nearbyVenueOptions.length > 1}
             onActivate={() => setScreen("activate")}
-            onOpenFeed={() => setScreen("feed")}
+            onOpenFeed={() => setScreen(sessionVisible ? "feed" : "activate")}
             onOpenProfile={openProfile}
             onSocialMomentumPrimary={handleSocialMomentumPrimary}
             onDismissSocialMomentum={dismissSocialMomentumPrompt}
@@ -1124,7 +1278,7 @@ export function LeftApp() {
           />
         )}
         {screen === "feed" && (
-          <FeedScreen venue={venueSummary} feed={visibleFeed} onOpenProfile={openProfile} onWave={sendWave} onOpenSafety={() => setScreen("safety")} />
+          <FeedScreen venue={displayVenueSummary} feed={visibleFeed} sessionVisible={sessionVisible} onOpenProfile={openProfile} onOpenSafety={() => setScreen("safety")} />
         )}
         {screen === "profile" && selectedProfile && (
           <ProfileScreen
@@ -1134,7 +1288,6 @@ export function LeftApp() {
             reportNotes={reportNotes}
             reportSubmitting={reportSubmitting}
             onBack={() => setScreen("feed")}
-            onWave={() => void sendWave(selectedProfile)}
             onApproach={() => void startApproach()}
             onHide={() => void hideUser()}
             onBlock={() => void blockUser()}
@@ -1145,10 +1298,17 @@ export function LeftApp() {
           />
         )}
         {screen === "approach" && selectedProfile && approach && (
-          <ApproachScreen item={selectedProfile} approachPrompt={user?.approachPrompt ?? defaultApproachPrompt} onCancel={() => setScreen("feed")} onConfirmConnected={() => void confirmConnected()} onOpenSafety={() => setScreen("safety")} />
+          <ApproachScreen
+            item={selectedProfile}
+            approachPrompt={user?.approachPrompt ?? defaultApproachPrompt}
+            remainingSeconds={approachRemainingSeconds}
+            onCancel={() => setScreen("feed")}
+            onConfirmConnected={() => void confirmConnected()}
+            onOpenSafety={() => setScreen("safety")}
+          />
         )}
         {screen === "safety" && (
-          <SafetyScreen venueName={venueSummary.venueName} venueMuted={!!currentVenuePreference?.muted} sessionVisible={sessionVisible} onBack={() => setScreen(selectedProfile ? "profile" : "feed")} onPauseVisibility={() => void endSessionState("paused")} onEndSession={() => { void endSessionState(); setScreen("venue"); }} onHideVenue={() => void hideVenuePermanently()} onMuteVenue={() => void muteVenueNotifications()} />
+          <SafetyScreen venueName={sessionVisible ? venueSummary.venueName : "current venue"} venueMuted={!!currentVenuePreference?.muted} sessionVisible={sessionVisible} onBack={() => setScreen(selectedProfile && sessionVisible ? "profile" : sessionVisible ? "feed" : "venue")} onPauseVisibility={() => void endSessionState("paused")} onEndSession={() => { void endSessionState(); setScreen("venue"); }} onHideVenue={() => void hideVenuePermanently()} onMuteVenue={() => void muteVenueNotifications()} />
         )}
         {screen === "settings" && user && (
           <SettingsScreen
@@ -1176,6 +1336,20 @@ export function LeftApp() {
           onNavigate={goToFooterDestination}
         />
       )}
+      {pendingApproachFeedback ? (
+        <ApproachFeedbackPrompt
+          feedback={pendingApproachFeedback}
+          wentOver={feedbackWentOver}
+          usedIcebreaker={feedbackUsedIcebreaker}
+          onSetWentOver={(value) => {
+            setFeedbackWentOver(value);
+            if (!value) setFeedbackUsedIcebreaker(null);
+          }}
+          onSetUsedIcebreaker={setFeedbackUsedIcebreaker}
+          onSubmit={() => void submitApproachFeedback()}
+          onLater={() => setPendingApproachFeedback(null)}
+        />
+      ) : null}
     </View>
   );
 }

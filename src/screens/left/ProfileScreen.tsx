@@ -20,7 +20,6 @@ export function ProfileScreen({
   reportNotes,
   reportSubmitting,
   onBack,
-  onWave,
   onApproach,
   onHide,
   onBlock,
@@ -35,7 +34,6 @@ export function ProfileScreen({
   reportNotes: string;
   reportSubmitting: boolean;
   onBack: () => void;
-  onWave: () => void;
   onApproach: () => void;
   onHide: () => void;
   onBlock: () => void;
@@ -73,7 +71,6 @@ export function ProfileScreen({
         </InfoBlock>
       </View>
       <View style={styles.profileActions}>
-        <GhostButton label="Wave" onPress={onWave} />
         <PrimaryButton label="I'm going over →" onPress={onApproach} />
       </View>
       <View style={styles.profileDestructive}>

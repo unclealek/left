@@ -102,9 +102,11 @@ If the simulator still shows an old icon after rebuilding, delete the installed 
 Test these on a real device before submitting:
 
 - Google sign-in and session restore.
-- Venue detection and home feed loading.
+- Venue detection, venue selection, and venue submission fallback.
 - Become visible, visible timer, and visibility session recovery.
-- Social Momentum card behavior: observing, warming up, dismiss, and suppression after block/report.
+- Social Momentum card behavior: observing, warming up, engaging, connected, dismiss, and suppression after block/report.
+- Approach countdown expiry and delayed follow-up prompt recovery after app resume.
 - Hide, block, report, and safety controls.
+- Hidden/muted venue preference clearing from settings.
 - Account deletion request flow.
 - Logout and fresh sign-in.

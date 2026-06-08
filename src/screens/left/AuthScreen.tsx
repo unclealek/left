@@ -5,7 +5,7 @@ import { styles } from "../../app/leftTheme";
 export function AuthScreen({ authError, onAuth }: { authError: string | null; onAuth: () => void }) {
   return (
     <View style={styles.authWrap}>
-      <LinearGradient colors={["#0e0c18", "#141126", "#0c0b14"]} style={styles.absoluteFill} />
+      <LinearGradient colors={["#ffffff", "#faf7ff", "#f2ecff"]} style={styles.absoluteFill} />
       <View style={styles.authGlowTop} pointerEvents="none" />
       <View style={styles.authGlowBottom} pointerEvents="none" />
       <View style={styles.authBrand}>

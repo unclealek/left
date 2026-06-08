@@ -29,7 +29,7 @@ export function deriveSocialMomentum(input: {
   if (eventTypes.includes("user_blocked") || eventTypes.includes("user_reported")) return null;
 
   const profileViews = eventTypes.filter((eventType) => eventType === "profile_viewed").length;
-  const hasDirectAction = eventTypes.some((eventType) => eventType === "wave_sent" || eventType === "approach_started");
+  const hasDirectAction = eventTypes.some((eventType) => eventType === "approach_started");
   const hasConnected = eventTypes.includes("approach_connected");
   let state: SocialMomentumState = "observing";
   if (hasConnected) state = "connected";
@@ -58,8 +58,8 @@ export function deriveSocialMomentum(input: {
     return {
       state,
       title: "You’re warming up.",
-      body: "You’ve been checking people out. A small wave can make the next step easier.",
-      primaryLabel: "Send a wave",
+      body: "You’ve been checking people out. Open a profile when someone feels worth approaching.",
+      primaryLabel: "View people",
     };
   }
 
@@ -67,7 +67,7 @@ export function deriveSocialMomentum(input: {
   return {
     state,
     title: "You’re mostly observing.",
-    body: "Want to make a small move? You can start with a wave or keep it low-key.",
+    body: "Want to make a small move? Browse the room and approach when someone feels right.",
     primaryLabel: "View people",
   };
 }

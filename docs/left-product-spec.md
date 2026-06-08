@@ -1,7 +1,8 @@
 # Left Product Spec
 
 Status:
-- current MVP spec aligned to the implemented mobile app and updated product decisions
+- current MVP spec aligned to the implemented mobile app as of June 7, 2026
+- includes venue selection, venue submission, Social Momentum, and post-approach follow-up behavior now present in the client
 
 Source inputs:
 - `contextual_social_app_v2_spec.pdf`
@@ -74,33 +75,38 @@ User traits:
 
 In a shared place, a user can:
 1. sign in with Google and complete lightweight onboarding
-2. set their intent, vibes, duration, and hint
-3. become visible for a limited period
-4. discover nearby compatible people through venue-based presence
-5. open a soft-anonymity profile with contextual cues
-6. use customizable prompts during evaluation and approach
-7. wave or approach with a short encounter window
-8. control visibility, safety, and account actions at all times
+2. confirm or add their venue when nearby detection is ambiguous
+3. set their intent, vibes, duration, and hint
+4. become visible for a limited period
+5. discover nearby compatible people through venue-based presence
+6. open a soft-anonymity profile with contextual cues
+7. use customizable prompts during evaluation and approach
+8. enter a short approach window and later confirm how it went if they leave the timer running
+9. control visibility, safety, and account actions at all times
 
 ## 6. MVP Scope
 
 Included:
 - Google sign-in
 - first-name + avatar + location onboarding
+- nearby venue disambiguation when multiple venues are detected
+- user-submitted venue suggestions for missing venues
 - presence activation
 - venue-based discovery
 - nearby feed
 - venue pulse / venue context
-- optional bubble visualization layer over nearby feed data
+- venue home with bubble preview over the same discovery data
 - soft-anonymity profile
+- Social Momentum nudge card on venue home while visible
 - shared-intent and shared-vibe matching
 - approach flow with countdown timer
+- delayed approach follow-up prompt after the countdown window expires
 - quick identification hint
-- waves-only signaling
 - persistent safety controls
-- session duration and automatic expiry
+- session duration tracking and active-session recovery
 - persistent footer navigation: `Home`, `Nearby`, `Session`, `You`
 - signed-in settings screen for profile defaults and prompt customization
+- venue preference management for hidden and muted venues
 - identity-removal request flow backed by Supabase
 
 Deferred:
@@ -120,6 +126,7 @@ Explicitly excluded from MVP:
 - history of who you've seen
 - post-session rating or review
 - follow or save mechanics
+- outbound wave UI until the product and persistence paths are aligned
 
 ## 7. User Journey
 
@@ -158,6 +165,8 @@ Onboarding exclusions:
 ### 7.1 Activate
 
 The user enters a venue or shared environment and decides whether to become discoverable.
+
+If the device detects more than one nearby venue, the user must first choose the correct one. If the correct venue is missing, the user can submit a venue suggestion with type, address/landmark, and optional notes.
 
 The user sets:
 - intent
@@ -199,7 +208,7 @@ The profile shows:
 - suggested icebreaker from the viewer's saved prompt template
 
 Result:
-- the user decides to wave or approach
+- the user decides whether to approach, hide, block, or report
 
 ### 7.4 Approach
 
@@ -209,7 +218,7 @@ The approach state uses a second customizable prompt template owned by the viewe
 
 Result:
 - the user confirms the connection happened
-- or cancels and exits the flow
+- or exits the flow and later gets a follow-up prompt asking whether they actually went over and used the icebreaker
 
 ### 7.5 Stay Safe
 
@@ -231,6 +240,7 @@ That screen currently supports:
 - customizing the nearby-profile prompt
 - customizing the approach prompt
 - opening safety controls
+- clearing hidden or muted venue preferences
 - signing out
 - requesting identity removal
 
@@ -266,8 +276,7 @@ Key UI elements:
 - intent tag
 - one vibe tag
 - hint card
-- shared alignment callout
-- actions for wave, view profile, hide, and safety entry
+- actions for view profile and safety entry
 
 Functional requirements:
 - communicate enough to support approach decisions without oversharing
@@ -307,7 +316,7 @@ Required content:
 - shared-context callout
 - identifying hint
 - icebreaker prompt from saved user settings
-- actions for wave and approach
+- approach and safety actions
 
 Functional requirements:
 - do not reveal unnecessary personal detail
@@ -333,14 +342,13 @@ Required content:
 
 Functional requirements:
 - approach attempts should persist to the backend when backed by real user/session IDs
-- timer should use server-backed expiry in production paths
-- expired approach should close automatically or force re-entry
+- timer uses a persisted expiry timestamp and transitions to a follow-up prompt when the countdown elapses
 - this state should be designed as the anxiety-reducing bridge from phone to real life
 
 `We connected!` does exactly three things:
-1. ends the approaching state and returns to the home bubble view with a soft aurora confirmation for 30 seconds
+1. ends the approaching state and returns the user to discovery
 2. logs a successful real-world interaction event for beta metrics
-3. optionally triggers a one-time contact exchange prompt
+3. clears any pending follow-up prompt for that approach
 
 ### 8.6 Safety Controls
 
@@ -385,6 +393,7 @@ Required content:
 - default vibes
 - nearby prompt template
 - approach prompt template
+- stored hidden/muted venue preferences
 - sign-out action
 - identity-removal request action
 
@@ -467,16 +476,12 @@ Design intent:
 
 ### Waves
 
-For MVP, waves are a lightweight interest signal.
+Waves remain part of the intended product model, but the current app shell is approach-first.
 
 Rules:
-- waves are allowed
 - full chat is out of scope
-- wave does not gate approach
 - `I'm going over` is always available once a profile is opened
-- wave is a signal only
-- one wave per person per session maximum
-- recipient may wave back or ignore without blocking approach
+- wave behavior and UI should not be treated as current shipped functionality until the implementation paths are restored and documented together
 
 ## 10. Matching and Ranking
 
@@ -525,7 +530,7 @@ When a user requests account deletion in the current product:
 - selected product records are retained
 - the request is logged in `public.identity_removal_requests`
 
-The exact retained vs removed behavior is documented in [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/left%20app/docs/identity-removal-policy.md).
+The exact retained vs removed behavior is documented in [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/identity-removal-policy.md).
 
 ## 12. Data Model
 
@@ -701,7 +706,6 @@ MVP metrics should focus on activation and real-world usefulness, not vanity eng
 Track:
 - session activation rate
 - percent of activated users who open at least one profile
-- wave rate
 - approach-start rate
 - approach-complete rate
 - session cancel rate
