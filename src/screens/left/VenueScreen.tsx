@@ -5,12 +5,12 @@ import { formatIntent, formatRemaining } from "../../app/leftConfig";
 import { styles } from "../../app/leftTheme";
 import { GhostButton, PrimaryButton } from "../../components/left/ui";
 
-const bubbleLayout = [
-  { top: 108, left: 168, size: 106, featured: true, glow: "#9f94ff" },
-  { top: 42, left: 40, size: 72, featured: false, glow: "#6559d8" },
-  { top: 22, right: 58, size: 84, featured: false, glow: "#31d7bf" },
-  { top: 156, left: 24, size: 58, featured: false, glow: "#2ec9ff" },
-  { top: 148, right: 70, size: 66, featured: false, glow: "#5f5cff" },
+const radarLayout = [
+  { top: 80, left: 38, size: 68 },
+  { top: 42, right: 58, size: 78 },
+  { top: 178, left: 26, size: 56 },
+  { top: 212, right: 34, size: 62 },
+  { top: 126, left: 146, size: 72 },
 ] as const;
 
 export function VenueScreen({
@@ -19,6 +19,7 @@ export function VenueScreen({
   socialMomentum,
   sessionVisible,
   venueHidden,
+  allowVenueActions,
   canChooseVenue,
   onActivate,
   onOpenFeed,
@@ -38,6 +39,7 @@ export function VenueScreen({
   } | null;
   sessionVisible: boolean;
   venueHidden: boolean;
+  allowVenueActions: boolean;
   canChooseVenue: boolean;
   onActivate: () => void;
   onOpenFeed: () => void;
@@ -47,69 +49,96 @@ export function VenueScreen({
   onChooseVenue: () => void;
   onAddVenue: () => void;
 }) {
-  const previewPeople = feed.slice(0, bubbleLayout.length);
+  const previewPeople = feed.slice(0, radarLayout.length);
+  const signalPeople = previewPeople.slice(0, 4);
   const extraCount = Math.max(0, venue.visibleCount - previewPeople.length);
   const buttonLabel = sessionVisible ? "Open nearby feed" : "Become visible";
   const topIntent = venue.popularIntents[0] ? formatIntent(venue.popularIntents[0]) : "Open to chat";
   const pulseCopy = venue.pulseCopy?.trim() || "No one has surfaced yet.";
+  const centerLabel = sessionVisible ? "Radar live" : "Private until visible";
+  const centerCaption = sessionVisible
+    ? `${venue.visibleCount} ${venue.visibleCount === 1 ? "person" : "people"} in range`
+    : "Turn on visibility to light up the room.";
+  const venueInitial = venue.venueName.trim().charAt(0).toUpperCase() || "L";
 
   return (
     <View style={styles.venuePage}>
-      <LinearGradient colors={["#12111b", "#0e0d15", "#0a0911"]} style={styles.venueHeroCard}>
+      <LinearGradient colors={["#18131f", "#24182d", "#37223f"]} style={styles.venueHeroCardRadar}>
         <View style={styles.venueHeroEyebrowRow}>
-          <Text style={styles.venueHeroEyebrow}>Venue home</Text>
-          <View style={styles.venueStatusPill}>
-            <View style={[styles.venueStatusDot, sessionVisible && styles.venueStatusDotActive]} />
-            <Text style={styles.venueStatusLabel}>{sessionVisible ? "Visible now" : "Browsing quietly"}</Text>
+          <Text style={styles.venueHeroEyebrowRadar}>Venue radar</Text>
+          <View style={styles.venueStatusPillRadar}>
+            <View style={[styles.venueStatusDotRadar, sessionVisible && styles.venueStatusDotRadarActive]} />
+            <Text style={styles.venueStatusLabelRadar}>{sessionVisible ? "Visible now" : "Browsing quietly"}</Text>
           </View>
         </View>
-        <View style={styles.venueHeaderRow}>
-          <View style={styles.venueHeaderCopy}>
-            <Text style={styles.venueName} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.82}>
+
+        <View style={styles.venueRadarHeader}>
+          <View style={styles.venueHeaderCopyRadar}>
+            <Text style={styles.venueNameRadar} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.82}>
               {venue.venueName}
             </Text>
-            <Text style={styles.venueVisibleCount}>
-              {venue.visibleCount} {venue.visibleCount === 1 ? "person" : "people"} visible
+            <Text style={styles.venueVisibleCountRadar}>
+              {venue.visibleCount} {venue.visibleCount === 1 ? "person" : "people"} visible nearby
             </Text>
-            <Text style={styles.venuePulseCopy}>{pulseCopy}</Text>
+            <Text style={styles.venuePulseCopyRadar}>{pulseCopy}</Text>
           </View>
-          <View style={styles.venueEnergyPill}>
-            <Text style={styles.venueEnergyIcon}>⚡</Text>
-            <Text style={styles.venueEnergyLabel}>{venue.energyLevel.replaceAll("_", " ").toUpperCase()} ENERGY</Text>
+
+          <View style={styles.venueHeaderMetaStack}>
+            <View style={styles.venueEnergyPillRadar}>
+              <Text style={styles.venueEnergyIconRadar}>⚡</Text>
+              <Text style={styles.venueEnergyLabelRadar}>
+                {venue.energyLevel.replaceAll("_", " ").toUpperCase()} ENERGY
+              </Text>
+            </View>
+            <View style={styles.venueIntentBadge}>
+              <Text style={styles.venueIntentBadgeLabel}>{topIntent}</Text>
+            </View>
           </View>
         </View>
 
-        <View style={styles.venueStatsRow}>
-          <View style={styles.venueStatCard}>
-            <Text style={styles.venueStatValue}>{venue.visibleCount}</Text>
-            <Text style={styles.venueStatLabel}>visible now</Text>
+        {signalPeople.length > 0 ? (
+          <View style={styles.venueSignalRow}>
+            {signalPeople.map((item) => (
+              <Pressable
+                key={`signal-${item.profileUserId}`}
+                onPress={() => onOpenProfile(item)}
+                style={({ pressed }) => [styles.venueSignalCard, pressed && styles.venueBubblePressed]}
+              >
+                <View style={styles.venueSignalAvatarWrap}>
+                  <LinearGradient colors={["#ff8fd9", "#b388ff"]} style={styles.venueSignalAvatarRing}>
+                    <View style={styles.venueSignalAvatarInner}>
+                      <Text style={styles.venueSignalAvatarGlyph}>{item.firstName.slice(0, 1)}</Text>
+                    </View>
+                  </LinearGradient>
+                  <View style={styles.venueSignalOnlineDot} />
+                </View>
+                <Text style={styles.venueSignalName} numberOfLines={1}>
+                  {item.firstName}
+                </Text>
+              </Pressable>
+            ))}
           </View>
-          <View style={styles.venueStatCard}>
-            <Text style={styles.venueStatValue}>{venue.activeVibes.length}</Text>
-            <Text style={styles.venueStatLabel}>active vibes</Text>
-          </View>
-          <View style={styles.venueStatCard}>
-            <Text style={styles.venueStatValue} numberOfLines={1}>
-              {topIntent}
-            </Text>
-            <Text style={styles.venueStatLabel}>top intent</Text>
-          </View>
-        </View>
+        ) : null}
 
-        <View style={styles.venueClusterArea}>
-          <View style={styles.venueClusterGlow} />
+        <View style={[styles.venueRadarStage, !sessionVisible && styles.venueRadarStagePrivate]}>
+          <View style={styles.venueRadarGlow} />
+          <View style={styles.venueRadarAuraOuter} />
+          <View style={styles.venueRadarAuraInner} />
+          <View style={styles.venueRadarRingOuter} />
+          <View style={styles.venueRadarRingMid} />
+          <View style={styles.venueRadarRingInner} />
+
           {previewPeople.length > 0 ? (
             <>
               {previewPeople.map((item, index) => {
-                const layout = bubbleLayout[index];
-                const bubbleStyle = {
+                const layout = radarLayout[index];
+                const pingStyle = {
                   top: layout.top,
                   left: "left" in layout ? layout.left : undefined,
                   right: "right" in layout ? layout.right : undefined,
                   width: layout.size,
                   height: layout.size,
                   borderRadius: layout.size / 2,
-                  shadowColor: layout.glow,
                 } as const;
 
                 return (
@@ -117,67 +146,85 @@ export function VenueScreen({
                     key={item.profileUserId}
                     onPress={() => onOpenProfile(item)}
                     style={({ pressed }) => [
-                      styles.venueBubble,
-                      layout.featured ? styles.venueBubbleFeatured : styles.venueBubbleStandard,
-                      bubbleStyle,
+                      styles.venueRadarPing,
+                      pingStyle,
                       pressed && styles.venueBubblePressed,
                     ]}
                   >
-                    <LinearGradient
-                      colors={layout.featured ? ["#26153a", "#121826", "#090911"] : ["#101322", "#0c0f1a", "#090910"]}
-                      style={styles.venueBubbleInner}
-                    >
-                      <Text style={[styles.venueBubbleGlyph, layout.featured && styles.venueBubbleGlyphFeatured]}>
+                    <LinearGradient colors={["#ff8fd9", "#c89bff", "#f9f2ff"]} style={styles.venueRadarPingRing}>
+                      <View style={styles.venueRadarPingInner}>
+                        <Text style={styles.venueRadarPingGlyph}>
+                          {item.firstName.slice(0, 1)}
+                        </Text>
+                      </View>
+                    </LinearGradient>
+                    <View style={styles.venueRadarPingPresence} />
+                    <View style={styles.venueRadarPingLabelWrap}>
+                      <Text style={styles.venueRadarPingLabel} numberOfLines={1}>
                         {item.firstName.slice(0, 1)}
                       </Text>
-                    </LinearGradient>
+                    </View>
                   </Pressable>
                 );
               })}
               {extraCount > 0 ? (
-                <Pressable onPress={onOpenFeed} style={({ pressed }) => [styles.venueCountBubble, pressed && styles.venueBubblePressed]}>
-                  <Text style={styles.venueCountBubbleLabel}>+{extraCount}</Text>
+                <Pressable
+                  onPress={onOpenFeed}
+                  style={({ pressed }) => [styles.venueRadarCountBadge, pressed && styles.venueBubblePressed]}
+                >
+                  <Text style={styles.venueRadarCountBadgeLabel}>+{extraCount}</Text>
                 </Pressable>
               ) : null}
             </>
           ) : (
-            <View style={styles.venueEmptyClusterCard}>
-              <Text style={styles.venueEmptyClusterTitle}>{venueHidden ? "Venue hidden" : "Quiet right now"}</Text>
-              <Text style={styles.venueEmptyClusterBody}>
+            <View style={styles.venueRadarEmptyCard}>
+              <Text style={styles.venueRadarEmptyTitle}>
+                {venueHidden ? "Venue hidden" : sessionVisible ? "Quiet right now" : "Private until visible"}
+              </Text>
+              <Text style={styles.venueRadarEmptyBody}>
                 {venueHidden
                   ? "This venue is hidden from discovery for now. You can manage that from Safety."
                   : sessionVisible
                     ? "You're visible. Stay put and the first nearby person will appear here."
-                    : "Turn on visibility when you want to surface in the room and start seeing real nearby people."}
+                    : "Your venue and nearby people stay hidden until you turn on visibility."}
               </Text>
             </View>
           )}
-          <Text style={styles.venueClusterHint}>
-            {previewPeople.length > 0 ? "Tap a bubble to explore" : venueHidden ? "You're hidden at this venue" : venue.pulseCopy ?? "No pulse yet."}
-          </Text>
-        </View>
 
-        <View style={styles.venueVibesSection}>
-          <Text style={styles.venueSectionLabel}>Active vibes here</Text>
-          <View style={styles.venueVibesGrid}>
-            {venue.activeVibes.map((vibe, index) => (
-              <View key={vibe} style={[styles.venueVibePill, index === 0 ? styles.venueVibePillPrimary : styles.venueVibePillSecondary]}>
-                <View style={[styles.venueVibeDot, index === 0 ? styles.venueVibeDotPrimary : styles.venueVibeDotSecondary]} />
-                <Text style={[styles.venueVibeText, index === 0 ? styles.venueVibeTextPrimary : styles.venueVibeTextSecondary]}>{vibe}</Text>
+          <View style={styles.venueRadarCenterWrap}>
+            <LinearGradient colors={["rgba(255,170,222,0.95)", "rgba(200,155,255,0.92)"]} style={styles.venueRadarCenterRing}>
+              <View style={styles.venueRadarCenterCore}>
+                <Text style={styles.venueRadarCenterGlyph}>{venueInitial}</Text>
               </View>
-            ))}
-            {venue.activeVibes.length < 3 ? (
-              <View style={styles.venueVibePillMuted}>
-                <Text style={styles.venueVibeTextMuted}>Live Music</Text>
-              </View>
-            ) : null}
+            </LinearGradient>
+            <Text style={styles.venueRadarCenterLabel}>{centerLabel}</Text>
+            <Text style={styles.venueRadarCenterCaption}>{centerCaption}</Text>
           </View>
         </View>
+
+        {sessionVisible && venue.activeVibes.length > 0 ? (
+          <View style={styles.venueVibesSection}>
+            <Text style={styles.venueSectionLabelRadar}>Active vibes here</Text>
+            <View style={styles.venueVibesGrid}>
+              {venue.activeVibes.map((vibe, index) => (
+                <View key={vibe} style={[styles.venueVibePill, index === 0 ? styles.venueVibePillPrimary : styles.venueVibePillSecondary]}>
+                  <View style={[styles.venueVibeDot, index === 0 ? styles.venueVibeDotPrimary : styles.venueVibeDotSecondary]} />
+                  <Text style={[styles.venueVibeText, index === 0 ? styles.venueVibeTextPrimary : styles.venueVibeTextSecondary]}>{vibe}</Text>
+                </View>
+              ))}
+              {venue.activeVibes.length < 3 ? (
+                <View style={styles.venueVibePillMuted}>
+                  <Text style={styles.venueVibeTextMuted}>Live Music</Text>
+                </View>
+              ) : null}
+            </View>
+          </View>
+        ) : null}
 
         {previewPeople.length > 0 ? (
           <View style={styles.venuePreviewSection}>
             <View style={styles.venuePreviewHeader}>
-              <Text style={styles.venueSectionLabel}>People in the room</Text>
+              <Text style={styles.venueSectionLabelRadar}>People in the room</Text>
               <Pressable onPress={onOpenFeed} hitSlop={10}>
                 <Text style={styles.venuePreviewLink}>See all</Text>
               </Pressable>
@@ -230,8 +277,8 @@ export function VenueScreen({
           <PrimaryButton label={buttonLabel} onPress={sessionVisible ? onOpenFeed : onActivate} />
         </View>
       </LinearGradient>
-      {canChooseVenue ? <GhostButton label="Choose a different nearby venue" onPress={onChooseVenue} /> : null}
-      <GhostButton label="Can't find your venue? Add +" onPress={onAddVenue} />
+      {allowVenueActions && canChooseVenue ? <GhostButton label="Choose a different nearby venue" onPress={onChooseVenue} /> : null}
+      {allowVenueActions ? <GhostButton label="Can't find your venue? Add +" onPress={onAddVenue} /> : null}
     </View>
   );
 }

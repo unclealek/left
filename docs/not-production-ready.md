@@ -26,6 +26,7 @@ Status:
 - There is no backend cleanup job for expired sessions.
 - Pause is persisted, but there is no resume flow.
 - Realtime updates are not wired for venue/feed changes.
+- Venue selection gating exists, but stale selected venue recovery across movement needs more QA.
 
 ## 4. Nearby Feed
 
@@ -37,10 +38,11 @@ Status:
 
 ## 5. Waves And Approaches
 
-- Waves and approaches persist, but the UI has no clear sent, failed, or pending state.
-- Approach expiry is not enforced in the UI or backend.
+- The current product shell is approach-first; wave persistence exists in docs/schema but the user-facing wave flow is not presently aligned with the UI.
+- Approach expiry now transitions to a local delayed follow-up prompt, but the backend does not yet own or validate that follow-up state.
 - Cancel approach is not persisted.
 - Contact exchange exists in schema but is not implemented.
+- Follow-up feedback is stored locally only and does not yet feed analytics or product ranking.
 
 ## 6. Admin And Operations
 
@@ -54,7 +56,7 @@ Status:
 - No automated test suite is visible.
 - Add Supabase RLS tests.
 - Add integration tests for migrations and SQL functions.
-- Add simulator or E2E coverage for auth, activation, feed, safety, reporting, waves, and approaches.
+- Add simulator or E2E coverage for auth, venue selection, activation, feed, safety, reporting, and approaches.
 - TypeScript passing is necessary but not enough for production confidence.
 
 ## 8. Supabase Migrations
@@ -70,11 +72,12 @@ Status:
 - Backend venue detection and local venue state still use fallback paths.
 - Production venue catalog strategy is incomplete.
 - Improve behavior for ambiguous venues, stale selected venues, and venue changes during active sessions.
+- User-submitted venues are reusable in the current session, but moderation and promotion into the canonical venue catalog still need stronger ops support.
 
 ## 10. Observability And Errors
 
 - Many flows use `Alert.alert` without structured operational logging.
-- Add analytics for activation, feed load, report submit, block, wave, approach, session expiry, and venue detection.
+- Add analytics for activation, feed load, report submit, block, approach, approach follow-up, session expiry, and venue detection.
 - Add crash/error reporting.
 - Reduce noisy console logging in auth and location flows before release.
 
@@ -98,4 +101,4 @@ Status:
 2. Apply and validate `0015_social_momentum_events.sql` in staging.
 3. Enforce session expiry and approach cancellation/expiry.
 4. Remove or clearly isolate mock fallback paths from production builds.
-5. Add loading, disabled, and error states for safety, wave, approach, and report actions.
+5. Add loading, disabled, and error states for safety, approach, and report actions.

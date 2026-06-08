@@ -5,33 +5,6 @@ function isUuid(value: string | null | undefined): value is string {
   return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
-export async function sendWaveToUser(input: {
-  fromUserId: string;
-  toUserId: string;
-  presenceSessionId: string;
-}) {
-  if (!isUuid(input.fromUserId) || !isUuid(input.toUserId) || !isUuid(input.presenceSessionId)) return false;
-
-  const { error } = await supabase
-    .from("waves")
-    .upsert(
-      {
-        from_user_id: input.fromUserId,
-        to_user_id: input.toUserId,
-        presence_session_id: input.presenceSessionId,
-        status: "sent",
-      },
-      { onConflict: "from_user_id,to_user_id,presence_session_id" },
-    );
-
-  if (error) {
-    console.warn("[interactions] wave send failed", error.message);
-    return false;
-  }
-
-  return true;
-}
-
 export async function createApproachAttempt(input: {
   fromUserId: string;
   toUserId: string;

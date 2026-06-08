@@ -7,12 +7,14 @@ import { GhostButton, InfoBlock, PrimaryButton } from "../../components/left/ui"
 export function ApproachScreen({
   item,
   approachPrompt,
+  remainingSeconds,
   onCancel,
   onConfirmConnected,
   onOpenSafety,
 }: {
   item: NearbyFeedItem;
   approachPrompt: string;
+  remainingSeconds: number;
   onCancel: () => void;
   onConfirmConnected: () => void;
   onOpenSafety: () => void;
@@ -27,7 +29,7 @@ export function ApproachScreen({
         <Text style={styles.approachLabel}>Going over to</Text>
         <Text style={styles.approachName}>{item.firstName}</Text>
         <View style={styles.timerRing}>
-          <Text style={styles.timerNum}>60</Text>
+          <Text style={styles.timerNum}>{remainingSeconds}</Text>
           <Text style={styles.timerUnit}>sec</Text>
         </View>
       </View>

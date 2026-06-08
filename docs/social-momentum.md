@@ -6,7 +6,7 @@ Social Momentum is a lightweight nudge system for users who are visible at a ven
 
 - `Observing`: user is visible but has not viewed profiles or taken direct interaction actions.
 - `Warming up`: user has viewed at least one profile.
-- `Engaging`: user has sent a wave or started an approach.
+- `Engaging`: user has started an approach.
 - `Connected`: user has confirmed an approach connection.
 
 ## User Experience
@@ -14,7 +14,6 @@ Social Momentum is a lightweight nudge system for users who are visible at a ven
 The first version shows a small dismissible card on the home venue screen while the user is visible. It reuses existing flows:
 
 - `View people` opens the nearby feed.
-- `Send a wave` sends a wave to the first visible feed candidate and opens that profile.
 - `Stay low-key` records a dismissal for the current visibility session.
 
 The copy should stay supportive. Avoid phrases like "low-level interaction" or "less stimulating interaction" because they sound judgmental.
@@ -25,7 +24,6 @@ Events are stored in `public.social_interaction_events`:
 
 - `became_visible`
 - `profile_viewed`
-- `wave_sent`
 - `approach_started`
 - `approach_connected`
 - `prompt_dismissed`
@@ -66,6 +64,7 @@ Social Momentum must never override safety controls.
 
 - Become visible and confirm a `became_visible` event is inserted.
 - Open a profile and confirm `profile_viewed`.
-- Send a wave and confirm `wave_sent`.
+- Start an approach and confirm `approach_started`.
+- Confirm a connection and confirm `approach_connected`.
 - Dismiss the card and confirm `prompt_dismissed` suppresses the card for that visibility session.
 - Block or report a user and confirm nudges stop for that visibility session.

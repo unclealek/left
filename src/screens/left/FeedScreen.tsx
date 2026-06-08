@@ -7,29 +7,31 @@ import { Chip, GhostButton } from "../../components/left/ui";
 export function FeedScreen({
   venue,
   feed,
+  sessionVisible,
   onOpenProfile,
-  onWave,
   onOpenSafety,
 }: {
   venue: VenueContextSummary;
   feed: NearbyFeedItem[];
+  sessionVisible: boolean;
   onOpenProfile: (item: NearbyFeedItem) => void;
-  onWave: (item: NearbyFeedItem) => void;
   onOpenSafety: () => void;
 }) {
   return (
     <View>
       <View style={styles.feedHead}>
         <View>
-          <Text style={styles.feedHeadVenue}>{venue.venueName}</Text>
-          <Text style={styles.feedHeadCount}>{feed.length} {feed.length === 1 ? "person" : "people"} visible</Text>
+          <Text style={styles.feedHeadVenue}>{sessionVisible ? venue.venueName : "Nearby"}</Text>
+          <Text style={styles.feedHeadCount}>
+            {sessionVisible ? `${feed.length} ${feed.length === 1 ? "person" : "people"} visible` : "Your venue stays private until you become visible"}
+          </Text>
         </View>
         <GhostButton label="Safety" onPress={onOpenSafety} compact />
       </View>
       {feed.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyGlyph}>{"<"}</Text>
-          <Text style={styles.emptyText}>No one visible yet.</Text>
+          <Text style={styles.emptyText}>{sessionVisible ? "No one visible yet." : "Become visible to reveal your venue and see nearby people."}</Text>
         </View>
       ) : (
         feed.map((item) => (
@@ -47,7 +49,7 @@ export function FeedScreen({
             {item.hintText ? <Text style={styles.feedCardHint}>{item.hintText}</Text> : null}
             <View style={styles.feedCardFooter}>
               <Chip label={item.primaryVibe ?? "Open"} />
-              <GhostButton label="Wave →" onPress={() => onWave(item)} compact />
+              <GhostButton label="View profile →" onPress={() => onOpenProfile(item)} compact />
             </View>
           </Pressable>
         ))

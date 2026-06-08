@@ -21,13 +21,6 @@ export type PromptState =
   | "accepted"
   | "dismissed";
 
-export type WaveStatus =
-  | "sent"
-  | "seen"
-  | "reciprocated"
-  | "expired"
-  | "cancelled";
-
 export type ApproachStatus =
   | "started"
   | "confirmed_going"
@@ -58,7 +51,6 @@ export type EnergyLevel = "quiet" | "warm" | "high";
 export type SocialInteractionEventType =
   | "became_visible"
   | "profile_viewed"
-  | "wave_sent"
   | "approach_started"
   | "approach_connected"
   | "prompt_dismissed"
@@ -145,16 +137,6 @@ export interface SocialInteractionEvent {
   eventType: SocialInteractionEventType;
   metadata: Record<string, unknown>;
   createdAt: string;
-}
-
-export interface Wave {
-  id: string;
-  fromUserId: string;
-  toUserId: string;
-  presenceSessionId: string;
-  status: WaveStatus;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface ApproachAttempt {
@@ -318,7 +300,6 @@ export interface DomainEventMap {
   presence_cancelled: { venueId: string };
   nearby_feed_loaded: { venueId: string; resultCount: number };
   profile_opened: { targetUserId: string; presenceSessionId: string };
-  wave_sent: { targetUserId: string; waveId: string };
   approach_started: { targetUserId: string; approachAttemptId: string };
   approach_cancelled: { approachAttemptId: string };
   approach_connected: { approachAttemptId: string };

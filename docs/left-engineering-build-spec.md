@@ -1,12 +1,13 @@
 # Left Engineering Build Spec
 
 Status:
-- engineering-ready build spec aligned to the current app implementation
+- engineering-ready build spec aligned to the current app implementation as of June 7, 2026
+- includes venue disambiguation, venue submission, Social Momentum, and delayed approach follow-up
 
 Depends on:
-- [left-product-spec.md](/Users/kelvinaliche/Desktop/Projects/left%20app/docs/left-product-spec.md)
-- [left-mvp-wireframes.md](/Users/kelvinaliche/Desktop/Projects/left%20app/docs/left-mvp-wireframes.md)
-- [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/left%20app/docs/identity-removal-policy.md)
+- [left-product-spec.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/left-product-spec.md)
+- [left-mvp-wireframes.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/left-mvp-wireframes.md)
+- [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/identity-removal-policy.md)
 
 Primary implementation rules:
 - the `Nearby Feed` is the canonical MVP discovery surface
@@ -20,14 +21,15 @@ Primary implementation rules:
 Ship a mobile MVP that lets a user:
 1. sign in with Google
 2. complete lightweight onboarding
-3. activate a temporary presence session
-4. browse compatible nearby people in the nearby feed
-5. inspect a soft-anonymity profile
-6. wave or enter the approaching micro-state
-7. confirm real-world connection or cancel
-8. access safety controls at active stages
-9. manage profile defaults and prompt templates from `You`
-10. request identity removal from the signed-in account screen
+3. confirm the correct nearby venue or add a missing one
+4. activate a temporary presence session
+5. browse compatible nearby people in the nearby feed
+6. inspect a soft-anonymity profile
+7. enter the approaching micro-state
+8. confirm a real-world connection or answer a delayed follow-up prompt after the approach window
+9. access safety controls at active stages
+10. manage profile defaults and prompt templates from `You`
+11. request identity removal from the signed-in account screen
 
 ## 2. Current Stack
 
@@ -50,25 +52,27 @@ Current implementation notes:
 ## 3. Current App Structure
 
 Current coordinating modules:
-- [src/app/LeftApp.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/app/LeftApp.tsx)
-- [src/app/leftConfig.ts](/Users/kelvinaliche/Desktop/Projects/left%20app/src/app/leftConfig.ts)
-- [src/app/leftTheme.ts](/Users/kelvinaliche/Desktop/Projects/left%20app/src/app/leftTheme.ts)
+- [src/app/LeftApp.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/app/LeftApp.tsx)
+- [src/app/leftConfig.ts](/Users/kelvinaliche/Desktop/Projects/leftApp/src/app/leftConfig.ts)
+- [src/app/leftTheme.ts](/Users/kelvinaliche/Desktop/Projects/leftApp/src/app/leftTheme.ts)
 
 Reusable UI/navigation:
-- [src/components/left/ui.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/components/left/ui.tsx)
-- [src/components/left/navigation.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/components/left/navigation.tsx)
+- [src/components/left/ui.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/components/left/ui.tsx)
+- [src/components/left/navigation.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/components/left/navigation.tsx)
 
 Screens:
-- [src/screens/left/AuthScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/AuthScreen.tsx)
-- [src/screens/left/LoadingScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/LoadingScreen.tsx)
-- [src/screens/left/OnboardingScreens.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/OnboardingScreens.tsx)
-- [src/screens/left/VenueScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/VenueScreen.tsx)
-- [src/screens/left/ActivationScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/ActivationScreen.tsx)
-- [src/screens/left/FeedScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/FeedScreen.tsx)
-- [src/screens/left/ProfileScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/ProfileScreen.tsx)
-- [src/screens/left/ApproachScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/ApproachScreen.tsx)
-- [src/screens/left/SafetyScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/SafetyScreen.tsx)
-- [src/screens/left/SettingsScreen.tsx](/Users/kelvinaliche/Desktop/Projects/left%20app/src/screens/left/SettingsScreen.tsx)
+- [src/screens/left/AuthScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/AuthScreen.tsx)
+- [src/screens/left/LoadingScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/LoadingScreen.tsx)
+- [src/screens/left/OnboardingScreens.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/OnboardingScreens.tsx)
+- [src/screens/left/VenueScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/VenueScreen.tsx)
+- [src/screens/left/ActivationScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/ActivationScreen.tsx)
+- [src/screens/left/FeedScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/FeedScreen.tsx)
+- [src/screens/left/ProfileScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/ProfileScreen.tsx)
+- [src/screens/left/ApproachScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/ApproachScreen.tsx)
+- [src/screens/left/ApproachFeedbackPrompt.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/ApproachFeedbackPrompt.tsx)
+- [src/screens/left/SafetyScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/SafetyScreen.tsx)
+- [src/screens/left/SettingsScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/SettingsScreen.tsx)
+- [src/screens/left/VenueSelectionScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/VenueSelectionScreen.tsx)
 
 ## 4. Canonical Screen Set
 
@@ -77,13 +81,14 @@ Implement and maintain in this order:
 1. Auth
 2. Onboarding
 3. Venue home
-4. Presence activation
-5. Nearby feed
-6. Soft-anonymity profile
-7. Approaching micro-state
-8. Safety controls
-9. Settings / You
-10. Optional bubble visualization
+4. Venue selection / add venue
+5. Presence activation
+6. Nearby feed
+7. Soft-anonymity profile
+8. Approaching micro-state
+9. Approach follow-up prompt
+10. Safety controls
+11. Settings / You
 
 ## 5. Navigation Model
 
@@ -94,6 +99,8 @@ Top-level screens in the current app:
 - `onboarding-avatar`
 - `onboarding-location`
 - `venue`
+- `venue-select`
+- `venue-add`
 - `activate`
 - `feed`
 - `profile`
@@ -109,7 +116,7 @@ Footer navigation is persistent across in-session screens and uses four destinat
 
 Navigation rules:
 - `Home` routes to venue home
-- `Nearby` routes to the feed / nearby cluster
+- `Nearby` routes to the feed when visible and back to activation when not visible
 - `Session` routes to activation before visibility and the live session timer after visibility starts
 - `You` routes to settings/account
 - safety is reachable from feed, profile, approach, and settings
@@ -176,7 +183,7 @@ Persisted fields:
 
 Purpose:
 - signed-in landing state
-- show venue pulse and activation entry point
+- show venue pulse, bubble preview, Social Momentum, and activation entry point
 
 Display fields:
 - `venue_name`
@@ -189,6 +196,8 @@ Display fields:
 Primary actions:
 - `open_activation`
 - `open_nearby_feed`
+- `choose_detected_venue`
+- `add_missing_venue`
 - footer navigation
 
 ### 6.3 Presence Activation
@@ -223,6 +232,7 @@ Current implementation notes:
 - activation inserts a `public.presence_sessions` row when the signed-in user and current venue are UUID-backed
 - one existing active session is ended before a new visible session is created
 - the app restores active visible sessions from Supabase on auth bootstrap and app resume
+- activation is blocked until venue selection is resolved when multiple nearby venues are detected
 - local mock IDs still use local state so seeded development screens keep working
 
 ### 6.4 Nearby Feed
@@ -245,8 +255,6 @@ Display fields per feed item:
 
 Primary actions:
 - `open_profile(profile_user_id)`
-- `wave(profile_user_id)`
-- `hide_user(profile_user_id)`
 - `open_safety_controls()`
 
 Rules:
@@ -254,7 +262,7 @@ Rules:
 - no `save user` action
 - no chat entry point
 - feed is tier-1 data only
-- shared alignment is shown in the current UI
+- shared alignment remains partly hardcoded in the current profile UI
 - UUID-backed sessions load feed records from `public.get_nearby_feed(...)`
 - mock/local sessions fall back to seeded feed data
 
@@ -273,7 +281,6 @@ Display fields:
 - `profile_prompt`
 
 Primary actions:
-- `wave(profile_id)`
 - `start_approach(profile_id)`
 - `hide_user(profile_id)`
 - `block_user(profile_id)`
@@ -306,8 +313,28 @@ Primary actions:
 
 Rules:
 - approach attempts are persisted to `public.approach_attempts` when UUID-backed records are available
-- expired approach should close state
+- expired approach currently transitions to a pending local follow-up prompt backed by AsyncStorage
 - prompt is owned by the signed-in viewer and saved in user settings
+
+### 6.6.1 Approach Follow-Up Prompt
+
+Purpose:
+- capture what happened after an approach countdown elapses without forcing the user to answer in the moment
+
+Display fields:
+- `target_first_name`
+- `approach_prompt`
+- `went_over`
+- `used_icebreaker`
+
+Primary actions:
+- `save_feedback`
+- `defer_feedback`
+
+Rules:
+- pending feedback is stored locally in AsyncStorage
+- if the user confirms the connection during the live countdown, pending feedback is cleared
+- this flow is currently local-only and does not yet persist feedback to Supabase
 
 ### 6.7 Safety Controls
 
@@ -347,6 +374,7 @@ Display fields:
 - `default_vibes`
 - `profile_prompt`
 - `approach_prompt`
+- venue preference summary
 - account status copy
 
 Primary actions:
@@ -366,7 +394,7 @@ Persisted fields on save:
 Identity-removal rules:
 - request writes to `public.identity_removal_requests`
 - app then calls the backend processor
-- retained/removed behavior is defined in [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/left%20app/docs/identity-removal-policy.md)
+- retained/removed behavior is defined in [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/identity-removal-policy.md)
 
 ### 6.9 Bubble Visualization Layer
 
@@ -387,6 +415,8 @@ App-level screens:
 - `onboarding-avatar`
 - `onboarding-location`
 - `venue`
+- `venue-select`
+- `venue-add`
 - `activate`
 - `feed`
 - `profile`
@@ -401,6 +431,7 @@ Presence/session-related local state:
 - `selectedDuration`
 - `hintDraft`
 - `approach`
+- `pendingApproachFeedback`
 - `venueHidden`
 
 Suggested future backend-backed presence states:
@@ -703,10 +734,10 @@ Current path:
 - backend SQL processor `public.process_identity_removal_request(...)`
 
 Key files:
-- [supabase/functions/process-identity-removal/index.ts](/Users/kelvinaliche/Desktop/Projects/left%20app/supabase/functions/process-identity-removal/index.ts)
-- [supabase/migrations/0004_process_identity_removal.sql](/Users/kelvinaliche/Desktop/Projects/left%20app/supabase/migrations/0004_process_identity_removal.sql)
-- [supabase/migrations/0006_fix_identity_removal_auth_casts.sql](/Users/kelvinaliche/Desktop/Projects/left%20app/supabase/migrations/0006_fix_identity_removal_auth_casts.sql)
-- [supabase/migrations/0007_harden_identity_removal_auth_schema.sql](/Users/kelvinaliche/Desktop/Projects/left%20app/supabase/migrations/0007_harden_identity_removal_auth_schema.sql)
+- [supabase/functions/process-identity-removal/index.ts](/Users/kelvinaliche/Desktop/Projects/leftApp/supabase/functions/process-identity-removal/index.ts)
+- [supabase/migrations/0004_process_identity_removal.sql](/Users/kelvinaliche/Desktop/Projects/leftApp/supabase/migrations/0004_process_identity_removal.sql)
+- [supabase/migrations/0006_fix_identity_removal_auth_casts.sql](/Users/kelvinaliche/Desktop/Projects/leftApp/supabase/migrations/0006_fix_identity_removal_auth_casts.sql)
+- [supabase/migrations/0007_harden_identity_removal_auth_schema.sql](/Users/kelvinaliche/Desktop/Projects/leftApp/supabase/migrations/0007_harden_identity_removal_auth_schema.sql)
 
 ### 11.6 sign_out
 
@@ -723,10 +754,10 @@ Track at minimum:
 - `presence_activated`
 - `nearby_feed_loaded`
 - `profile_opened`
-- `wave_sent`
 - `approach_started`
 - `approach_cancelled`
 - `approach_connected`
+- `approach_follow_up_saved`
 - `safety_opened`
 - `user_hidden`
 - `identity_removal_requested`
@@ -821,7 +852,6 @@ Venue scope for MVP:
 - prompt template persistence
 - identity-removal request + processor
 - feed ranking query
-- waves
 - hide/block/report
 - venue pulse
 - persisted presence activation, pause, and end
@@ -847,8 +877,9 @@ The current MVP build is done when:
 - presence activation flow is usable
 - nearby feed, profile, and approach flows work end to end in the app shell
 - active sessions persist and recover when backed by real Supabase UUID records
-- hide, block, report, wave, and approach writes persist when backed by real Supabase UUID records
+- hide, block, report, and approach writes persist when backed by real Supabase UUID records
 - prompt templates can be customized and are reflected in profile/approach UI
+- venue selection and missing-venue submission are usable
 - safety controls are reachable from active social states
 - sign-out works
 - identity-removal request flow works against deployed Supabase backend

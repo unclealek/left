@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
-import { Pressable, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Pressable, Text, View } from "react-native";
 import type { AppUser } from "../../types/left-domain";
 import { formatIntent, type FooterDestination } from "../../app/leftConfig";
 import { styles, T } from "../../app/leftTheme";
@@ -31,35 +32,67 @@ export function SessionFooterNav(props: {
     { key: "account", label: "You", icon: "user" },
   ];
   const activeIndex = items.findIndex((item) => item.key === props.activeDestination);
+  const [trackWidth, setTrackWidth] = useState(0);
+  const slideAnim = useRef(new Animated.Value(Math.max(activeIndex, 0))).current;
+
+  useEffect(() => {
+    Animated.spring(slideAnim, {
+      toValue: Math.max(activeIndex, 0),
+      useNativeDriver: true,
+      tension: 170,
+      friction: 18,
+    }).start();
+  }, [activeIndex, slideAnim]);
+
+  const slotWidth = trackWidth > 0 ? trackWidth / items.length : 0;
+  const bubbleTranslateX = slideAnim.interpolate({
+    inputRange: items.map((_, index) => index),
+    outputRange: items.map((_, index) => index * slotWidth),
+  });
+  const activeItem = items[Math.max(activeIndex, 0)];
 
   return (
     <View style={styles.footerShell}>
-      <View style={styles.footerSummaryRow}>
-        <View style={styles.footerVenueBlock}>
-          <Text style={styles.footerVenueLabel}>AT</Text>
-          <Text style={styles.footerVenueName}>{props.venueName}</Text>
-        </View>
-        <View style={styles.footerSessionMeta}>
-          <View style={[styles.footerPresenceDot, props.sessionVisible && styles.footerPresenceDotActive]} />
-          <Text style={styles.footerSessionText}>
-            {props.vibe} · {formatIntent(props.intent ?? "networking")}
-          </Text>
-        </View>
-      </View>
-      <View style={styles.footerNavRow}>
-        <View style={styles.footerNavTrack}>
-          <View
-            pointerEvents="none"
-            style={[
-              styles.footerNavMoundWrap,
-              {
-                width: `${100 / items.length}%`,
-                left: `${(Math.max(activeIndex, 0) * 100) / items.length}%`,
-              },
-            ]}
-          >
-            <View style={styles.footerNavMound} />
+      {props.sessionVisible ? (
+        <View style={styles.footerSummaryRow}>
+          <View style={styles.footerVenueBlock}>
+            <Text style={styles.footerVenueLabel}>AT</Text>
+            <Text style={styles.footerVenueName}>{props.venueName}</Text>
           </View>
+          <View style={styles.footerSessionMeta}>
+            <View style={[styles.footerPresenceDot, props.sessionVisible && styles.footerPresenceDotActive]} />
+            <Text style={styles.footerSessionText}>
+              {props.vibe} · {formatIntent(props.intent ?? "networking")}
+            </Text>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.footerPrivateRow}>
+          <View style={styles.footerPrivateBadge}>
+            <View style={styles.footerPrivateDot} />
+            <Text style={styles.footerPrivateText}>Your venue stays private until visible</Text>
+          </View>
+        </View>
+      )}
+      <View style={styles.footerNavRow}>
+        <View style={styles.footerNavTrack} onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}>
+          {slotWidth > 0 && (
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.footerNavBubbleTrack,
+                {
+                  width: slotWidth,
+                  transform: [{ translateX: bubbleTranslateX }],
+                },
+              ]}
+            >
+              <View style={styles.footerNavMound} />
+              <View style={styles.footerNavIconBubbleActive}>
+                <Feather name={activeItem.icon} size={26} color={T.white} />
+              </View>
+            </Animated.View>
+          )}
           {items.map((item) => {
             const active = props.activeDestination === item.key;
             return (
@@ -71,13 +104,13 @@ export function SessionFooterNav(props: {
                 accessibilityState={{ selected: active }}
                 style={({ pressed }) => [styles.footerNavItem, active && styles.footerNavItemActive, pressed && styles.footerNavItemPressed]}
               >
-                <View style={[styles.footerNavIconBubble, active && styles.footerNavIconBubbleActive]}>
-                  <Feather
-                    name={item.icon}
-                    size={active ? 26 : 22}
-                    color={active ? "#21008e" : T.textMuted}
-                  />
-                </View>
+                {!active ? (
+                  <View style={styles.footerNavIconBubble}>
+                    <Feather name={item.icon} size={22} color={T.textMuted} />
+                  </View>
+                ) : (
+                  <View style={styles.footerNavIconPlaceholder} />
+                )}
               </Pressable>
             );
           })}
