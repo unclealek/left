@@ -1255,6 +1255,7 @@ export function LeftApp() {
             onDismissSocialMomentum={dismissSocialMomentumPrompt}
             onChooseVenue={() => setScreen("venue-select")}
             onAddVenue={() => setScreen("venue-add")}
+            onOpenSafety={() => setScreen("safety")}
           />
         )}
         {screen === "activate" && (
