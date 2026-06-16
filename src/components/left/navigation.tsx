@@ -27,9 +27,9 @@ export function SessionFooterNav(props: {
 }) {
   const items: Array<{ key: FooterDestination; label: string; icon: keyof typeof Feather.glyphMap }> = [
     { key: "home", label: "Home", icon: "home" },
-    { key: "nearby", label: "Nearby", icon: "map-pin" },
-    { key: "session", label: "Session", icon: "layers" },
-    { key: "account", label: "You", icon: "user" },
+    { key: "nearby", label: "Map", icon: "map-pin" },
+    { key: "session", label: "Venues", icon: "layers" },
+    { key: "account", label: "Profile", icon: "user" },
   ];
   const activeIndex = items.findIndex((item) => item.key === props.activeDestination);
   const [trackWidth, setTrackWidth] = useState(0);
@@ -44,12 +44,15 @@ export function SessionFooterNav(props: {
     }).start();
   }, [activeIndex, slideAnim]);
 
-  const slotWidth = trackWidth > 0 ? trackWidth / items.length : 0;
+  const trackHorizontalInset = 24;
+  const trackInnerWidth = trackWidth > 0 ? Math.max(trackWidth - trackHorizontalInset, 0) : 0;
+  const slotWidth = trackInnerWidth > 0 ? trackInnerWidth / items.length : 0;
   const bubbleTranslateX = slideAnim.interpolate({
     inputRange: items.map((_, index) => index),
-    outputRange: items.map((_, index) => index * slotWidth),
+    outputRange: items.map((_, index) => index * slotWidth + trackHorizontalInset / 2),
   });
   const activeItem = items[Math.max(activeIndex, 0)];
+  const showPrivateBadge = !props.sessionVisible && props.activeDestination !== "home";
 
   return (
     <View style={styles.footerShell}>
@@ -66,14 +69,14 @@ export function SessionFooterNav(props: {
             </Text>
           </View>
         </View>
-      ) : (
+      ) : showPrivateBadge ? (
         <View style={styles.footerPrivateRow}>
           <View style={styles.footerPrivateBadge}>
             <View style={styles.footerPrivateDot} />
             <Text style={styles.footerPrivateText}>Your venue stays private until visible</Text>
           </View>
         </View>
-      )}
+      ) : null}
       <View style={styles.footerNavRow}>
         <View style={styles.footerNavTrack} onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}>
           {slotWidth > 0 && (
@@ -87,9 +90,8 @@ export function SessionFooterNav(props: {
                 },
               ]}
             >
-              <View style={styles.footerNavMound} />
               <View style={styles.footerNavIconBubbleActive}>
-                <Feather name={activeItem.icon} size={26} color={T.white} />
+                <Feather name={activeItem.icon} size={22} color={T.white} />
               </View>
             </Animated.View>
           )}
@@ -105,11 +107,17 @@ export function SessionFooterNav(props: {
                 style={({ pressed }) => [styles.footerNavItem, active && styles.footerNavItemActive, pressed && styles.footerNavItemPressed]}
               >
                 {!active ? (
-                  <View style={styles.footerNavIconBubble}>
-                    <Feather name={item.icon} size={22} color={T.textMuted} />
-                  </View>
+                  <>
+                    <View style={styles.footerNavIconBubble}>
+                      <Feather name={item.icon} size={19} color={T.accentBright} />
+                    </View>
+                    <Text style={styles.footerNavLabel}>{item.label}</Text>
+                  </>
                 ) : (
-                  <View style={styles.footerNavIconPlaceholder} />
+                  <>
+                    <View style={styles.footerNavIconPlaceholder} />
+                    <Text style={[styles.footerNavLabel, styles.footerNavLabelActive]}>{item.label}</Text>
+                  </>
                 )}
               </Pressable>
             );
