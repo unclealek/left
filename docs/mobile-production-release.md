@@ -50,12 +50,7 @@ NODE_ENV=production npx expo export --platform all --output-dir dist-mobile-chec
 rm -rf dist-mobile-check
 ```
 
-Current local verification status:
-
-- TypeScript check passes.
-- Expo dependency check passes.
-- Production iOS export passes.
-- Android preview build has completed successfully on EAS.
+Treat the command output as the source of truth. Do not rely on this document as evidence that the checks passed recently.
 
 For local iOS builds, CocoaPods requires a UTF-8 terminal locale. If `npx expo run:ios` fails with `Unicode Normalization not appropriate for ASCII-8BIT`, run:
 
