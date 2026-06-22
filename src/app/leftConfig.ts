@@ -8,9 +8,11 @@ export type Screen =
   | "onboarding-location"
   | "venue-select"
   | "venue-add"
+  | "home"
   | "venue"
   | "activate"
   | "feed"
+  | "me"
   | "profile"
   | "approach"
   | "safety"
@@ -59,7 +61,7 @@ export const defaultApproachPrompt = "What are you working on that feels genuine
 
 export const AUTH_CALLBACK_PATH = "auth/callback";
 export const NATIVE_AUTH_REDIRECT = "left://auth/callback";
-export const SESSION_NAV_SCREENS: Screen[] = ["venue", "activate", "feed", "profile", "approach", "safety", "settings"];
+export const SESSION_NAV_SCREENS: Screen[] = ["home", "venue", "activate", "feed", "me", "profile", "approach", "safety", "settings"];
 
 export function formatIntent(intent: string) {
   return intent.replaceAll("_", " ");
@@ -83,8 +85,8 @@ export function formatElapsedDuration(totalSeconds: number) {
 }
 
 export function getFooterDestination(screen: Screen): FooterDestination {
-  if (screen === "venue") return "home";
+  if (screen === "home") return "home";
   if (screen === "feed" || screen === "profile" || screen === "approach") return "nearby";
-  if (screen === "activate") return "session";
+  if (screen === "venue" || screen === "activate") return "session";
   return "account";
 }

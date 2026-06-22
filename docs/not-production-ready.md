@@ -40,6 +40,8 @@ Status:
 
 - The current product shell is approach-first; wave persistence exists in docs/schema but the user-facing wave flow is not presently aligned with the UI.
 - Approach expiry now transitions to a local delayed follow-up prompt, but the backend does not yet own or validate that follow-up state.
+- The UI now shows only the approach-stage prompt. The older profile-stage prompt field still exists in the data model/settings save path and the product docs still describe two prompt stages.
+- Decide whether to fully remove `profile_prompt` from schema/docs/client state or intentionally reintroduce it later with a clearer product role.
 - Cancel approach is not persisted.
 - Contact exchange exists in schema but is not implemented.
 - Follow-up feedback is stored locally only and does not yet feed analytics or product ranking.

@@ -6,6 +6,7 @@ import { Card, FieldBlock, PrimaryButton, SelectChip } from "../../components/le
 
 export function ActivationScreen(props: {
   sessionVisible: boolean;
+  venueHidden: boolean;
   selectedIntent: AppUser["defaultIntent"];
   selectedVibes: string[];
   selectedDuration: number;
@@ -81,7 +82,12 @@ export function ActivationScreen(props: {
           style={styles.input}
         />
       </FieldBlock>
-      <PrimaryButton label="Become visible" onPress={props.onActivate} />
+      {props.venueHidden ? (
+        <Text style={styles.settingsInfoBody}>
+          This venue is hidden in your settings. Unhide it before becoming visible here again.
+        </Text>
+      ) : null}
+      <PrimaryButton label="Become visible" onPress={props.onActivate} disabled={props.venueHidden} />
     </Card>
   );
 }

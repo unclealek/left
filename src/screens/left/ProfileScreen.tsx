@@ -15,7 +15,6 @@ const reportCategories: Array<{ id: ReportCategory; label: string }> = [
 
 export function ProfileScreen({
   item,
-  profilePrompt,
   reportCategory,
   reportNotes,
   reportSubmitting,
@@ -29,7 +28,6 @@ export function ProfileScreen({
   onOpenSafety,
 }: {
   item: NearbyFeedItem;
-  profilePrompt: string;
   reportCategory: ReportCategory;
   reportNotes: string;
   reportSubmitting: boolean;
@@ -65,9 +63,6 @@ export function ProfileScreen({
         </InfoBlock>
         <InfoBlock label="Shared alignment">
           <Text style={styles.infoText}>You both selected AI/startups.</Text>
-        </InfoBlock>
-        <InfoBlock label="Icebreaker">
-          <Text style={[styles.infoText, styles.icebreakerText]}>"{profilePrompt}"</Text>
         </InfoBlock>
       </View>
       <View style={styles.profileActions}>

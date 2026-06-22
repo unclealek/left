@@ -7,6 +7,8 @@ export function SafetyScreen({
   venueName,
   sessionVisible,
   venueMuted,
+  venueAction,
+  venueMessage,
   onBack,
   onPauseVisibility,
   onEndSession,
@@ -16,6 +18,8 @@ export function SafetyScreen({
   venueName: string;
   sessionVisible: boolean;
   venueMuted: boolean;
+  venueAction: "hiding" | "muting" | null;
+  venueMessage: { tone: "success" | "error"; text: string } | null;
   onBack: () => void;
   onPauseVisibility: () => void;
   onEndSession: () => void;
@@ -32,15 +36,32 @@ export function SafetyScreen({
           <View style={[styles.pulseDot, sessionVisible && styles.pulseDotActive]} />
           <Text style={styles.safetyStatusText}>{sessionVisible ? "Visible nearby" : "Not currently visible"}</Text>
         </View>
-        <PrimaryButton label="Pause visibility" onPress={onPauseVisibility} />
-        <GhostButton label="End session" onPress={onEndSession} />
+        <PrimaryButton label="Pause visibility" onPress={onPauseVisibility} disabled={!sessionVisible} />
+        <GhostButton label="End session" onPress={onEndSession} disabled={!sessionVisible} />
       </FieldBlock>
       <FieldBlock label="Venue">
-        <GhostButton label={`Hide me at ${venueName}`} onPress={onHideVenue} destructive />
+        {venueMessage ? (
+          <Text style={venueMessage.tone === "success" ? styles.settingsSuccessText : styles.errorText}>
+            {venueMessage.text}
+          </Text>
+        ) : null}
         <GhostButton
-          label={venueMuted ? `Venue notifications off at ${venueName}` : "Never notify me here"}
+          label={venueAction === "hiding" ? "Hiding venue..." : `Hide me at ${venueName}`}
+          onPress={onHideVenue}
+          destructive
+          disabled={!!venueAction}
+        />
+        <GhostButton
+          label={
+            venueAction === "muting"
+              ? "Muting venue..."
+              : venueMuted
+                ? `Venue notifications off at ${venueName}`
+                : "Never notify me here"
+          }
           onPress={onMuteVenue}
           destructive={!venueMuted}
+          disabled={!!venueAction || venueMuted}
         />
       </FieldBlock>
     </View>
