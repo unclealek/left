@@ -60,10 +60,26 @@ export function EnergyPill({ level }: { level: string }) {
   );
 }
 
-export function PrimaryButton({ label, onPress }: { label: string; onPress: () => void }) {
+export function PrimaryButton({
+  label,
+  onPress,
+  disabled = false,
+}: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+}) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.primaryBtn, pressed && styles.primaryBtnPressed]}>
-      <Text style={styles.primaryBtnLabel}>{label}</Text>
+    <Pressable
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.primaryBtn,
+        disabled && styles.primaryBtnDisabled,
+        pressed && !disabled && styles.primaryBtnPressed,
+      ]}
+    >
+      <Text style={[styles.primaryBtnLabel, disabled && styles.primaryBtnLabelDisabled]}>{label}</Text>
     </Pressable>
   );
 }
@@ -73,15 +89,34 @@ export function GhostButton({
   onPress,
   compact = false,
   destructive = false,
+  disabled = false,
 }: {
   label: string;
   onPress: () => void;
   compact?: boolean;
   destructive?: boolean;
+  disabled?: boolean;
 }) {
   return (
-    <Pressable onPress={onPress} style={[styles.ghostBtn, compact && styles.ghostBtnCompact, destructive && styles.ghostBtnDestructive]}>
-      <Text style={[styles.ghostBtnLabel, destructive && styles.ghostBtnLabelDestructive]}>{label}</Text>
+    <Pressable
+      disabled={disabled}
+      onPress={onPress}
+      style={[
+        styles.ghostBtn,
+        compact && styles.ghostBtnCompact,
+        destructive && styles.ghostBtnDestructive,
+        disabled && styles.ghostBtnDisabled,
+      ]}
+    >
+      <Text
+        style={[
+          styles.ghostBtnLabel,
+          destructive && styles.ghostBtnLabelDestructive,
+          disabled && styles.ghostBtnLabelDisabled,
+        ]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }

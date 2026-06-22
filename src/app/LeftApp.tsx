@@ -32,6 +32,7 @@ import { AuthScreen } from "../screens/left/AuthScreen";
 import { LoadingScreen } from "../screens/left/LoadingScreen";
 import { NameScreen, AvatarScreen, LocationScreen } from "../screens/left/OnboardingScreens";
 import { VenueScreen } from "../screens/left/VenueScreen";
+import { HomeScreen } from "../screens/left/HomeScreen";
 import { ActivationScreen } from "../screens/left/ActivationScreen";
 import { FeedScreen } from "../screens/left/FeedScreen";
 import { ProfileScreen } from "../screens/left/ProfileScreen";
@@ -39,6 +40,7 @@ import { ApproachScreen } from "../screens/left/ApproachScreen";
 import { ApproachFeedbackPrompt } from "../screens/left/ApproachFeedbackPrompt";
 import { SafetyScreen } from "../screens/left/SafetyScreen";
 import { SettingsScreen } from "../screens/left/SettingsScreen";
+import { MeScreen } from "../screens/left/MeScreen";
 import { VenueAddScreen, VenueSelectionScreen } from "../screens/left/VenueSelectionScreen";
 import {
   consumePendingActivationLaunch,
@@ -55,10 +57,15 @@ import {
 import {
   getLocationRuntimeState,
   getVenuePreferences,
+  saveVenuePreferences,
   type RuntimeCoords,
   type RuntimeVenueCandidate,
   type VenuePreference,
 } from "../features/location/location-storage";
+import {
+  fetchVenuePreferencesForUser,
+  upsertVenuePreferenceForUser,
+} from "../features/location/venue-preference-service";
 import {
   fetchUserProfile,
   submitIdentityRemovalRequest,
@@ -119,6 +126,13 @@ function isUuid(value: string | null | undefined): value is string {
   return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
+type VenuePreferenceAction = "hide" | "mute" | "unhide" | "unmute";
+type VenuePreferenceMessage = {
+  venueId: string;
+  tone: "success" | "error";
+  text: string;
+};
+
 const PRIVATE_VENUE_SUMMARY: VenueContextSummary = {
   venueId: "private",
   venueName: "Visibility off",
@@ -154,6 +168,11 @@ export function LeftApp() {
   const [settingsSaveState, setSettingsSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [deletionRequestState, setDeletionRequestState] = useState<"idle" | "submitting" | "submitted" | "error">("idle");
   const [venuePreferences, setVenuePreferences] = useState<Record<string, VenuePreference>>({});
+  const [venuePreferenceAction, setVenuePreferenceAction] = useState<{
+    venueId: string;
+    action: VenuePreferenceAction;
+  } | null>(null);
+  const [venuePreferenceMessage, setVenuePreferenceMessage] = useState<VenuePreferenceMessage | null>(null);
   const [nearbyVenueOptions, setNearbyVenueOptions] = useState<RuntimeVenueCandidate[]>([]);
   const [lastKnownCoords, setLastKnownCoords] = useState<RuntimeCoords | null>(null);
   const [venueSelectionRequired, setVenueSelectionRequired] = useState(false);
@@ -371,6 +390,17 @@ export function LeftApp() {
       return false;
     }
 
+    const preferences = await loadVenuePreferences(appUser.id);
+    if (preferences[activeSession.venueId]?.hidden) {
+      await updatePresenceSessionEndState(activeSession.id, "session_ended");
+      setActivePresenceSessionId(null);
+      setSessionVisible(false);
+      setSessionStartedAt(null);
+      setSocialMomentumEvents([]);
+      setFeed([]);
+      return false;
+    }
+
     setActivePresenceSessionId(activeSession.id);
     await refreshSocialMomentumEvents(activeSession.id, appUser.id);
     setSessionStartedAt(activeSession.startedAt);
@@ -440,9 +470,62 @@ export function LeftApp() {
   }
 
   async function refreshVenuePreferences() {
-    const preferences = await getVenuePreferences();
+    const preferences = await loadVenuePreferences(user?.id ?? null);
     setVenuePreferences(preferences);
     setVenueHidden(!!preferences[venueSummary.venueId]?.hidden);
+  }
+
+  async function loadVenuePreferences(userId: string | null) {
+    const localPreferences = await getVenuePreferences();
+    const serverPreferences = userId ? await fetchVenuePreferencesForUser(userId) : null;
+    const mergedPreferences = mergeVenuePreferences(localPreferences, serverPreferences ?? {});
+    if (serverPreferences) {
+      await saveVenuePreferences(mergedPreferences);
+    }
+    return mergedPreferences;
+  }
+
+  async function syncVenuePreferencesForUser(userId: string) {
+    const localPreferences = await getVenuePreferences();
+    const serverPreferences = await fetchVenuePreferencesForUser(userId);
+    if (!serverPreferences) return localPreferences;
+
+    const mergedPreferences = mergeVenuePreferences(localPreferences, serverPreferences);
+    await saveVenuePreferences(mergedPreferences);
+
+    await Promise.all(
+      Object.values(mergedPreferences).map(async (preference) => {
+        const serverPreference = serverPreferences[preference.venueId];
+        if (serverPreference && new Date(serverPreference.updatedAt).getTime() >= new Date(preference.updatedAt).getTime()) {
+          return;
+        }
+
+        await upsertVenuePreferenceForUser({
+          userId,
+          venueId: preference.venueId,
+          venueName: preference.venueName,
+          hidden: preference.hidden,
+          muted: preference.muted,
+          cooldownUntil: preference.cooldownUntil,
+        });
+      }),
+    );
+
+    return mergedPreferences;
+  }
+
+  function mergeVenuePreferences(
+    localPreferences: Record<string, VenuePreference>,
+    serverPreferences: Record<string, VenuePreference>,
+  ) {
+    const merged = { ...localPreferences };
+    for (const [venueId, serverPreference] of Object.entries(serverPreferences)) {
+      const localPreference = merged[venueId];
+      if (!localPreference || new Date(serverPreference.updatedAt).getTime() >= new Date(localPreference.updatedAt).getTime()) {
+        merged[venueId] = serverPreference;
+      }
+    }
+    return merged;
   }
 
   async function syncApproachFollowUp(appUser: AppUser) {
@@ -615,7 +698,7 @@ export function LeftApp() {
     setVenueDraftType("other");
     await refreshVenueFromRuntime();
     Alert.alert("Venue submitted", "Your venue was saved as a pending submission and is available for your current session.");
-    setScreen("venue");
+    setScreen("home");
   }
 
   async function syncSession(session: Session | null, isInitialLoad: boolean) {
@@ -667,12 +750,15 @@ export function LeftApp() {
     setUser(appUser);
     setFirstNameDraft(profile.first_name);
     setAuthProvider(profile.auth_provider);
+    const syncedVenuePreferences = await syncVenuePreferencesForUser(appUser.id);
+    setVenuePreferences(syncedVenuePreferences);
+    setVenueHidden(!!syncedVenuePreferences[venueSummary.venueId]?.hidden);
     if (isInitialLoad) {
       setScreen("loading");
       await delay(2000);
     }
     const recoveredActiveSession = await recoverActivePresenceSession(appUser);
-    setScreen(recoveredActiveSession ? "activate" : "venue");
+    setScreen(recoveredActiveSession ? "activate" : "home");
   }
 
   async function startGoogleAuth() {
@@ -738,6 +824,10 @@ export function LeftApp() {
     if (!user) return;
     if (venueSelectionRequired) {
       setScreen("venue-select");
+      return;
+    }
+    if (venueHidden) {
+      Alert.alert("Venue hidden", "Unhide this venue in Settings before becoming visible here again.");
       return;
     }
     if (!isUuid(venueSummary.venueId)) {
@@ -982,30 +1072,172 @@ export function LeftApp() {
   }
 
   async function hideVenuePermanently() {
-    await persistVenueHidden(venueSummary.venueId, venueSummary.venueName, true);
-    setVenueHidden(true);
-    setFeed([]);
-    await refreshVenuePreferences();
-    setScreen("venue");
+    const venueId = venueSummary.venueId;
+    const venueName = venueSummary.venueName;
+    setVenuePreferenceAction({ venueId, action: "hide" });
+    setVenuePreferenceMessage(null);
+
+    try {
+      await persistVenueHidden(venueId, venueName, true);
+      let synced = true;
+      if (user) {
+        const savedPreference = await upsertVenuePreferenceForUser({
+          userId: user.id,
+          venueId,
+          venueName,
+          hidden: true,
+          muted: !!currentVenuePreference?.muted,
+          cooldownUntil: currentVenuePreference?.cooldownUntil ?? null,
+        });
+
+        synced = !!savedPreference || !isUuid(user.id) || !isUuid(venueId);
+      }
+
+      if (sessionVisible) {
+        await endSessionState();
+      }
+      setVenueHidden(true);
+      setFeed([]);
+      await refreshVenuePreferences();
+      setVenuePreferenceMessage({
+        venueId,
+        tone: synced ? "success" : "error",
+        text: synced
+          ? `${venueName} is hidden. You will not be visible there until you unhide it.`
+          : `${venueName} is hidden on this device, but server sync did not complete.`,
+      });
+      setScreen("venue");
+    } catch {
+      setVenuePreferenceMessage({
+        venueId,
+        tone: "error",
+        text: `We could not hide ${venueName}. Please try again.`,
+      });
+    } finally {
+      setVenuePreferenceAction(null);
+    }
   }
 
   async function muteVenueNotifications() {
-    await setVenueMuted(venueSummary.venueId, venueSummary.venueName, true);
-    await refreshVenuePreferences();
-    Alert.alert("Venue muted", `Left will no longer send dwell notifications at ${venueSummary.venueName}.`);
+    const venueId = venueSummary.venueId;
+    const venueName = venueSummary.venueName;
+    setVenuePreferenceAction({ venueId, action: "mute" });
+    setVenuePreferenceMessage(null);
+
+    try {
+      await setVenueMuted(venueId, venueName, true);
+      let synced = true;
+      if (user) {
+        const savedPreference = await upsertVenuePreferenceForUser({
+          userId: user.id,
+          venueId,
+          venueName,
+          hidden: !!currentVenuePreference?.hidden,
+          muted: true,
+          cooldownUntil: null,
+        });
+
+        synced = !!savedPreference || !isUuid(user.id) || !isUuid(venueId);
+      }
+
+      await refreshVenuePreferences();
+      setVenuePreferenceMessage({
+        venueId,
+        tone: synced ? "success" : "error",
+        text: synced
+          ? `Notifications are off at ${venueName}.`
+          : `Notifications are off on this device, but server sync did not complete.`,
+      });
+    } catch {
+      setVenuePreferenceMessage({
+        venueId,
+        tone: "error",
+        text: `We could not mute ${venueName}. Please try again.`,
+      });
+    } finally {
+      setVenuePreferenceAction(null);
+    }
   }
 
   async function clearVenueHidden(venueId: string, venueName: string) {
-    await persistVenueHidden(venueId, venueName, false);
-    if (venueSummary.venueId === venueId) {
-      setVenueHidden(false);
+    setVenuePreferenceAction({ venueId, action: "unhide" });
+    setVenuePreferenceMessage(null);
+
+    try {
+      await persistVenueHidden(venueId, venueName, false);
+      let synced = true;
+      if (user) {
+        const preference = venuePreferences[venueId];
+        const savedPreference = await upsertVenuePreferenceForUser({
+          userId: user.id,
+          venueId,
+          venueName,
+          hidden: false,
+          muted: !!preference?.muted,
+          cooldownUntil: preference?.cooldownUntil ?? null,
+        });
+
+        synced = !!savedPreference || !isUuid(user.id) || !isUuid(venueId);
+      }
+      if (venueSummary.venueId === venueId) {
+        setVenueHidden(false);
+      }
+      await refreshVenuePreferences();
+      setVenuePreferenceMessage({
+        venueId,
+        tone: synced ? "success" : "error",
+        text: synced
+          ? `${venueName} is unhidden. You can become visible there again.`
+          : `${venueName} is unhidden on this device, but server sync did not complete.`,
+      });
+    } catch {
+      setVenuePreferenceMessage({
+        venueId,
+        tone: "error",
+        text: `We could not unhide ${venueName}. Please try again.`,
+      });
+    } finally {
+      setVenuePreferenceAction(null);
     }
-    await refreshVenuePreferences();
   }
 
   async function clearVenueMuted(venueId: string, venueName: string) {
-    await setVenueMuted(venueId, venueName, false);
-    await refreshVenuePreferences();
+    setVenuePreferenceAction({ venueId, action: "unmute" });
+    setVenuePreferenceMessage(null);
+
+    try {
+      await setVenueMuted(venueId, venueName, false);
+      let synced = true;
+      if (user) {
+        const preference = venuePreferences[venueId];
+        const savedPreference = await upsertVenuePreferenceForUser({
+          userId: user.id,
+          venueId,
+          venueName,
+          hidden: !!preference?.hidden,
+          muted: false,
+          cooldownUntil: preference?.cooldownUntil ?? null,
+        });
+
+        synced = !!savedPreference || !isUuid(user.id) || !isUuid(venueId);
+      }
+      await refreshVenuePreferences();
+      setVenuePreferenceMessage({
+        venueId,
+        tone: synced ? "success" : "error",
+        text: synced
+          ? `Notifications are back on for ${venueName}.`
+          : `Notifications are back on locally, but server sync did not complete.`,
+      });
+    } catch {
+      setVenuePreferenceMessage({
+        venueId,
+        tone: "error",
+        text: `We could not update notifications for ${venueName}. Please try again.`,
+      });
+    } finally {
+      setVenuePreferenceAction(null);
+    }
   }
 
   async function saveSettings(input: {
@@ -1164,7 +1396,7 @@ export function LeftApp() {
   function goToFooterDestination(destination: FooterDestination) {
     if (destination === "home") {
       setSelectedProfile(null);
-      setScreen("venue");
+      setScreen("home");
       return;
     }
     if (destination === "nearby") {
@@ -1178,7 +1410,7 @@ export function LeftApp() {
       return;
     }
     setSelectedProfile(null);
-    setScreen("settings");
+    setScreen("me");
   }
 
   const footerSummary = {
@@ -1189,6 +1421,16 @@ export function LeftApp() {
     activeDestination: getFooterDestination(screen),
   };
   const currentVenuePreference = venuePreferences[venueSummary.venueId];
+  const currentVenuePreferenceAction =
+    venuePreferenceAction?.venueId === venueSummary.venueId ? venuePreferenceAction.action : null;
+  const safetyVenueAction =
+    currentVenuePreferenceAction === "hide"
+      ? "hiding"
+      : currentVenuePreferenceAction === "mute"
+        ? "muting"
+        : null;
+  const currentVenuePreferenceMessage =
+    venuePreferenceMessage?.venueId === venueSummary.venueId ? venuePreferenceMessage : null;
   const locationStatus = locationEnabled
     ? "Background location is active. Venue matching runs on-device and only venue IDs are used for app state."
     : "Background location is not enabled yet.";
@@ -1239,6 +1481,9 @@ export function LeftApp() {
             onBack={() => setScreen("venue-select")}
           />
         )}
+        {screen === "home" && (
+          <HomeScreen firstName={user?.firstName ?? "there"} onBecomeVisible={() => setScreen("venue")} />
+        )}
         {screen === "venue" && (
           <VenueScreen
             venue={displayVenueSummary}
@@ -1261,6 +1506,7 @@ export function LeftApp() {
         {screen === "activate" && (
           <ActivationScreen
             sessionVisible={sessionVisible}
+            venueHidden={venueHidden}
             selectedIntent={selectedIntent}
             selectedVibes={selectedVibes}
             selectedDuration={selectedDuration}
@@ -1284,7 +1530,6 @@ export function LeftApp() {
         {screen === "profile" && selectedProfile && (
           <ProfileScreen
             item={selectedProfile}
-            profilePrompt={user?.profilePrompt ?? defaultProfilePrompt}
             reportCategory={reportCategory}
             reportNotes={reportNotes}
             reportSubmitting={reportSubmitting}
@@ -1309,21 +1554,30 @@ export function LeftApp() {
           />
         )}
         {screen === "safety" && (
-          <SafetyScreen venueName={sessionVisible ? venueSummary.venueName : "current venue"} venueMuted={!!currentVenuePreference?.muted} sessionVisible={sessionVisible} onBack={() => setScreen(selectedProfile && sessionVisible ? "profile" : sessionVisible ? "feed" : "venue")} onPauseVisibility={() => void endSessionState("paused")} onEndSession={() => { void endSessionState(); setScreen("venue"); }} onHideVenue={() => void hideVenuePermanently()} onMuteVenue={() => void muteVenueNotifications()} />
+          <SafetyScreen venueName={sessionVisible ? venueSummary.venueName : "current venue"} venueMuted={!!currentVenuePreference?.muted} venueAction={safetyVenueAction} venueMessage={currentVenuePreferenceMessage} sessionVisible={sessionVisible} onBack={() => setScreen(selectedProfile && sessionVisible ? "profile" : sessionVisible ? "feed" : "venue")} onPauseVisibility={() => void endSessionState("paused")} onEndSession={() => { void endSessionState(); setScreen("venue"); }} onHideVenue={() => void hideVenuePermanently()} onMuteVenue={() => void muteVenueNotifications()} />
         )}
         {screen === "settings" && user && (
           <SettingsScreen
             user={user}
-            saveState={settingsSaveState}
             deletionState={deletionRequestState}
             venuePreferences={Object.values(venuePreferences).filter((preference) => preference.hidden || preference.muted)}
+            venuePreferenceAction={venuePreferenceAction}
+            venuePreferenceMessage={venuePreferenceMessage}
             locationStatus={locationStatus}
-            onSave={(input) => void saveSettings(input)}
             onOpenSafety={() => setScreen("safety")}
             onClearVenueHidden={(venueId, venueName) => void clearVenueHidden(venueId, venueName)}
             onClearVenueMuted={(venueId, venueName) => void clearVenueMuted(venueId, venueName)}
             onSignOut={() => void signOut()}
             onRequestDeletion={() => void requestAccountDeletion()}
+            onBack={() => setScreen("me")}
+          />
+        )}
+        {screen === "me" && user && (
+          <MeScreen
+            user={user}
+            saveState={settingsSaveState}
+            onSave={(input) => void saveSettings(input)}
+            onOpenSettings={() => setScreen("settings")}
           />
         )}
       </ScrollView>

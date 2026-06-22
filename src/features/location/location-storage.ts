@@ -139,6 +139,10 @@ export async function getVenuePreferences() {
   return readJson<Record<string, VenuePreference>>(STORAGE_KEYS.venuePreferences, {});
 }
 
+export async function saveVenuePreferences(next: Record<string, VenuePreference>) {
+  await writeJson(STORAGE_KEYS.venuePreferences, next);
+}
+
 export async function upsertVenuePreference(
   venueId: string,
   venueName: string,

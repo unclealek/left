@@ -304,6 +304,10 @@ export async function processLocationFix(coords: Location.LocationObjectCoords) 
     console.info("[location] venue is muted, skipping prompt");
     return;
   }
+  if (venuePreference?.hidden) {
+    console.info("[location] venue is hidden, skipping prompt");
+    return;
+  }
   if (isCooldownActive(venuePreference?.cooldownUntil ?? null)) {
     console.info("[location] venue is cooling down, skipping prompt", {
       cooldownUntil: venuePreference?.cooldownUntil,

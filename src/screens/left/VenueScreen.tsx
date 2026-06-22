@@ -157,7 +157,7 @@ export function VenueScreen({
   });
   const radarPeople = buildRadarPlacements(feed);
   const nearbyCount = Math.max(venue.visibleCount, feed.length);
-  const buttonLabel = sessionVisible ? "Open nearby feed" : "Become visible";
+  const buttonLabel = sessionVisible ? "Open nearby feed" : "Set presence";
   const pulseCopy = venue.pulseCopy?.trim() || "No one has surfaced yet.";
   const centerLabel = sessionVisible ? "Radar live" : "You're invisible";
   const centerCaption = sessionVisible
