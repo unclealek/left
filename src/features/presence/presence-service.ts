@@ -2,6 +2,7 @@ import { supabase } from "../../lib/supabase";
 import type {
   DistanceBucket,
   EnergyLevel,
+  AvatarStyle,
   IntentType,
   NearbyFeedItem,
   VenueContextSummary,
@@ -45,6 +46,7 @@ type NearbyFeedRow = {
   profile_user_id: string;
   presence_session_id: string;
   first_name: string;
+  avatar_style?: AvatarStyle | null;
   intent: IntentType;
   hint_text: string | null;
   primary_vibe: string | null;
@@ -222,6 +224,7 @@ function mapNearbyFeedRow(row: NearbyFeedRow): NearbyFeedItem {
     profileUserId: row.profile_user_id,
     presenceSessionId: row.presence_session_id,
     firstName: row.first_name,
+    avatarStyle: row.avatar_style ?? null,
     intent: row.intent,
     hintText: row.hint_text,
     primaryVibe: row.primary_vibe,

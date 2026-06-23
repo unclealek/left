@@ -1,13 +1,14 @@
 import { Feather } from "@expo/vector-icons";
+import { useState } from "react";
 import { Alert, Linking, Pressable, Text, View } from "react-native";
 import type { AppUser } from "../../types/left-domain";
 import { T, styles } from "../../app/leftTheme";
 import { GhostButton } from "../../components/left/ui";
-import type { VenuePreference } from "../../features/location/location-storage";
 
 type SettingsMenuRowProps = {
   icon: keyof typeof Feather.glyphMap;
   label: string;
+  helper?: string;
   value?: string;
   onPress?: () => void;
   last?: boolean;
@@ -16,47 +17,43 @@ type SettingsMenuRowProps = {
 export function SettingsScreen({
   user,
   deletionState,
-  venuePreferences,
-  venuePreferenceAction,
-  venuePreferenceMessage,
-  locationStatus,
   onOpenSafety,
-  onClearVenueHidden,
-  onClearVenueMuted,
   onSignOut,
   onRequestDeletion,
   onBack,
 }: {
   user: AppUser;
   deletionState: "idle" | "submitting" | "submitted" | "error";
-  venuePreferences: VenuePreference[];
-  venuePreferenceAction: {
-    venueId: string;
-    action: "hide" | "mute" | "unhide" | "unmute";
-  } | null;
-  venuePreferenceMessage: { tone: "success" | "error"; text: string } | null;
-  locationStatus: string;
   onOpenSafety: () => void;
-  onClearVenueHidden: (venueId: string, venueName: string) => void;
-  onClearVenueMuted: (venueId: string, venueName: string) => void;
   onSignOut: () => void;
   onRequestDeletion: () => void;
   onBack: () => void;
 }) {
-  function showLanguageSelection() {
-    Alert.alert("Language", "English is currently the only supported language.");
-  }
-
-  function showAppearanceSelection() {
-    Alert.alert("Appearance", "Light mode is currently the only supported appearance.");
-  }
+  const [settingsActionMessage, setSettingsActionMessage] = useState<string | null>(null);
 
   function openNotificationPreferences() {
-    void Linking.openSettings();
+    setSettingsActionMessage(null);
+    void Linking.openSettings().catch(() => {
+      setSettingsActionMessage("Couldn't open phone settings.");
+    });
   }
 
   function openAboutLeft() {
-    void Linking.openURL("https://google.com");
+    setSettingsActionMessage(null);
+    void Linking.openURL("https://google.com").catch(() => {
+      setSettingsActionMessage("Couldn't open the website.");
+    });
+  }
+
+  function confirmSignOut() {
+    Alert.alert(
+      "Log out?",
+      "You can sign back in anytime.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Log out", style: "destructive", onPress: onSignOut },
+      ],
+    );
   }
 
   return (
@@ -71,67 +68,29 @@ export function SettingsScreen({
 
       <Text style={styles.settingsGroupTitle}>Account</Text>
       <View style={styles.settingsMenuCard}>
-        <SettingsMenuRow icon="user" label="Account Information" value={user.firstName} />
-        <SettingsMenuRow icon="shield" label="Privacy Settings" onPress={onOpenSafety} />
-        <SettingsMenuRow icon="bell" label="Notification Preferences" value="Device settings" onPress={openNotificationPreferences} last />
+        <SettingsMenuRow icon="user" label="Account information" value={user.firstName} />
+        <SettingsMenuRow icon="shield" label="Privacy and safety" helper="Manage blocks and hidden venues." onPress={onOpenSafety} />
+        <SettingsMenuRow icon="bell" label="Notifications" helper="Manage alerts." onPress={openNotificationPreferences} last />
       </View>
 
       <Text style={styles.settingsGroupTitle}>General</Text>
       <View style={styles.settingsMenuCard}>
-        <SettingsMenuRow icon="globe" label="Language" value="English" onPress={showLanguageSelection} />
-        <SettingsMenuRow icon="moon" label="Appearance" value="Light" onPress={showAppearanceSelection} />
-        <SettingsMenuRow icon="info" label="About Left" onPress={openAboutLeft} last />
+        <SettingsMenuRow icon="info" label="About Left" helper="App info and updates." onPress={openAboutLeft} last />
       </View>
+      {settingsActionMessage ? <Text style={styles.settingsInfoBody}>{settingsActionMessage}</Text> : null}
 
-      <Text style={styles.settingsGroupTitle}>Blocked or Muted Venues</Text>
-      <View style={styles.settingsEditCard}>
-        <Text style={styles.settingsInfoBody}>{locationStatus}</Text>
-        {venuePreferenceMessage ? (
-          <Text style={venuePreferenceMessage.tone === "success" ? styles.settingsSuccessText : styles.errorText}>
-            {venuePreferenceMessage.text}
-          </Text>
-        ) : null}
-        {venuePreferences.length === 0 ? (
-          <Text style={styles.settingsInfoBody}>No blocked or muted venues yet.</Text>
-        ) : (
-          venuePreferences.map((preference) => {
-            const activeAction =
-              venuePreferenceAction?.venueId === preference.venueId ? venuePreferenceAction.action : null;
-
-            return (
-              <View key={preference.venueId} style={styles.settingsVenueRow}>
-                <Text style={styles.settingsInfoTitle}>{preference.venueName}</Text>
-                {preference.hidden ? (
-                  <GhostButton
-                    label={activeAction === "unhide" ? "Unhiding..." : "Undo hide"}
-                    onPress={() => onClearVenueHidden(preference.venueId, preference.venueName)}
-                    disabled={!!activeAction}
-                  />
-                ) : null}
-                {preference.muted ? (
-                  <GhostButton
-                    label={activeAction === "unmute" ? "Re-enabling..." : "Allow notifications"}
-                    onPress={() => onClearVenueMuted(preference.venueId, preference.venueName)}
-                    disabled={!!activeAction}
-                  />
-                ) : null}
-              </View>
-            );
-          })
-        )}
-      </View>
-
-      <Pressable onPress={onSignOut} style={({ pressed }) => [styles.settingsLogoutButton, pressed && styles.primaryBtnPressed]}>
+      <Pressable onPress={confirmSignOut} style={({ pressed }) => [styles.settingsLogoutButton, pressed && styles.primaryBtnPressed]}>
         <Feather name="log-out" size={20} color={T.white} />
-        <Text style={styles.settingsLogoutText}>Log Out</Text>
+        <Text style={styles.settingsLogoutText}>Log out</Text>
       </Pressable>
 
+      <Text style={styles.settingsInfoBody}>Need your identity removed from Left? Submit a request below.</Text>
       <GhostButton
         label={
           deletionState === "submitting"
-            ? "Submitting identity removal..."
+            ? "Sending request..."
             : deletionState === "submitted"
-              ? "Identity removal requested"
+              ? "Removal requested"
               : "Request identity removal"
         }
         onPress={onRequestDeletion}
@@ -148,11 +107,14 @@ export function SettingsScreen({
   );
 }
 
-function SettingsMenuRow({ icon, label, value, onPress, last = false }: SettingsMenuRowProps) {
+function SettingsMenuRow({ icon, label, helper, value, onPress, last = false }: SettingsMenuRowProps) {
   const rowContent = (
     <>
       <Feather name={icon} size={22} color={T.textPrimary} />
-      <Text style={styles.settingsMenuLabel}>{label}</Text>
+      <View style={styles.settingsMenuTextBlock}>
+        <Text style={styles.settingsMenuLabel}>{label}</Text>
+        {helper ? <Text style={styles.settingsMenuHelper}>{helper}</Text> : null}
+      </View>
       {value ? <Text style={styles.settingsMenuValue}>{value}</Text> : null}
       {onPress ? <Feather name="chevron-right" size={21} color={T.textSecondary} /> : null}
     </>

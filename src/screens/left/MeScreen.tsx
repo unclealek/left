@@ -4,6 +4,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import type { AppUser, AvatarStyle } from "../../types/left-domain";
 import { AVATAR_GLYPHS, avatarStyles, intents, vibeOptions } from "../../app/leftConfig";
 import { T, styles } from "../../app/leftTheme";
+import { LeftAvatar } from "../../components/left/LeftAvatar";
 import { PrimaryButton, SelectChip } from "../../components/left/ui";
 
 export function MeScreen({
@@ -54,12 +55,6 @@ export function MeScreen({
     onSave({ firstName, avatarStyle, defaultIntent, defaultVibes, profilePrompt, approachPrompt });
   }
 
-  const initials = firstName
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "ME";
   const intent = (user.defaultIntent ?? "networking").replaceAll("_", " ");
   const vibes = user.defaultVibes.length ? user.defaultVibes.join(", ") : "Open";
   const displayedAvatarStyle = editing ? avatarStyle : user.avatarStyle;
@@ -87,21 +82,7 @@ export function MeScreen({
       </View>
 
       <View style={styles.profileHero}>
-        <View style={styles.profileAvatarRing}>
-          <View
-            style={[
-              styles.profileAvatarCircle,
-              displayedAvatarStyle === "abstract" && styles.profileAvatarCircleAbstract,
-              displayedAvatarStyle === "minimal" && styles.profileAvatarCircleMinimal,
-              displayedAvatarStyle === "soft" && styles.profileAvatarCircleSoft,
-            ]}
-          >
-            <Text style={styles.profileAvatarGlyphMark}>{AVATAR_GLYPHS[displayedAvatarStyle]}</Text>
-            <Text style={[styles.profileAvatarText, displayedAvatarStyle === "minimal" && styles.profileAvatarTextMinimal]}>
-              {initials}
-            </Text>
-          </View>
-        </View>
+        <LeftAvatar name={firstName} avatarStyle={displayedAvatarStyle} size="lg" />
         <Text style={styles.profileDisplayName}>{user.firstName}</Text>
         <View style={styles.profileRolePill}>
           <Text style={styles.profileRoleText}>{intent}</Text>
