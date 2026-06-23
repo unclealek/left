@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useEffect, useRef } from "react";
-import { Animated, Easing, Image, Pressable, Text, View } from "react-native";
+import { Animated, Easing, Pressable, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import type { NearbyFeedItem, VenueContextSummary } from "../../types/left-domain";
 import { formatIntent } from "../../app/leftConfig";
@@ -157,13 +157,13 @@ export function VenueScreen({
   });
   const radarPeople = buildRadarPlacements(feed);
   const nearbyCount = Math.max(venue.visibleCount, feed.length);
-  const buttonLabel = sessionVisible ? "Open nearby feed" : "Set presence";
+  const buttonLabel = sessionVisible ? "Open nearby feed" : "Confirm venue";
   const pulseCopy = venue.pulseCopy?.trim() || "No one has surfaced yet.";
   const centerLabel = sessionVisible ? "Radar live" : "You're invisible";
   const centerCaption = sessionVisible
     ? `${venue.visibleCount} ${venue.visibleCount === 1 ? "person" : "people"} in range`
     : "Nobody can see you yet.";
-  const privateHelper = "Go visible to detect your venue and unlock nearby people.";
+  const privateHelper = "Confirm where you are before going visible. Nobody can see you yet.";
   const privacyFootnote = "Your location stays private. Only nearby people will be shown.";
   const showRadarPeople = radarPeople.length > 0;
   const showEmptyRadarCard = sessionVisible && radarPeople.length === 0;
@@ -171,9 +171,7 @@ export function VenueScreen({
     <View style={styles.venuePage}>
       <View style={styles.venuePageHeaderStack}>
         <View style={styles.venuePageBrandRow}>
-          <View style={styles.venueHeaderBrandRow}>
-            <Image source={require("../../../Logo-text-tight.png")} style={styles.venueHeaderLogoImage} resizeMode="contain" />
-          </View>
+          <View />
           <Pressable onPress={onOpenSafety} style={({ pressed }) => [styles.venueHeaderUtilityBadge, pressed && styles.venueBubblePressed]}>
             <Feather name="shield" size={18} color={T.accentBright} />
           </Pressable>
@@ -359,7 +357,7 @@ export function VenueScreen({
                 <Text style={styles.venueNearbyCardTitle}>
                   {nearbyCount > 0 ? `${nearbyCount} ${nearbyCount === 1 ? "person" : "people"} nearby` : "Nobody nearby yet"}
                 </Text>
-                <Text style={styles.venueNearbyCardBody}>Become visible to see who is around you.</Text>
+                <Text style={styles.venueNearbyCardBody}>Start visibility to see who is around you.</Text>
               </View>
               <View style={styles.venueNearbyCardLockWrap}>
                 <Feather name="lock" size={16} color={T.accentBright} />

@@ -216,6 +216,7 @@ export interface NearbyFeedItem {
   profileUserId: string;
   presenceSessionId: string;
   firstName: string;
+  avatarStyle?: AvatarStyle | null;
   intent: IntentType;
   hintText: string | null;
   primaryVibe: string | null;

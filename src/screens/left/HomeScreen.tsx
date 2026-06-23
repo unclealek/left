@@ -6,34 +6,30 @@ import { styles, T } from "../../app/leftTheme";
 export function HomeScreen({
   firstName,
   onBecomeVisible,
+  onOpenNearby,
+  onOpenSafety,
+  onComingSoon,
 }: {
   firstName: string;
   onBecomeVisible: () => void;
+  onOpenNearby: () => void;
+  onOpenSafety: () => void;
+  onComingSoon: (label: string) => void;
 }) {
   const events = [
-    { title: "Coffee Meetup", meta: "Today · 10:00 AM", place: "Nearby venue", icon: "calendar" },
-    { title: "Builder Hour", meta: "Tomorrow · 02:00 PM", place: "Main hall", icon: "users" },
+    { title: "Venue events", meta: "Coming soon", place: "Events near you will appear here.", icon: "calendar", colors: ["#D56FAF", "#E7A6CB"] },
+    { title: "Community moments", meta: "Coming soon", place: "Discover planned meetups from nearby spaces.", icon: "activity", colors: ["#8A6ED8", "#B99BEF"] },
   ] as const;
 
   const quickLinks = [
-    { label: "Radar", icon: "radio" },
-    { label: "Nearby", icon: "map-pin" },
-    { label: "Safety", icon: "shield" },
-    { label: "Resources", icon: "folder" },
+    { label: "Radar", icon: "radio", colors: ["#8065D8", "#B28AF0"], onPress: onBecomeVisible },
+    { label: "Nearby", icon: "navigation", colors: ["#D86F8F", "#E8A7BA"], onPress: onOpenNearby },
+    { label: "Safety", icon: "shield", colors: ["#CE6A4A", "#E8A071"], onPress: onOpenSafety },
+    { label: "Resources", icon: "book-open", colors: ["#6F8DD8", "#A9BDF0"], onPress: () => onComingSoon("Resources coming soon") },
   ] as const;
 
   return (
     <View style={styles.homePage}>
-      <View style={styles.homeTopBar}>
-        <Pressable accessibilityRole="button" style={({ pressed }) => [styles.homeIconButton, pressed && styles.iconButtonPressed]}>
-          <Feather name="menu" size={24} color={T.textPrimary} />
-        </Pressable>
-        <Pressable accessibilityRole="button" style={({ pressed }) => [styles.homeIconButton, pressed && styles.iconButtonPressed]}>
-          <Feather name="bell" size={23} color={T.textPrimary} />
-          <View style={styles.homeNotificationDot} />
-        </Pressable>
-      </View>
-
       <View style={styles.homeGreetingBlock}>
         <Text style={styles.homeGreetingLabel}>Good Morning,</Text>
         <Text style={styles.homeGreetingName}>{firstName}</Text>
@@ -55,14 +51,15 @@ export function HomeScreen({
 
       <View style={styles.homeSectionHeader}>
         <Text style={styles.homeSectionTitle}>Upcoming Events</Text>
-        <Text style={styles.homeSectionAction}>View all</Text>
+        <Text style={styles.homeSectionAction}>Coming soon</Text>
       </View>
       <View style={styles.homeEventList}>
         {events.map((event, index) => (
           <View key={event.title} style={[styles.homeEventRow, index === 0 && styles.homeEventRowFirst]}>
-            <View style={styles.homeEventIconWrap}>
-              <Feather name={event.icon} size={26} color={T.white} />
-            </View>
+            <LinearGradient colors={event.colors} style={styles.homeEventIconWrap}>
+              <View style={styles.homeIconShine} />
+              <Feather name={event.icon} size={25} color={T.white} />
+            </LinearGradient>
             <View style={styles.homeEventCopy}>
               <Text style={styles.homeEventTitle}>{event.title}</Text>
               <Text style={styles.homeEventMeta}>{event.meta}</Text>
@@ -77,19 +74,20 @@ export function HomeScreen({
         {quickLinks.map((link) => (
           <Pressable
             key={link.label}
-            onPress={link.label === "Radar" ? onBecomeVisible : undefined}
+            onPress={link.onPress}
             style={({ pressed }) => [styles.homeQuickTile, pressed && styles.iconButtonPressed]}
           >
-            <View style={styles.homeQuickIconWrap}>
-              <Feather name={link.icon} size={24} color={T.white} />
-            </View>
+            <LinearGradient colors={link.colors} style={styles.homeQuickIconWrap}>
+              <View style={styles.homeIconShine} />
+              <Feather name={link.icon} size={22} color={T.white} />
+            </LinearGradient>
             <Text style={styles.homeQuickLabel}>{link.label}</Text>
           </Pressable>
         ))}
       </View>
 
       <Pressable onPress={onBecomeVisible} style={({ pressed }) => [styles.homeBecomeButton, pressed && styles.primaryBtnPressed]}>
-        <Text style={styles.homeBecomeButtonText}>Become visible</Text>
+        <Text style={styles.homeBecomeButtonText}>Start visibility</Text>
       </Pressable>
     </View>
   );

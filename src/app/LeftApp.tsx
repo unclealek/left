@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, AppState, ScrollView, Text, View } from "react-native";
 import * as Notifications from "expo-notifications";
 import type { Session } from "@supabase/supabase-js";
@@ -173,6 +173,8 @@ export function LeftApp() {
     action: VenuePreferenceAction;
   } | null>(null);
   const [venuePreferenceMessage, setVenuePreferenceMessage] = useState<VenuePreferenceMessage | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [nearbyVenueOptions, setNearbyVenueOptions] = useState<RuntimeVenueCandidate[]>([]);
   const [lastKnownCoords, setLastKnownCoords] = useState<RuntimeCoords | null>(null);
   const [venueSelectionRequired, setVenueSelectionRequired] = useState(false);
@@ -184,6 +186,9 @@ export function LeftApp() {
   const [reportCategory, setReportCategory] = useState<ReportCategory>("unsafe_behavior");
   const [reportNotes, setReportNotes] = useState("");
   const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [activationSubmitting, setActivationSubmitting] = useState(false);
+  const [profileAction, setProfileAction] = useState<"hide" | "block" | null>(null);
+  const [visibilityAction, setVisibilityAction] = useState<"pause" | "end" | null>(null);
   const [socialMomentumEvents, setSocialMomentumEvents] = useState<SocialInteractionEventType[]>([]);
   const [pendingApproachFeedback, setPendingApproachFeedback] = useState<PendingApproachFeedback | null>(null);
   const [feedbackWentOver, setFeedbackWentOver] = useState<boolean | null>(null);
@@ -224,6 +229,15 @@ export function LeftApp() {
     return Math.max(0, Math.ceil((new Date(approach.expiresAt).getTime() - sessionNowMs) / 1000));
   }, [approach, sessionNowMs]);
 
+  function showToast(message: string) {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToastMessage(message);
+    toastTimerRef.current = setTimeout(() => {
+      setToastMessage(null);
+      toastTimerRef.current = null;
+    }, 2400);
+  }
+
   useEffect(() => {
     void bootstrapSession();
     void bootstrapDeviceState();
@@ -236,6 +250,7 @@ export function LeftApp() {
       void applyNotificationResponse(response);
     });
     return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
       subscription.unsubscribe();
       notificationSubscription.remove();
     };
@@ -822,6 +837,7 @@ export function LeftApp() {
 
   async function activatePresence() {
     if (!user) return;
+    if (activationSubmitting) return;
     if (venueSelectionRequired) {
       setScreen("venue-select");
       return;
@@ -840,49 +856,57 @@ export function LeftApp() {
     const intent = selectedIntent ?? "networking";
     const vibes = selectedVibes.length > 0 ? selectedVibes : ["Open"];
     const hintText = hintDraft.trim() || null;
+    setActivationSubmitting(true);
 
-    void saveLastActivationDefaults({
-      intent,
-      vibes,
-      durationMinutes: selectedDuration,
-      hintText: hintDraft,
-    });
-
-    if (isUuid(user.id) && isUuid(venueSummary.venueId)) {
-      await endOpenPresenceSessionsForUser(user.id);
-      const presenceSessionId = await createPresenceSession({
-        userId: user.id,
-        venueId: venueSummary.venueId,
+    try {
+      void saveLastActivationDefaults({
         intent,
         vibes,
-        hintText,
-        startedAt,
-        expiresAt,
+        durationMinutes: selectedDuration,
+        hintText: hintDraft,
       });
 
-      if (!presenceSessionId) {
-        Alert.alert("Could not start visibility", "Your session was not saved. Try again before becoming visible.");
-        return;
+      if (isUuid(user.id) && isUuid(venueSummary.venueId)) {
+        await endOpenPresenceSessionsForUser(user.id);
+        const presenceSessionId = await createPresenceSession({
+          userId: user.id,
+          venueId: venueSummary.venueId,
+          intent,
+          vibes,
+          hintText,
+          startedAt,
+          expiresAt,
+        });
+
+        if (!presenceSessionId) {
+          Alert.alert("Could not start visibility", "Your session was not saved. Try again before becoming visible.");
+          return;
+        }
+
+        setActivePresenceSessionId(presenceSessionId);
+        void recordSocialInteractionEvent("became_visible", { visibilitySessionId: presenceSessionId });
+        await refreshVenueContext(venueSummary.venueId);
+        await refreshNearbyFeed(user.id, venueSummary.venueId);
+      } else {
+        setActivePresenceSessionId(null);
+        setSocialMomentumEvents([]);
       }
 
-      setActivePresenceSessionId(presenceSessionId);
-      void recordSocialInteractionEvent("became_visible", { visibilitySessionId: presenceSessionId });
-      await refreshVenueContext(venueSummary.venueId);
-      await refreshNearbyFeed(user.id, venueSummary.venueId);
-    } else {
-      setActivePresenceSessionId(null);
-      setSocialMomentumEvents([]);
+      setSessionNowMs(Date.now());
+      setSessionStartedAt(startedAt);
+      setSessionVisible(true);
+      setVenueSummary((current) => ({
+        ...current,
+        visibleCount: Math.max(1, current.visibleCount),
+        pulseCopy: "1 person is active nearby right now.",
+      }));
+      showToast("You are visible");
+      setScreen("activate");
+    } catch {
+      Alert.alert("Could not start visibility", "Please try again.");
+    } finally {
+      setActivationSubmitting(false);
     }
-
-    setSessionNowMs(Date.now());
-    setSessionStartedAt(startedAt);
-    setSessionVisible(true);
-    setVenueSummary((current) => ({
-      ...current,
-      visibleCount: Math.max(1, current.visibleCount),
-      pulseCopy: "1 person is active nearby right now.",
-    }));
-    setScreen("activate");
   }
 
   function openProfile(item: NearbyFeedItem) {
@@ -987,56 +1011,71 @@ export function LeftApp() {
 
   async function hideUser() {
     if (!selectedProfile) return;
+    if (profileAction) return;
+    setProfileAction("hide");
     const targetUserId = selectedProfile.profileUserId;
-    if (user && isUuid(user.id) && isUuid(targetUserId)) {
-      const hidden = await hideUserForActor({
-        actorUserId: user.id,
-        targetUserId,
-      });
+    try {
+      if (user && isUuid(user.id) && isUuid(targetUserId)) {
+        const hidden = await hideUserForActor({
+          actorUserId: user.id,
+          targetUserId,
+        });
 
-      if (!hidden) {
-        Alert.alert("Could not hide person", "Please try again.");
-        return;
+        if (!hidden) {
+          Alert.alert("Could not hide person", "Please try again.");
+          return;
+        }
       }
-    }
 
-    void recordSocialInteractionEvent("user_hidden", {
-      targetUserId,
-      visibilitySessionId: activePresenceSessionId ?? selectedProfile.presenceSessionId,
-    });
-    setFeed((current) => current.filter((item) => item.profileUserId !== selectedProfile.profileUserId));
-    setSelectedProfile(null);
-    setScreen("feed");
+      void recordSocialInteractionEvent("user_hidden", {
+        targetUserId,
+        visibilitySessionId: activePresenceSessionId ?? selectedProfile.presenceSessionId,
+      });
+      setFeed((current) => current.filter((item) => item.profileUserId !== selectedProfile.profileUserId));
+      setSelectedProfile(null);
+      setScreen("feed");
+      showToast("Person hidden");
+    } finally {
+      setProfileAction(null);
+    }
   }
 
   async function blockUser() {
     if (!selectedProfile || !user) return;
+    if (profileAction) return;
+    setProfileAction("block");
     const targetUserId = selectedProfile.profileUserId;
 
-    if (isUuid(user.id) && isUuid(targetUserId)) {
-      const blocked = await blockUserForActor({
-        actorUserId: user.id,
-        targetUserId,
-        reason: "user_blocked_from_profile",
-      });
+    try {
+      if (isUuid(user.id) && isUuid(targetUserId)) {
+        const blocked = await blockUserForActor({
+          actorUserId: user.id,
+          targetUserId,
+          reason: "user_blocked_from_profile",
+        });
 
-      if (!blocked) {
-        Alert.alert("Could not block person", "Please try again.");
-        return;
+        if (!blocked) {
+          Alert.alert("Could not block person", "Please try again.");
+          return;
+        }
       }
-    }
 
-    void recordSocialInteractionEvent("user_blocked", {
-      targetUserId,
-      visibilitySessionId: activePresenceSessionId ?? selectedProfile.presenceSessionId,
-    });
-    setFeed((current) => current.filter((item) => item.profileUserId !== targetUserId));
-    setSelectedProfile(null);
-    setScreen("feed");
+      void recordSocialInteractionEvent("user_blocked", {
+        targetUserId,
+        visibilitySessionId: activePresenceSessionId ?? selectedProfile.presenceSessionId,
+      });
+      setFeed((current) => current.filter((item) => item.profileUserId !== targetUserId));
+      setSelectedProfile(null);
+      setScreen("feed");
+      showToast("Person blocked");
+    } finally {
+      setProfileAction(null);
+    }
   }
 
   async function reportUser(category: ReportCategory = reportCategory, notes = reportNotes) {
     if (!selectedProfile || !user) return;
+    if (reportSubmitting) return;
     const targetUserId = selectedProfile.profileUserId;
     const presenceSessionId = isUuid(selectedProfile.presenceSessionId) ? selectedProfile.presenceSessionId : null;
 
@@ -1068,7 +1107,7 @@ export function LeftApp() {
     setFeed((current) => current.filter((item) => item.profileUserId !== targetUserId));
     setSelectedProfile(null);
     setScreen("feed");
-    Alert.alert("Report submitted", "This person is hidden from your current session.");
+    showToast("Report submitted");
   }
 
   async function hideVenuePermanently() {
@@ -1094,7 +1133,7 @@ export function LeftApp() {
       }
 
       if (sessionVisible) {
-        await endSessionState();
+        await endSessionState("session_ended", { toast: false });
       }
       setVenueHidden(true);
       setFeed([]);
@@ -1106,6 +1145,7 @@ export function LeftApp() {
           ? `${venueName} is hidden. You will not be visible there until you unhide it.`
           : `${venueName} is hidden on this device, but server sync did not complete.`,
       });
+      showToast(synced ? "Venue hidden" : "Venue hidden on this device");
       setScreen("venue");
     } catch {
       setVenuePreferenceMessage({
@@ -1148,6 +1188,7 @@ export function LeftApp() {
           ? `Notifications are off at ${venueName}.`
           : `Notifications are off on this device, but server sync did not complete.`,
       });
+      showToast(synced ? "Notifications muted" : "Notifications muted on this device");
     } catch {
       setVenuePreferenceMessage({
         venueId,
@@ -1190,6 +1231,7 @@ export function LeftApp() {
           ? `${venueName} is unhidden. You can become visible there again.`
           : `${venueName} is unhidden on this device, but server sync did not complete.`,
       });
+      showToast(synced ? "Venue unhidden" : "Venue unhidden on this device");
     } catch {
       setVenuePreferenceMessage({
         venueId,
@@ -1229,6 +1271,7 @@ export function LeftApp() {
           ? `Notifications are back on for ${venueName}.`
           : `Notifications are back on locally, but server sync did not complete.`,
       });
+      showToast(synced ? "Notifications on" : "Notifications on locally");
     } catch {
       setVenuePreferenceMessage({
         venueId,
@@ -1279,6 +1322,7 @@ export function LeftApp() {
     setSelectedIntent(nextUser.defaultIntent);
     setSelectedVibes(nextUser.defaultVibes);
     setSettingsSaveState("saved");
+    showToast("Profile saved");
     setTimeout(() => setSettingsSaveState("idle"), 1500);
   }
 
@@ -1296,33 +1340,48 @@ export function LeftApp() {
     setUser(null);
     setAuthProvider(null);
     setSelectedProfile(null);
-    void endSessionState();
+    void endSessionState("session_ended", { toast: false });
     setApproach(null);
     setAuthError(null);
     setSettingsSaveState("idle");
     setDeletionRequestState("idle");
     setReportSubmitting(false);
+    setActivationSubmitting(false);
+    setProfileAction(null);
+    setVisibilityAction(null);
     setReportCategory("unsafe_behavior");
     setReportNotes("");
     setScreen("auth");
   }
 
-  async function endSessionState(status: "paused" | "session_ended" = "session_ended") {
+  async function endSessionState(
+    status: "paused" | "session_ended" = "session_ended",
+    options: { toast?: boolean } = {},
+  ) {
+    if (visibilityAction) return;
+    setVisibilityAction(status === "paused" ? "pause" : "end");
     const sessionId = activePresenceSessionId;
-    setSessionVisible(false);
-    setSessionStartedAt(null);
-    setActivePresenceSessionId(null);
-    setSocialMomentumEvents([]);
-    setSessionNowMs(Date.now());
-    setSelectedProfile(null);
-    setFeed([]);
+    try {
+      setSessionVisible(false);
+      setSessionStartedAt(null);
+      setActivePresenceSessionId(null);
+      setSocialMomentumEvents([]);
+      setSessionNowMs(Date.now());
+      setSelectedProfile(null);
+      setFeed([]);
 
-    if (isUuid(sessionId)) {
-      const updated = await updatePresenceSessionEndState(sessionId, status);
+      if (isUuid(sessionId)) {
+        const updated = await updatePresenceSessionEndState(sessionId, status);
 
-      if (!updated) {
-        Alert.alert("Could not update visibility", "Your local session is hidden, but the server did not confirm the change.");
+        if (!updated) {
+          Alert.alert("Could not update visibility", "Your local session is hidden, but the server did not confirm the change.");
+        }
       }
+      if (options.toast !== false) {
+        showToast(status === "paused" ? "Visibility paused" : "Session ended");
+      }
+    } finally {
+      setVisibilityAction(null);
     }
   }
 
@@ -1330,11 +1389,11 @@ export function LeftApp() {
     if (!user) return;
     Alert.alert(
       "Request identity removal",
-      "This submits a backend request to remove direct identity fields while retaining selected product records like hints, venue history, and safety zones.",
+      "We will start a request to remove your direct identity details.",
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Submit request",
+          text: "Send request",
           style: "destructive",
           onPress: () => {
             void submitAccountDeletionRequest();
@@ -1482,7 +1541,13 @@ export function LeftApp() {
           />
         )}
         {screen === "home" && (
-          <HomeScreen firstName={user?.firstName ?? "there"} onBecomeVisible={() => setScreen("venue")} />
+          <HomeScreen
+            firstName={user?.firstName ?? "there"}
+            onBecomeVisible={() => setScreen("venue")}
+            onOpenNearby={() => setScreen(sessionVisible ? "feed" : "venue")}
+            onOpenSafety={() => setScreen("safety")}
+            onComingSoon={showToast}
+          />
         )}
         {screen === "venue" && (
           <VenueScreen
@@ -1512,6 +1577,8 @@ export function LeftApp() {
             selectedDuration={selectedDuration}
             hintDraft={hintDraft}
             elapsedSeconds={elapsedSessionSeconds}
+            activationSubmitting={activationSubmitting}
+            endingSession={visibilityAction === "end"}
             onPickIntent={setSelectedIntent}
             onToggleVibe={toggleVibe}
             onPickDuration={setSelectedDuration}
@@ -1533,6 +1600,7 @@ export function LeftApp() {
             reportCategory={reportCategory}
             reportNotes={reportNotes}
             reportSubmitting={reportSubmitting}
+            profileAction={profileAction}
             onBack={() => setScreen("feed")}
             onApproach={() => void startApproach()}
             onHide={() => void hideUser()}
@@ -1554,19 +1622,34 @@ export function LeftApp() {
           />
         )}
         {screen === "safety" && (
-          <SafetyScreen venueName={sessionVisible ? venueSummary.venueName : "current venue"} venueMuted={!!currentVenuePreference?.muted} venueAction={safetyVenueAction} venueMessage={currentVenuePreferenceMessage} sessionVisible={sessionVisible} onBack={() => setScreen(selectedProfile && sessionVisible ? "profile" : sessionVisible ? "feed" : "venue")} onPauseVisibility={() => void endSessionState("paused")} onEndSession={() => { void endSessionState(); setScreen("venue"); }} onHideVenue={() => void hideVenuePermanently()} onMuteVenue={() => void muteVenueNotifications()} />
+          <SafetyScreen
+            venueName={sessionVisible ? venueSummary.venueName : "current venue"}
+            venueMuted={!!currentVenuePreference?.muted}
+            venueAction={safetyVenueAction}
+            venueMessage={currentVenuePreferenceMessage}
+            venuePreferences={Object.values(venuePreferences).filter((preference) => preference.hidden || preference.muted)}
+            venuePreferenceAction={venuePreferenceAction}
+            venuePreferenceMessage={venuePreferenceMessage}
+            locationStatus={locationStatus}
+            visibilityAction={visibilityAction}
+            sessionVisible={sessionVisible}
+            onBack={() => setScreen(selectedProfile && sessionVisible ? "profile" : sessionVisible ? "feed" : "venue")}
+            onPauseVisibility={() => void endSessionState("paused")}
+            onEndSession={() => {
+              void endSessionState();
+              setScreen("venue");
+            }}
+            onHideVenue={() => void hideVenuePermanently()}
+            onMuteVenue={() => void muteVenueNotifications()}
+            onClearVenueHidden={(venueId, venueName) => void clearVenueHidden(venueId, venueName)}
+            onClearVenueMuted={(venueId, venueName) => void clearVenueMuted(venueId, venueName)}
+          />
         )}
         {screen === "settings" && user && (
           <SettingsScreen
             user={user}
             deletionState={deletionRequestState}
-            venuePreferences={Object.values(venuePreferences).filter((preference) => preference.hidden || preference.muted)}
-            venuePreferenceAction={venuePreferenceAction}
-            venuePreferenceMessage={venuePreferenceMessage}
-            locationStatus={locationStatus}
             onOpenSafety={() => setScreen("safety")}
-            onClearVenueHidden={(venueId, venueName) => void clearVenueHidden(venueId, venueName)}
-            onClearVenueMuted={(venueId, venueName) => void clearVenueMuted(venueId, venueName)}
             onSignOut={() => void signOut()}
             onRequestDeletion={() => void requestAccountDeletion()}
             onBack={() => setScreen("me")}
@@ -1604,6 +1687,11 @@ export function LeftApp() {
           onSubmit={() => void submitApproachFeedback()}
           onLater={() => setPendingApproachFeedback(null)}
         />
+      ) : null}
+      {toastMessage ? (
+        <View pointerEvents="none" style={styles.toast}>
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </View>
       ) : null}
     </View>
   );

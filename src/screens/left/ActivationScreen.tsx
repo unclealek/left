@@ -12,6 +12,8 @@ export function ActivationScreen(props: {
   selectedDuration: number;
   hintDraft: string;
   elapsedSeconds: number;
+  activationSubmitting: boolean;
+  endingSession: boolean;
   onPickIntent: (v: AppUser["defaultIntent"]) => void;
   onToggleVibe: (v: string) => void;
   onPickDuration: (v: number) => void;
@@ -44,7 +46,7 @@ export function ActivationScreen(props: {
         </FieldBlock>
         <PrimaryButton label="Open nearby feed" onPress={props.onOpenFeed} />
         <View style={{ height: 12 }} />
-        <PrimaryButton label="End visibility" onPress={props.onEndSession} />
+        <PrimaryButton label={props.endingSession ? "Ending..." : "End visibility"} onPress={props.onEndSession} disabled={props.endingSession} />
       </Card>
     );
   }
@@ -84,10 +86,14 @@ export function ActivationScreen(props: {
       </FieldBlock>
       {props.venueHidden ? (
         <Text style={styles.settingsInfoBody}>
-          This venue is hidden in your settings. Unhide it before becoming visible here again.
+          This venue is hidden in your settings. Unhide it before going visible here again.
         </Text>
       ) : null}
-      <PrimaryButton label="Become visible" onPress={props.onActivate} disabled={props.venueHidden} />
+      <PrimaryButton
+        label={props.activationSubmitting ? "Going visible..." : "Go visible"}
+        onPress={props.onActivate}
+        disabled={props.venueHidden || props.activationSubmitting}
+      />
     </Card>
   );
 }
