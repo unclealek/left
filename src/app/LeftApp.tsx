@@ -1543,6 +1543,7 @@ export function LeftApp() {
         {screen === "home" && (
           <HomeScreen
             firstName={user?.firstName ?? "there"}
+            venue={displayVenueSummary}
             onBecomeVisible={() => setScreen("venue")}
             onOpenNearby={() => setScreen(sessionVisible ? "feed" : "venue")}
             onOpenSafety={() => setScreen("safety")}

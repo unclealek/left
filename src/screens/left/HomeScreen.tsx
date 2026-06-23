@@ -1,24 +1,27 @@
 import { Feather } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import type { VenueContextSummary } from "../../types/left-domain";
 import { styles, T } from "../../app/leftTheme";
 
 export function HomeScreen({
   firstName,
+  venue,
   onBecomeVisible,
   onOpenNearby,
   onOpenSafety,
   onComingSoon,
 }: {
   firstName: string;
+  venue: VenueContextSummary;
   onBecomeVisible: () => void;
   onOpenNearby: () => void;
   onOpenSafety: () => void;
   onComingSoon: (label: string) => void;
 }) {
-  const events = [
-    { title: "Venue events", meta: "Coming soon", place: "Events near you will appear here.", icon: "calendar", colors: ["#D56FAF", "#E7A6CB"] },
-    { title: "Community moments", meta: "Coming soon", place: "Discover planned meetups from nearby spaces.", icon: "activity", colors: ["#8A6ED8", "#B99BEF"] },
+  const favoriteVenues = [
+    { title: venue.venueName, meta: "Current venue", place: `${venue.visibleCount} ${venue.visibleCount === 1 ? "person" : "people"} visible nearby`, icon: "map-pin", colors: ["#5BCBFF", "#FB8FFF"], onPress: onBecomeVisible },
+    { title: "Add favorite venue", meta: "Coming soon", place: "Save places you visit often.", icon: "heart", colors: ["#86162F", "#FB8FFF"], onPress: () => onComingSoon("Favorite venues coming soon") },
   ] as const;
 
   const quickLinks = [
@@ -36,7 +39,7 @@ export function HomeScreen({
       </View>
 
       <Pressable onPress={onBecomeVisible} style={({ pressed }) => [styles.homeHeroCard, pressed && styles.primaryBtnPressed]}>
-        <LinearGradient colors={["#d774b4", "#d989bf", "#e49cc9"]} style={styles.homeHeroGradient}>
+        <LinearGradient colors={["#5BCBFF", "#FB8FFF"]} style={styles.homeHeroGradient}>
           <View style={styles.homeHeroCopy}>
             <Text style={styles.homeQuoteMark}>“</Text>
             <Text style={styles.homeHeroText}>Every day is a chance to meet someone new.</Text>
@@ -44,28 +47,31 @@ export function HomeScreen({
           <View style={styles.homeHeroPeople}>
             <Feather name="user" size={56} color="#171221" />
             <Feather name="user" size={62} color="#171221" />
-            <Feather name="star" size={20} color="#5f4b96" style={styles.homeHeroStar} />
+            <Feather name="star" size={20} color="#5BCBFF" style={styles.homeHeroStar} />
           </View>
         </LinearGradient>
       </Pressable>
 
       <View style={styles.homeSectionHeader}>
-        <Text style={styles.homeSectionTitle}>Upcoming Events</Text>
-        <Text style={styles.homeSectionAction}>Coming soon</Text>
+        <Text style={styles.homeSectionTitle}>Favorite Venues</Text>
       </View>
       <View style={styles.homeEventList}>
-        {events.map((event, index) => (
-          <View key={event.title} style={[styles.homeEventRow, index === 0 && styles.homeEventRowFirst]}>
-            <LinearGradient colors={event.colors} style={styles.homeEventIconWrap}>
+        {favoriteVenues.map((venueItem, index) => (
+          <Pressable
+            key={venueItem.title}
+            onPress={venueItem.onPress}
+            style={({ pressed }) => [styles.homeEventRow, index === 0 && styles.homeEventRowFirst, pressed && styles.iconButtonPressed]}
+          >
+            <LinearGradient colors={venueItem.colors} style={styles.homeEventIconWrap}>
               <View style={styles.homeIconShine} />
-              <Feather name={event.icon} size={25} color={T.white} />
+              <Feather name={venueItem.icon} size={25} color={T.white} />
             </LinearGradient>
             <View style={styles.homeEventCopy}>
-              <Text style={styles.homeEventTitle}>{event.title}</Text>
-              <Text style={styles.homeEventMeta}>{event.meta}</Text>
-              <Text style={styles.homeEventPlace}>{event.place}</Text>
+              <Text style={styles.homeEventTitle}>{venueItem.title}</Text>
+              <Text style={styles.homeEventMeta}>{venueItem.meta}</Text>
+              <Text style={styles.homeEventPlace}>{venueItem.place}</Text>
             </View>
-          </View>
+          </Pressable>
         ))}
       </View>
 
