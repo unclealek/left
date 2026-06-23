@@ -298,7 +298,7 @@ export function VenueScreen({
           ) : null}
 
           <View style={styles.venueRadarCenterWrap}>
-            <LinearGradient colors={["rgba(201,106,74,0.98)", "rgba(201,106,74,0.74)"]} style={styles.venueRadarCenterRing}>
+            <LinearGradient colors={["rgba(251,143,255,0.98)", "rgba(91,203,255,0.74)"]} style={styles.venueRadarCenterRing}>
               <View style={styles.venueRadarCenterCore}>
                 <View style={styles.venueRadarCenterHalo} />
                 <View style={styles.venueRadarCenterLogoWrap}>
