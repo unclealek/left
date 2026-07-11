@@ -47,7 +47,7 @@ export type VenueType =
   | "other";
 
 export type DistanceBucket = "same_area" | "nearby" | "within_venue";
-export type EnergyLevel = "quiet" | "warm" | "high";
+export type EnergyLevel = "calm" | "warm" | "active" | "busy" | "focused";
 export type SocialInteractionEventType =
   | "became_visible"
   | "profile_viewed"

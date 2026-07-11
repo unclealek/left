@@ -52,11 +52,14 @@ export function SessionFooterNav(props: {
     outputRange: items.map((_, index) => index * slotWidth + trackHorizontalInset / 2),
   });
   const activeItem = items[Math.max(activeIndex, 0)];
-  const showPrivateBadge = !props.sessionVisible && props.activeDestination !== "home";
+  const showPrivateBadge =
+    !props.sessionVisible &&
+    props.activeDestination !== "home" &&
+    props.activeDestination !== "session";
 
   return (
     <View style={styles.footerShell}>
-      {props.sessionVisible ? (
+      {props.sessionVisible && props.activeDestination !== "home" ? (
         <View style={styles.footerSummaryRow}>
           <View style={styles.footerVenueBlock}>
             <Text style={styles.footerVenueLabel}>AT</Text>
@@ -91,7 +94,7 @@ export function SessionFooterNav(props: {
               ]}
             >
               <View style={styles.footerNavIconBubbleActive}>
-                <Feather name={activeItem.icon} size={22} color={T.white} />
+                <Feather name={activeItem.icon} size={21} color={T.white} />
               </View>
             </Animated.View>
           )}
@@ -109,7 +112,11 @@ export function SessionFooterNav(props: {
                 {!active ? (
                   <>
                     <View style={styles.footerNavIconBubble}>
-                      <Feather name={item.icon} size={19} color={T.accentBright} />
+                      <Feather
+                        name={item.icon}
+                        size={21}
+                        color={"rgba(31,46,36,0.78)"}
+                      />
                     </View>
                     <Text style={styles.footerNavLabel}>{item.label}</Text>
                   </>

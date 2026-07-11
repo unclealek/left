@@ -1,14 +1,17 @@
 import type { LocationObjectCoords } from "expo-location";
 import { supabase } from "../../lib/supabase";
+import type { VenueType } from "../../types/left-domain";
 
 export type DetectedVenue = {
   id: string;
   name: string;
+  venueType: VenueType;
   latitude: number;
   longitude: number;
   radiusMeters: number;
   source: "google_places" | "local_catalog" | "user_submission";
   distanceMeters: number | null;
+  photoUrl: string | null;
 };
 
 const SOCIAL_GOOGLE_TYPES = [
@@ -35,17 +38,26 @@ type VenueGeofenceJson = {
   source?: string;
 };
 
-const LOCAL_VENUE_CATALOG: DetectedVenue[] = [
-  {
-    id: "venue-regatta",
-    name: "Café Regatta",
-    latitude: 60.1536,
-    longitude: 24.9136,
-    radiusMeters: 120,
-    source: "local_catalog",
-    distanceMeters: null,
-  },
-];
+type DbVenueRow = {
+  id: string;
+  name: string;
+  type?: VenueType;
+  city?: string | null;
+  geofence_json: VenueGeofenceJson | null;
+  google_place_id?: string | null;
+  source?: string | null;
+  source_payload?: Record<string, unknown> | null;
+};
+
+type GooglePlace = {
+  id?: string;
+  displayName?: { text?: string };
+  location?: { latitude?: number; longitude?: number };
+  photos?: Array<{ name?: string }>;
+  primaryType?: string;
+};
+
+const LOCAL_VENUE_CATALOG: DetectedVenue[] = [];
 
 function toRadians(value: number) {
   return (value * Math.PI) / 180;
@@ -63,14 +75,13 @@ export function distanceMeters(aLat: number, aLng: number, bLat: number, bLng: n
   return 2 * earthRadius * Math.asin(Math.sqrt(haversine));
 }
 
-function normalizeGooglePlace(
-  place: {
-    id?: string;
-    displayName?: { text?: string };
-    location?: { latitude?: number; longitude?: number };
-  },
-  coords: LocationObjectCoords,
-): DetectedVenue | null {
+function buildGooglePlacePhotoUrl(photoName: string | undefined) {
+  const apiKey = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
+  if (!photoName || !apiKey) return null;
+  return `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=400&key=${apiKey}`;
+}
+
+function normalizeGooglePlace(place: GooglePlace, coords: LocationObjectCoords): DetectedVenue | null {
   const id = place.id;
   const name = place.displayName?.text;
   const latitude = place.location?.latitude;
@@ -79,12 +90,30 @@ function normalizeGooglePlace(
   return {
     id,
     name,
+    venueType: mapGooglePlaceType(place.primaryType),
     latitude,
     longitude,
     radiusMeters: 120,
     source: "google_places",
     distanceMeters: distanceMeters(coords.latitude, coords.longitude, latitude, longitude),
+    photoUrl: buildGooglePlacePhotoUrl(place.photos?.[0]?.name),
   };
+}
+
+function mapGooglePlaceType(primaryType: string | undefined): VenueType {
+  switch (primaryType) {
+    case "cafe":
+    case "coffee_shop":
+      return "cafe";
+    case "library":
+      return "library";
+    case "coworking_space":
+      return "coworking_space";
+    case "university":
+      return "university";
+    default:
+      return "other";
+  }
 }
 
 function normalizeVenueName(name: string) {
@@ -100,11 +129,7 @@ function isSamePhysicalVenue(a: DetectedVenue, b: DetectedVenue) {
 }
 
 function normalizeDbVenue(
-  row: {
-    id: string;
-    name: string;
-    geofence_json: VenueGeofenceJson | null;
-  },
+  row: DbVenueRow,
   coords: LocationObjectCoords,
 ): DetectedVenue | null {
   const latitude = row.geofence_json?.center?.latitude;
@@ -123,12 +148,113 @@ function normalizeDbVenue(
   return {
     id: row.id,
     name: row.name,
+    venueType: row.type ?? "other",
     latitude,
     longitude,
     radiusMeters,
-    source: row.geofence_json?.source === "user_submission" ? "user_submission" : "local_catalog",
+    source:
+      row.source === "google_places"
+        ? "google_places"
+        : row.geofence_json?.source === "user_submission"
+          ? "user_submission"
+          : "local_catalog",
     distanceMeters: venueDistanceMeters,
+    photoUrl: null,
   };
+}
+
+async function fetchActiveVenueRows() {
+  const { data, error } = await supabase
+    .from("venues")
+    .select("id, name, type, city, geofence_json, google_place_id, source, source_payload")
+    .eq("is_active", true)
+    .limit(200);
+
+  if (error) {
+    console.warn("[location][venues] Supabase venue lookup failed", error.message);
+    return [];
+  }
+
+  return (data ?? []) as DbVenueRow[];
+}
+
+async function createCanonicalVenueFromGooglePlace(place: GooglePlace) {
+  const normalized = normalizeGooglePlace(place, {
+    latitude: place.location?.latitude ?? 0,
+    longitude: place.location?.longitude ?? 0,
+    accuracy: null,
+    altitude: null,
+    altitudeAccuracy: null,
+    heading: null,
+    speed: null,
+  });
+  if (!normalized || !place.id) return null;
+
+  const { data, error } = await supabase
+    .from("venues")
+    .upsert(
+      {
+        name: normalized.name,
+        type: mapGooglePlaceType(place.primaryType),
+        city: null,
+        geofence_json: {
+          center: {
+            latitude: normalized.latitude,
+            longitude: normalized.longitude,
+          },
+          radius_meters: normalized.radiusMeters,
+          source: "google_places",
+        },
+        is_active: true,
+        google_place_id: place.id,
+        source: "google_places",
+        source_payload: {
+          primaryType: place.primaryType ?? null,
+          photoName: place.photos?.[0]?.name ?? null,
+        },
+        last_verified_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "google_place_id",
+      },
+    )
+    .select("id, name, type, city, geofence_json, google_place_id, source, source_payload")
+    .single();
+
+  if (error) {
+    console.warn("[location][venues] canonical venue upsert failed", error.message, {
+      googlePlaceId: place.id,
+      placeName: normalized.name,
+    });
+    return null;
+  }
+
+  return data as DbVenueRow;
+}
+
+async function canonicalizeGooglePlaces(places: GooglePlace[], existingVenueRows: DbVenueRow[]) {
+  const existingByGooglePlaceId = new Map(
+    existingVenueRows
+      .filter((venue) => !!venue.google_place_id)
+      .map((venue) => [venue.google_place_id as string, venue]),
+  );
+
+  const canonicalRows: DbVenueRow[] = [];
+  for (const place of places) {
+    if (!place.id) continue;
+    const existingVenue = existingByGooglePlaceId.get(place.id);
+    if (existingVenue) {
+      canonicalRows.push(existingVenue);
+      continue;
+    }
+
+    const createdVenue = await createCanonicalVenueFromGooglePlace(place);
+    if (!createdVenue) continue;
+    existingByGooglePlaceId.set(place.id, createdVenue);
+    canonicalRows.push(createdVenue);
+  }
+
+  return canonicalRows;
 }
 
 async function lookupGooglePlaces(coords: LocationObjectCoords) {
@@ -148,7 +274,7 @@ async function lookupGooglePlaces(coords: LocationObjectCoords) {
     headers: {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": "places.id,places.displayName,places.location",
+      "X-Goog-FieldMask": "places.id,places.displayName,places.location,places.photos.name,places.primaryType",
     },
     body: JSON.stringify({
       includedTypes: SOCIAL_GOOGLE_TYPES,
@@ -171,15 +297,50 @@ async function lookupGooglePlaces(coords: LocationObjectCoords) {
   }
 
   const payload = (await response.json()) as {
-    places?: Array<{
-      id?: string;
-      displayName?: { text?: string };
-      location?: { latitude?: number; longitude?: number };
-    }>;
+    places?: GooglePlace[];
   };
 
-  const venues = (payload.places ?? [])
-    .map((place) => normalizeGooglePlace(place, coords))
+  return payload.places ?? [];
+}
+
+function normalizeCanonicalVenue(
+  row: DbVenueRow,
+  place: GooglePlace,
+  coords: LocationObjectCoords,
+): DetectedVenue | null {
+  const normalizedFromPlace = normalizeGooglePlace(place, coords);
+  if (!normalizedFromPlace) return null;
+  return {
+    ...normalizedFromPlace,
+    id: row.id,
+    name: row.name,
+    venueType: row.type ?? normalizedFromPlace.venueType,
+    radiusMeters:
+      typeof row.geofence_json?.radius_meters === "number"
+        ? Math.min(row.geofence_json.radius_meters, VENUE_CANDIDATE_MAX_DISTANCE_METERS)
+        : normalizedFromPlace.radiusMeters,
+    source: "google_places",
+  };
+}
+
+async function lookupCanonicalizedGoogleVenues(
+  coords: LocationObjectCoords,
+  existingVenueRows: DbVenueRow[],
+) {
+  const places = await lookupGooglePlaces(coords);
+  const canonicalRows = await canonicalizeGooglePlaces(places, existingVenueRows);
+  const canonicalByGooglePlaceId = new Map(
+    canonicalRows
+      .filter((row) => !!row.google_place_id)
+      .map((row) => [row.google_place_id as string, row]),
+  );
+
+  const venues = places
+    .map((place) => {
+      const row = place.id ? canonicalByGooglePlaceId.get(place.id) : null;
+      if (!row) return null;
+      return normalizeCanonicalVenue(row, place, coords);
+    })
     .filter((venue): venue is DetectedVenue => !!venue)
     .filter(
       (venue) =>
@@ -188,7 +349,7 @@ async function lookupGooglePlaces(coords: LocationObjectCoords) {
     .sort((a, b) => (a.distanceMeters ?? Number.MAX_SAFE_INTEGER) - (b.distanceMeters ?? Number.MAX_SAFE_INTEGER));
 
   console.info(
-    "[location][venues] Google Places candidates",
+    "[location][venues] canonical Google Places candidates",
     venues.length
       ? venues.map((venue) => ({
           venueId: venue.id,
@@ -201,29 +362,9 @@ async function lookupGooglePlaces(coords: LocationObjectCoords) {
   return venues;
 }
 
-async function lookupDbVenues(coords: LocationObjectCoords) {
-  const { data, error } = await supabase
-    .from("venues")
-    .select("id, name, geofence_json")
-    .eq("is_active", true)
-    .limit(100);
-
-  if (error) {
-    console.warn("[location][venues] Supabase venue lookup failed", error.message);
-    return [];
-  }
-
-  const venues = (data ?? [])
-    .map((row) =>
-      normalizeDbVenue(
-        row as {
-          id: string;
-          name: string;
-          geofence_json: VenueGeofenceJson | null;
-        },
-        coords,
-      ),
-    )
+function lookupDbVenues(coords: LocationObjectCoords, rows: DbVenueRow[]) {
+  const venues = rows
+    .map((row) => normalizeDbVenue(row, coords))
     .filter((venue): venue is DetectedVenue => !!venue)
     .sort(
       (a, b) => (a.distanceMeters ?? Number.MAX_SAFE_INTEGER) - (b.distanceMeters ?? Number.MAX_SAFE_INTEGER),
@@ -298,10 +439,23 @@ function dedupeVenues(venues: DetectedVenue[]) {
 }
 
 export async function getNearbyVenues(coords: LocationObjectCoords) {
-  const dbVenues = await lookupDbVenues(coords);
-  const googleVenues = await lookupGooglePlaces(coords);
-  const mergedNetworkVenues = dedupeVenues([...dbVenues, ...googleVenues]);
-  if (mergedNetworkVenues.length > 0) return mergedNetworkVenues;
+  const activeVenueRows = await fetchActiveVenueRows();
+  const dbVenues = lookupDbVenues(coords, activeVenueRows);
+  if (dbVenues.length > 0) {
+    console.info(
+      "[location][venues] using database venues before Google fallback",
+      dbVenues.map((venue) => ({
+        venueId: venue.id,
+        venueName: venue.name,
+        distanceMeters: venue.distanceMeters ? Math.round(venue.distanceMeters) : null,
+        source: venue.source,
+      })),
+    );
+    return dedupeVenues(dbVenues);
+  }
+
+  const googleVenues = await lookupCanonicalizedGoogleVenues(coords, activeVenueRows);
+  if (googleVenues.length > 0) return dedupeVenues(googleVenues);
 
   const fallbackVenues = lookupLocalVenues(coords);
   if (!fallbackVenues.length) {

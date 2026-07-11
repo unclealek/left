@@ -95,6 +95,7 @@ Included:
 - venue-based discovery
 - nearby feed
 - venue pulse / venue context
+- home-screen `Venue Rhythm` card driven by truthful live venue signals
 - venue home with bubble preview over the same discovery data
 - soft-anonymity profile
 - Social Momentum nudge card on venue home while visible
@@ -191,6 +192,26 @@ Result:
 - the user selects someone to inspect further
 
 If venue density is low, the app should show a venue pulse instead of failing silently.
+
+The home screen may also summarize venue context through a `Venue Rhythm` card.
+
+Rules:
+- if the user is currently at a detected venue, the card should reference that venue
+- if the user is not currently at a venue, the card may fall back to the last detected venue
+- the card should use truthful live signals already available in the product, such as `visibleCount`, `energyLevel`, and `pulseCopy`
+- the card must not present synthetic capacity percentages or invented hourly hot/calm charts when the venue lacks sufficient historical data
+- hourly timing patterns are a later learned state, not a default MVP assumption
+
+EnergyPill:
+- venue context uses an `EnergyPill` surface in the UI
+- the canonical frontend energy values are `calm`, `warm`, `active`, `busy`, and `focused`
+- display copy should use title case labels: `Calm`, `Warm`, `Active`, `Busy`, `Focused`
+- legacy backend values such as `quiet` and `high` may still be normalized in the client during transition, but new product language should use the five-value `EnergyPill` vocabulary
+
+Hidden-state venue context:
+- when the user is not visible, nearby venue cards may still show venue flavor signals
+- allowed pre-visibility signals are venue name, distance, `EnergyPill`, and intent/vibe tags
+- pre-visibility surfaces should not show exact or implied live occupancy counts such as `3 people visible`
 
 The bubble visualization is secondary and optional. The nearby feed remains the canonical MVP discovery surface.
 
@@ -433,6 +454,8 @@ The canonical MVP discovery surface is the `Nearby Feed`.
 Rules:
 - users should be able to decide whether to engage from the nearby feed alone
 - venue context exists to answer whether activation is worthwhile
+- the home-screen `Venue Rhythm` card is supportive context, not a separate ranking or recommendation engine
+- before historical venue data reaches a meaningful threshold, `Venue Rhythm` should only describe current live conditions and learning status
 - the bubble visualization layer, if included, must sit on top of the same discovery data and open the same profile flow
 - engineering should not treat feed discovery and bubble discovery as separate product systems
 

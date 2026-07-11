@@ -4,6 +4,7 @@ import * as Notifications from "expo-notifications";
 import type { Session } from "@supabase/supabase-js";
 import { BackgroundWaveLayer } from "../components/left/BackgroundWaveLayer";
 import { SessionFooterNav } from "../components/left/navigation";
+import { AppDialog } from "../components/left/ui";
 import {
   SESSION_NAV_SCREENS,
   defaultApproachPrompt,
@@ -29,7 +30,6 @@ import type {
   VenueContextSummary,
 } from "../types/left-domain";
 import { AuthScreen } from "../screens/left/AuthScreen";
-import { LoadingScreen } from "../screens/left/LoadingScreen";
 import { NameScreen, AvatarScreen, LocationScreen } from "../screens/left/OnboardingScreens";
 import { VenueScreen } from "../screens/left/VenueScreen";
 import { HomeScreen } from "../screens/left/HomeScreen";
@@ -46,6 +46,7 @@ import {
   consumePendingActivationLaunch,
   handleVenuePromptResponse,
   loadLastActivationDefaults,
+  primeLocationFix,
   requestLocationAccess,
   saveLastActivationDefaults,
   selectNearbyVenue,
@@ -62,6 +63,11 @@ import {
   type RuntimeVenueCandidate,
   type VenuePreference,
 } from "../features/location/location-storage";
+import {
+  getVenueConfidenceCopy,
+  getVenueConfidenceLabel,
+  resolveVenueConfidence,
+} from "../features/location/venue-confidence";
 import {
   fetchVenuePreferencesForUser,
   upsertVenuePreferenceForUser,
@@ -126,7 +132,39 @@ function isUuid(value: string | null | undefined): value is string {
   return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
+function pickBestNearbyVenueMatch(
+  venues: RuntimeVenueCandidate[],
+  submittedName: string,
+) {
+  const normalizedName = normalizeVenueName(submittedName);
+  const exactMatches = venues.filter(
+    (venue) => normalizeVenueName(venue.name) === normalizedName,
+  );
+  if (!exactMatches.length) return null;
+
+  return (
+    exactMatches.find((venue) => isUuid(venue.id)) ??
+    exactMatches[0]
+  );
+}
+
+function summarizeVenueCandidates(venues: RuntimeVenueCandidate[]) {
+  return venues.map((venue) => ({
+    id: venue.id,
+    name: venue.name,
+    venueType: venue.venueType ?? "other",
+    source: venue.source,
+    distanceMeters: venue.distanceMeters ?? null,
+    isUuid: isUuid(venue.id),
+  }));
+}
+
 type VenuePreferenceAction = "hide" | "mute" | "unhide" | "unmute";
+type DialogAction = {
+  label: string;
+  onPress?: () => void;
+  variant?: "primary" | "ghost" | "destructive";
+};
 type VenuePreferenceMessage = {
   venueId: string;
   tone: "success" | "error";
@@ -137,14 +175,14 @@ const PRIVATE_VENUE_SUMMARY: VenueContextSummary = {
   venueId: "private",
   venueName: "Visibility off",
   visibleCount: 0,
-  energyLevel: "quiet",
+  energyLevel: "calm",
   activeVibes: [],
   popularIntents: [],
   pulseCopy: "Your venue stays private until you become visible. Turn on visibility to detect your venue and unlock nearby people.",
 };
 
 export function LeftApp() {
-  const [screen, setScreen] = useState<Screen>("loading");
+  const [screen, setScreen] = useState<Screen>("auth");
   const [authProvider, setAuthProvider] = useState<AuthProvider | null>(null);
   const [user, setUser] = useState<AppUser | null>(null);
   const [feed, setFeed] = useState<NearbyFeedItem[]>(initialFeed);
@@ -174,6 +212,11 @@ export function LeftApp() {
   } | null>(null);
   const [venuePreferenceMessage, setVenuePreferenceMessage] = useState<VenuePreferenceMessage | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [dialogState, setDialogState] = useState<{
+    title: string;
+    message: string;
+    actions: DialogAction[];
+  } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [nearbyVenueOptions, setNearbyVenueOptions] = useState<RuntimeVenueCandidate[]>([]);
   const [lastKnownCoords, setLastKnownCoords] = useState<RuntimeCoords | null>(null);
@@ -236,6 +279,18 @@ export function LeftApp() {
       setToastMessage(null);
       toastTimerRef.current = null;
     }, 2400);
+  }
+
+  function showDialog(title: string, message: string, actions?: DialogAction[]) {
+    setDialogState({
+      title,
+      message,
+      actions: actions?.length ? actions : [{ label: "OK", variant: "primary" }],
+    });
+  }
+
+  function dismissDialog() {
+    setDialogState(null);
   }
 
   useEffect(() => {
@@ -648,6 +703,8 @@ export function LeftApp() {
   }
 
   async function confirmVenueSelection(venueId: string) {
+    const runtime = await getLocationRuntimeState();
+    const chosenVenue = runtime.nearbyVenues.find((venue) => venue.id === venueId) ?? null;
     const selected = await selectNearbyVenue(venueId);
     if (!selected) {
       Alert.alert("Venue unavailable", "That nearby venue is no longer available. Try again from the refreshed list.");
@@ -655,6 +712,21 @@ export function LeftApp() {
       return;
     }
     await refreshVenueFromRuntime();
+    if (chosenVenue && !isUuid(chosenVenue.id)) {
+      setVenueDraftName(chosenVenue.name);
+      setVenueDraftAddress("");
+      setVenueDraftNotes("");
+      setVenueDraftType("other");
+      showDialog(
+        "Add this venue first",
+        `${chosenVenue.name} was detected nearby, but it is not in Left's venue database yet. Add it once before you can go visible there.`,
+        [
+          { label: "Cancel", onPress: () => setScreen("venue-select") },
+          { label: "Add venue", variant: "primary", onPress: () => setScreen("venue-add") },
+        ],
+      );
+      return;
+    }
     setScreen(sessionVisible ? "venue" : "activate");
   }
 
@@ -669,9 +741,7 @@ export function LeftApp() {
     }
 
     const submittedName = venueDraftName.trim();
-    const duplicateVenue = nearbyVenueOptions.find(
-      (venue) => normalizeVenueName(venue.name) === normalizeVenueName(submittedName),
-    );
+    const duplicateVenue = pickBestNearbyVenueMatch(nearbyVenueOptions, submittedName);
     if (duplicateVenue) {
       setVenueDraftSubmitting(false);
       await confirmVenueSelection(duplicateVenue.id);
@@ -697,8 +767,9 @@ export function LeftApp() {
     }
 
     await storeUserSubmittedVenue({
-      id: `submission:${submittedVenue.id}`,
+      id: submittedVenue.id,
       name: submittedVenue.name,
+      venueType: venueDraftType,
       latitude: lastKnownCoords.latitude,
       longitude: lastKnownCoords.longitude,
       radiusMeters: 60,
@@ -712,8 +783,18 @@ export function LeftApp() {
     setVenueDraftNotes("");
     setVenueDraftType("other");
     await refreshVenueFromRuntime();
-    Alert.alert("Venue submitted", "Your venue was saved as a pending submission and is available for your current session.");
-    setScreen("home");
+    showDialog(
+      "Venue saved",
+      `Use ${submittedVenue.name} as your current venue now?`,
+      [
+        { label: "Not now", onPress: () => setScreen("home") },
+        {
+          label: "Use this venue",
+          variant: "primary",
+          onPress: () => setScreen(sessionVisible ? "venue" : "activate"),
+        },
+      ],
+    );
   }
 
   async function syncSession(session: Session | null, isInitialLoad: boolean) {
@@ -768,12 +849,8 @@ export function LeftApp() {
     const syncedVenuePreferences = await syncVenuePreferencesForUser(appUser.id);
     setVenuePreferences(syncedVenuePreferences);
     setVenueHidden(!!syncedVenuePreferences[venueSummary.venueId]?.hidden);
-    if (isInitialLoad) {
-      setScreen("loading");
-      await delay(2000);
-    }
     const recoveredActiveSession = await recoverActivePresenceSession(appUser);
-    setScreen(recoveredActiveSession ? "activate" : "home");
+    setScreen(recoveredActiveSession ? "venue" : "home");
   }
 
   async function startGoogleAuth() {
@@ -823,7 +900,7 @@ export function LeftApp() {
 
     setUser(nextUser);
     setLocationBusy(false);
-    setScreen("venue");
+    setScreen("home");
   }
 
   function toggleVibe(vibe: string) {
@@ -838,6 +915,69 @@ export function LeftApp() {
   async function activatePresence() {
     if (!user) return;
     if (activationSubmitting) return;
+    let runtime = await getLocationRuntimeState();
+    console.info("[activation] starting presence activation", {
+      permissionGranted: runtime.permissionGranted,
+      lastKnownCoords: runtime.lastKnownCoords,
+      currentVenueId: runtime.currentVenueId,
+      currentVenueName: runtime.currentVenueName,
+      selectedVenueId: runtime.selectedVenueId,
+      selectedVenueName: runtime.selectedVenueName,
+      nearbyVenues: summarizeVenueCandidates(runtime.nearbyVenues),
+    });
+    if (!runtime.permissionGranted) {
+      const locationResult = await requestLocationAccess();
+      setLocationEnabled(locationResult.granted);
+      if (!locationResult.granted) {
+        Alert.alert(
+          "Location needed",
+          locationResult.reason === "background_denied"
+            ? "Allow 'Always' location access so Left can confirm your venue before you go visible."
+            : "Left needs location access to confirm your venue before you go visible.",
+        );
+        return;
+      }
+
+      await primeLocationFix();
+      await refreshVenueFromRuntime();
+      runtime = await getLocationRuntimeState();
+    } else {
+      await primeLocationFix();
+      await refreshVenueFromRuntime();
+      runtime = await getLocationRuntimeState();
+    }
+
+    console.info("[activation] runtime after location refresh", {
+      permissionGranted: runtime.permissionGranted,
+      lastKnownCoords: runtime.lastKnownCoords,
+      currentVenueId: runtime.currentVenueId,
+      currentVenueName: runtime.currentVenueName,
+      selectedVenueId: runtime.selectedVenueId,
+      selectedVenueName: runtime.selectedVenueName,
+      nearbyVenues: summarizeVenueCandidates(runtime.nearbyVenues),
+    });
+
+    const matchedCanonicalVenue =
+      runtime.selectedVenueId && isUuid(runtime.selectedVenueId)
+        ? runtime.nearbyVenues.find((venue) => venue.id === runtime.selectedVenueId) ?? null
+        : runtime.nearbyVenues.find((venue) => isUuid(venue.id)) ?? null;
+    const resolvedVenueId = isUuid(venueSummary.venueId)
+      ? venueSummary.venueId
+      : matchedCanonicalVenue?.id ?? null;
+    const resolvedVenueName =
+      venueSummary.venueName !== "Visibility off"
+        ? venueSummary.venueName
+        : matchedCanonicalVenue?.name ?? runtime.currentVenueName ?? runtime.selectedVenueName ?? venueSummary.venueName;
+
+    console.info("[activation] resolved venue candidate", {
+      venueSummaryVenueId: venueSummary.venueId,
+      venueSummaryVenueName: venueSummary.venueName,
+      matchedCanonicalVenueId: matchedCanonicalVenue?.id ?? null,
+      matchedCanonicalVenueName: matchedCanonicalVenue?.name ?? null,
+      resolvedVenueId,
+      resolvedVenueName,
+    });
+
     if (venueSelectionRequired) {
       setScreen("venue-select");
       return;
@@ -846,8 +986,54 @@ export function LeftApp() {
       Alert.alert("Venue hidden", "Unhide this venue in Settings before becoming visible here again.");
       return;
     }
-    if (!isUuid(venueSummary.venueId)) {
-      Alert.alert("Venue not ready", "Left needs a confirmed nearby venue before visibility can start.");
+    if (!resolvedVenueId || !isUuid(resolvedVenueId)) {
+      const detectedVenue = runtime.nearbyVenues[0] ?? null;
+      console.warn("[activation] venue unresolved after refresh", {
+        permissionGranted: runtime.permissionGranted,
+        lastKnownCoords: runtime.lastKnownCoords,
+        currentVenueId: runtime.currentVenueId,
+        currentVenueName: runtime.currentVenueName,
+        selectedVenueId: runtime.selectedVenueId,
+        selectedVenueName: runtime.selectedVenueName,
+        resolvedVenueId,
+        detectedVenue: detectedVenue
+          ? {
+              id: detectedVenue.id,
+              name: detectedVenue.name,
+              source: detectedVenue.source,
+              isUuid: isUuid(detectedVenue.id),
+              distanceMeters: detectedVenue.distanceMeters ?? null,
+            }
+          : null,
+        nearbyVenues: summarizeVenueCandidates(runtime.nearbyVenues),
+      });
+      if (detectedVenue && !isUuid(detectedVenue.id)) {
+        setVenueDraftName(detectedVenue.name);
+        setVenueDraftAddress("");
+        setVenueDraftNotes("");
+        setVenueDraftType("other");
+        showDialog(
+          "Venue found nearby",
+          `${detectedVenue.name} was detected nearby, but it is not a confirmed Left venue yet. Add it first, then you can go visible there.`,
+          [
+            { label: "Cancel" },
+            { label: "Add venue", variant: "primary", onPress: () => setScreen("venue-add") },
+          ],
+        );
+        return;
+      }
+
+      if (!runtime.permissionGranted) {
+        showDialog("Location needed", "Left does not have location permission yet, so it cannot confirm your venue.");
+        return;
+      }
+
+      if (!runtime.lastKnownCoords) {
+        showDialog("Location not ready", "Left does not have a recent location fix yet. Wait a moment and try again.");
+        return;
+      }
+
+      showDialog("Venue not ready", "Left could not confirm a nearby venue from your current location yet.");
       return;
     }
     const startedAtDate = new Date();
@@ -866,11 +1052,11 @@ export function LeftApp() {
         hintText: hintDraft,
       });
 
-      if (isUuid(user.id) && isUuid(venueSummary.venueId)) {
+      if (isUuid(user.id) && isUuid(resolvedVenueId)) {
         await endOpenPresenceSessionsForUser(user.id);
         const presenceSessionId = await createPresenceSession({
           userId: user.id,
-          venueId: venueSummary.venueId,
+          venueId: resolvedVenueId,
           intent,
           vibes,
           hintText,
@@ -885,8 +1071,8 @@ export function LeftApp() {
 
         setActivePresenceSessionId(presenceSessionId);
         void recordSocialInteractionEvent("became_visible", { visibilitySessionId: presenceSessionId });
-        await refreshVenueContext(venueSummary.venueId);
-        await refreshNearbyFeed(user.id, venueSummary.venueId);
+        await refreshVenueContext(resolvedVenueId);
+        await refreshNearbyFeed(user.id, resolvedVenueId);
       } else {
         setActivePresenceSessionId(null);
         setSocialMomentumEvents([]);
@@ -897,11 +1083,12 @@ export function LeftApp() {
       setSessionVisible(true);
       setVenueSummary((current) => ({
         ...current,
-        visibleCount: Math.max(1, current.visibleCount),
-        pulseCopy: "1 person is active nearby right now.",
+        venueId: resolvedVenueId,
+        venueName: resolvedVenueName,
+        pulseCopy: "You are now visible at this venue.",
       }));
       showToast("You are visible");
-      setScreen("activate");
+      setScreen("venue");
     } catch {
       Alert.alert("Could not start visibility", "Please try again.");
     } finally {
@@ -1146,7 +1333,7 @@ export function LeftApp() {
           : `${venueName} is hidden on this device, but server sync did not complete.`,
       });
       showToast(synced ? "Venue hidden" : "Venue hidden on this device");
-      setScreen("venue");
+      setScreen("home");
     } catch {
       setVenuePreferenceMessage({
         venueId,
@@ -1465,7 +1652,7 @@ export function LeftApp() {
     }
     if (destination === "session") {
       setSelectedProfile(null);
-      setScreen("activate");
+      setScreen(sessionVisible ? "venue" : "activate");
       return;
     }
     setSelectedProfile(null);
@@ -1490,6 +1677,9 @@ export function LeftApp() {
         : null;
   const currentVenuePreferenceMessage =
     venuePreferenceMessage?.venueId === venueSummary.venueId ? venuePreferenceMessage : null;
+  const venueConfidence = resolveVenueConfidence(venueSummary, nearbyVenueOptions);
+  const venueConfidenceLabel = getVenueConfidenceLabel(venueConfidence);
+  const venueConfidenceCopy = getVenueConfidenceCopy(venueConfidence);
   const locationStatus = locationEnabled
     ? "Background location is active. Venue matching runs on-device and only venue IDs are used for app state."
     : "Background location is not enabled yet.";
@@ -1501,12 +1691,11 @@ export function LeftApp() {
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          (screen === "auth" || screen === "loading") && styles.fullContent,
+          screen === "auth" && styles.fullContent,
           SESSION_NAV_SCREENS.includes(screen) && styles.contentWithFooter,
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {screen === "loading" && <LoadingScreen />}
         {screen === "auth" && <AuthScreen authError={authError} onAuth={startGoogleAuth} />}
         {screen === "onboarding-name" && (
           <NameScreen firstNameDraft={firstNameDraft} onChangeFirstName={setFirstNameDraft} onContinue={() => setScreen("onboarding-avatar")} />
@@ -1543,9 +1732,12 @@ export function LeftApp() {
         {screen === "home" && (
           <HomeScreen
             firstName={user?.firstName ?? "there"}
-            venue={displayVenueSummary}
-            onBecomeVisible={() => setScreen("venue")}
-            onOpenNearby={() => setScreen(sessionVisible ? "feed" : "venue")}
+            venue={venueSummary}
+            nearbyVenues={nearbyVenueOptions}
+            sessionVisible={sessionVisible}
+            venueHidden={venueHidden}
+            onBecomeVisible={() => setScreen("activate")}
+            onOpenNearby={() => setScreen(sessionVisible ? "feed" : "activate")}
             onOpenSafety={() => setScreen("safety")}
             onComingSoon={showToast}
           />
@@ -1567,12 +1759,16 @@ export function LeftApp() {
             onChooseVenue={() => setScreen("venue-select")}
             onAddVenue={() => setScreen("venue-add")}
             onOpenSafety={() => setScreen("safety")}
+            nearbyVenues={nearbyVenueOptions}
+            lastKnownCoords={lastKnownCoords}
           />
         )}
         {screen === "activate" && (
           <ActivationScreen
             sessionVisible={sessionVisible}
             venueHidden={venueHidden}
+            venueConfidenceLabel={venueConfidenceLabel}
+            venueConfidenceCopy={venueConfidenceCopy}
             selectedIntent={selectedIntent}
             selectedVibes={selectedVibes}
             selectedDuration={selectedDuration}
@@ -1588,7 +1784,7 @@ export function LeftApp() {
             onOpenFeed={() => setScreen("feed")}
             onEndSession={() => {
               endSessionState();
-              setScreen("venue");
+              setScreen("home");
             }}
           />
         )}
@@ -1634,11 +1830,11 @@ export function LeftApp() {
             locationStatus={locationStatus}
             visibilityAction={visibilityAction}
             sessionVisible={sessionVisible}
-            onBack={() => setScreen(selectedProfile && sessionVisible ? "profile" : sessionVisible ? "feed" : "venue")}
+            onBack={() => setScreen(selectedProfile && sessionVisible ? "profile" : sessionVisible ? "feed" : "home")}
             onPauseVisibility={() => void endSessionState("paused")}
             onEndSession={() => {
               void endSessionState();
-              setScreen("venue");
+              setScreen("home");
             }}
             onHideVenue={() => void hideVenuePermanently()}
             onMuteVenue={() => void muteVenueNotifications()}
@@ -1694,6 +1890,19 @@ export function LeftApp() {
           <Text style={styles.toastText}>{toastMessage}</Text>
         </View>
       ) : null}
+      <AppDialog
+        visible={!!dialogState}
+        title={dialogState?.title ?? ""}
+        message={dialogState?.message ?? ""}
+        actions={(dialogState?.actions ?? [{ label: "OK", variant: "primary" }]).map((action) => ({
+          label: action.label,
+          variant: action.variant,
+          onPress: () => {
+            dismissDialog();
+            action.onPress?.();
+          },
+        }))}
+      />
     </View>
   );
 }
@@ -1716,8 +1925,4 @@ function mapProfileToAppUser(profile: UserProfileRow): AppUser {
     createdAt: profile.created_at,
     updatedAt: profile.updated_at,
   };
-}
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

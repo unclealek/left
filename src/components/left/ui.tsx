@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Modal, Pressable, Text, View } from "react-native";
 import { styles } from "../../app/leftTheme";
 
 export function Card({ children, step, total }: { children: ReactNode; step?: string; total?: string }) {
@@ -50,10 +50,10 @@ export function SelectChip({ label, active, onPress }: { label: string; active: 
 }
 
 export function EnergyPill({ level }: { level: string }) {
-  const isHigh = level === "high";
+  const isEmphasized = level === "busy" || level === "active";
   return (
-    <View style={[styles.energyPill, isHigh && styles.energyPillHigh]}>
-      <Text style={[styles.energyPillLabel, isHigh && styles.energyPillLabelHigh]}>
+    <View style={[styles.energyPill, isEmphasized && styles.energyPillHigh]}>
+      <Text style={[styles.energyPillLabel, isEmphasized && styles.energyPillLabelHigh]}>
         {level.toUpperCase()}
       </Text>
     </View>
@@ -118,5 +118,48 @@ export function GhostButton({
         {label}
       </Text>
     </Pressable>
+  );
+}
+
+export function AppDialog({
+  visible,
+  title,
+  message,
+  actions,
+}: {
+  visible: boolean;
+  title: string;
+  message: string;
+  actions: Array<{
+    label: string;
+    onPress: () => void;
+    variant?: "primary" | "ghost" | "destructive";
+  }>;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={actions[0]?.onPress}>
+      <View style={styles.dialogOverlay}>
+        <Pressable style={styles.absoluteFill} onPress={actions[0]?.onPress} />
+        <View style={styles.dialogCard}>
+          <View style={styles.dialogAccent} />
+          <Text style={styles.dialogTitle}>{title}</Text>
+          <Text style={styles.dialogBody}>{message}</Text>
+          <View style={styles.dialogActions}>
+            {actions.map((action) =>
+              action.variant === "primary" ? (
+                <PrimaryButton key={action.label} label={action.label} onPress={action.onPress} />
+              ) : (
+                <GhostButton
+                  key={action.label}
+                  label={action.label}
+                  onPress={action.onPress}
+                  destructive={action.variant === "destructive"}
+                />
+              ),
+            )}
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 }

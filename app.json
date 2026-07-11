@@ -42,6 +42,7 @@
           "isIosBackgroundLocationEnabled": true
         }
       ],
+      "@rnmapbox/maps",
       "expo-notifications",
       "expo-web-browser",
       "expo-font"

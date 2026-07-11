@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { IntentType } from "../../types/left-domain";
+import type { IntentType, VenueType } from "../../types/left-domain";
 
 const STORAGE_KEYS = {
   runtime: "left/location/runtime",
@@ -28,11 +28,13 @@ export type LocationPromptState = {
 export type RuntimeVenueCandidate = {
   id: string;
   name: string;
+  venueType?: VenueType;
   latitude: number;
   longitude: number;
   radiusMeters: number;
   source: "google_places" | "local_catalog" | "user_submission";
   distanceMeters: number | null;
+  photoUrl?: string | null;
 };
 
 export type RuntimeCoords = {

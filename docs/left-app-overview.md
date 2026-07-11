@@ -51,6 +51,18 @@ Discovery happens through:
 - Real-world presence
 - Contextual compatibility
 
+The home screen also includes a `Venue Rhythm` card.
+
+That card is intentionally honest:
+
+- when Left has only live venue context, it shows current signals such as visible people nearby, venue energy, and pulse copy
+- when Left does not yet have enough historical venue data, it does not invent hourly hot/calm predictions
+- only after enough venue history exists should the product show learned timing patterns for that venue
+
+Current venue-energy language:
+- Left renders venue energy through an `EnergyPill`
+- the current canonical `EnergyPill` values are `Calm`, `Warm`, `Active`, `Busy`, and `Focused`
+
 Instead of matching people through static profiles or endless browsing, Left helps users evaluate who is nearby in the moment and decide whether to approach.
 
 The goal is not to prolong digital interaction. The goal is to reduce friction and support a real conversation offline.
