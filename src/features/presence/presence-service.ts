@@ -57,6 +57,25 @@ type NearbyFeedRow = {
   session_expires_at: string;
 };
 
+function normalizeEnergyLevel(
+  value: EnergyLevel | "quiet" | "high" | string | null | undefined,
+): EnergyLevel {
+  switch (value) {
+    case "busy":
+    case "active":
+    case "focused":
+    case "warm":
+    case "calm":
+      return value;
+    case "high":
+      return "busy";
+    case "quiet":
+      return "calm";
+    default:
+      return "warm";
+  }
+}
+
 function isUuid(value: string | null | undefined) {
   return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
@@ -196,7 +215,7 @@ export async function fetchVenueContextSummary(venueId: string): Promise<VenueCo
     venueId: context.venue_id,
     venueName: context.venue_name,
     visibleCount: context.visible_count,
-    energyLevel: context.energy_level,
+    energyLevel: normalizeEnergyLevel(context.energy_level),
     activeVibes: context.active_vibes,
     popularIntents: context.popular_intents,
     pulseCopy: context.pulse_copy ?? "No pulse yet.",
@@ -231,7 +250,7 @@ function mapNearbyFeedRow(row: NearbyFeedRow): NearbyFeedItem {
     sessionDurationRemaining: formatIntervalValue(row.session_duration_remaining),
     distanceBucket: row.distance_bucket,
     venueName: row.venue_name,
-    energyLevel: row.energy_level,
+    energyLevel: normalizeEnergyLevel(row.energy_level),
     sessionExpiresAt: row.session_expires_at,
   };
 }

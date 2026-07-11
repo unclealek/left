@@ -1,17 +1,17 @@
 import { Pressable, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { styles } from "../../app/leftTheme";
+import { LeftDoorwayMark } from "../../components/left/LeftDoorwayMark";
 
 export function AuthScreen({ authError, onAuth }: { authError: string | null; onAuth: () => void }) {
   return (
     <View style={styles.authWrap}>
-      <LinearGradient colors={["#ffffff", "#faf7ff", "#f2ecff"]} style={styles.absoluteFill} />
+      <LinearGradient colors={["#FFF9EF", "#FFF6E8", "#F8EEDB"]} style={styles.absoluteFill} />
       <View style={styles.authGlowTop} pointerEvents="none" />
       <View style={styles.authGlowBottom} pointerEvents="none" />
       <View style={styles.authBrand}>
         <View style={styles.authMarkRing}>
-          <Text style={styles.authMarkChevron}>{"<"}</Text>
-          <View style={styles.authMarkDot} />
+          <LeftDoorwayMark size={44} />
         </View>
         <View style={styles.authWordmarkWrap}>
           <View style={styles.authWordmarkRule} />

@@ -7,6 +7,8 @@ import { Card, FieldBlock, PrimaryButton, SelectChip } from "../../components/le
 export function ActivationScreen(props: {
   sessionVisible: boolean;
   venueHidden: boolean;
+  venueConfidenceLabel: string;
+  venueConfidenceCopy: string;
   selectedIntent: AppUser["defaultIntent"];
   selectedVibes: string[];
   selectedDuration: number;
@@ -54,6 +56,10 @@ export function ActivationScreen(props: {
   return (
     <Card>
       <Text style={styles.cardTitle}>Set your{"\n"}presence.</Text>
+      <View style={styles.settingsInfoCard}>
+        <Text style={styles.settingsInfoTitle}>{props.venueConfidenceLabel}</Text>
+        <Text style={styles.settingsInfoBody}>{props.venueConfidenceCopy}</Text>
+      </View>
       <FieldBlock label="Intent">
         <View style={styles.chipWrap}>
           {intents.map((i) => (

@@ -90,6 +90,114 @@ The current product flow makes these screens highest priority:
 
 The venue context, safety surfaces, and account flows support this core loop.
 
+## UI Design Principles
+
+These principles govern the Home screen and every future screen. They are product rules, not decorative preferences.
+
+### 1. One Hero Per Screen
+
+Every screen must have exactly one dominant element.
+
+Examples:
+- Home: Presence card
+- Venue: People currently here
+- Profile: User identity
+
+Rule:
+- supporting modules must never compete with the hero for attention
+- if two elements feel equally loud, the screen is wrong
+
+### 2. Progressive Information
+
+Users should not have to think about what to read next.
+
+Information should appear in this order:
+
+1. where am I?
+2. what is my status?
+3. what can I do?
+4. where should I go?
+5. who is there?
+6. take action
+
+Every screen should follow this flow as closely as possible.
+
+### 3. Build Trust Before Action
+
+Before asking the user to press anything, reassure them that the app understands their context.
+
+Examples:
+- `You're near Tad's Steakhouse`
+- `Updated just now`
+- `Private by default`
+
+The interface must answer these questions before presenting the primary CTA:
+- can people already see me?
+- is my GPS wrong?
+- is this live?
+
+### 4. The App Should Feel Human
+
+Avoid robotic product copy.
+
+Prefer:
+- `You're near Tad's Steakhouse`
+- `You're hidden right now`
+
+Avoid:
+- `Nearby Venue Detected`
+- `Presence Disabled`
+
+Rule:
+- write copy the way a calm person would explain the situation to another person in real life
+
+### 5. The Interface Breathes
+
+Every component should have room around it.
+
+Requirements:
+- large outer margins
+- soft internal spacing
+- no crowded stacks
+- no dense multi-card compression that makes the screen feel stressful
+
+The product should feel calm, not busy.
+
+### 6. Primary Action Wins
+
+Each screen should have one obvious action.
+
+Examples:
+- Home: `Go visible`
+- Venue: `Wave`
+- Profile: `Edit profile`
+
+Rule:
+- secondary controls should support the primary action, not compete with it
+
+### 7. Information Hierarchy
+
+Use typography consistently so users understand importance before they read details.
+
+Recommended type scale:
+- Hero message: `32-40px`
+- Section title: `22-26px`
+- Card title: `18-20px`
+- Body: `16px`
+- Metadata: `13-14px`
+
+Rule:
+- the user should know what matters first without reading every line
+
+### Immediate Home Screen Implications
+
+For the current Home screen, these principles mean:
+- the merged presence card remains the hero and should stay visually dominant
+- location context must stay strong and appear before the presence CTA
+- nearby places cards should support the hero rather than compete with it
+- the safety row should remain quieter than the presence card and nearby places
+- any future additions, including weather-aware greetings, must remain secondary to presence and visibility
+
 ## Screen 0: Auth
 
 Goal:
@@ -576,3 +684,9 @@ This flow is documented in more detail in [identity-removal-policy.md](/Users/ke
 - whether wave requires reciprocal acceptance before approach
 - what happens when approach timer expires without confirmation
 - how safety zones affect visibility and matching
+
+## Future Upgrades
+
+- add weather-aware greeting copy on home so the intro can reflect local conditions and time of day, for example `What a sunny afternoon to be out, Kelvin.`
+- keep weather greeting as supporting atmosphere rather than the primary headline
+- require graceful fallback to the standard greeting when weather data is unavailable or low confidence

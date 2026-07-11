@@ -115,9 +115,7 @@ Current matching behavior:
 - fall back to the local venue catalog only when backend and Google candidate lists are empty
 - return a candidate list instead of only a single guessed venue
 
-The local fallback catalog still includes a sample venue:
-
-- `Café Regatta`
+The local fallback catalog is intentionally empty, so the app relies on detected live venues, backend venue records, or user-submitted venues instead of shipping a sample place.
 
 ### Local Persistence
 

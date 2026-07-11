@@ -193,6 +193,13 @@ Display fields:
 - `pulse_copy`
 - footer summary state
 
+EnergyPill contract:
+- `energy_level` is the canonical venue-energy field rendered through the `EnergyPill` UI surface
+- frontend-supported values are `calm`, `warm`, `active`, `busy`, and `focused`
+- until backend schemas and derived views fully migrate, the client may normalize legacy values such as `quiet -> calm` and `high -> busy`
+- hidden-state nearby venue cards should expose only venue flavor signals: name, distance, `energy_level`, and placeholder intent/vibe tags
+- hidden-state nearby venue cards should not expose exact occupancy counts or `people visible` copy
+
 Primary actions:
 - `open_activation`
 - `open_nearby_feed`

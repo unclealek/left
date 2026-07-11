@@ -152,6 +152,24 @@ export async function requestLocationAccess() {
   }
 }
 
+export async function primeLocationFix() {
+  try {
+    console.info("[location] priming immediate location fix");
+    const currentPosition = await withTimeout(
+      Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      }),
+      10000,
+      "Current location lookup",
+    );
+    await processLocationFix(currentPosition.coords);
+    return true;
+  } catch (error) {
+    console.warn("[location] primeLocationFix failed", error);
+    return false;
+  }
+}
+
 export async function syncLocationRegistrationState() {
   const foreground = await Location.getForegroundPermissionsAsync();
   const background = await Location.getBackgroundPermissionsAsync();
