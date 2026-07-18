@@ -1,5 +1,15 @@
 # Left MVP Wireframes
 
+Status:
+- historical wireframe reference
+- useful for early flow and hierarchy context
+- not the canonical implementation contract anymore
+
+Read this with:
+- [left-engineering-build-spec.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/left-engineering-build-spec.md) for current app behavior
+- [location-venue-logic.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/location-venue-logic.md) for the live venue pipeline
+- [venues-google.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/venues-google.md) for Google Places usage and cost strategy
+
 Source inputs:
 - `contextual_social_app_v2_spec.pdf`
 - `contextual_social_app_design_review.pdf`

@@ -17,6 +17,13 @@ Instead of endless feeds, follower counts, and identity-heavy online personas, L
 
 The product is built around temporary visibility, soft anonymity, and venue-based context. Users do not broadcast to the internet at large. They become discoverable only when they intentionally activate a session in a shared place.
 
+Current mobile shell:
+- footer navigation is `Home`, `Map`, `Venues`, `Profile`
+- `Home` is the emotional landing screen and visibility entry
+- `Map` is the nearby people path when visible and nearby venue browsing path when hidden
+- `Venues` is the venue radar and venue-context screen
+- `Profile` is the signed-in self/account screen
+
 ---
 
 ## The Problem
@@ -62,6 +69,11 @@ That card is intentionally honest:
 Current venue-energy language:
 - Left renders venue energy through an `EnergyPill`
 - the current canonical `EnergyPill` values are `Calm`, `Warm`, `Active`, `Busy`, and `Focused`
+
+Current hidden-state browsing rule:
+- a user can browse nearby venues while still hidden
+- when hidden, venue browsing should show only venue flavor signals such as name, distance, energy, and placeholder social cues
+- when hidden, the app should not show exact live occupancy counts such as `5 people visible`
 
 Instead of matching people through static profiles or endless browsing, Left helps users evaluate who is nearby in the moment and decide whether to approach.
 

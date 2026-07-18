@@ -1,8 +1,8 @@
 # Left Product Spec
 
 Status:
-- current MVP spec aligned to the implemented mobile app as of June 7, 2026
-- includes venue selection, venue submission, Social Momentum, and post-approach follow-up behavior now present in the client
+- current MVP spec aligned to the implemented mobile app as of July 18, 2026
+- includes venue selection, venue submission, Social Momentum, post-approach follow-up behavior, hidden-state venue browsing, and the current footer/app-shell naming
 
 Source inputs:
 - `contextual_social_app_v2_spec.pdf`
@@ -105,7 +105,7 @@ Included:
 - quick identification hint
 - persistent safety controls
 - session duration tracking and active-session recovery
-- persistent footer navigation: `Home`, `Nearby`, `Session`, `You`
+- persistent footer navigation: `Home`, `Map`, `Venues`, `Profile`
 - signed-in settings screen for profile defaults and prompt customization
 - venue preference management for hidden and muted venues
 - identity-removal request flow backed by Supabase
@@ -251,7 +251,7 @@ At any point, the user can:
 
 ### 7.6 Settings And Account
 
-The signed-in user has a dedicated `You` destination in the footer navigation.
+The signed-in user has a dedicated `Profile` destination in the footer navigation.
 
 That screen currently supports:
 - editing first name
@@ -402,7 +402,7 @@ Functional requirements:
 - support the ambient visual identity without becoming the primary MVP discovery surface
 - remain strictly secondary to the nearby feed in the implementation order
 
-### 8.8 Settings / You
+### 8.8 Profile / Account
 
 Purpose:
 - provide a signed-in destination for account defaults, prompt customization, sign-out, and identity-removal request handling
@@ -421,7 +421,7 @@ Required content:
 Functional requirements:
 - profile defaults persist to `public.users`
 - prompt templates persist to `public.users`
-- account actions live under `You`, not under safety
+- account actions live under `Profile`, not under safety
 - identity removal follows the retained-record policy defined in `identity-removal-policy.md`
 
 ## 9. Interaction Model
