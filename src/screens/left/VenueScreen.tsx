@@ -200,6 +200,7 @@ export function VenueScreen({
   onActivate,
   onOpenFeed,
   onOpenProfile,
+  onOpenVenueDetail,
   onSocialMomentumPrimary,
   onDismissSocialMomentum,
   onChooseVenue,
@@ -223,6 +224,7 @@ export function VenueScreen({
   onActivate: () => void;
   onOpenFeed: () => void;
   onOpenProfile: (item: NearbyFeedItem) => void;
+  onOpenVenueDetail: (venue: RuntimeVenueCandidate) => void;
   onSocialMomentumPrimary: () => void;
   onDismissSocialMomentum: () => void;
   onChooseVenue: () => void;
@@ -327,6 +329,18 @@ export function VenueScreen({
       ? `${venueDistanceLabel} · ${venueCategoryLabel}`
       : venueCategoryLabel;
   const showPrimaryCta = !isPubliclyVisible || !socialMomentum;
+  const currentVenueCandidate =
+    activeVenueCandidate ??
+    ({
+      id: venue.venueId,
+      name: displayVenueName,
+      venueType: undefined,
+      latitude: mapCenter.latitude,
+      longitude: mapCenter.longitude,
+      radiusMeters: 60,
+      source: "local_catalog" as const,
+      distanceMeters: 0,
+    } satisfies RuntimeVenueCandidate);
   const pulseIconStyle = {
     transform: [{ scale: pulseScale }],
     opacity: pingPulse.interpolate({
@@ -338,22 +352,27 @@ export function VenueScreen({
   return (
     <View style={screenStyles.page}>
       <View style={screenStyles.headerRow}>
-        <VenueIdentityBlock
-          icon={getVenueMarkerIcon(displayVenueName)}
-          title={displayVenueName}
-          titleLines={2}
-          metaIcon={isPubliclyVisible ? "users" : "radio"}
-          metaText={
-            isPubliclyVisible
-              ? nearbyCount > 0
-                ? `${nearbyCount} ${nearbyCount === 1 ? "person visible now" : "people visible now"}`
-                : "Nobody visible yet"
-              : confidenceLabel
-          }
-          secondaryMetaIcon="map-pin"
-          secondaryMetaText={venueAddressMeta}
-          emphasis="hero"
-        />
+        <Pressable
+          onPress={() => onOpenVenueDetail(currentVenueCandidate)}
+          style={({ pressed }) => [screenStyles.venueIdentityPressable, pressed && screenStyles.pressed]}
+        >
+          <VenueIdentityBlock
+            icon={getVenueMarkerIcon(displayVenueName)}
+            title={displayVenueName}
+            titleLines={2}
+            metaIcon={isPubliclyVisible ? "users" : "radio"}
+            metaText={
+              isPubliclyVisible
+                ? nearbyCount > 0
+                  ? `${nearbyCount} ${nearbyCount === 1 ? "person visible now" : "people visible now"}`
+                  : "Nobody visible yet"
+                : confidenceLabel
+            }
+            secondaryMetaIcon="map-pin"
+            secondaryMetaText={venueAddressMeta}
+            emphasis="hero"
+          />
+        </Pressable>
 
         <SafetyActionButton onPress={onOpenSafety} />
       </View>
@@ -442,14 +461,15 @@ export function VenueScreen({
           <View style={screenStyles.centerVenueBoundary} pointerEvents="none" />
 
           {venuePlacements.map(({ candidate, badgeLabel, left, top }) => (
-            <View
+            <Pressable
               key={candidate.id}
+              onPress={() => onOpenVenueDetail(candidate)}
               style={[
                 screenStyles.venueMarker,
                 !isPubliclyVisible && screenStyles.venueMarkerHidden,
                 { left, top },
               ]}
-              pointerEvents="none"
+              hitSlop={8}
             >
               <View style={screenStyles.venueMarkerBadge}>
                 <Text style={screenStyles.venueMarkerBadgeText}>{badgeLabel}</Text>
@@ -472,7 +492,7 @@ export function VenueScreen({
                   {toMetersLabel(candidate.distanceMeters)}
                 </Text>
               </View>
-            </View>
+            </Pressable>
           ))}
 
           {isPubliclyVisible
@@ -610,6 +630,9 @@ const screenStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 14,
+  },
+  venueIdentityPressable: {
+    flex: 1,
   },
   titleBlock: {
     width: "100%",

@@ -10,6 +10,7 @@ export type Screen =
   | "venue-add"
   | "home"
   | "venue"
+  | "venue-detail"
   | "activate"
   | "feed"
   | "me"
@@ -87,6 +88,6 @@ export function formatElapsedDuration(totalSeconds: number) {
 export function getFooterDestination(screen: Screen): FooterDestination {
   if (screen === "home") return "home";
   if (screen === "feed" || screen === "profile" || screen === "approach") return "nearby";
-  if (screen === "venue" || screen === "activate") return "session";
+  if (screen === "venue" || screen === "venue-detail" || screen === "activate") return "session";
   return "account";
 }

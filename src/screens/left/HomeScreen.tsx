@@ -31,7 +31,7 @@ export function HomeScreen({
   sessionVisible,
   venueHidden,
   onBecomeVisible,
-  onOpenNearby,
+  onOpenVenueDetail,
   onOpenSafety,
 }: {
   firstName: string;
@@ -40,7 +40,7 @@ export function HomeScreen({
   sessionVisible: boolean;
   venueHidden: boolean;
   onBecomeVisible: () => void;
-  onOpenNearby: () => void;
+  onOpenVenueDetail: (venue: RuntimeVenueCandidate) => void;
   onOpenSafety: () => void;
   onComingSoon: (label: string) => void;
 }) {
@@ -154,7 +154,7 @@ export function HomeScreen({
         {nearbyCards.map((item) => (
           <Pressable
             key={item.id}
-            onPress={onOpenNearby}
+            onPress={() => onOpenVenueDetail(item.venue)}
             style={({ pressed }) => [
               styles.homeVenueCard,
               nearbyCards.length === 1 && styles.homeVenueCardSingle,
@@ -308,6 +308,7 @@ function buildNearbyVenueCards(
 
     return {
       id: venue.id,
+      venue,
       name: venue.name,
       venueType,
       emoji,

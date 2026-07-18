@@ -11,23 +11,25 @@ export function FeedScreen({
   feed,
   sessionVisible,
   onOpenProfile,
+  onOpenVenueDetail,
   onOpenSafety,
 }: {
   venue: VenueContextSummary;
   feed: NearbyFeedItem[];
   sessionVisible: boolean;
   onOpenProfile: (item: NearbyFeedItem) => void;
+  onOpenVenueDetail: () => void;
   onOpenSafety: () => void;
 }) {
   return (
     <View>
       <View style={styles.feedHead}>
-        <View>
+        <Pressable onPress={onOpenVenueDetail} style={({ pressed }) => [pressed && styles.feedCardPressed]}>
           <Text style={styles.feedHeadVenue}>{sessionVisible ? venue.venueName : "Nearby"}</Text>
           <Text style={styles.feedHeadCount}>
             {sessionVisible ? `${feed.length} ${feed.length === 1 ? "person" : "people"} visible` : "Your venue stays private until you start visibility"}
           </Text>
-        </View>
+        </Pressable>
         <SafetyActionButton onPress={onOpenSafety} compact />
       </View>
       {feed.length === 0 ? (
