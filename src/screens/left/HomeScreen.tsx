@@ -10,6 +10,7 @@ import {
 } from "../../features/location/venue-confidence";
 import { styles, T } from "../../app/leftTheme";
 import { LeftDoorwayMark } from "../../components/left/LeftDoorwayMark";
+import { BrandPrimaryButton, VenueIdentityBlock } from "../../components/left/ui";
 import type { VenueContextSummary } from "../../types/left-domain";
 
 const VENUE_ILLUSTRATIONS = {
@@ -83,20 +84,12 @@ export function HomeScreen({
   return (
     <View style={styles.homePage}>
       <View style={styles.homeVenueHeader}>
-        <View style={styles.homeVenueContextRow}>
-          <View style={styles.homeVenueContextIconWrap}>
-            <Feather name="map-pin" size={18} color={"rgba(46,33,20,0.72)"} />
-          </View>
-          <View style={styles.homeVenueContextCopy}>
-            <Text style={styles.homeVenueContextName}>{venueName}</Text>
-            <View style={styles.homeVenueContextMetaRow}>
-              <Feather name={isVisible ? "users" : "radio"} size={16} color={T.primary} />
-              <Text style={styles.homeVenueContextMetaText}>
-                {isVisible ? venueMetaCopy : confidenceLabel}
-              </Text>
-            </View>
-          </View>
-        </View>
+        <VenueIdentityBlock
+          icon="map-pin"
+          title={venueName}
+          metaIcon={isVisible ? "users" : "radio"}
+          metaText={isVisible ? venueMetaCopy : confidenceLabel}
+        />
         <View style={styles.homeBrandMark}>
           <LeftDoorwayMark size={24} archColor={T.primary} innerColor={T.accent} baseColor={T.accent} baseScale={0.52} />
           <PresencePulseIndicator isVisible={isVisible} />
@@ -136,12 +129,7 @@ export function HomeScreen({
             <Image source={heroIllustration} style={styles.homeVenueIllustrationImage} resizeMode="cover" />
           </LinearGradient>
         </View>
-        <Pressable onPress={onBecomeVisible} style={({ pressed }) => [styles.homeStartButton, styles.homeHeroPrimaryButton, pressed && styles.primaryBtnPressed]}>
-          <View style={styles.homeHeroPrimaryIconWrap}>
-            <LeftDoorwayMark size={22} archColor={T.primary} innerColor={T.accent} baseColor={T.accent} baseScale={0.54} />
-          </View>
-          <Text style={styles.homeStartButtonText}>{ctaLabel}</Text>
-        </Pressable>
+        <BrandPrimaryButton label={ctaLabel} onPress={onBecomeVisible} size="compact" />
         <Pressable onPress={onOpenSafety} style={({ pressed }) => [styles.homeHeroPrivacyRow, pressed && styles.iconButtonPressed]}>
           <View style={styles.homeHeroPrivacyIconWrap}>
             <Feather name="lock" size={17} color={"rgba(46,33,20,0.78)"} />

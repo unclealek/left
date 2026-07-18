@@ -4,7 +4,7 @@ import { formatIntent } from "../../app/leftConfig";
 import { T, styles } from "../../app/leftTheme";
 import { LeftAvatar } from "../../components/left/LeftAvatar";
 import { BackNavButton } from "../../components/left/navigation";
-import { Chip, GhostButton, InfoBlock, PrimaryButton, SelectChip } from "../../components/left/ui";
+import { Chip, GhostButton, InfoBlock, PrimaryButton, SafetyActionButton, SelectChip } from "../../components/left/ui";
 
 const reportCategories: Array<{ id: ReportCategory; label: string }> = [
   { id: "unsafe_behavior", label: "Unsafe" },
@@ -69,7 +69,7 @@ export function ProfileScreen({
     <View>
       <View style={styles.navRow}>
         <BackNavButton label="Back to nearby" onPress={onBack} />
-        <GhostButton label="Safety" onPress={onOpenSafety} compact />
+        <SafetyActionButton onPress={onOpenSafety} compact />
       </View>
       <View style={styles.profileHeroBlock}>
         <LeftAvatar name={item.firstName} avatarStyle={item.avatarStyle} size="lg" />

@@ -2,7 +2,7 @@ import { Text, View } from "react-native";
 import type { NearbyFeedItem } from "../../types/left-domain";
 import { styles } from "../../app/leftTheme";
 import { BackNavButton } from "../../components/left/navigation";
-import { GhostButton, InfoBlock, PrimaryButton } from "../../components/left/ui";
+import { InfoBlock, PrimaryButton, SafetyActionButton } from "../../components/left/ui";
 
 export function ApproachScreen({
   item,
@@ -23,7 +23,7 @@ export function ApproachScreen({
     <View>
       <View style={styles.navRow}>
         <BackNavButton label="Back to nearby" onPress={onCancel} />
-        <GhostButton label="Safety" onPress={onOpenSafety} compact />
+        <SafetyActionButton onPress={onOpenSafety} compact />
       </View>
       <View style={styles.approachHero}>
         <Text style={styles.approachLabel}>Going over to</Text>

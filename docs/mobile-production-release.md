@@ -84,7 +84,7 @@ The staging LAN callback URL should not be required for store builds.
 
 ## App Icon
 
-The app uses `Logo-text.png` for Expo-managed icon and splash config. Because the repository includes a native `ios/` directory, iOS also uses the native icon asset at:
+The app uses `app-icon.png` for Expo-managed icon and splash config. Because the repository includes a native `ios/` directory, iOS also uses the native icon asset at:
 
 ```text
 ios/Left/Images.xcassets/AppIcon.appiconset/App-Icon-1024x1024@1x.png

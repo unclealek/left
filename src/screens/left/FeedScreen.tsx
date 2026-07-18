@@ -3,7 +3,8 @@ import type { NearbyFeedItem, VenueContextSummary } from "../../types/left-domai
 import { formatRemaining } from "../../app/leftConfig";
 import { styles } from "../../app/leftTheme";
 import { LeftAvatar } from "../../components/left/LeftAvatar";
-import { Chip, GhostButton } from "../../components/left/ui";
+import { LeftDoorwayMark } from "../../components/left/LeftDoorwayMark";
+import { Chip, GhostButton, SafetyActionButton } from "../../components/left/ui";
 
 export function FeedScreen({
   venue,
@@ -27,11 +28,15 @@ export function FeedScreen({
             {sessionVisible ? `${feed.length} ${feed.length === 1 ? "person" : "people"} visible` : "Your venue stays private until you start visibility"}
           </Text>
         </View>
-        <GhostButton label="Safety" onPress={onOpenSafety} compact />
+        <SafetyActionButton onPress={onOpenSafety} compact />
       </View>
       {feed.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyGlyph}>{"<"}</Text>
+          <View style={styles.emptyGlyphWrap}>
+            <View style={styles.emptyGlyphMark}>
+              <LeftDoorwayMark size={30} />
+            </View>
+          </View>
           <Text style={styles.emptyText}>{sessionVisible ? "No one visible yet." : "Start visibility to reveal your venue and see nearby people."}</Text>
         </View>
       ) : (
