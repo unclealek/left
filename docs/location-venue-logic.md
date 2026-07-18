@@ -98,24 +98,29 @@ Core logic:
 
 This file maps coordinates to one or more venue candidates.
 
-It currently uses three paths:
+It currently uses three paths, in strict order:
 
-- Supabase `public.venues` lookup for app-created venues
-- Google Places API lookup if `EXPO_PUBLIC_GOOGLE_PLACES_API_KEY` is configured
-- local fallback catalog if no Google Places key is present or no result is found
+- Supabase `public.venues` lookup for canonical app venues
+- Google Places API lookup only when the DB path returns no nearby venues
+- local fallback catalog only when both DB and Google return nothing
 
 Current matching behavior:
 
-- fetch nearby Supabase venue candidates using saved geofence centers and radii
-- fetch up to 5 nearby Google Places candidates
-- search within a 100 meter radius
-- discard candidates farther than 120 meters from the current device fix
-- merge and dedupe backend venues with Google Places candidates
-- sort candidates by straight-line distance
-- fall back to the local venue catalog only when backend and Google candidate lists are empty
+- fetch active Supabase venue rows
+- normalize them into nearby candidates using saved geofence centers and radii
+- if one or more DB candidates survive the radius check, return them immediately
+- only if the DB returns zero nearby venues, call Google Places
+- Google search uses a 100 meter radius and fetches up to 5 candidates
+- discard Google candidates farther than 120 meters from the current device fix
+- canonicalize Google matches into `public.venues`
+- normalize those canonical venue rows and return them
+- fall back to the local venue catalog only when backend and Google candidate lists are both empty
 - return a candidate list instead of only a single guessed venue
 
-The local fallback catalog is intentionally empty, so the app relies on detected live venues, backend venue records, or user-submitted venues instead of shipping a sample place.
+Important implementation detail:
+
+- the local fallback catalog is intentionally empty today
+- the runtime is effectively DB-first, Google-second, and local-catalog-last with no seeded sample venue safety net
 
 ### Local Persistence
 
@@ -212,7 +217,9 @@ Database write enablement:
 Important caveat:
 
 - user-added venues are now stored as pending submissions in the backend
-- automatic nearby lookup now merges backend venues with Google Places candidates
+- automatic nearby lookup does not merge DB and Google in the same successful lookup path anymore
+- DB venues win immediately when present
+- Google is used only as a fallback discovery path when the DB has no nearby venue match
 - pending submissions become reusable for other users only after approval promotes them into `public.venues`
 - promotion now has a database-side duplicate check based on normalized name plus geofence proximity
 

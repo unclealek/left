@@ -1,13 +1,19 @@
 # Left Engineering Build Spec
 
 Status:
-- engineering-ready build spec aligned to the current app implementation as of June 7, 2026
-- includes venue disambiguation, venue submission, Social Momentum, and delayed approach follow-up
+- engineering-ready build spec aligned to the current app implementation as of July 18, 2026
+- includes venue disambiguation, venue submission, Social Momentum, delayed approach follow-up, hidden-state venue browsing, and the current `Home / Map / Venues / Profile` footer model
 
 Depends on:
 - [left-product-spec.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/left-product-spec.md)
 - [left-mvp-wireframes.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/left-mvp-wireframes.md)
 - [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/identity-removal-policy.md)
+- [location-venue-logic.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/location-venue-logic.md)
+- [venues-google.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/venues-google.md)
+
+Source-of-truth note:
+- this document is the canonical implementation contract for the current mobile client
+- [left-mvp-wireframes.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/left-mvp-wireframes.md) should be treated as historical design context, not the final behavior contract
 
 Primary implementation rules:
 - the `Nearby Feed` is the canonical MVP discovery surface
@@ -28,7 +34,7 @@ Ship a mobile MVP that lets a user:
 7. enter the approaching micro-state
 8. confirm a real-world connection or answer a delayed follow-up prompt after the approach window
 9. access safety controls at active stages
-10. manage profile defaults and prompt templates from `You`
+10. manage profile defaults and prompt templates from `Profile`
 11. request identity removal from the signed-in account screen
 
 ## 2. Current Stack
@@ -64,6 +70,7 @@ Screens:
 - [src/screens/left/AuthScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/AuthScreen.tsx)
 - [src/screens/left/LoadingScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/LoadingScreen.tsx)
 - [src/screens/left/OnboardingScreens.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/OnboardingScreens.tsx)
+- [src/screens/left/HomeScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/HomeScreen.tsx)
 - [src/screens/left/VenueScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/VenueScreen.tsx)
 - [src/screens/left/ActivationScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/ActivationScreen.tsx)
 - [src/screens/left/FeedScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/FeedScreen.tsx)
@@ -72,6 +79,7 @@ Screens:
 - [src/screens/left/ApproachFeedbackPrompt.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/ApproachFeedbackPrompt.tsx)
 - [src/screens/left/SafetyScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/SafetyScreen.tsx)
 - [src/screens/left/SettingsScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/SettingsScreen.tsx)
+- [src/screens/left/MeScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/MeScreen.tsx)
 - [src/screens/left/VenueSelectionScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/VenueSelectionScreen.tsx)
 
 ## 4. Canonical Screen Set
@@ -80,15 +88,16 @@ Implement and maintain in this order:
 
 1. Auth
 2. Onboarding
-3. Venue home
-4. Venue selection / add venue
-5. Presence activation
-6. Nearby feed
-7. Soft-anonymity profile
-8. Approaching micro-state
-9. Approach follow-up prompt
-10. Safety controls
-11. Settings / You
+3. Home
+4. Venue radar / Venues
+5. Venue selection / add venue
+6. Presence activation
+7. Nearby feed
+8. Soft-anonymity profile
+9. Approaching micro-state
+10. Approach follow-up prompt
+11. Safety controls
+12. Profile / account
 
 ## 5. Navigation Model
 
@@ -98,11 +107,13 @@ Top-level screens in the current app:
 - `onboarding-name`
 - `onboarding-avatar`
 - `onboarding-location`
+- `home`
 - `venue`
 - `venue-select`
 - `venue-add`
 - `activate`
 - `feed`
+- `me`
 - `profile`
 - `approach`
 - `safety`
@@ -110,15 +121,17 @@ Top-level screens in the current app:
 
 Footer navigation is persistent across in-session screens and uses four destinations:
 - `Home`
-- `Nearby`
-- `Session`
-- `You`
+- `Map`
+- `Venues`
+- `Profile`
 
 Navigation rules:
-- `Home` routes to venue home
-- `Nearby` routes to the feed when visible and back to activation when not visible
-- `Session` routes to activation before visibility and the live session timer after visibility starts
-- `You` routes to settings/account
+- `Home` routes to the home screen
+- `Map` routes to the nearby feed when visible and to the venue radar when hidden
+- `Venues` always routes to the venue radar screen
+- `Profile` routes to the signed-in self screen
+- hidden-state nearby venue cards and the footer `Map` entry can browse venue context without forcing activation
+- safety and activation preserve a return origin instead of always returning to one hardcoded screen
 - safety is reachable from feed, profile, approach, and settings
 
 ## 6. Screen Contracts
@@ -179,18 +192,18 @@ Persisted fields:
 - `prompts_enabled`
 - `onboarding_completed`
 
-### 6.2 Venue Home
+### 6.2 Home
 
 Purpose:
 - signed-in landing state
-- show venue pulse, bubble preview, Social Momentum, and activation entry point
+- show current visibility state, nearby venue flavor, and the primary activation entry point
 
 Display fields:
 - `venue_name`
 - `energy_level`
 - `visible_count`
-- `active_vibes[]`
 - `pulse_copy`
+- nearby venue cards
 - footer summary state
 
 EnergyPill contract:
@@ -202,12 +215,49 @@ EnergyPill contract:
 
 Primary actions:
 - `open_activation`
-- `open_nearby_feed`
+- `open_venue_radar`
 - `choose_detected_venue`
 - `add_missing_venue`
+- `open_safety_controls`
 - footer navigation
 
-### 6.3 Presence Activation
+Rules:
+- the home hero is the primary visibility entry point
+- when hidden, the home screen should emphasize privacy-first copy
+- when visible, the home screen shifts from activation to visibility management
+- hidden-state nearby venue cards may show only venue flavor signals, not exact occupancy counts
+
+### 6.3 Venue Radar / Venues
+
+Purpose:
+- show the confirmed venue, venue radar, nearby venue context, and venue-level CTA hierarchy
+
+Display fields:
+- confirmed venue identity
+- venue confidence state
+- visibility status
+- `energy_level` rendered as `EnergyPill`
+- top intent summary
+- radar/map stage
+- nearby venue placements
+- optional Social Momentum card
+
+Primary actions:
+- `open_activation`
+- `open_nearby_feed`
+- `open_profile(profile_user_id)`
+- `choose_detected_venue`
+- `add_missing_venue`
+- `open_safety_controls`
+- footer navigation
+
+Rules:
+- do not duplicate the same venue summary card multiple times on this screen
+- use one dominant CTA at a time
+- when hidden, show venue flavor and context without exact occupancy counts
+- when visible and Social Momentum exists, the momentum card can become the primary action surface
+
+### 6.4 Presence Activation
 
 Purpose:
 - create or resume a temporary presence session
@@ -242,7 +292,7 @@ Current implementation notes:
 - activation is blocked until venue selection is resolved when multiple nearby venues are detected
 - local mock IDs still use local state so seeded development screens keep working
 
-### 6.4 Nearby Feed
+### 6.5 Nearby Feed
 
 Purpose:
 - primary MVP discovery surface
@@ -273,7 +323,7 @@ Rules:
 - UUID-backed sessions load feed records from `public.get_nearby_feed(...)`
 - mock/local sessions fall back to seeded feed data
 
-### 6.5 Soft-Anonymity Profile
+### 6.6 Soft-Anonymity Profile
 
 Purpose:
 - increase confidence before approach
@@ -300,7 +350,7 @@ Rules:
 - no photo render path in MVP
 - prompt is owned by the signed-in viewer and saved in user settings
 
-### 6.6 Approaching Micro-State
+### 6.7 Approaching Micro-State
 
 Purpose:
 - bridge digital confidence to physical action
@@ -323,7 +373,7 @@ Rules:
 - expired approach currently transitions to a pending local follow-up prompt backed by AsyncStorage
 - prompt is owned by the signed-in viewer and saved in user settings
 
-### 6.6.1 Approach Follow-Up Prompt
+### 6.7.1 Approach Follow-Up Prompt
 
 Purpose:
 - capture what happened after an approach countdown elapses without forcing the user to answer in the moment
@@ -343,7 +393,7 @@ Rules:
 - if the user confirms the connection during the live countdown, pending feedback is cleared
 - this flow is currently local-only and does not yet persist feedback to Supabase
 
-### 6.7 Safety Controls
+### 6.8 Safety Controls
 
 Purpose:
 - immediate safety actions
@@ -369,24 +419,30 @@ Rules:
 - pause and end update the active `public.presence_sessions` row when available
 - reports are reviewable through `public.safety_report_review`
 
-### 6.8 Settings / You
+### 6.9 Profile / Account
 
 Purpose:
 - signed-in account and customization destination
+- show a lightweight live self-view plus editable defaults
 
 Display fields:
 - `first_name`
 - `avatar_style`
 - `default_intent`
 - `default_vibes`
-- `profile_prompt`
+- current visibility state
+- current venue or hidden state
+- nearby venue count
+- wave count
 - `approach_prompt`
 - venue preference summary
 - account status copy
 
 Primary actions:
 - `save_profile_defaults`
+- `edit_profile_defaults`
 - `open_safety_controls`
+- `open_settings`
 - `sign_out`
 - `request_identity_removal`
 
@@ -403,7 +459,12 @@ Identity-removal rules:
 - app then calls the backend processor
 - retained/removed behavior is defined in [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/identity-removal-policy.md)
 
-### 6.9 Bubble Visualization Layer
+Rules:
+- the non-edit profile view is intentionally lightweight and live-state aware
+- `wave count` is currently derived from `approach_started` interaction events
+- `nearby venue count` is runtime context, not historical venue history
+
+### 6.10 Bubble Visualization Layer
 
 Purpose:
 - optional ambient layer over nearby feed data
@@ -421,11 +482,13 @@ App-level screens:
 - `onboarding-name`
 - `onboarding-avatar`
 - `onboarding-location`
+- `home`
 - `venue`
 - `venue-select`
 - `venue-add`
 - `activate`
 - `feed`
+- `me`
 - `profile`
 - `approach`
 - `safety`
