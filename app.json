@@ -4,11 +4,11 @@
     "slug": "left-mobile",
     "version": "0.1.0",
     "orientation": "portrait",
-    "icon": "./Logo-text.png",
+    "icon": "./app-icon.png",
     "userInterfaceStyle": "dark",
     "scheme": "left",
     "splash": {
-      "image": "./Logo-text.png",
+      "image": "./app-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#08080F"
     },
@@ -26,7 +26,7 @@
     "android": {
       "package": "com.left.mobile",
       "adaptiveIcon": {
-        "foregroundImage": "./Logo-text.png",
+        "foregroundImage": "./app-icon.png",
         "backgroundColor": "#08080F"
       },
       "permissions": [

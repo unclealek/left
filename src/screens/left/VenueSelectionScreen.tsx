@@ -67,11 +67,13 @@ export function VenueSelectionScreen({
   currentVenueId,
   onSelectVenue,
   onAddVenue,
+  onBack,
 }: {
   venues: RuntimeVenueCandidate[];
   currentVenueId: string | null;
   onSelectVenue: (venueId: string) => void;
   onAddVenue: () => void;
+  onBack: () => void;
 }) {
   return (
     <Card>
@@ -89,6 +91,7 @@ export function VenueSelectionScreen({
         ))}
       </View>
       <GhostButton label="Can't find your venue? Add +" onPress={onAddVenue} />
+      <GhostButton label="Back" onPress={onBack} />
     </Card>
   );
 }

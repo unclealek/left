@@ -40,9 +40,10 @@ export function SettingsScreen({
 
   function openAboutLeft() {
     setSettingsActionMessage(null);
-    void Linking.openURL("https://google.com").catch(() => {
-      setSettingsActionMessage("Couldn't open the website.");
-    });
+    Alert.alert(
+      "About Left",
+      "Left helps you signal presence at real venues, discover nearby social energy, and control how you are seen.",
+    );
   }
 
   function confirmSignOut() {
@@ -95,7 +96,7 @@ export function SettingsScreen({
         }
         onPress={onRequestDeletion}
         destructive
-        disabled={deletionState === "submitting"}
+        disabled={deletionState === "submitting" || deletionState === "submitted"}
       />
       {deletionState === "submitted" ? (
         <Text style={styles.settingsSuccessText}>We recorded your identity-removal request and the backend can now process it under the retention policy.</Text>

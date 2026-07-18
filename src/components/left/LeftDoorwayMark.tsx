@@ -21,60 +21,73 @@ export function LeftDoorwayMark({
   const pillarWidth = archWidth * 0.18;
   const baseWidth = archWidth * baseScale;
   const baseHeight = size * 0.18;
+  const totalHeight = archHeight + baseHeight * 0.7;
+  const opticalShiftY = -size * 0.06;
 
   return (
-    <View style={[styles.wrap, { width: archWidth, height: archHeight + baseHeight * 0.7 }]}>
+    <View style={[styles.wrap, { width: archWidth, height: totalHeight }]}>
       <View
         style={[
-          styles.arch,
+          styles.content,
           {
             width: archWidth,
-            height: archHeight,
-            borderTopLeftRadius: archWidth / 2,
-            borderTopRightRadius: archWidth / 2,
-            backgroundColor: archColor,
+            height: totalHeight,
+            transform: [{ translateY: opticalShiftY }],
           },
         ]}
-      />
-      <View
-        style={[
-          styles.cutout,
-          {
-            width: innerWidth,
-            height: innerHeight,
-            left: (archWidth - innerWidth) / 2,
-            top: archHeight * 0.18,
-            borderTopLeftRadius: innerWidth / 2,
-            borderTopRightRadius: innerWidth / 2,
-            backgroundColor: innerColor,
-          },
-        ]}
-      />
-      <View
-        style={[
-          styles.base,
-          {
-            width: baseWidth,
-            height: baseHeight,
-            borderRadius: baseHeight,
-            backgroundColor: baseColor,
-            left: (archWidth - baseWidth) / 2,
-            bottom: 0,
-          },
-        ]}
-      />
-      <View
-        style={[
-          styles.cutoutStem,
-          {
-            width: pillarWidth,
-            height: archHeight * 0.42,
-            left: (archWidth - pillarWidth) / 2,
-            bottom: baseHeight * 0.42,
-            backgroundColor: innerColor,
-          },
-        ]}
-      />
+      >
+        <View
+          style={[
+            styles.arch,
+            {
+              width: archWidth,
+              height: archHeight,
+              borderTopLeftRadius: archWidth / 2,
+              borderTopRightRadius: archWidth / 2,
+              backgroundColor: archColor,
+            },
+          ]}
+        />
+        <View
+          style={[
+            styles.cutout,
+            {
+              width: innerWidth,
+              height: innerHeight,
+              left: (archWidth - innerWidth) / 2,
+              top: archHeight * 0.18,
+              borderTopLeftRadius: innerWidth / 2,
+              borderTopRightRadius: innerWidth / 2,
+              backgroundColor: innerColor,
+            },
+          ]}
+        />
+        <View
+          style={[
+            styles.base,
+            {
+              width: baseWidth,
+              height: baseHeight,
+              borderRadius: baseHeight,
+              backgroundColor: baseColor,
+              left: (archWidth - baseWidth) / 2,
+              bottom: 0,
+            },
+          ]}
+        />
+        <View
+          style={[
+            styles.cutoutStem,
+            {
+              width: pillarWidth,
+              height: archHeight * 0.42,
+              left: (archWidth - pillarWidth) / 2,
+              bottom: baseHeight * 0.42,
+              backgroundColor: innerColor,
+            },
+          ]}
+        />
+      </View>
     </View>
   );
 }
@@ -82,7 +95,10 @@ export function LeftDoorwayMark({
 const styles = StyleSheet.create({
   wrap: {
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "center",
+  },
+  content: {
+    position: "relative",
   },
   arch: {
     position: "absolute",

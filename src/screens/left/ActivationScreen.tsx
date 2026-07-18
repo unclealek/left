@@ -1,12 +1,15 @@
-import { Text, TextInput, View } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { Pressable, Text, TextInput, View } from "react-native";
 import type { AppUser } from "../../types/left-domain";
 import { durationOptions, formatElapsedDuration, intents, vibeOptions } from "../../app/leftConfig";
 import { T, styles } from "../../app/leftTheme";
-import { Card, FieldBlock, PrimaryButton, SelectChip } from "../../components/left/ui";
+import { BackNavButton } from "../../components/left/navigation";
+import { BrandPrimaryButton, Card, FieldBlock, IconSelectChip, PrimaryButton } from "../../components/left/ui";
 
 export function ActivationScreen(props: {
   sessionVisible: boolean;
   venueHidden: boolean;
+  venueName: string;
   venueConfidenceLabel: string;
   venueConfidenceCopy: string;
   selectedIntent: AppUser["defaultIntent"];
@@ -16,6 +19,7 @@ export function ActivationScreen(props: {
   elapsedSeconds: number;
   activationSubmitting: boolean;
   endingSession: boolean;
+  onBack: () => void;
   onPickIntent: (v: AppUser["defaultIntent"]) => void;
   onToggleVibe: (v: string) => void;
   onPickDuration: (v: number) => void;
@@ -55,51 +59,157 @@ export function ActivationScreen(props: {
 
   return (
     <Card>
-      <Text style={styles.cardTitle}>Set your{"\n"}presence.</Text>
-      <View style={styles.settingsInfoCard}>
-        <Text style={styles.settingsInfoTitle}>{props.venueConfidenceLabel}</Text>
-        <Text style={styles.settingsInfoBody}>{props.venueConfidenceCopy}</Text>
+      <View style={styles.activationTopRow}>
+        <BackNavButton label="" onPress={props.onBack} />
+        <View style={styles.activationProgressBlock}>
+          <Text style={styles.activationProgressEyebrow}>Step 1</Text>
+          <View style={styles.activationProgressDots}>
+            <View style={[styles.activationProgressDot, styles.activationProgressDotActive]} />
+            <View style={styles.activationProgressDot} />
+            <View style={styles.activationProgressDot} />
+          </View>
+          <Text style={styles.activationProgressMeta}>Step 1 of 3</Text>
+        </View>
       </View>
-      <FieldBlock label="Intent">
-        <View style={styles.chipWrap}>
+      <View style={styles.activationHeader}>
+        <Text style={styles.activationTitle}>Your presence</Text>
+        <Text style={styles.activationSubtitle}>
+          Confirm the details below and go visible.
+        </Text>
+      </View>
+
+      <View style={styles.activationVenueCard}>
+        <View style={styles.activationVenueCardTopRow}>
+          <View style={styles.activationVenueIconWrap}>
+            <Feather name="map-pin" size={18} color={T.primary} />
+          </View>
+          <View style={styles.activationVenueCopy}>
+            <Text style={styles.activationVenueEyebrow}>{props.venueConfidenceLabel}</Text>
+            <Text style={styles.activationVenueName}>{props.venueName}</Text>
+            <Text style={styles.activationVenueBody}>{props.venueConfidenceCopy}</Text>
+          </View>
+          <View style={styles.activationVenueStatusBadge}>
+            <View
+              style={[
+                styles.activationVenueStatusDot,
+                props.sessionVisible &&
+                  props.venueConfidenceLabel === "Confirmed venue" &&
+                  styles.activationVenueStatusDotConfirmed,
+              ]}
+            />
+          </View>
+        </View>
+      </View>
+
+      <FieldBlock label="Intent" hint="Pick the main reason people should read your signal.">
+        <View style={styles.activationChoiceGrid}>
           {intents.map((i) => (
-            <SelectChip key={i.id} label={i.label} active={props.selectedIntent === i.id} onPress={() => props.onPickIntent(i.id)} />
+            <IconSelectChip
+              key={i.id}
+              label={i.label}
+              icon={getIntentIcon(i.id)}
+              active={props.selectedIntent === i.id}
+              onPress={() => props.onPickIntent(i.id)}
+            />
           ))}
         </View>
       </FieldBlock>
-      <FieldBlock label="Vibes">
-        <View style={styles.chipWrap}>
+
+      <FieldBlock label="Vibes" hint="Select up to 2 cues so the room knows your energy.">
+        <View style={styles.activationChoiceGrid}>
           {vibeOptions.map((v) => (
-            <SelectChip key={v} label={v} active={props.selectedVibes.includes(v)} onPress={() => props.onToggleVibe(v)} />
+            <IconSelectChip
+              key={v}
+              label={v}
+              icon={getVibeIcon(v)}
+              active={props.selectedVibes.includes(v)}
+              onPress={() => props.onToggleVibe(v)}
+            />
           ))}
         </View>
       </FieldBlock>
-      <FieldBlock label="Duration">
-        <View style={styles.chipWrap}>
+
+      <FieldBlock label="Duration" hint="How long will your signal stay active?">
+        <View style={styles.activationDurationRow}>
           {durationOptions.map((d) => (
-            <SelectChip key={d} label={`${d}m`} active={props.selectedDuration === d} onPress={() => props.onPickDuration(d)} />
+            <IconSelectChip
+              key={d}
+              label={`${d}m`}
+              icon="clock"
+              compact
+              active={props.selectedDuration === d}
+              onPress={() => props.onPickDuration(d)}
+            />
           ))}
         </View>
       </FieldBlock>
-      <FieldBlock label="Hint card">
-        <TextInput
-          value={props.hintDraft}
-          onChangeText={props.onChangeHint}
-          placeholder="e.g. Blue headphones, left table"
-          placeholderTextColor={T.textMuted}
-          style={styles.input}
-        />
+
+      <FieldBlock label="Hint card" hint="Add a short hint to help people spot you.">
+        <View style={styles.activationHintCard}>
+          <View style={styles.activationHintIconWrap}>
+            <Feather name="edit-3" size={16} color={T.primary} />
+          </View>
+          <View style={styles.activationHintContent}>
+            <TextInput
+              value={props.hintDraft}
+              onChangeText={props.onChangeHint}
+              placeholder="e.g. Grey hoodie, corner seat"
+              placeholderTextColor={T.textMuted}
+              maxLength={42}
+              style={styles.activationHintInput}
+            />
+            <Text style={styles.activationHintMeta}>{`${props.hintDraft.length}/42 characters`}</Text>
+          </View>
+        </View>
       </FieldBlock>
+
       {props.venueHidden ? (
-        <Text style={styles.settingsInfoBody}>
+        <Text style={styles.activationWarningText}>
           This venue is hidden in your settings. Unhide it before going visible here again.
         </Text>
       ) : null}
-      <PrimaryButton
+
+      <BrandPrimaryButton
         label={props.activationSubmitting ? "Going visible..." : "Go visible"}
         onPress={props.onActivate}
         disabled={props.venueHidden || props.activationSubmitting}
+        size="compact"
       />
+
+      <View style={styles.activationPrivacyNote}>
+        <View style={styles.activationPrivacyDot} />
+        <Text style={styles.activationPrivacyText}>Your venue stays private until you go visible.</Text>
+      </View>
     </Card>
   );
+}
+
+function getIntentIcon(intent: AppUser["defaultIntent"]) {
+  switch (intent) {
+    case "open_to_conversation":
+      return "message-circle" as const;
+    case "group_discussion":
+      return "users" as const;
+    case "casual_chat":
+      return "smile" as const;
+    case "networking":
+    default:
+      return "user-plus" as const;
+  }
+}
+
+function getVibeIcon(vibe: string) {
+  switch (vibe) {
+    case "AI/startups":
+      return "cpu" as const;
+    case "Design":
+      return "pen-tool" as const;
+    case "Travel":
+      return "map" as const;
+    case "Language exchange":
+      return "message-square" as const;
+    case "Creativity":
+    default:
+      return "sun" as const;
+  }
 }

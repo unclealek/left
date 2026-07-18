@@ -29,7 +29,7 @@ import type {
 import { formatIntent } from "../../app/leftConfig";
 import { T } from "../../app/leftTheme";
 import { LeftDoorwayMark } from "../../components/left/LeftDoorwayMark";
-import { GhostButton } from "../../components/left/ui";
+import { BrandPrimaryButton, EnergyPill, GhostButton, SafetyActionButton, StatusPill, VenueIdentityBlock } from "../../components/left/ui";
 import { MAPBOX_ENABLED } from "../../lib/mapbox";
 
 const STAGE_SIZE = 350;
@@ -163,6 +163,16 @@ function getVenueMarkerIcon(name: string) {
   return "map-pin";
 }
 
+function getVenueCategoryLabel(name: string) {
+  const value = name.toLowerCase();
+  if (value.includes("steak") || value.includes("grill") || value.includes("restaurant")) return "Restaurant";
+  if (value.includes("bar") || value.includes("lounge")) return "Bar · Lounge";
+  if (value.includes("cafe") || value.includes("coffee")) return "Cafe";
+  if (value.includes("hotel")) return "Hotel";
+  if (value.includes("library")) return "Library";
+  return "Venue";
+}
+
 function resolveDisplayVenueName(
   venue: VenueContextSummary,
   nearbyVenues: RuntimeVenueCandidate[],
@@ -261,6 +271,14 @@ export function VenueScreen({
     [lastKnownCoords, nearbyVenues, venue],
   );
   const personPlacements = useMemo(() => buildPersonPlacements(feed), [feed]);
+  const activeVenueCandidate = useMemo(
+    () =>
+      nearbyVenues.find((candidate) => candidate.id === venue.venueId) ??
+      nearbyVenues.find((candidate) => candidate.name === displayVenueName) ??
+      nearbyVenues[0] ??
+      null,
+    [displayVenueName, nearbyVenues, venue.venueId],
+  );
   const venuePlacements = useMemo(
     () => buildVenuePlacements(nearbyVenues, displayVenueName, mapCenter),
     [displayVenueName, mapCenter, nearbyVenues],
@@ -302,63 +320,51 @@ export function VenueScreen({
   const intentSubtext = isPubliclyVisible ? "Most common here" : "Likely nearby";
   const primaryActionLabel = isPubliclyVisible ? "Open Nearby Feed" : "Go Visible";
   const primaryAction = isPubliclyVisible ? onOpenFeed : onActivate;
+  const venueDistanceLabel = toMetersLabel(activeVenueCandidate?.distanceMeters ?? null);
+  const venueCategoryLabel = getVenueCategoryLabel(displayVenueName);
+  const venueAddressMeta =
+    activeVenueCandidate && activeVenueCandidate.distanceMeters != null
+      ? `${venueDistanceLabel} · ${venueCategoryLabel}`
+      : venueCategoryLabel;
+  const showPrimaryCta = !isPubliclyVisible || !socialMomentum;
+  const pulseIconStyle = {
+    transform: [{ scale: pulseScale }],
+    opacity: pingPulse.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.62, 1],
+    }),
+  };
 
   return (
     <View style={screenStyles.page}>
       <View style={screenStyles.headerRow}>
-        <View style={screenStyles.venueIdentity}>
-          <View style={screenStyles.venueIdentityIcon}>
-            <Feather name="map-pin" size={18} color={T.textPrimary} />
-          </View>
-          <View style={screenStyles.venueIdentityCopy}>
-            <Text style={screenStyles.venueName} numberOfLines={1}>
-              {displayVenueName}
-            </Text>
-            <View style={screenStyles.venueMetaRow}>
-              <Feather
-                name={isPubliclyVisible ? "users" : "radio"}
-                size={16}
-                color={T.primary}
-              />
-              <Text style={screenStyles.venueMetaText}>
-                {isPubliclyVisible
-                  ? nearbyCount > 0
-                    ? `${nearbyCount} ${nearbyCount === 1 ? "person visible now" : "people visible now"}`
-                    : "Nobody visible yet"
-                  : confidenceLabel}
-              </Text>
-            </View>
-          </View>
-        </View>
+        <VenueIdentityBlock
+          icon={getVenueMarkerIcon(displayVenueName)}
+          title={displayVenueName}
+          titleLines={2}
+          metaIcon={isPubliclyVisible ? "users" : "radio"}
+          metaText={
+            isPubliclyVisible
+              ? nearbyCount > 0
+                ? `${nearbyCount} ${nearbyCount === 1 ? "person visible now" : "people visible now"}`
+                : "Nobody visible yet"
+              : confidenceLabel
+          }
+          secondaryMetaIcon="map-pin"
+          secondaryMetaText={venueAddressMeta}
+          emphasis="hero"
+        />
 
-        <Pressable
-          onPress={onOpenSafety}
-          style={({ pressed }) => [
-            screenStyles.privacyButton,
-            pressed && screenStyles.pressed,
-          ]}
-        >
-          <Feather name="shield" size={18} color={T.accentBright} />
-        </Pressable>
+        <SafetyActionButton onPress={onOpenSafety} />
       </View>
 
       <View style={screenStyles.titleBlock}>
-        <View style={screenStyles.statusPill}>
-          <View
-            style={[
-              screenStyles.statusDot,
-              isPubliclyVisible
-                ? screenStyles.statusDotVisible
-                : screenStyles.statusDotHidden,
-            ]}
-          />
-          <Text style={screenStyles.statusPillText}>{statusLabel}</Text>
-        </View>
+        <StatusPill label={statusLabel} visible={isPubliclyVisible} onPress={onOpenSafety} showChevron />
         <View style={screenStyles.heroTitleRow}>
           <Text style={screenStyles.heroTitle}>Venue Radar</Text>
-          <View style={screenStyles.heroSignalWrap}>
+          <Animated.View style={[screenStyles.heroSignalWrap, pulseIconStyle]}>
             <Feather name="radio" size={18} color={"#9BB39C"} />
-          </View>
+          </Animated.View>
         </View>
         <Text style={screenStyles.heroSubtitle}>
           {isPubliclyVisible
@@ -368,7 +374,7 @@ export function VenueScreen({
         <View style={screenStyles.insightRow}>
           <View style={screenStyles.insightCard}>
             <Text style={screenStyles.insightLabel}>Energy Pill</Text>
-            <Text style={screenStyles.insightValue}>{energyTitle}</Text>
+            <EnergyPill level={energyTitle} />
             <Text style={screenStyles.insightSubtext}>{energySubtext}</Text>
           </View>
           <View style={screenStyles.insightCard}>
@@ -459,6 +465,9 @@ export function VenueScreen({
                 <Text style={screenStyles.venueMarkerName} numberOfLines={2}>
                   {candidate.name}
                 </Text>
+                <Text style={screenStyles.venueMarkerCategory}>
+                  {getVenueCategoryLabel(candidate.name)}
+                </Text>
                 <Text style={screenStyles.venueMarkerMeta}>
                   {toMetersLabel(candidate.distanceMeters)}
                 </Text>
@@ -530,71 +539,25 @@ export function VenueScreen({
                 You are here
               </Text>
               <Text style={screenStyles.currentVenueChipMeta}>
-                {isPubliclyVisible ? displayVenueName : `${energyTitle} · ${intentTitle}`}
+                {`${energyTitle} · ${intentTitle}`}
               </Text>
             </View>
           </View>
         </View>
       </View>
 
-      <Pressable
-        onPress={onOpenSafety}
-        style={({ pressed }) => [
-          screenStyles.privacyNote,
-          pressed && screenStyles.pressed,
-        ]}
-      >
-        <Feather name="lock" size={16} color={T.textSecondary} />
-        <Text style={screenStyles.privacyNoteInline}>
-          {isPubliclyVisible
-            ? "You are visible at this venue right now"
-            : "Nearby venue details stay private until you go visible"}
-        </Text>
-      </Pressable>
-
-      <View style={screenStyles.ctaBlock}>
-        <Pressable
-          onPress={primaryAction}
-          style={({ pressed }) => [
-            screenStyles.primaryCta,
-            pressed && screenStyles.pressed,
-          ]}
-        >
-          <LinearGradient
-            colors={["#FFC94D", "#FFBE42", "#F4AE21"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={screenStyles.primaryCtaGradient}
-          >
-            <View style={screenStyles.primaryCtaIconWrap}>
-              <LeftDoorwayMark
-                size={22}
-                archColor={T.primary}
-                innerColor={"rgba(255,195,77,0.22)"}
-                baseColor={T.primary}
-                baseScale={0.52}
-              />
-            </View>
-            <View style={screenStyles.primaryCtaCopy}>
-              <Text style={screenStyles.primaryCtaLabel}>{primaryActionLabel}</Text>
-              <Text style={screenStyles.primaryCtaSubtext}>
-                {isPubliclyVisible ? "See who's nearby now" : "Let people discover you"}
-              </Text>
-            </View>
-            {!isPubliclyVisible ? (
-              <View style={screenStyles.primaryCtaSignal}>
-                <View style={[screenStyles.primaryCtaSignalBar, { height: 6 }]} />
-                <View style={[screenStyles.primaryCtaSignalBar, { height: 10 }]} />
-                <View style={[screenStyles.primaryCtaSignalBar, { height: 14 }]} />
-                <View style={[screenStyles.primaryCtaSignalBar, { height: 9 }]} />
-              </View>
-            ) : (
-              <Feather name="arrow-right" size={18} color={T.primary} />
-            )}
-          </LinearGradient>
-        </Pressable>
-        <Text style={screenStyles.ctaFootnote}>{helperCopy}</Text>
-      </View>
+      {showPrimaryCta ? (
+        <View style={screenStyles.ctaBlock}>
+          <BrandPrimaryButton
+            label={primaryActionLabel}
+            subtitle={isPubliclyVisible ? "See who's nearby now" : "Let people discover you"}
+            onPress={primaryAction}
+            size="hero"
+            trailingIcon="arrow"
+          />
+          <Text style={screenStyles.ctaFootnote}>{helperCopy}</Text>
+        </View>
+      ) : null}
 
       {socialMomentum && isPubliclyVisible ? (
         <View style={screenStyles.momentumCard}>
@@ -646,58 +609,7 @@ const screenStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 16,
-  },
-  venueIdentity: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    minWidth: 0,
-  },
-  venueIdentityIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(255,255,255,0.9)",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#DFA85A",
-    shadowOpacity: 0.14,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-  },
-  venueIdentityCopy: {
-    flex: 1,
-    gap: 4,
-    minWidth: 0,
-  },
-  venueName: {
-    color: T.textPrimary,
-    fontSize: 18,
-    lineHeight: 22,
-    fontFamily: T.fontBodyBold,
-  },
-  venueMetaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-  },
-  venueMetaText: {
-    color: T.primary,
-    fontSize: 14,
-    fontFamily: T.fontBodyMedium,
-  },
-  privacyButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.82)",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255,107,74,0.10)",
+    gap: 14,
   },
   titleBlock: {
     width: "100%",
@@ -710,37 +622,10 @@ const screenStyles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  statusPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    minHeight: 36,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    backgroundColor: "#F4F6F2",
-    borderWidth: 1,
-    borderColor: "#E2E8E1",
-  },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  statusDotVisible: {
-    backgroundColor: "#2E7D32",
-  },
-  statusDotHidden: {
-    backgroundColor: "#FFC24D",
-  },
-  statusPillText: {
-    color: T.textPrimary,
-    fontSize: 14,
-    fontFamily: T.fontBodyMedium,
-  },
   heroTitle: {
     color: T.textPrimary,
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 32,
+    lineHeight: 37,
     fontFamily: T.fontDisplayBold,
     letterSpacing: -0.8,
   },
@@ -748,7 +633,7 @@ const screenStyles = StyleSheet.create({
     marginTop: 3,
   },
   heroSubtitle: {
-    color: T.textSecondary,
+    color: "rgba(31,46,36,0.82)",
     fontSize: 15,
     lineHeight: 21,
     fontFamily: T.fontBody,
@@ -757,7 +642,7 @@ const screenStyles = StyleSheet.create({
   insightRow: {
     width: "100%",
     flexDirection: "row",
-    gap: 12,
+    gap: 10,
   },
   insightCard: {
     flex: 1,
@@ -765,21 +650,22 @@ const screenStyles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "rgba(214,198,169,0.4)",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: 15,
+    paddingVertical: 13,
     shadowColor: "#000000",
     shadowOpacity: 0.06,
     shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 3 },
     elevation: 2,
-    gap: 4,
+    gap: 5,
   },
   insightLabel: {
-    color: T.textMuted,
-    fontSize: 12,
+    color: "rgba(31,46,36,0.56)",
+    fontSize: 11,
     lineHeight: 14,
     textTransform: "uppercase",
     fontFamily: T.fontBodyBold,
+    letterSpacing: 0.7,
   },
   insightValue: {
     color: T.textPrimary,
@@ -788,7 +674,7 @@ const screenStyles = StyleSheet.create({
     fontFamily: T.fontBodyBold,
   },
   insightSubtext: {
-    color: T.textSecondary,
+    color: "rgba(31,46,36,0.7)",
     fontSize: 12,
     lineHeight: 16,
     fontFamily: T.fontBody,
@@ -800,7 +686,7 @@ const screenStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(214,198,169,0.72)",
     backgroundColor: "rgba(255,252,247,0.92)",
-    padding: 13,
+    padding: 14,
     shadowColor: "#D8C3A3",
     shadowOpacity: 0.2,
     shadowRadius: 24,
@@ -809,7 +695,7 @@ const screenStyles = StyleSheet.create({
   },
   mapFrame: {
     width: "100%",
-    height: 364,
+    height: 390,
     borderRadius: 28,
     overflow: "hidden",
     alignItems: "center",
@@ -895,7 +781,7 @@ const screenStyles = StyleSheet.create({
     borderRadius: 135,
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "rgba(100,116,103,0.22)",
+    borderColor: "rgba(100,116,103,0.28)",
   },
   ringMid: {
     position: "absolute",
@@ -904,7 +790,7 @@ const screenStyles = StyleSheet.create({
     borderRadius: 100,
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "rgba(100,116,103,0.18)",
+    borderColor: "rgba(100,116,103,0.24)",
   },
   ringInner: {
     position: "absolute",
@@ -952,22 +838,22 @@ const screenStyles = StyleSheet.create({
   },
   venueMarker: {
     position: "absolute",
-    width: 120,
-    minHeight: 74,
+    width: 96,
+    minHeight: 62,
   },
   venueMarkerHidden: {
     opacity: 0.78,
   },
   venueMarkerBadge: {
     position: "absolute",
-    top: -6,
-    right: 10,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#FFFFFF",
+    top: -4,
+    right: 4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#FFF7E8",
     borderWidth: 1,
-    borderColor: "rgba(214,198,169,0.52)",
+    borderColor: "rgba(255,195,77,0.62)",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 2,
@@ -977,14 +863,14 @@ const screenStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   venueMarkerBadgeText: {
-    color: T.textPrimary,
-    fontSize: 12,
+    color: T.accentBright,
+    fontSize: 11,
     fontFamily: T.fontBodyBold,
   },
   venueMarkerPin: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: "#1B4332",
     alignItems: "center",
     justifyContent: "center",
@@ -994,18 +880,24 @@ const screenStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
   },
   venueMarkerCopy: {
-    marginTop: 8,
-    gap: 2,
+    marginTop: 6,
+    gap: 1,
   },
   venueMarkerName: {
     color: T.textPrimary,
-    fontSize: 13,
-    lineHeight: 16,
+    fontSize: 11,
+    lineHeight: 13,
     fontFamily: T.fontBodyMedium,
+  },
+  venueMarkerCategory: {
+    color: T.textSecondary,
+    fontSize: 10,
+    lineHeight: 12,
+    fontFamily: T.fontBody,
   },
   venueMarkerMeta: {
     color: T.primary,
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: T.fontBodyMedium,
   },
   personPulse: {
@@ -1101,54 +993,10 @@ const screenStyles = StyleSheet.create({
     lineHeight: 16,
     fontFamily: T.fontBodyMedium,
   },
-  primaryCta: {
-    width: "100%",
-    borderRadius: 18,
-    overflow: "hidden",
-  },
   ctaBlock: {
     width: "100%",
     maxWidth: 390,
     gap: 8,
-  },
-  primaryCtaGradient: {
-    minHeight: 56,
-    borderRadius: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    paddingHorizontal: 18,
-  },
-  primaryCtaIconWrap: {
-    width: 32,
-    alignItems: "center",
-  },
-  primaryCtaCopy: {
-    flex: 1,
-    gap: 2,
-  },
-  primaryCtaLabel: {
-    color: T.primary,
-    fontSize: 18,
-    fontFamily: T.fontDisplayBold,
-  },
-  primaryCtaSubtext: {
-    color: "rgba(31,46,36,0.84)",
-    fontSize: 13,
-    lineHeight: 17,
-    fontFamily: T.fontBody,
-  },
-  primaryCtaSignal: {
-    width: 28,
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-  },
-  primaryCtaSignalBar: {
-    width: 3,
-    borderRadius: 999,
-    backgroundColor: T.white,
   },
   ctaFootnote: {
     color: T.textSecondary,
@@ -1157,36 +1005,16 @@ const screenStyles = StyleSheet.create({
     textAlign: "center",
     fontFamily: T.fontBody,
   },
-  privacyNote: {
-    width: "100%",
-    maxWidth: 390,
-    minHeight: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.84)",
-    borderWidth: 1,
-    borderColor: "#EFE9DF",
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-  },
-  privacyNoteInline: {
-    color: T.textPrimary,
-    fontSize: 13,
-    lineHeight: 17,
-    fontFamily: T.fontBodyMedium,
-  },
   momentumCard: {
     width: "100%",
     maxWidth: 390,
-    borderRadius: 24,
+    borderRadius: 22,
     backgroundColor: "rgba(255,252,247,0.92)",
     borderWidth: 1,
     borderColor: "rgba(214,198,169,0.44)",
-    padding: 20,
-    gap: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    gap: 10,
   },
   momentumHeader: {
     flexDirection: "row",
@@ -1207,19 +1035,19 @@ const screenStyles = StyleSheet.create({
   },
   momentumTitle: {
     color: T.textPrimary,
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 18,
+    lineHeight: 22,
     fontFamily: T.fontDisplayBold,
   },
   momentumBody: {
     color: T.textSecondary,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 20,
     fontFamily: T.fontBody,
   },
   momentumButton: {
-    minHeight: 46,
-    borderRadius: 16,
+    minHeight: 44,
+    borderRadius: 15,
     backgroundColor: "rgba(53,102,77,0.08)",
     alignItems: "center",
     justifyContent: "center",
