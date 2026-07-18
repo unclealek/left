@@ -422,8 +422,10 @@ export function AppDialog({
         <Pressable style={styles.absoluteFill} onPress={actions[0]?.onPress} />
         <View style={styles.dialogCard}>
           <View style={styles.dialogAccent} />
-          <Text style={styles.dialogTitle}>{title}</Text>
-          <Text style={styles.dialogBody}>{message}</Text>
+          <View style={styles.dialogTextBlock}>
+            <Text style={styles.dialogTitle}>{title}</Text>
+            <Text style={styles.dialogBody}>{message}</Text>
+          </View>
           <View style={styles.dialogActions}>
             {actions.map((action) =>
               action.variant === "primary" ? (

@@ -42,6 +42,7 @@ import { SafetyScreen } from "../screens/left/SafetyScreen";
 import { SettingsScreen } from "../screens/left/SettingsScreen";
 import { MeScreen } from "../screens/left/MeScreen";
 import { VenueAddScreen, VenueSelectionScreen } from "../screens/left/VenueSelectionScreen";
+import { VenueDetailScreen } from "../screens/left/VenueDetailScreen";
 import {
   consumePendingActivationLaunch,
   handleVenuePromptResponse,
@@ -228,6 +229,8 @@ export function LeftApp() {
   const [venueDraftNotes, setVenueDraftNotes] = useState("");
   const [venueDraftType, setVenueDraftType] = useState<VenueType>("other");
   const [venueDraftSubmitting, setVenueDraftSubmitting] = useState(false);
+  const [selectedVenueDetail, setSelectedVenueDetail] = useState<RuntimeVenueCandidate | null>(null);
+  const [venueDetailReturnScreen, setVenueDetailReturnScreen] = useState<Screen>("home");
   const [reportCategory, setReportCategory] = useState<ReportCategory>("unsafe_behavior");
   const [reportNotes, setReportNotes] = useState("");
   const [reportSubmitting, setReportSubmitting] = useState(false);
@@ -303,6 +306,38 @@ export function LeftApp() {
   function openSafetyFrom(origin: Screen) {
     setSafetyReturnScreen(origin);
     setScreen("safety");
+  }
+
+  function resolveVenueDetailCandidate(candidate?: RuntimeVenueCandidate | null) {
+    if (candidate) return candidate;
+    return (
+      nearbyVenueOptions.find((item) => item.id === venueSummary.venueId) ??
+      nearbyVenueOptions.find((item) => item.name === venueSummary.venueName) ??
+      (venueSummary.venueName
+        ? {
+            id: venueSummary.venueId,
+            name: venueSummary.venueName,
+            venueType: undefined,
+            latitude: lastKnownCoords?.latitude ?? 0,
+            longitude: lastKnownCoords?.longitude ?? 0,
+            radiusMeters: 60,
+            source: "local_catalog" as const,
+            distanceMeters: 0,
+          }
+        : null)
+    );
+  }
+
+  function openVenueDetail(candidate?: RuntimeVenueCandidate | null, origin: Screen = screen) {
+    if (!sessionVisible || venueHidden) {
+      showDialog("Visibility required", "Go visible to see more.");
+      return;
+    }
+    const resolvedCandidate = resolveVenueDetailCandidate(candidate);
+    if (!resolvedCandidate) return;
+    setSelectedVenueDetail(resolvedCandidate);
+    setVenueDetailReturnScreen(origin);
+    setScreen("venue-detail");
   }
 
   useEffect(() => {
@@ -740,6 +775,24 @@ export function LeftApp() {
       return;
     }
     setScreen(sessionVisible ? "venue" : "activate");
+  }
+
+  async function handleVenueDetailPrimaryAction() {
+    if (!selectedVenueDetail) return;
+    const isCurrentVenue =
+      selectedVenueDetail.id === venueSummary.venueId ||
+      selectedVenueDetail.name === venueSummary.venueName;
+
+    if (isCurrentVenue) {
+      if (sessionVisible) {
+        setScreen("feed");
+        return;
+      }
+      openActivationFrom("venue-detail");
+      return;
+    }
+
+    await confirmVenueSelection(selectedVenueDetail.id);
   }
 
   async function submitVenueSuggestion() {
@@ -1654,20 +1707,24 @@ export function LeftApp() {
   function goToFooterDestination(destination: FooterDestination) {
     if (destination === "home") {
       setSelectedProfile(null);
+      setSelectedVenueDetail(null);
       setScreen("home");
       return;
     }
     if (destination === "nearby") {
       setSelectedProfile(null);
+      setSelectedVenueDetail(null);
       setScreen(sessionVisible ? "feed" : "venue");
       return;
     }
     if (destination === "session") {
       setSelectedProfile(null);
+      setSelectedVenueDetail(null);
       setScreen("venue");
       return;
     }
     setSelectedProfile(null);
+    setSelectedVenueDetail(null);
     setScreen("me");
   }
 
@@ -1750,7 +1807,7 @@ export function LeftApp() {
             sessionVisible={sessionVisible}
             venueHidden={venueHidden}
             onBecomeVisible={() => openActivationFrom("home")}
-            onOpenNearby={() => setScreen(sessionVisible ? "feed" : "venue")}
+            onOpenVenueDetail={(venueCandidate) => openVenueDetail(venueCandidate, "home")}
             onOpenSafety={() => openSafetyFrom("home")}
             onComingSoon={showToast}
           />
@@ -1767,6 +1824,7 @@ export function LeftApp() {
             onActivate={() => openActivationFrom("venue")}
             onOpenFeed={() => setScreen(sessionVisible ? "feed" : "venue")}
             onOpenProfile={openProfile}
+            onOpenVenueDetail={(venueCandidate) => openVenueDetail(venueCandidate, "venue")}
             onSocialMomentumPrimary={handleSocialMomentumPrimary}
             onDismissSocialMomentum={dismissSocialMomentumPrompt}
             onChooseVenue={() => setScreen("venue-select")}
@@ -1774,6 +1832,16 @@ export function LeftApp() {
             onOpenSafety={() => openSafetyFrom("venue")}
             nearbyVenues={nearbyVenueOptions}
             lastKnownCoords={lastKnownCoords}
+          />
+        )}
+        {screen === "venue-detail" && selectedVenueDetail && (
+          <VenueDetailScreen
+            venue={selectedVenueDetail}
+            venueSummary={displayVenueSummary}
+            feed={visibleFeed}
+            sessionVisible={sessionVisible}
+            onBack={() => setScreen(venueDetailReturnScreen)}
+            onPrimaryAction={() => void handleVenueDetailPrimaryAction()}
           />
         )}
         {screen === "activate" && (
@@ -1804,7 +1872,14 @@ export function LeftApp() {
           />
         )}
         {screen === "feed" && (
-          <FeedScreen venue={displayVenueSummary} feed={visibleFeed} sessionVisible={sessionVisible} onOpenProfile={openProfile} onOpenSafety={() => openSafetyFrom("feed")} />
+          <FeedScreen
+            venue={displayVenueSummary}
+            feed={visibleFeed}
+            sessionVisible={sessionVisible}
+            onOpenProfile={openProfile}
+            onOpenVenueDetail={() => openVenueDetail(undefined, "feed")}
+            onOpenSafety={() => openSafetyFrom("feed")}
+          />
         )}
         {screen === "profile" && selectedProfile && (
           <ProfileScreen
