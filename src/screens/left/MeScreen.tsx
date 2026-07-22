@@ -28,7 +28,6 @@ export function MeScreen({
     defaultIntent: AppUser["defaultIntent"];
     defaultVibes: string[];
     profilePrompt: string;
-    approachPrompt: string;
   }) => void;
   onOpenSettings: () => void;
   onBack: () => void;
@@ -45,7 +44,6 @@ export function MeScreen({
   const [defaultIntent, setDefaultIntent] = useState<AppUser["defaultIntent"]>(user.defaultIntent);
   const [defaultVibes, setDefaultVibes] = useState<string[]>(user.defaultVibes);
   const [profilePrompt, setProfilePrompt] = useState(user.profilePrompt);
-  const [approachPrompt, setApproachPrompt] = useState(user.approachPrompt);
 
   useEffect(() => {
     setFirstName(user.firstName);
@@ -53,7 +51,6 @@ export function MeScreen({
     setDefaultIntent(user.defaultIntent);
     setDefaultVibes(user.defaultVibes);
     setProfilePrompt(user.profilePrompt);
-    setApproachPrompt(user.approachPrompt);
   }, [user]);
 
   function toggleVibe(vibe: string) {
@@ -66,7 +63,7 @@ export function MeScreen({
   }
 
   function saveProfileDefaults() {
-    onSave({ firstName, avatarStyle, defaultIntent, defaultVibes, profilePrompt, approachPrompt });
+    onSave({ firstName, avatarStyle, defaultIntent, defaultVibes, profilePrompt });
   }
 
   const intent = (user.defaultIntent ?? "networking").replaceAll("_", " ");
@@ -107,16 +104,6 @@ export function MeScreen({
           style={({ pressed }) => [styles.profileEditHeaderButton, pressed && styles.iconButtonPressed]}
         >
           <Text style={styles.profileEditHeaderText}>{editing ? "Settings" : "Edit"}</Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.profileGreetingRow}>
-        <View style={styles.profileGreetingWrap}>
-          <Feather name="map-pin" size={15} color={T.primary} />
-          <Text style={styles.profileGreetingText}>{`Hey ${user.firstName}! 👋`}</Text>
-        </View>
-        <Pressable onPress={onOpenSettings} style={({ pressed }) => [styles.profileBellButton, pressed && styles.iconButtonPressed]}>
-          <Feather name="bell" size={19} color={T.primary} />
         </Pressable>
       </View>
 
@@ -197,17 +184,6 @@ export function MeScreen({
             ))}
           </View>
 
-          <Text style={styles.settingsEditLabel}>Approach prompt</Text>
-          <TextInput
-            value={approachPrompt}
-            onChangeText={setApproachPrompt}
-            placeholder="What should Left suggest when you're walking over?"
-            placeholderTextColor={T.textMuted}
-            style={[styles.settingsInlineInput, styles.settingsPromptInput]}
-            multiline
-            maxLength={160}
-          />
-
           <View style={styles.profileEditActions}>
             <PrimaryButton
               label={saveState === "saving" ? "Saving..." : saveState === "saved" ? "Saved" : "Save Changes"}
@@ -222,15 +198,6 @@ export function MeScreen({
         </View>
       ) : (
         <>
-          <View style={styles.profileAboutCard}>
-            <View style={styles.profileSectionHeaderRow}>
-              <Text style={styles.profileSectionTitle}>About Me</Text>
-              <Feather name="chevron-down" size={16} color={"rgba(53,102,77,0.55)"} />
-            </View>
-            <Text style={styles.profileAboutText}>{`"${user.approachPrompt}"`}</Text>
-            <Text style={styles.profileQuoteMark}>”</Text>
-          </View>
-
           <View style={styles.profileNowSection}>
             <View style={styles.profileSectionHeaderRow}>
               <View style={styles.profileSectionHeaderLeft}>

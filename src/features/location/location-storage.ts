@@ -5,6 +5,7 @@ const STORAGE_KEYS = {
   runtime: "left/location/runtime",
   venuePreferences: "left/location/venue-preferences",
   activationDefaults: "left/location/activation-defaults",
+  venueApproachPrompts: "left/location/venue-approach-prompts",
 } as const;
 
 const MAX_PERSISTED_VENUE_DISTANCE_METERS = 120;
@@ -63,6 +64,13 @@ export type ActivationDefaults = {
   vibes: string[];
   durationMinutes: number;
   hintText: string;
+};
+
+export type VenueApproachPrompt = {
+  venueId: string;
+  venueName: string;
+  promptText: string;
+  updatedAt: string;
 };
 
 const DEFAULT_RUNTIME_STATE: LocationRuntimeState = {
@@ -179,4 +187,28 @@ export async function getActivationDefaults() {
 
 export async function saveActivationDefaults(next: ActivationDefaults) {
   await writeJson(STORAGE_KEYS.activationDefaults, next);
+}
+
+export async function getVenueApproachPrompts() {
+  return readJson<Record<string, VenueApproachPrompt>>(STORAGE_KEYS.venueApproachPrompts, {});
+}
+
+export async function saveVenueApproachPrompts(next: Record<string, VenueApproachPrompt>) {
+  await writeJson(STORAGE_KEYS.venueApproachPrompts, next);
+}
+
+export async function upsertVenueApproachPrompt(
+  venueId: string,
+  venueName: string,
+  promptText: string,
+) {
+  const all = await getVenueApproachPrompts();
+  all[venueId] = {
+    venueId,
+    venueName,
+    promptText,
+    updatedAt: new Date().toISOString(),
+  };
+  await writeJson(STORAGE_KEYS.venueApproachPrompts, all);
+  return all[venueId];
 }

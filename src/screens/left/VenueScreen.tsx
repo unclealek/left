@@ -19,7 +19,6 @@ import type {
 } from "../../features/location/location-storage";
 import {
   getVenueConfidenceCopy,
-  getVenueConfidenceLabel,
   resolveVenueConfidence,
 } from "../../features/location/venue-confidence";
 import type {
@@ -28,8 +27,7 @@ import type {
 } from "../../types/left-domain";
 import { formatIntent } from "../../app/leftConfig";
 import { T } from "../../app/leftTheme";
-import { LeftDoorwayMark } from "../../components/left/LeftDoorwayMark";
-import { BrandPrimaryButton, EnergyPill, GhostButton, SafetyActionButton, StatusPill, VenueIdentityBlock } from "../../components/left/ui";
+import { BrandPrimaryButton, GhostButton } from "../../components/left/ui";
 import { MAPBOX_ENABLED } from "../../lib/mapbox";
 
 const STAGE_SIZE = 350;
@@ -118,8 +116,8 @@ function buildVenuePlacements(
 
   return filtered.map((candidate, index) => {
     const point = projectVenueCandidate(candidate, center, index);
-    const cardWidth = 116;
-    const cardHeight = 72;
+    const cardWidth = 82;
+    const cardHeight = 54;
     const left = Math.max(10, Math.min(STAGE_SIZE - cardWidth - 10, point.x - cardWidth / 2));
     const top = Math.max(18, Math.min(STAGE_SIZE - cardHeight - 18, point.y - cardHeight / 2));
 
@@ -157,20 +155,19 @@ function resolveMapCenter(
 function getVenueMarkerIcon(name: string) {
   const value = name.toLowerCase();
   if (value.includes("cafe") || value.includes("coffee")) return "coffee";
-  if (value.includes("bar")) return "disc";
+  if (value.includes("bar")) return "wine";
   if (value.includes("gym") || value.includes("studio")) return "activity";
+  if (value.includes("gift") || value.includes("shop") || value.includes("boutique")) return "gift";
   if (value.includes("press") || value.includes("library")) return "book-open";
   return "map-pin";
 }
 
-function getVenueCategoryLabel(name: string) {
-  const value = name.toLowerCase();
-  if (value.includes("steak") || value.includes("grill") || value.includes("restaurant")) return "Restaurant";
-  if (value.includes("bar") || value.includes("lounge")) return "Bar · Lounge";
-  if (value.includes("cafe") || value.includes("coffee")) return "Cafe";
-  if (value.includes("hotel")) return "Hotel";
-  if (value.includes("library")) return "Library";
-  return "Venue";
+function getIntentIcon(intent: string): keyof typeof Feather.glyphMap {
+  const value = intent.toLowerCase();
+  if (value.includes("conversation") || value.includes("group")) return "message-circle";
+  if (value.includes("network")) return "users";
+  if (value.includes("study") || value.includes("focus")) return "book-open";
+  return "message-circle";
 }
 
 function resolveDisplayVenueName(
@@ -265,9 +262,7 @@ export function VenueScreen({
     () => resolveVenueConfidence(venue, nearbyVenues),
     [nearbyVenues, venue],
   );
-  const confidenceLabel = getVenueConfidenceLabel(venueConfidence);
   const confidenceCopy = getVenueConfidenceCopy(venueConfidence);
-  const nearbyCount = Math.max(venue.visibleCount, feed.length);
   const mapCenter = useMemo(
     () => resolveMapCenter(venue, nearbyVenues, lastKnownCoords),
     [lastKnownCoords, nearbyVenues, venue],
@@ -322,25 +317,7 @@ export function VenueScreen({
   const intentSubtext = isPubliclyVisible ? "Most common here" : "Likely nearby";
   const primaryActionLabel = isPubliclyVisible ? "Open Nearby Feed" : "Go Visible";
   const primaryAction = isPubliclyVisible ? onOpenFeed : onActivate;
-  const venueDistanceLabel = toMetersLabel(activeVenueCandidate?.distanceMeters ?? null);
-  const venueCategoryLabel = getVenueCategoryLabel(displayVenueName);
-  const venueAddressMeta =
-    activeVenueCandidate && activeVenueCandidate.distanceMeters != null
-      ? `${venueDistanceLabel} · ${venueCategoryLabel}`
-      : venueCategoryLabel;
   const showPrimaryCta = !isPubliclyVisible || !socialMomentum;
-  const currentVenueCandidate =
-    activeVenueCandidate ??
-    ({
-      id: venue.venueId,
-      name: displayVenueName,
-      venueType: undefined,
-      latitude: mapCenter.latitude,
-      longitude: mapCenter.longitude,
-      radiusMeters: 60,
-      source: "local_catalog" as const,
-      distanceMeters: 0,
-    } satisfies RuntimeVenueCandidate);
   const pulseIconStyle = {
     transform: [{ scale: pulseScale }],
     opacity: pingPulse.interpolate({
@@ -351,54 +328,64 @@ export function VenueScreen({
 
   return (
     <View style={screenStyles.page}>
-      <View style={screenStyles.headerRow}>
-        <Pressable
-          onPress={() => onOpenVenueDetail(currentVenueCandidate)}
-          style={({ pressed }) => [screenStyles.venueIdentityPressable, pressed && screenStyles.pressed]}
-        >
-          <VenueIdentityBlock
-            icon={getVenueMarkerIcon(displayVenueName)}
-            title={displayVenueName}
-            titleLines={2}
-            metaIcon={isPubliclyVisible ? "users" : "radio"}
-            metaText={
-              isPubliclyVisible
-                ? nearbyCount > 0
-                  ? `${nearbyCount} ${nearbyCount === 1 ? "person visible now" : "people visible now"}`
-                  : "Nobody visible yet"
-                : confidenceLabel
-            }
-            secondaryMetaIcon="map-pin"
-            secondaryMetaText={venueAddressMeta}
-            emphasis="hero"
-          />
-        </Pressable>
-
-        <SafetyActionButton onPress={onOpenSafety} />
-      </View>
-
       <View style={screenStyles.titleBlock}>
-        <StatusPill label={statusLabel} visible={isPubliclyVisible} onPress={onOpenSafety} showChevron />
-        <View style={screenStyles.heroTitleRow}>
-          <Text style={screenStyles.heroTitle}>Venue Radar</Text>
-          <Animated.View style={[screenStyles.heroSignalWrap, pulseIconStyle]}>
-            <Feather name="radio" size={18} color={"#9BB39C"} />
-          </Animated.View>
+        <View style={screenStyles.headerRow}>
+          <View style={screenStyles.headerCopy}>
+            <View style={screenStyles.heroTitleRow}>
+              <Text style={screenStyles.heroTitle}>Venue Radar</Text>
+              <Animated.View style={[screenStyles.heroSignalWrap, pulseIconStyle]}>
+                <Feather name="radio" size={18} color={"#5D9A7B"} />
+              </Animated.View>
+            </View>
+            <Text style={screenStyles.heroSubtitle}>
+              {isPubliclyVisible
+                ? "See who's around while you stay visible."
+                : confidenceCopy}
+            </Text>
+          </View>
+          <View style={screenStyles.statusActionPill}>
+            <View style={screenStyles.compactStatusPill}>
+              <Feather
+                name={isPubliclyVisible ? "eye" : "eye-off"}
+                size={17}
+                color={isPubliclyVisible ? T.primary : "#35664D"}
+              />
+              <Text style={screenStyles.compactStatusLabel}>{statusLabel}</Text>
+            </View>
+            <View style={screenStyles.statusActionDivider} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Privacy and safety"
+              onPress={onOpenSafety}
+              hitSlop={8}
+              style={({ pressed }) => [
+                screenStyles.compactPrivacyButton,
+                pressed && screenStyles.pressed,
+              ]}
+            >
+              <Feather name="shield" size={18} color={T.primary} />
+            </Pressable>
+          </View>
         </View>
-        <Text style={screenStyles.heroSubtitle}>
-          {isPubliclyVisible
-            ? "See who's around while you stay visible."
-            : confidenceCopy}
-        </Text>
         <View style={screenStyles.insightRow}>
           <View style={screenStyles.insightCard}>
-            <Text style={screenStyles.insightLabel}>Energy Pill</Text>
-            <EnergyPill level={energyTitle} />
+            <Text style={screenStyles.insightLabel}>Energy</Text>
+            <View style={screenStyles.insightValueRow}>
+              <View style={screenStyles.insightIconBubble}>
+                <Feather name="wind" size={24} color={T.primary} />
+              </View>
+              <Text style={screenStyles.insightTitle}>{energyTitle}</Text>
+            </View>
             <Text style={screenStyles.insightSubtext}>{energySubtext}</Text>
           </View>
           <View style={screenStyles.insightCard}>
             <Text style={screenStyles.insightLabel}>Top intent</Text>
-            <Text style={screenStyles.insightValue}>{intentTitle}</Text>
+            <View style={screenStyles.insightValueRow}>
+              <View style={screenStyles.insightIconBubble}>
+                <Feather name={getIntentIcon(intentTitle)} size={23} color={T.primary} />
+              </View>
+              <Text style={screenStyles.insightTitle}>{intentTitle}</Text>
+            </View>
             <Text style={screenStyles.insightSubtext}>{intentSubtext}</Text>
           </View>
         </View>
@@ -444,18 +431,15 @@ export function VenueScreen({
             pointerEvents="none"
           />
 
+          <View style={screenStyles.rangePill}>
+            <Feather name="crosshair" size={18} color={T.textPrimary} />
+            <Text style={screenStyles.rangePillText}>150 m</Text>
+            <Feather name="chevron-down" size={16} color={T.textPrimary} />
+          </View>
+
           <View style={screenStyles.ringOuter} pointerEvents="none" />
           <View style={screenStyles.ringMid} pointerEvents="none" />
           <View style={screenStyles.ringInner} pointerEvents="none" />
-          <Text style={[screenStyles.ringLabel, screenStyles.ringLabelOuter]}>
-            150 m
-          </Text>
-          <Text style={[screenStyles.ringLabel, screenStyles.ringLabelMid]}>
-            100 m
-          </Text>
-          <Text style={[screenStyles.ringLabel, screenStyles.ringLabelInner]}>
-            50 m
-          </Text>
 
           <View style={screenStyles.centerVenueGlow} pointerEvents="none" />
           <View style={screenStyles.centerVenueBoundary} pointerEvents="none" />
@@ -482,11 +466,8 @@ export function VenueScreen({
                 />
               </View>
               <View style={screenStyles.venueMarkerCopy}>
-                <Text style={screenStyles.venueMarkerName} numberOfLines={2}>
+                <Text style={screenStyles.venueMarkerName} numberOfLines={1}>
                   {candidate.name}
-                </Text>
-                <Text style={screenStyles.venueMarkerCategory}>
-                  {getVenueCategoryLabel(candidate.name)}
                 </Text>
                 <Text style={screenStyles.venueMarkerMeta}>
                   {toMetersLabel(candidate.distanceMeters)}
@@ -535,24 +516,23 @@ export function VenueScreen({
             : null}
 
           <View style={screenStyles.centerBadge} pointerEvents="none">
-            <View style={screenStyles.centerBadgeIcon}>
-              <LeftDoorwayMark
-                size={22}
-                archColor={T.white}
-                innerColor={"rgba(255,246,232,0.10)"}
-                baseColor={T.white}
-                baseScale={0.5}
-              />
-            </View>
             <Text style={screenStyles.centerBadgeTitle}>YOU</Text>
             <Text style={screenStyles.centerBadgeSubtitle}>
               {isPubliclyVisible ? "Visible" : "Hidden"}
             </Text>
           </View>
 
-          <View style={screenStyles.currentVenueChip} pointerEvents="none">
+          <Pressable
+            onPress={() => {
+              if (activeVenueCandidate) onOpenVenueDetail(activeVenueCandidate);
+            }}
+            style={({ pressed }) => [
+              screenStyles.currentVenueChip,
+              pressed && screenStyles.pressed,
+            ]}
+          >
             <View style={screenStyles.currentVenuePin}>
-              <Feather name="map-pin" size={14} color={T.white} />
+              <Feather name="map-pin" size={18} color={T.primary} />
             </View>
             <View style={screenStyles.currentVenueCopy}>
               <Text style={screenStyles.currentVenueChipText} numberOfLines={1}>
@@ -562,7 +542,8 @@ export function VenueScreen({
                 {`${energyTitle} · ${intentTitle}`}
               </Text>
             </View>
-          </View>
+            <Feather name="chevron-right" size={20} color={T.textPrimary} />
+          </Pressable>
         </View>
       </View>
 
@@ -620,86 +601,140 @@ const screenStyles = StyleSheet.create({
   page: {
     width: "100%",
     alignItems: "center",
-    gap: 14,
-  },
-  headerRow: {
-    width: "100%",
-    maxWidth: 390,
-    paddingHorizontal: 2,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 14,
-  },
-  venueIdentityPressable: {
-    flex: 1,
+    gap: 18,
   },
   titleBlock: {
     width: "100%",
     maxWidth: 390,
-    gap: 10,
+    gap: 18,
+  },
+  headerRow: {
+    width: "100%",
+    flexDirection: "row",
     alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  headerCopy: {
+    flex: 1,
+    gap: 16,
+    paddingRight: 2,
+  },
+  statusActionPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexShrink: 0,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,252,247,0.96)",
+    borderWidth: 1,
+    borderColor: "rgba(226,212,190,0.9)",
+    paddingLeft: 7,
+    paddingRight: 4,
+    paddingVertical: 4,
+    gap: 2,
+    marginTop: 2,
+  },
+  compactStatusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingLeft: 10,
+    paddingRight: 12,
+    paddingVertical: 8,
+  },
+  compactStatusLabel: {
+    color: T.textPrimary,
+    fontSize: 15,
+    lineHeight: 19,
+    fontFamily: T.fontBodyMedium,
+  },
+  statusActionDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: "rgba(214,198,169,0.46)",
+    marginVertical: 0,
+  },
+  compactPrivacyButton: {
+    width: 42,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
   },
   heroTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
   },
   heroTitle: {
+    flexShrink: 1,
     color: T.textPrimary,
-    fontSize: 32,
-    lineHeight: 37,
+    fontSize: 34,
+    lineHeight: 40,
     fontFamily: T.fontDisplayBold,
-    letterSpacing: -0.8,
+    letterSpacing: -1.1,
   },
   heroSignalWrap: {
-    marginTop: 3,
+    marginTop: 4,
   },
   heroSubtitle: {
     color: "rgba(31,46,36,0.82)",
-    fontSize: 15,
-    lineHeight: 21,
+    fontSize: 16,
+    lineHeight: 24,
     fontFamily: T.fontBody,
-    maxWidth: 280,
   },
   insightRow: {
     width: "100%",
     flexDirection: "row",
-    gap: 10,
+    gap: 14,
   },
   insightCard: {
     flex: 1,
-    borderRadius: 18,
-    backgroundColor: "#FFFFFF",
+    borderRadius: 26,
+    backgroundColor: "rgba(255,255,255,0.98)",
     borderWidth: 1,
-    borderColor: "rgba(214,198,169,0.4)",
-    paddingHorizontal: 15,
-    paddingVertical: 13,
-    shadowColor: "#000000",
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
+    borderColor: "rgba(226,212,190,0.78)",
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+    shadowColor: "#D8C3A3",
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
     elevation: 2,
-    gap: 5,
+    gap: 14,
   },
   insightLabel: {
     color: "rgba(31,46,36,0.56)",
-    fontSize: 11,
+    fontSize: 10,
     lineHeight: 14,
     textTransform: "uppercase",
     fontFamily: T.fontBodyBold,
-    letterSpacing: 0.7,
+    letterSpacing: 2,
   },
-  insightValue: {
+  insightValueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  insightIconBubble: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "rgba(233,236,206,0.72)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  insightTitle: {
     color: T.textPrimary,
-    fontSize: 16,
-    lineHeight: 20,
+    flex: 1,
+    fontSize: 17,
+    lineHeight: 21,
     fontFamily: T.fontBodyBold,
   },
   insightSubtext: {
     color: "rgba(31,46,36,0.7)",
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 13,
+    lineHeight: 18,
     fontFamily: T.fontBody,
   },
   mapCard: {
@@ -707,18 +742,18 @@ const screenStyles = StyleSheet.create({
     maxWidth: 390,
     borderRadius: 34,
     borderWidth: 1,
-    borderColor: "rgba(214,198,169,0.72)",
-    backgroundColor: "rgba(255,252,247,0.92)",
-    padding: 14,
+    borderColor: "rgba(226,212,190,0.9)",
+    backgroundColor: "rgba(255,252,247,0.98)",
+    padding: 10,
     shadowColor: "#D8C3A3",
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.16,
     shadowRadius: 24,
-    shadowOffset: { width: 0, height: 16 },
+    shadowOffset: { width: 0, height: 14 },
     elevation: 6,
   },
   mapFrame: {
     width: "100%",
-    height: 390,
+    height: 470,
     borderRadius: 28,
     overflow: "hidden",
     alignItems: "center",
@@ -733,7 +768,7 @@ const screenStyles = StyleSheet.create({
   },
   mapWarmWash: {
     ...StyleSheet.absoluteFillObject,
-    opacity: 0.9,
+    opacity: 0.94,
   },
   mapPatchOne: {
     position: "absolute",
@@ -799,101 +834,108 @@ const screenStyles = StyleSheet.create({
   },
   ringOuter: {
     position: "absolute",
-    width: 270,
-    height: 270,
-    borderRadius: 135,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "rgba(100,116,103,0.28)",
+    borderColor: "rgba(103,128,113,0.18)",
   },
   ringMid: {
     position: "absolute",
-    width: 200,
-    height: 200,
-    borderRadius: 100,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "rgba(100,116,103,0.24)",
+    borderColor: "rgba(103,128,113,0.18)",
   },
   ringInner: {
+    position: "absolute",
+    width: 144,
+    height: 144,
+    borderRadius: 72,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: "rgba(255,194,77,0.22)",
+  },
+  rangePill: {
+    position: "absolute",
+    top: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,252,247,0.98)",
+    borderWidth: 1,
+    borderColor: "rgba(226,212,190,0.9)",
+    shadowColor: "#D8C3A3",
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  rangePillText: {
+    color: T.textPrimary,
+    fontSize: 17,
+    lineHeight: 20,
+    fontFamily: T.fontBodyMedium,
+  },
+  centerVenueGlow: {
+    position: "absolute",
+    width: 206,
+    height: 206,
+    borderRadius: 103,
+    backgroundColor: "rgba(255,194,77,0.18)",
+  },
+  centerVenueBoundary: {
     position: "absolute",
     width: 132,
     height: 132,
     borderRadius: 66,
     borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: "rgba(255,194,77,0.35)",
-  },
-  ringLabel: {
-    position: "absolute",
-    color: T.textMuted,
-    fontSize: 12,
-    fontFamily: T.fontBodyMedium,
-  },
-  ringLabelOuter: {
-    top: 66,
-    right: 86,
-  },
-  ringLabelMid: {
-    top: 102,
-    right: 112,
-  },
-  ringLabelInner: {
-    top: 138,
-    right: 136,
-  },
-  centerVenueGlow: {
-    position: "absolute",
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: "rgba(255,194,77,0.16)",
-  },
-  centerVenueBoundary: {
-    position: "absolute",
-    width: 120,
-    height: 120,
-    borderRadius: 34,
-    borderWidth: 1.6,
     borderColor: "#FFC24D",
-    backgroundColor: "rgba(255,221,164,0.16)",
-    transform: [{ rotate: "18deg" }],
+    backgroundColor: "rgba(255,221,164,0.12)",
   },
   venueMarker: {
     position: "absolute",
-    width: 96,
-    minHeight: 62,
+    width: 92,
+    minHeight: 56,
   },
   venueMarkerHidden: {
     opacity: 0.78,
   },
   venueMarkerBadge: {
     position: "absolute",
-    top: -4,
-    right: 4,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#FFF7E8",
+    top: -8,
+    right: 10,
+    minWidth: 54,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "rgba(255,252,247,0.98)",
     borderWidth: 1,
-    borderColor: "rgba(255,195,77,0.62)",
+    borderColor: "rgba(255,195,77,0.34)",
     alignItems: "center",
     justifyContent: "center",
+    flexDirection: "row",
+    gap: 6,
     zIndex: 2,
-    shadowColor: "#000000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
+    paddingHorizontal: 10,
+    shadowColor: "#D8C3A3",
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
   },
   venueMarkerBadgeText: {
     color: T.accentBright,
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: T.fontBodyBold,
   },
   venueMarkerPin: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: "#1B4332",
     alignItems: "center",
     justifyContent: "center",
@@ -903,24 +945,19 @@ const screenStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
   },
   venueMarkerCopy: {
-    marginTop: 6,
+    marginTop: 8,
     gap: 1,
   },
   venueMarkerName: {
     color: T.textPrimary,
     fontSize: 11,
-    lineHeight: 13,
+    lineHeight: 14,
     fontFamily: T.fontBodyMedium,
-  },
-  venueMarkerCategory: {
-    color: T.textSecondary,
-    fontSize: 10,
-    lineHeight: 12,
-    fontFamily: T.fontBody,
   },
   venueMarkerMeta: {
     color: T.primary,
     fontSize: 10,
+    lineHeight: 13,
     fontFamily: T.fontBodyMedium,
   },
   personPulse: {
@@ -949,71 +986,74 @@ const screenStyles = StyleSheet.create({
   },
   centerBadge: {
     position: "absolute",
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "rgba(255,252,247,0.98)",
+    borderWidth: 8,
+    borderColor: "rgba(255,255,255,0.92)",
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
-  },
-  centerBadgeIcon: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: T.white,
-    borderWidth: 5,
-    borderColor: "rgba(255,252,247,0.96)",
-    alignItems: "center",
-    justifyContent: "center",
     shadowColor: "#D5B06D",
     shadowOpacity: 0.16,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
   },
   centerBadgeTitle: {
     color: T.textPrimary,
-    fontSize: 13,
+    fontSize: 17,
+    lineHeight: 20,
     fontFamily: T.fontBodyBold,
-    letterSpacing: 0.8,
   },
   centerBadgeSubtitle: {
     color: T.textSecondary,
-    fontSize: 13,
+    fontSize: 15,
+    lineHeight: 18,
     fontFamily: T.fontBody,
   },
   currentVenueChip: {
     position: "absolute",
-    bottom: 10,
-    maxWidth: 186,
+    left: 50,
+    right: 50,
+    bottom: 18,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,252,247,0.82)",
+    gap: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderRadius: 24,
+    backgroundColor: "rgba(255,252,247,0.98)",
     borderWidth: 1,
-    borderColor: "rgba(214,198,169,0.42)",
+    borderColor: "rgba(226,212,190,0.9)",
+    shadowColor: "#D8C3A3",
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
   },
   currentVenuePin: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#F4AE21",
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "rgba(233,236,206,0.78)",
     alignItems: "center",
     justifyContent: "center",
   },
   currentVenueCopy: {
-    flexShrink: 1,
-    alignItems: "center",
+    flex: 1,
+    alignItems: "flex-start",
+    gap: 2,
   },
   currentVenueChipText: {
-    flexShrink: 1,
     color: T.textPrimary,
-    fontSize: 13,
+    fontSize: 15,
+    lineHeight: 18,
     fontFamily: T.fontBodyMedium,
   },
   currentVenueChipMeta: {
     color: T.primary,
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 18,
     fontFamily: T.fontBodyMedium,
   },
   ctaBlock: {

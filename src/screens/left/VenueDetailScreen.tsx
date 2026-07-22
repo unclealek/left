@@ -1,9 +1,11 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
 import type { NearbyFeedItem, VenueContextSummary } from "../../types/left-domain";
 import { T } from "../../app/leftTheme";
+import { BackNavButton } from "../../components/left/navigation";
 
 const VENUE_ILLUSTRATIONS = {
   cafe: require("../../../output/illustrations/venues/cafe.png"),
@@ -16,11 +18,14 @@ const VENUE_ILLUSTRATIONS = {
   generic: require("../../../output/illustrations/venues/generic-place.png"),
 } as const;
 
+const INTENT_TINT = "#F5EFE3";
+
 type DetailIntent = {
   label: string;
   icon: keyof typeof Feather.glyphMap;
   count: number;
   tint: string;
+  iconColor: string;
 };
 
 export function VenueDetailScreen({
@@ -28,6 +33,10 @@ export function VenueDetailScreen({
   venueSummary,
   feed,
   sessionVisible,
+  approachPrompt,
+  approachPromptSaving,
+  onChangeApproachPrompt,
+  onSaveApproachPrompt,
   onBack,
   onPrimaryAction,
 }: {
@@ -35,9 +44,15 @@ export function VenueDetailScreen({
   venueSummary: VenueContextSummary;
   feed: NearbyFeedItem[];
   sessionVisible: boolean;
+  approachPrompt: string;
+  approachPromptSaving: boolean;
+  onChangeApproachPrompt: (value: string) => void;
+  onSaveApproachPrompt: () => void;
   onBack: () => void;
   onPrimaryAction: () => void;
 }) {
+  const insets = useSafeAreaInsets();
+  const topInset = insets.top + 10;
   const isCurrentVenue =
     venue.id === venueSummary.venueId || venue.name === venueSummary.venueName;
   const seed = Math.abs(hashVenueName(venue.name));
@@ -56,19 +71,15 @@ export function VenueDetailScreen({
   const primaryCaption = isCurrentVenue && sessionVisible ? "Open the people visible at this venue" : isCurrentVenue ? "Let others know you're here" : "Make this your active venue";
 
   return (
-    <View style={screenStyles.page}>
-      <View style={screenStyles.hero}>
+    <View style={[screenStyles.page, { paddingTop: topInset }]}>
+      <View style={[screenStyles.hero, { marginTop: -topInset }]}>
         <Image source={imageSource} style={screenStyles.heroImage} resizeMode="cover" />
         <LinearGradient
-          colors={["rgba(17,15,12,0.12)", "rgba(17,15,12,0.28)", "rgba(17,15,12,0.48)"]}
+          colors={["rgba(17,15,12,0.04)", "rgba(17,15,12,0.10)", "rgba(253,249,238,0.88)"]}
           style={screenStyles.heroShade}
         />
-        <View style={screenStyles.heroControls}>
-          <IconCircleButton icon="chevron-left" onPress={onBack} />
-          <View style={screenStyles.heroActions}>
-            <IconCircleButton icon="share" />
-            <IconCircleButton icon="more-vertical" />
-          </View>
+        <View style={[screenStyles.heroControls, { top: topInset + 6 }]}>
+          <BackNavButton label="" onPress={onBack} />
         </View>
       </View>
 
@@ -77,9 +88,6 @@ export function VenueDetailScreen({
           <View style={screenStyles.titleCopy}>
             <Text style={screenStyles.title}>{venue.name}</Text>
             <Text style={screenStyles.subtitle}>{formatVenueSubline(venue, isCurrentVenue, venueType)}</Text>
-          </View>
-          <View style={screenStyles.saveCircle}>
-            <Feather name="bookmark" size={24} color={T.textSecondary} />
           </View>
         </View>
 
@@ -106,7 +114,7 @@ export function VenueDetailScreen({
             <Feather name="users" size={26} color={pulseTone.iconColor} />
           </LinearGradient>
           <View style={screenStyles.pulseCopy}>
-            <Text numberOfLines={1} style={[screenStyles.pulseStatus, { color: pulseTone.titleColor }]}>
+            <Text style={[screenStyles.pulseStatus, { color: pulseTone.titleColor }]}>
               {status.title}
             </Text>
             <Text numberOfLines={2} style={screenStyles.pulseSubtext}>{status.subtitle}</Text>
@@ -129,7 +137,7 @@ export function VenueDetailScreen({
         <View style={screenStyles.statsRow}>
           <View style={screenStyles.statCard}>
             <View style={[screenStyles.statIconBubble, screenStyles.statIconWarm]}>
-              <Feather name="users" size={21} color={"#A55B2D"} />
+              <Feather name="users" size={21} color={"#982206"} />
             </View>
             <Text style={screenStyles.statTitle}>People on Left</Text>
             <Text style={screenStyles.statValue}>{visibleCount}</Text>
@@ -137,7 +145,7 @@ export function VenueDetailScreen({
           </View>
           <View style={screenStyles.statCard}>
             <View style={[screenStyles.statIconBubble, screenStyles.statIconCool]}>
-              <Feather name="clock" size={21} color={T.primary} />
+              <Feather name="clock" size={21} color={"#325735"} />
             </View>
             <Text style={screenStyles.statTitle}>Usual at this time</Text>
             <Text style={screenStyles.statValue}>{usualCount}</Text>
@@ -146,47 +154,70 @@ export function VenueDetailScreen({
         </View>
 
         <View style={screenStyles.intentSection}>
-          <Text style={screenStyles.sectionHeading}>What people are here for</Text>
-          <View style={screenStyles.intentRow}>
-            {intents.map((intent) => (
-              <View key={intent.label} style={screenStyles.intentItem}>
-                <View style={[screenStyles.intentIconBubble, { backgroundColor: intent.tint }]}>
-                  <Feather name={intent.icon} size={25} color={T.textPrimary} />
+          <Text style={screenStyles.sectionHeading}>Social Intent</Text>
+          <View style={screenStyles.intentCard}>
+            <View style={screenStyles.intentRow}>
+              {intents.map((intent) => (
+                <View key={intent.label} style={screenStyles.intentItem}>
+                  <View style={[screenStyles.intentIconBubble, { backgroundColor: intent.tint }]}>
+                    <Feather name={intent.icon} size={23} color={intent.iconColor} />
+                  </View>
+                  <Text style={screenStyles.intentLabel}>{intent.label}</Text>
+                  <Text style={screenStyles.intentCount}>{intent.count}</Text>
                 </View>
-                <Text style={screenStyles.intentLabel}>{intent.label}</Text>
-                <Text style={screenStyles.intentCount}>{intent.count}</Text>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
         </View>
 
+        {sessionVisible ? (
+          <View style={screenStyles.promptSection}>
+            <View style={screenStyles.promptHeader}>
+              <Text style={screenStyles.sectionHeading}>Venue-specific approach prompt</Text>
+              <Text style={screenStyles.promptMeta}>Used when you approach someone here</Text>
+            </View>
+            <View style={screenStyles.promptCard}>
+              <TextInput
+                value={approachPrompt}
+                onChangeText={onChangeApproachPrompt}
+                placeholder="What should Left suggest when you're walking over here?"
+                placeholderTextColor={T.textMuted}
+                style={screenStyles.promptInput}
+                multiline
+                maxLength={160}
+                textAlignVertical="top"
+              />
+              <Pressable
+                onPress={onSaveApproachPrompt}
+                style={({ pressed }) => [
+                  screenStyles.promptSaveButton,
+                  pressed && screenStyles.primaryButtonPressed,
+                ]}
+              >
+                <Text style={screenStyles.promptSaveButtonText}>
+                  {approachPromptSaving ? "Saving..." : "Save prompt"}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+
+        <Text style={screenStyles.privacyNote}>
+          Only your first name and current vibe are shared with others checked-in here. No photos or precise coordinates are ever broadcast.
+        </Text>
+
         <Pressable onPress={onPrimaryAction} style={({ pressed }) => [screenStyles.primaryButton, pressed && screenStyles.primaryButtonPressed]}>
-          <LinearGradient
-            colors={["#BE4D31", "#D35A38", "#C6482F"]}
-            start={{ x: 0, y: 0.4 }}
-            end={{ x: 1, y: 0.8 }}
-            style={screenStyles.primaryButtonFill}
-          >
-            <Text style={screenStyles.primaryButtonText}>{primaryLabel}</Text>
-            <Text style={screenStyles.primaryButtonSubtext}>{primaryCaption}</Text>
-          </LinearGradient>
+          <View style={screenStyles.primaryButtonFill}>
+            <Text style={screenStyles.primaryButtonText}>
+              {isCurrentVenue && sessionVisible ? "See People Here" : "Check-in at this Venue"}
+            </Text>
+            <Text style={screenStyles.primaryButtonSubtext}>
+              {isCurrentVenue && sessionVisible ? primaryCaption : "Make this your active location"}
+            </Text>
+          </View>
         </Pressable>
       </View>
     </View>
-  );
-}
-
-function IconCircleButton({
-  icon,
-  onPress,
-}: {
-  icon: keyof typeof Feather.glyphMap;
-  onPress?: () => void;
-}) {
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [screenStyles.iconCircle, pressed && screenStyles.iconCirclePressed]}>
-      <Feather name={icon} size={22} color={T.white} />
-    </Pressable>
   );
 }
 
@@ -217,24 +248,24 @@ function buildIntentBreakdown(
     const ordered = Object.entries(intentMap)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 4)
-      .map(([label, count]) => buildIntentItem(label, count));
+      .map(([label, count], index) => buildIntentItem(label, count, index === 0));
     if (ordered.length >= 4) return ordered;
   }
 
   const librarySet: DetailIntent[] = [
-    buildIntentItem("Study", 4 + (seed % 5)),
+    buildIntentItem("Study", 4 + (seed % 5), true),
     buildIntentItem("Networking", 2 + (seed % 4)),
     buildIntentItem("Coffee", 2 + (seed % 3)),
     buildIntentItem("Focused", Math.max(1, visibleCount - 8)),
   ];
   const cafeSet: DetailIntent[] = [
-    buildIntentItem("Coffee", 3 + (seed % 5)),
+    buildIntentItem("Coffee", 3 + (seed % 5), true),
     buildIntentItem("Networking", 2 + (seed % 4)),
     buildIntentItem("Open", 2 + (seed % 3)),
     buildIntentItem("Working", Math.max(1, visibleCount - 7)),
   ];
   const coworkingSet: DetailIntent[] = [
-    buildIntentItem("Builders", 3 + (seed % 5)),
+    buildIntentItem("Builders", 3 + (seed % 5), true),
     buildIntentItem("Networking", 2 + (seed % 4)),
     buildIntentItem("Focus", 2 + (seed % 4)),
     buildIntentItem("Coffee", Math.max(1, visibleCount - 6)),
@@ -245,25 +276,27 @@ function buildIntentBreakdown(
   return cafeSet;
 }
 
-function buildIntentItem(label: string, count: number): DetailIntent {
+function buildIntentItem(label: string, count: number, highlighted = false): DetailIntent {
   const normalized = label.toLowerCase();
+  const tint = highlighted ? "#FFB950" : INTENT_TINT;
+  const iconColor = highlighted ? "#291800" : T.textPrimary;
   if (normalized.includes("study") || normalized.includes("focus")) {
-    return { label, icon: "book-open", count, tint: "#ECECE7" };
+    return { label, icon: "book-open", count, tint, iconColor };
   }
   if (normalized.includes("network")) {
-    return { label, icon: "briefcase", count, tint: "#F6E9D4" };
+    return { label, icon: "briefcase", count, tint, iconColor };
   }
   if (normalized.includes("coffee")) {
-    return { label, icon: "coffee", count, tint: "#FAEBD9" };
+    return { label, icon: "coffee", count, tint, iconColor };
   }
   if (normalized.includes("work") || normalized.includes("builder")) {
-    return { label, icon: "monitor", count, tint: "#E9EBEE" };
+    return { label, icon: "monitor", count, tint, iconColor };
   }
-  return { label, icon: "message-circle", count, tint: "#F1ECE8" };
+  return { label, icon: "message-circle", count, tint, iconColor };
 }
 
 function mapIntentToDisplay(intent: NearbyFeedItem["intent"]) {
-  if (intent === "networking") return "Networking";
+  if (intent === "networking") return "Network";
   if (intent === "open_to_conversation") return "Open";
   if (intent === "group_discussion") return "Group";
   return "Coffee";
@@ -299,23 +332,48 @@ function getPulseBars(level: VenueContextSummary["energyLevel"]) {
 }
 
 function getPulseTone(level: VenueContextSummary["energyLevel"]) {
-  if (level === "busy" || level === "active") {
-    return {
-      titleColor: T.primary,
-      iconColor: T.primary,
-      barColor: T.primary,
-      barBorderColor: "rgba(53,102,77,0.24)",
-      iconGradient: [T.primarySoft, "#FFF7EB"] as [string, string],
-    };
+  switch (level) {
+    case "busy":
+      return {
+        titleColor: "#C1462E",
+        iconColor: "#C1462E",
+        barColor: "#C1462E",
+        barBorderColor: "rgba(193,70,46,0.24)",
+        iconGradient: ["#F9DDD6", "#FFF4EF"] as [string, string],
+      };
+    case "active":
+      return {
+        titleColor: T.primary,
+        iconColor: T.primary,
+        barColor: T.primary,
+        barBorderColor: "rgba(53,102,77,0.24)",
+        iconGradient: [T.primarySoft, "#FFF7EB"] as [string, string],
+      };
+    case "warm":
+      return {
+        titleColor: "#825500",
+        iconColor: "#825500",
+        barColor: "#FDB64A",
+        barBorderColor: "rgba(253,182,74,0.34)",
+        iconGradient: ["#FFDDB3", "#FFF8EA"] as [string, string],
+      };
+    case "focused":
+      return {
+        titleColor: "#4C5B8F",
+        iconColor: "#4C5B8F",
+        barColor: "#4C5B8F",
+        barBorderColor: "rgba(76,91,143,0.24)",
+        iconGradient: ["#E8ECF8", "#F8F9FE"] as [string, string],
+      };
+    default:
+      return {
+        titleColor: "#7A8478",
+        iconColor: "#7A8478",
+        barColor: "#7A8478",
+        barBorderColor: "rgba(122,132,120,0.24)",
+        iconGradient: ["#EEF1EA", "#FAFBF8"] as [string, string],
+      };
   }
-
-  return {
-    titleColor: "#B88A1B",
-    iconColor: "#B88A1B",
-    barColor: T.accent,
-    barBorderColor: "rgba(255,195,77,0.34)",
-    iconGradient: ["#FFF1CC", "#FFF8EA"] as [string, string],
-  };
 }
 
 function getVenueIllustrationSource(
@@ -356,13 +414,17 @@ function hashVenueName(value: string) {
 
 const screenStyles = StyleSheet.create({
   page: {
+    marginHorizontal: -20,
+    paddingBottom: 28,
     gap: 0,
+    backgroundColor: T.ink,
   },
   hero: {
     position: "relative",
-    height: 306,
+    height: 392,
     overflow: "hidden",
-    borderRadius: 34,
+    borderBottomLeftRadius: 34,
+    borderBottomRightRadius: 34,
     backgroundColor: "#D7D0C2",
   },
   heroImage: {
@@ -374,43 +436,23 @@ const screenStyles = StyleSheet.create({
   },
   heroControls: {
     position: "absolute",
-    top: 22,
     left: 18,
     right: 18,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-  },
-  heroActions: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  iconCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(16,15,13,0.22)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.18)",
-  },
-  iconCirclePressed: {
-    opacity: 0.84,
+    justifyContent: "flex-start",
   },
   sheet: {
-    marginTop: -18,
-    borderRadius: 34,
-    backgroundColor: "#FFF9F1",
+    marginTop: -34,
+    borderTopLeftRadius: 34,
+    borderTopRightRadius: 34,
+    borderBottomLeftRadius: 34,
+    borderBottomRightRadius: 34,
+    backgroundColor: "#FDF9EE",
     paddingHorizontal: 22,
     paddingTop: 22,
-    paddingBottom: 26,
-    gap: 18,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: -6 },
-    elevation: 10,
+    paddingBottom: 34,
+    gap: 20,
   },
   titleRow: {
     flexDirection: "row",
@@ -423,26 +465,16 @@ const screenStyles = StyleSheet.create({
   },
   title: {
     color: "#211814",
-    fontSize: 30,
+    fontSize: 28,
     lineHeight: 34,
-    fontFamily: T.fontDisplayLight,
-    letterSpacing: -1.1,
+    fontFamily: T.fontDisplayBold,
+    letterSpacing: -0.8,
   },
   subtitle: {
     color: T.textSecondary,
     fontSize: 16,
     lineHeight: 21,
     fontFamily: T.fontBody,
-  },
-  saveCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(31,46,36,0.14)",
-    backgroundColor: "#FFFDF8",
   },
   divider: {
     height: 1,
@@ -474,19 +506,25 @@ const screenStyles = StyleSheet.create({
     fontFamily: T.fontBody,
   },
   pulseCard: {
-    borderRadius: 22,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(31,46,36,0.10)",
-    backgroundColor: "#FFFCF7",
-    padding: 16,
+    backgroundColor: "#F7F3E8",
+    paddingHorizontal: 18,
+    paddingVertical: 16,
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   pulseIconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -506,13 +544,13 @@ const screenStyles = StyleSheet.create({
   },
   pulseBars: {
     flexDirection: "row",
-    gap: 6,
+    gap: 4,
     marginLeft: "auto",
   },
   pulseBar: {
-    width: 18,
-    height: 44,
-    borderRadius: 5,
+    width: 12,
+    height: 40,
+    borderRadius: 4,
     borderWidth: 1,
   },
   pulseBarActive: {
@@ -525,112 +563,192 @@ const screenStyles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: "row",
-    gap: 14,
+    gap: 12,
   },
   statCard: {
     flex: 1,
-    borderRadius: 20,
+    minHeight: 164,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(31,46,36,0.10)",
-    backgroundColor: "#FFFCF7",
-    padding: 16,
-    gap: 6,
+    backgroundColor: "#F7F3E8",
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 16,
+    gap: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   statIconBubble: {
-    alignSelf: "flex-end",
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 10,
   },
   statIconWarm: {
-    backgroundColor: "#FFF0DF",
+    backgroundColor: "#FFDAD2",
   },
   statIconCool: {
-    backgroundColor: "#E5F0E5",
+    backgroundColor: "#C3EEC0",
   },
   statTitle: {
     color: T.textPrimary,
-    fontSize: 16,
-    fontFamily: T.fontBodyMedium,
+    fontSize: 15,
+    lineHeight: 18,
+    fontFamily: T.fontBodyBold,
   },
   statValue: {
     color: T.textPrimary,
-    fontSize: 43,
+    fontSize: 44,
     lineHeight: 46,
-    fontFamily: T.fontDisplayLight,
-    letterSpacing: -1.8,
+    fontFamily: T.fontDisplayBold,
+    letterSpacing: -1.2,
   },
   statAccent: {
     color: T.visibilityOn,
-    fontSize: 15,
+    fontSize: 14,
+    lineHeight: 18,
     fontFamily: T.fontBodyMedium,
   },
   statBody: {
     color: T.textSecondary,
-    fontSize: 15,
+    fontSize: 14,
+    lineHeight: 18,
     fontFamily: T.fontBody,
+    maxWidth: 132,
   },
   intentSection: {
-    gap: 16,
+    gap: 14,
   },
   sectionHeading: {
     color: T.textPrimary,
     fontSize: 16,
     fontFamily: T.fontBodyBold,
   },
+  intentCard: {
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(31,46,36,0.10)",
+    backgroundColor: "#FBF8F1",
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+  },
   intentRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 12,
+    gap: 8,
   },
   intentItem: {
     flex: 1,
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
   intentIconBubble: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     alignItems: "center",
     justifyContent: "center",
   },
   intentLabel: {
     color: T.textPrimary,
-    fontSize: 15,
-    lineHeight: 18,
+    minHeight: 34,
+    fontSize: 12,
+    lineHeight: 15,
     textAlign: "center",
     fontFamily: T.fontBodyMedium,
   },
   intentCount: {
     color: T.textPrimary,
-    fontSize: 24,
-    lineHeight: 26,
-    fontFamily: T.fontDisplayLight,
+    fontSize: 16,
+    lineHeight: 18,
+    fontFamily: T.fontBodyBold,
+  },
+  privacyNote: {
+    color: "rgba(31,46,36,0.38)",
+    fontSize: 12,
+    lineHeight: 20,
+    textAlign: "center",
+    fontFamily: T.fontBodyBold,
+    fontStyle: "italic",
+    paddingHorizontal: 16,
+    marginTop: 2,
+  },
+  promptSection: {
+    gap: 10,
+  },
+  promptHeader: {
+    gap: 4,
+  },
+  promptMeta: {
+    color: T.textSecondary,
+    fontSize: 13,
+    lineHeight: 17,
+    fontFamily: T.fontBody,
+  },
+  promptCard: {
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "rgba(31,46,36,0.10)",
+    backgroundColor: "#FBF8F1",
+    padding: 16,
+    gap: 12,
+  },
+  promptInput: {
+    minHeight: 92,
+    borderRadius: 18,
+    backgroundColor: "#F3EEE1",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: T.textPrimary,
+    fontSize: 14,
+    lineHeight: 20,
+    fontFamily: T.fontBody,
+  },
+  promptSaveButton: {
+    alignSelf: "flex-start",
+    borderRadius: 16,
+    backgroundColor: T.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  promptSaveButtonText: {
+    color: T.white,
+    fontSize: 14,
+    fontFamily: T.fontBodyBold,
   },
   primaryButton: {
-    borderRadius: 28,
+    borderRadius: 30,
     overflow: "hidden",
-    marginTop: 2,
+    marginTop: 6,
   },
   primaryButtonPressed: {
     opacity: 0.88,
   },
   primaryButtonFill: {
-    paddingVertical: 16,
+    backgroundColor: "#FDB64A",
+    paddingVertical: 18,
     alignItems: "center",
-    gap: 2,
+    gap: 1,
   },
   primaryButtonText: {
-    color: T.white,
-    fontSize: 18,
+    color: "#704800",
+    fontSize: 17,
     fontFamily: T.fontBodyBold,
   },
   primaryButtonSubtext: {
-    color: "rgba(255,255,255,0.92)",
-    fontSize: 14,
+    color: "rgba(112,72,0,0.82)",
+    fontSize: 13,
     fontFamily: T.fontBody,
   },
 });

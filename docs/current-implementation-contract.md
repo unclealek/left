@@ -126,6 +126,20 @@ Recommended Google photo behavior:
 - fetch Google photo info only when a user opens a single venue page
 - do not fetch Google photos for lists, cards, hidden-state venue browsing, or discovery surfaces
 
+## Current Venue Detail Controls
+
+Current implemented behavior:
+
+- the venue detail screen uses the shared `BackNavButton`
+- the header `share` action is not implemented and should not be shown
+- the header overflow / `three-dot` action is not implemented and should not be shown
+- the venue `save` action is not implemented and should not be shown
+
+Future upgrades:
+
+- add a real venue share action once the app has a clear share target and payload format
+- add a real venue save / bookmark action once saved venues have a product home and persistence model
+
 ## Rebuild Rules For An LLM Or New Engineer
 
 If rebuilding or extending the app:
