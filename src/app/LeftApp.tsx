@@ -58,11 +58,14 @@ import {
 } from "../features/location/location-service";
 import {
   getLocationRuntimeState,
+  getVenueApproachPrompts,
   getVenuePreferences,
   saveVenuePreferences,
   type RuntimeCoords,
   type RuntimeVenueCandidate,
+  type VenueApproachPrompt,
   type VenuePreference,
+  upsertVenueApproachPrompt,
 } from "../features/location/location-storage";
 import {
   getVenueConfidenceCopy,
@@ -200,6 +203,7 @@ export function LeftApp() {
   const [selectedDuration, setSelectedDuration] = useState(60);
   const [hintDraft, setHintDraft] = useState("Grey hoodie, corner seat");
   const [approach, setApproach] = useState<ApproachAttempt | null>(null);
+  const [activeApproachPrompt, setActiveApproachPrompt] = useState(defaultApproachPrompt);
   const [venueHidden, setVenueHidden] = useState(false);
   const [sessionVisible, setSessionVisible] = useState(false);
   const [sessionStartedAt, setSessionStartedAt] = useState<string | null>(null);
@@ -231,6 +235,9 @@ export function LeftApp() {
   const [venueDraftSubmitting, setVenueDraftSubmitting] = useState(false);
   const [selectedVenueDetail, setSelectedVenueDetail] = useState<RuntimeVenueCandidate | null>(null);
   const [venueDetailReturnScreen, setVenueDetailReturnScreen] = useState<Screen>("home");
+  const [venueApproachPrompts, setVenueApproachPrompts] = useState<Record<string, VenueApproachPrompt>>({});
+  const [venueApproachPromptDraft, setVenueApproachPromptDraft] = useState("");
+  const [venueApproachPromptSaving, setVenueApproachPromptSaving] = useState(false);
   const [reportCategory, setReportCategory] = useState<ReportCategory>("unsafe_behavior");
   const [reportNotes, setReportNotes] = useState("");
   const [reportSubmitting, setReportSubmitting] = useState(false);
@@ -308,6 +315,13 @@ export function LeftApp() {
     setScreen("safety");
   }
 
+  function resolveApproachPromptForVenue(venueId: string | null | undefined) {
+    if (venueId && venueApproachPrompts[venueId]?.promptText?.trim()) {
+      return venueApproachPrompts[venueId].promptText.trim();
+    }
+    return user?.approachPrompt?.trim() || defaultApproachPrompt;
+  }
+
   function resolveVenueDetailCandidate(candidate?: RuntimeVenueCandidate | null) {
     if (candidate) return candidate;
     return (
@@ -336,6 +350,7 @@ export function LeftApp() {
     const resolvedCandidate = resolveVenueDetailCandidate(candidate);
     if (!resolvedCandidate) return;
     setSelectedVenueDetail(resolvedCandidate);
+    setVenueApproachPromptDraft(resolveApproachPromptForVenue(resolvedCandidate.id));
     setVenueDetailReturnScreen(origin);
     setScreen("venue-detail");
   }
@@ -465,6 +480,7 @@ export function LeftApp() {
       setSelectedDuration(defaults.durationMinutes);
       setHintDraft(defaults.hintText);
     }
+    setVenueApproachPrompts(await getVenueApproachPrompts());
     await refreshVenuePreferences();
   }
 
@@ -696,7 +712,7 @@ export function LeftApp() {
             targetUserId: selectedProfile.profileUserId,
             targetFirstName: selectedProfile.firstName,
             presenceSessionId: approach.presenceSessionId,
-            approachPrompt: user.approachPrompt || defaultApproachPrompt,
+            approachPrompt: resolveApproachPromptForVenue(venueSummary.venueId),
             startedAt: approach.startedAt,
             expiresAt: approach.expiresAt,
             createdAt: new Date().toISOString(),
@@ -793,6 +809,27 @@ export function LeftApp() {
     }
 
     await confirmVenueSelection(selectedVenueDetail.id);
+  }
+
+  async function saveVenueDetailApproachPrompt() {
+    if (!selectedVenueDetail) return;
+    const nextPrompt = venueApproachPromptDraft.trim() || defaultApproachPrompt;
+    setVenueApproachPromptSaving(true);
+    try {
+      const savedPrompt = await upsertVenueApproachPrompt(
+        selectedVenueDetail.id,
+        selectedVenueDetail.name,
+        nextPrompt,
+      );
+      setVenueApproachPrompts((current) => ({
+        ...current,
+        [selectedVenueDetail.id]: savedPrompt,
+      }));
+      setVenueApproachPromptDraft(savedPrompt.promptText);
+      showToast("Venue prompt saved");
+    } finally {
+      setVenueApproachPromptSaving(false);
+    }
   }
 
   async function submitVenueSuggestion() {
@@ -1182,6 +1219,7 @@ export function LeftApp() {
     if (!selectedProfile || !user) return;
     const startedAt = new Date();
     const expiresAt = new Date(startedAt.getTime() + 60_000);
+    const nextApproachPrompt = resolveApproachPromptForVenue(venueSummary.venueId);
     let approachId = "approach-1";
 
     if (isUuid(user.id) && isUuid(selectedProfile.profileUserId) && isUuid(selectedProfile.presenceSessionId)) {
@@ -1207,7 +1245,7 @@ export function LeftApp() {
       targetUserId: selectedProfile.profileUserId,
       targetFirstName: selectedProfile.firstName,
       presenceSessionId: selectedProfile.presenceSessionId,
-      approachPrompt: user.approachPrompt || defaultApproachPrompt,
+      approachPrompt: nextApproachPrompt,
       startedAt: startedAt.toISOString(),
       expiresAt: expiresAt.toISOString(),
     });
@@ -1230,6 +1268,7 @@ export function LeftApp() {
       createdAt: startedAt.toISOString(),
       updatedAt: startedAt.toISOString(),
     });
+    setActiveApproachPrompt(nextApproachPrompt);
     setScreen("approach");
   }
 
@@ -1541,7 +1580,6 @@ export function LeftApp() {
     defaultIntent: AppUser["defaultIntent"];
     defaultVibes: string[];
     profilePrompt: string;
-    approachPrompt: string;
   }) {
     if (!user) return;
     setSettingsSaveState("saving");
@@ -1552,7 +1590,7 @@ export function LeftApp() {
       defaultIntent: input.defaultIntent,
       defaultVibes: input.defaultVibes,
       profilePrompt: input.profilePrompt.trim() || defaultProfilePrompt,
-      approachPrompt: input.approachPrompt.trim() || defaultApproachPrompt,
+      approachPrompt: user.approachPrompt.trim() || defaultApproachPrompt,
       updatedAt: new Date().toISOString(),
     };
     const saved = await updateUserSettings({
@@ -1594,6 +1632,7 @@ export function LeftApp() {
     setSelectedProfile(null);
     void endSessionState("session_ended", { toast: false });
     setApproach(null);
+    setActiveApproachPrompt(defaultApproachPrompt);
     setAuthError(null);
     setSettingsSaveState("idle");
     setDeletionRequestState("idle");
@@ -1840,6 +1879,10 @@ export function LeftApp() {
             venueSummary={displayVenueSummary}
             feed={visibleFeed}
             sessionVisible={sessionVisible}
+            approachPrompt={venueApproachPromptDraft}
+            approachPromptSaving={venueApproachPromptSaving}
+            onChangeApproachPrompt={setVenueApproachPromptDraft}
+            onSaveApproachPrompt={() => void saveVenueDetailApproachPrompt()}
             onBack={() => setScreen(venueDetailReturnScreen)}
             onPrimaryAction={() => void handleVenueDetailPrimaryAction()}
           />
@@ -1901,7 +1944,7 @@ export function LeftApp() {
         {screen === "approach" && selectedProfile && approach && (
           <ApproachScreen
             item={selectedProfile}
-            approachPrompt={user?.approachPrompt ?? defaultApproachPrompt}
+            approachPrompt={activeApproachPrompt}
             remainingSeconds={approachRemainingSeconds}
             onCancel={() => setScreen("feed")}
             onConfirmConnected={() => void confirmConnected()}
@@ -1921,6 +1964,7 @@ export function LeftApp() {
             visibilityAction={visibilityAction}
             sessionVisible={sessionVisible}
             onBack={() => setScreen(safetyReturnScreen)}
+            onGoVisible={() => openActivationFrom("safety")}
             onPauseVisibility={() => void endSessionState("paused")}
             onEndSession={() => {
               void endSessionState();
