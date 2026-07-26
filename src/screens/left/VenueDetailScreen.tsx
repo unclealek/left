@@ -73,6 +73,10 @@ export function VenueDetailScreen({
   const pulseTone = venueActivity?.activity
     ? getPulseToneForActivityLabel(venueActivity.activity.label)
     : getPulseTone(fallbackEnergy);
+  const signalBarColor = venueActivity?.activity.score != null
+    ? getSignalBarColorForScore(venueActivity.activity.score)
+    : pulseTone.barColor;
+  const signalBarBorderColor = `${signalBarColor}44`;
   const status = venueActivity?.activity
     ? {
         title: venueActivity.activity.displayText,
@@ -146,8 +150,8 @@ export function VenueDetailScreen({
                   screenStyles.pulseBar,
                   getSignalBarHeightStyle(index),
                   active
-                    ? [screenStyles.pulseBarActive, { backgroundColor: pulseTone.barColor, borderColor: pulseTone.barColor }]
-                    : [screenStyles.pulseBarInactive, { borderColor: pulseTone.barBorderColor }],
+                    ? [screenStyles.pulseBarActive, { backgroundColor: signalBarColor, borderColor: signalBarColor }]
+                    : [screenStyles.pulseBarInactive, { borderColor: signalBarBorderColor }],
                 ]}
               />
             ))}
@@ -441,6 +445,15 @@ function getPulseBarsForScore(score: number) {
     score <= 60 ? 3 :
     score <= 80 ? 4 : 5;
   return Array.from({ length: 5 }, (_, index) => index < activeCount);
+}
+
+function getSignalBarColorForScore(score: number) {
+  const activeCount =
+    score <= 20 ? 1 :
+    score <= 40 ? 2 :
+    score <= 60 ? 3 :
+    score <= 80 ? 4 : 5;
+  return activeCount >= 3 ? T.primary : "#FDB64A";
 }
 
 function getPulseToneForActivityLabel(label: VenueActivityEnvelope["activity"]["label"]) {

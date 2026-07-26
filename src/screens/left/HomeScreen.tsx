@@ -109,18 +109,31 @@ export function HomeScreen({
       <View style={styles.homeHeroCardV2}>
         <View style={styles.homeHeroCardTopRow}>
           <View style={styles.homeHeroCardCopyBlock}>
-            <View style={styles.homeHeroStatusRow}>
-              <View style={[styles.homeHeroStatusDot, isVisible ? styles.homeHeroStatusDotVisible : styles.homeHeroStatusDotHidden]} />
-              <Text
-                style={[
-                  styles.homeHeroStatusText,
-                  isVisible ? styles.homeHeroStatusTextVisible : styles.homeHeroStatusTextHidden,
-                ]}
-              >
-                {heroStatus}
-              </Text>
-            </View>
-            <Text style={styles.homeHeroCardCopy}>{heroCopy}</Text>
+            {isVisible ? (
+              <>
+                <View style={styles.homeHeroPresenceEyebrowRow}>
+                  <View style={styles.homeHeroPresenceEyebrowDot} />
+                  <Text style={styles.homeHeroPresenceEyebrow}>YOU’RE HERE</Text>
+                </View>
+                <Text style={styles.homeHeroVenueNameVisible}>{venueName}</Text>
+                <Text style={styles.homeHeroCardCopyVisible}>You’re checked in here</Text>
+              </>
+            ) : (
+              <>
+                <View style={styles.homeHeroStatusRow}>
+                  <View style={[styles.homeHeroStatusDot, isVisible ? styles.homeHeroStatusDotVisible : styles.homeHeroStatusDotHidden]} />
+                  <Text
+                    style={[
+                      styles.homeHeroStatusText,
+                      isVisible ? styles.homeHeroStatusTextVisible : styles.homeHeroStatusTextHidden,
+                    ]}
+                  >
+                    {heroStatus}
+                  </Text>
+                </View>
+                <Text style={styles.homeHeroCardCopy}>{heroCopy}</Text>
+              </>
+            )}
           </View>
           <LinearGradient
             colors={["#FFF4D8", "#FFF8EE", "#E9ECCE"]}
@@ -131,7 +144,16 @@ export function HomeScreen({
             <Image source={heroIllustration} style={styles.homeVenueIllustrationImage} resizeMode="cover" />
           </LinearGradient>
         </View>
-        <BrandPrimaryButton label={ctaLabel} onPress={onBecomeVisible} size="compact" />
+        {isVisible ? (
+          <Pressable onPress={onBecomeVisible} style={({ pressed }) => [styles.homeVisibleHeroButton, pressed && styles.iconButtonPressed]}>
+            <View style={styles.homeVisibleHeroButtonMark}>
+              <LeftDoorwayMark size={20} archColor={"#FFBE45"} innerColor={"#FFE7A8"} baseColor={"#FFE7A8"} baseScale={0.54} />
+            </View>
+            <Text style={styles.homeVisibleHeroButtonText}>Manage visibility</Text>
+          </Pressable>
+        ) : (
+          <BrandPrimaryButton label={ctaLabel} onPress={onBecomeVisible} size="compact" />
+        )}
         <Pressable onPress={onOpenSafety} style={({ pressed }) => [styles.homeHeroPrivacyRow, pressed && styles.iconButtonPressed]}>
           <View style={styles.homeHeroPrivacyIconWrap}>
             <Feather name="lock" size={17} color={"rgba(46,33,20,0.78)"} />
@@ -176,41 +198,35 @@ export function HomeScreen({
                 <View style={styles.homeVenueCardTopGroup}>
                   <Text style={[styles.homeVenueCardName, item.featured && styles.homeVenueCardNameFeatured]}>{item.name}</Text>
                   <View style={styles.homeVenueStatusRow}>
-                    <View style={[styles.homeVenueStatusDot, { backgroundColor: item.statusColor }]} />
                     <Text style={styles.homeVenueStatusText}>{item.energyLabel}</Text>
-                    {item.signalBars ? (
-                      <View style={styles.homeVenueSignalBars}>
-                        {item.signalBars.map((active, index) => (
-                          <View
-                            key={`${item.id}-signal-${index}`}
-                            style={[
-                              styles.homeVenueSignalBar,
-                              getCompactSignalBarHeightStyle(index),
-                              active
-                                ? [styles.homeVenueSignalBarActive, { backgroundColor: item.statusColor, borderColor: item.statusColor }]
-                                : [styles.homeVenueSignalBarInactive, { borderColor: `${item.statusColor}44` }],
-                            ]}
-                          />
-                        ))}
-                      </View>
-                    ) : null}
                   </View>
                 </View>
-                {isVisible ? (
-                  <View style={styles.homeVenuePeopleRow}>
-                    <Feather name="users" size={16} color={item.peopleColor} />
-                    <Text style={[styles.homeVenuePeopleText, { color: item.peopleColor }]}>
-                      {item.peopleText}
-                    </Text>
+                {item.signalBars ? (
+                  <View
+                    style={[
+                      styles.homeVenuePeopleRow,
+                      { backgroundColor: `${item.signalBarColor}12`, borderColor: `${item.signalBarColor}26` },
+                    ]}
+                  >
+                    <View style={styles.homeVenueSignalIconWrap}>
+                      <Feather name="users" size={15} color={item.signalBarColor} />
+                    </View>
+                    <View style={styles.homeVenueSignalBars}>
+                      {item.signalBars.map((active, index) => (
+                        <View
+                          key={`${item.id}-signal-${index}`}
+                          style={[
+                            styles.homeVenueSignalBar,
+                            getCompactSignalBarHeightStyle(index),
+                            active
+                              ? [styles.homeVenueSignalBarActive, { backgroundColor: item.signalBarColor, borderColor: item.signalBarColor }]
+                              : [styles.homeVenueSignalBarInactive, { borderColor: `${item.signalBarColor}44` }],
+                          ]}
+                        />
+                      ))}
+                    </View>
                   </View>
                 ) : null}
-                <View style={styles.homeVenueChipRow}>
-                  {item.tags.map((tag) => (
-                    <View key={`${item.id}-${tag.label}`} style={[styles.homeVenueChip, { backgroundColor: tag.tint }]}>
-                      <Text style={styles.homeVenueChipText}>{tag.label}</Text>
-                    </View>
-                  ))}
-                </View>
                 <View style={styles.homeVenueDistanceRow}>
                   <Feather name="map-pin" size={15} color={T.textMuted} />
                   <Text style={styles.homeVenueDistanceText}>{item.distanceLabel}</Text>
@@ -337,6 +353,7 @@ function buildNearbyVenueCards(
       peopleColor: placeholderProfile.peopleColor,
       energyLabel: activity ? activity.activity.displayText : placeholderProfile.energyLabel,
       signalBars: activity?.activity.score != null ? getSignalBarsForScore(activity.activity.score) : null,
+      signalBarColor: activity?.activity.score != null ? getSignalBarColorForScore(activity.activity.score) : placeholderProfile.statusColor,
       statusColor: placeholderProfile.statusColor,
       tags: placeholderProfile.tags,
       distanceLabel: venue.distanceMeters != null ? formatDistanceLabel(venue.distanceMeters) : "Nearby now",
@@ -381,6 +398,15 @@ function getSignalBarsForScore(score: number) {
     score <= 60 ? 3 :
     score <= 80 ? 4 : 5;
   return Array.from({ length: 5 }, (_, index) => index < activeCount);
+}
+
+function getSignalBarColorForScore(score: number) {
+  const activeCount =
+    score <= 20 ? 1 :
+    score <= 40 ? 2 :
+    score <= 60 ? 3 :
+    score <= 80 ? 4 : 5;
+  return activeCount >= 3 ? T.primary : "#FDB64A";
 }
 
 function getCompactSignalBarHeightStyle(index: number) {
