@@ -38,27 +38,31 @@ export function MeScreen({
   nearbyVenueCount: number;
   waveCount: number;
 }) {
+  function normalizeSingleVibe(vibes: string[] | null | undefined, fallback = "Open") {
+    const first = Array.isArray(vibes) ? vibes.find((value) => value.trim().length > 0) : null;
+    return first ? [first] : [fallback];
+  }
+
   const [editing, setEditing] = useState(false);
   const [firstName, setFirstName] = useState(user.firstName);
   const [avatarStyle, setAvatarStyle] = useState<AvatarStyle>(user.avatarStyle);
   const [defaultIntent, setDefaultIntent] = useState<AppUser["defaultIntent"]>(user.defaultIntent);
-  const [defaultVibes, setDefaultVibes] = useState<string[]>(user.defaultVibes);
+  const [defaultVibes, setDefaultVibes] = useState<string[]>(normalizeSingleVibe(user.defaultVibes));
   const [profilePrompt, setProfilePrompt] = useState(user.profilePrompt);
 
   useEffect(() => {
     setFirstName(user.firstName);
     setAvatarStyle(user.avatarStyle);
     setDefaultIntent(user.defaultIntent);
-    setDefaultVibes(user.defaultVibes);
+    setDefaultVibes(normalizeSingleVibe(user.defaultVibes));
     setProfilePrompt(user.profilePrompt);
   }, [user]);
 
   function toggleVibe(vibe: string) {
     setDefaultVibes((current) => {
       const exists = current.includes(vibe);
-      if (exists) return current.filter((value) => value !== vibe);
-      if (current.length >= 2) return [current[0], vibe];
-      return [...current, vibe];
+      if (exists) return current;
+      return [vibe];
     });
   }
 
@@ -68,8 +72,8 @@ export function MeScreen({
 
   const intent = (user.defaultIntent ?? "networking").replaceAll("_", " ");
   const liveIntent = (currentIntent ?? user.defaultIntent ?? "networking").replaceAll("_", " ");
-  const liveVibes = currentVibes.length ? currentVibes : user.defaultVibes;
-  const vibePreview = liveVibes.slice(0, 2).join(" · ");
+  const liveVibes = currentVibes.length ? normalizeSingleVibe(currentVibes) : normalizeSingleVibe(user.defaultVibes);
+  const vibePreview = liveVibes[0] || "Open";
   const venueLabel = sessionVisible ? `At ${currentVenueName}` : "Hidden right now";
   const venueMeta = sessionVisible
     ? `${vibePreview || "Open"} · ${liveIntent}`
@@ -81,7 +85,7 @@ export function MeScreen({
   ] as const;
   const signalCards = [
     { icon: "target", label: "Intent", value: intent },
-    { icon: "star", label: "Vibes", value: user.defaultVibes.slice(0, 2).join(" · ") || "Open" },
+    { icon: "star", label: "Vibe", value: normalizeSingleVibe(user.defaultVibes)[0] || "Open" },
     { icon: "edit-3", label: "Style", value: user.avatarStyle },
   ] as const;
 
@@ -172,7 +176,7 @@ export function MeScreen({
             ))}
           </View>
 
-          <Text style={styles.settingsEditLabel}>Default vibes</Text>
+          <Text style={styles.settingsEditLabel}>Default vibe</Text>
           <View style={styles.chipWrap}>
             {vibeOptions.map((vibe) => (
               <SelectChip

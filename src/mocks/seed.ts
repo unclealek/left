@@ -7,7 +7,7 @@ export const viewerSeed: AppUser = {
   firstName: "Kelvin",
   avatarStyle: "geometric",
   defaultIntent: "networking",
-  defaultVibes: ["AI/startups", "Design"],
+  defaultVibes: ["AI/startups"],
   profilePrompt: "Ask what they're building right now, not what they do generally.",
   approachPrompt: "What are you working on that feels genuinely exciting?",
   focusModeEnabled: false,
@@ -23,7 +23,7 @@ export const initialVenueSummary: VenueContextSummary = {
   venueName: "Current venue",
   visibleCount: 1,
   energyLevel: "active",
-  activeVibes: ["AI/startups", "Design"],
+  activeVibes: ["AI/startups"],
   popularIntents: ["networking"],
   pulseCopy: "Checking your nearby venue.",
 };

@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
-import type { NearbyFeedItem, VenueContextSummary } from "../../types/left-domain";
+import type { NearbyFeedItem, VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
 import { T } from "../../app/leftTheme";
 import { BackNavButton } from "../../components/left/navigation";
 
@@ -31,6 +31,7 @@ type DetailIntent = {
 export function VenueDetailScreen({
   venue,
   venueSummary,
+  venueActivity,
   feed,
   sessionVisible,
   approachPrompt,
@@ -42,6 +43,7 @@ export function VenueDetailScreen({
 }: {
   venue: RuntimeVenueCandidate;
   venueSummary: VenueContextSummary;
+  venueActivity: VenueActivityEnvelope | null;
   feed: NearbyFeedItem[];
   sessionVisible: boolean;
   approachPrompt: string;
@@ -58,17 +60,34 @@ export function VenueDetailScreen({
   const seed = Math.abs(hashVenueName(venue.name));
   const venueType = venue.venueType ?? inferVenueTypeFromName(venue.name);
   const imageSource = getVenueIllustrationSource(venue.name, venueType);
-  const pulseBars = getPulseBars(isCurrentVenue ? venueSummary.energyLevel : inferEnergyLevel(seed, venueType));
-  const visibleCount = isCurrentVenue ? feed.length : 8 + (seed % 11);
-  const openToMeetCount = isCurrentVenue
+  const fallbackEnergy = isCurrentVenue ? venueSummary.energyLevel : inferEnergyLevel(seed, venueType);
+  const pulseBars = venueActivity?.activity.score != null
+    ? getPulseBarsForScore(venueActivity.activity.score)
+    : getPulseBars(fallbackEnergy);
+  const visibleCount = venueActivity?.leftPresence.visible ?? (isCurrentVenue ? feed.length : 8 + (seed % 11));
+  const openToMeetCount = venueActivity?.leftPresence.openToMeet ?? (isCurrentVenue
     ? feed.filter((item) => item.intent === "networking" || item.intent === "open_to_conversation").length
-    : Math.max(2, Math.round(visibleCount * 0.42));
-  const usualCount = Math.max(1, visibleCount - 2 + (seed % 5));
+    : Math.max(2, Math.round(visibleCount * 0.42)));
+  const usualCount = venueActivity?.activity.forecastScore ?? Math.max(1, visibleCount - 2 + (seed % 5));
   const intents = buildIntentBreakdown(isCurrentVenue ? feed : [], venueType, visibleCount, seed);
-  const pulseTone = getPulseTone(isCurrentVenue ? venueSummary.energyLevel : inferEnergyLevel(seed, venueType));
-  const status = getPulseStatus(isCurrentVenue ? venueSummary.energyLevel : inferEnergyLevel(seed, venueType));
+  const pulseTone = venueActivity?.activity
+    ? getPulseToneForActivityLabel(venueActivity.activity.label)
+    : getPulseTone(fallbackEnergy);
+  const status = venueActivity?.activity
+    ? {
+        title: venueActivity.activity.displayText,
+        subtitle: venueActivity.activity.liveAvailable
+          ? venueActivity.activity.comparisonText
+          : venueActivity.activity.forecastScore != null
+            ? "Based on typical activity"
+            : "Activity unavailable",
+      }
+    : getPulseStatus(fallbackEnergy);
   const primaryLabel = isCurrentVenue && sessionVisible ? "See People Here" : isCurrentVenue ? "Go Visible Here" : "Use This Venue";
   const primaryCaption = isCurrentVenue && sessionVisible ? "Open the people visible at this venue" : isCurrentVenue ? "Let others know you're here" : "Make this your active venue";
+  const updatedAtCopy = venueActivity?.activity.updatedAt
+    ? formatUpdatedAt(venueActivity.activity.updatedAt, venueActivity.activity.liveAvailable)
+    : "Activity estimate";
 
   return (
     <View style={[screenStyles.page, { paddingTop: topInset }]}>
@@ -99,7 +118,7 @@ export function VenueDetailScreen({
             <Text style={screenStyles.sectionTitle}>Live Pulse</Text>
           </View>
           <View style={screenStyles.pulseHeaderRight}>
-            <Text style={screenStyles.pulseMeta}>Updated 3 min ago</Text>
+            <Text style={screenStyles.pulseMeta}>{updatedAtCopy}</Text>
             <Feather name="rotate-cw" size={16} color={T.textSecondary} />
           </View>
         </View>
@@ -125,6 +144,7 @@ export function VenueDetailScreen({
                 key={`pulse-${index}`}
                 style={[
                   screenStyles.pulseBar,
+                  getSignalBarHeightStyle(index),
                   active
                     ? [screenStyles.pulseBarActive, { backgroundColor: pulseTone.barColor, borderColor: pulseTone.barColor }]
                     : [screenStyles.pulseBarInactive, { borderColor: pulseTone.barBorderColor }],
@@ -149,7 +169,9 @@ export function VenueDetailScreen({
             </View>
             <Text style={screenStyles.statTitle}>Usual at this time</Text>
             <Text style={screenStyles.statValue}>{usualCount}</Text>
-            <Text style={screenStyles.statBody}>Based on live patterns</Text>
+            <Text style={screenStyles.statBody}>
+              {venueActivity?.activity.liveAvailable ? "Typical level for this hour" : "Based on forecast"}
+            </Text>
           </View>
         </View>
 
@@ -412,6 +434,78 @@ function hashVenueName(value: string) {
   return value.split("").reduce((total, char) => total * 31 + char.charCodeAt(0), 7);
 }
 
+function getPulseBarsForScore(score: number) {
+  const activeCount =
+    score <= 20 ? 1 :
+    score <= 40 ? 2 :
+    score <= 60 ? 3 :
+    score <= 80 ? 4 : 5;
+  return Array.from({ length: 5 }, (_, index) => index < activeCount);
+}
+
+function getPulseToneForActivityLabel(label: VenueActivityEnvelope["activity"]["label"]) {
+  switch (label) {
+    case "quiet":
+      return {
+        titleColor: "#7A8478",
+        iconColor: "#7A8478",
+        barColor: "#7A8478",
+        barBorderColor: "rgba(122,132,120,0.24)",
+        iconGradient: ["#EEF1EA", "#FAFBF8"] as [string, string],
+      };
+    case "light":
+      return {
+        titleColor: "#825500",
+        iconColor: "#825500",
+        barColor: "#FDB64A",
+        barBorderColor: "rgba(253,182,74,0.34)",
+        iconGradient: ["#FFDDB3", "#FFF8EA"] as [string, string],
+      };
+    case "active":
+      return {
+        titleColor: T.primary,
+        iconColor: T.primary,
+        barColor: T.primary,
+        barBorderColor: "rgba(53,102,77,0.24)",
+        iconGradient: [T.primarySoft, "#FFF7EB"] as [string, string],
+      };
+    case "busy":
+    case "packed":
+      return {
+        titleColor: "#C1462E",
+        iconColor: "#C1462E",
+        barColor: "#C1462E",
+        barBorderColor: "rgba(193,70,46,0.24)",
+        iconGradient: ["#F9DDD6", "#FFF4EF"] as [string, string],
+      };
+    case "closed":
+    case "unknown":
+    default:
+      return getPulseTone("calm");
+  }
+}
+
+function formatUpdatedAt(updatedAt: string, liveAvailable: boolean) {
+  const timestamp = new Date(updatedAt).getTime();
+  if (Number.isNaN(timestamp)) {
+    return liveAvailable ? "Updated this hour" : "Based on typical activity";
+  }
+
+  const diffMinutes = Math.max(0, Math.round((Date.now() - timestamp) / 60000));
+  if (liveAvailable) {
+    if (diffMinutes < 60) return "Updated this hour";
+    return `Updated ${diffMinutes} min ago`;
+  }
+  return "Based on typical activity";
+}
+
+function getSignalBarHeightStyle(index: number) {
+  const heights = [14, 20, 27, 34, 42];
+  return {
+    height: heights[index] ?? heights[heights.length - 1],
+  };
+}
+
 const screenStyles = StyleSheet.create({
   page: {
     marginHorizontal: -20,
@@ -546,10 +640,10 @@ const screenStyles = StyleSheet.create({
     flexDirection: "row",
     gap: 4,
     marginLeft: "auto",
+    alignItems: "flex-end",
   },
   pulseBar: {
     width: 12,
-    height: 40,
     borderRadius: 4,
     borderWidth: 1,
   },

@@ -1,6 +1,7 @@
 import type { LocationObjectCoords } from "expo-location";
 import { supabase } from "../../lib/supabase";
 import type { VenueType } from "../../types/left-domain";
+import { fetchNearbyVenuesFromServer } from "./nearby-venues-service";
 
 export type DetectedVenue = {
   id: string;
@@ -439,6 +440,25 @@ function dedupeVenues(venues: DetectedVenue[]) {
 }
 
 export async function getNearbyVenues(coords: LocationObjectCoords) {
+  const serverVenues = await fetchNearbyVenuesFromServer(coords, VENUE_SEARCH_RADIUS_METERS);
+  if (serverVenues.length > 0) {
+    const normalizedServerVenues: DetectedVenue[] = serverVenues.map((venue) => ({
+      ...venue,
+      venueType: venue.venueType ?? "other",
+      photoUrl: venue.photoUrl ?? null,
+    }));
+    console.info(
+      "[location][venues] using nearby-venues edge function",
+      normalizedServerVenues.map((venue) => ({
+        venueId: venue.id,
+        venueName: venue.name,
+        distanceMeters: venue.distanceMeters ? Math.round(venue.distanceMeters) : null,
+        source: venue.source,
+      })),
+    );
+    return dedupeVenues(normalizedServerVenues);
+  }
+
   const activeVenueRows = await fetchActiveVenueRows();
   const dbVenues = lookupDbVenues(coords, activeVenueRows);
   if (dbVenues.length > 0) {
@@ -453,9 +473,6 @@ export async function getNearbyVenues(coords: LocationObjectCoords) {
     );
     return dedupeVenues(dbVenues);
   }
-
-  const googleVenues = await lookupCanonicalizedGoogleVenues(coords, activeVenueRows);
-  if (googleVenues.length > 0) return dedupeVenues(googleVenues);
 
   const fallbackVenues = lookupLocalVenues(coords);
   if (!fallbackVenues.length) {

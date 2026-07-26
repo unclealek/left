@@ -115,7 +115,7 @@ export function ActivationScreen(props: {
         </View>
       </FieldBlock>
 
-      <FieldBlock label="Vibes" hint="Select up to 2 cues so the room knows your energy.">
+      <FieldBlock label="Vibe" hint="Pick one cue so the room knows your energy.">
         <View style={styles.activationChoiceGrid}>
           {vibeOptions.map((v) => (
             <IconSelectChip
