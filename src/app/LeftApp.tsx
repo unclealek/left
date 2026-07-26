@@ -26,6 +26,7 @@ import type {
   NearbyFeedItem,
   ReportCategory,
   SocialInteractionEventType,
+  VenueActivityEnvelope,
   VenueType,
   VenueContextSummary,
 } from "../types/left-domain";
@@ -106,6 +107,7 @@ import {
   fetchVenueContextSummary,
   updatePresenceSessionEndState,
 } from "../features/presence/presence-service";
+import { fetchVenueActivity } from "../features/activity/besttime-activity-service";
 import {
   deriveSocialMomentum,
   fetchSocialMomentumEvents,
@@ -134,6 +136,11 @@ function normalizeVenueName(value: string) {
 
 function isUuid(value: string | null | undefined): value is string {
   return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function normalizeSingleVibe(vibes: string[] | null | undefined, fallback = "Open") {
+  const first = Array.isArray(vibes) ? vibes.find((value) => value.trim().length > 0) : null;
+  return first ? [first] : [fallback];
 }
 
 function pickBestNearbyVenueMatch(
@@ -234,6 +241,7 @@ export function LeftApp() {
   const [venueDraftType, setVenueDraftType] = useState<VenueType>("other");
   const [venueDraftSubmitting, setVenueDraftSubmitting] = useState(false);
   const [selectedVenueDetail, setSelectedVenueDetail] = useState<RuntimeVenueCandidate | null>(null);
+  const [venueActivityById, setVenueActivityById] = useState<Record<string, VenueActivityEnvelope>>({});
   const [venueDetailReturnScreen, setVenueDetailReturnScreen] = useState<Screen>("home");
   const [venueApproachPrompts, setVenueApproachPrompts] = useState<Record<string, VenueApproachPrompt>>({});
   const [venueApproachPromptDraft, setVenueApproachPromptDraft] = useState("");
@@ -448,6 +456,18 @@ export function LeftApp() {
   }, [user?.id, venueSummary.venueId, activePresenceSessionId, sessionVisible]);
 
   useEffect(() => {
+    const venueIds = nearbyVenueOptions
+      .map((venue) => venue.id)
+      .filter((venueId): venueId is string => isUuid(venueId));
+    if (isUuid(venueSummary.venueId)) {
+      venueIds.unshift(venueSummary.venueId);
+    }
+    const uniqueVenueIds = Array.from(new Set(venueIds));
+    if (!uniqueVenueIds.length) return;
+    void refreshVenueActivityForIds(uniqueVenueIds);
+  }, [nearbyVenueOptions, venueSummary.venueId]);
+
+  useEffect(() => {
     if (!approach || approach.status !== "started" || approachRemainingSeconds > 0) return;
     void handleApproachWindowElapsed();
   }, [approach, approachRemainingSeconds]);
@@ -476,7 +496,7 @@ export function LeftApp() {
     const defaults = await loadLastActivationDefaults();
     if (defaults) {
       setSelectedIntent(defaults.intent);
-      setSelectedVibes(defaults.vibes);
+      setSelectedVibes(normalizeSingleVibe(defaults.vibes));
       setSelectedDuration(defaults.durationMinutes);
       setHintDraft(defaults.hintText);
     }
@@ -513,6 +533,22 @@ export function LeftApp() {
     });
   }
 
+  async function refreshVenueActivityForIds(venueIds: string[]) {
+    const uniqueVenueIds = Array.from(new Set(venueIds.filter((venueId) => isUuid(venueId))));
+    if (!uniqueVenueIds.length) return;
+
+    const results = await fetchVenueActivity(uniqueVenueIds);
+    if (!results.length) return;
+
+    setVenueActivityById((current) => {
+      const next = { ...current };
+      for (const result of results) {
+        next[result.venueId] = result;
+      }
+      return next;
+    });
+  }
+
   async function recoverActivePresenceSession(appUser: AppUser) {
     const activeSession = await fetchActivePresenceSession(appUser.id);
     if (!activeSession) {
@@ -540,7 +576,7 @@ export function LeftApp() {
     setSessionNowMs(Date.now());
     setSessionVisible(true);
     setSelectedIntent(activeSession.intent);
-    setSelectedVibes(activeSession.vibes.length > 0 ? activeSession.vibes : ["Open"]);
+    setSelectedVibes(normalizeSingleVibe(activeSession.vibes));
     setSelectedDuration(activeSession.durationMinutes);
     setHintDraft(activeSession.hintText ?? "");
     setVenueSummary((current) => ({
@@ -1008,9 +1044,8 @@ export function LeftApp() {
   function toggleVibe(vibe: string) {
     setSelectedVibes((current) => {
       const exists = current.includes(vibe);
-      if (exists) return current.filter((v) => v !== vibe);
-      if (current.length >= 2) return [current[0], vibe];
-      return [...current, vibe];
+      if (exists) return current;
+      return [vibe];
     });
   }
 
@@ -1142,7 +1177,7 @@ export function LeftApp() {
     const startedAt = startedAtDate.toISOString();
     const expiresAt = new Date(startedAtDate.getTime() + selectedDuration * 60_000).toISOString();
     const intent = selectedIntent ?? "networking";
-    const vibes = selectedVibes.length > 0 ? selectedVibes : ["Open"];
+    const vibes = normalizeSingleVibe(selectedVibes);
     const hintText = hintDraft.trim() || null;
     setActivationSubmitting(true);
 
@@ -1598,7 +1633,7 @@ export function LeftApp() {
       firstName: nextUser.firstName,
       avatarStyle: nextUser.avatarStyle,
       defaultIntent: nextUser.defaultIntent,
-      defaultVibes: nextUser.defaultVibes,
+      defaultVibes: normalizeSingleVibe(nextUser.defaultVibes),
       profilePrompt: nextUser.profilePrompt,
       approachPrompt: nextUser.approachPrompt,
     });
@@ -1610,7 +1645,7 @@ export function LeftApp() {
     setFirstNameDraft(nextUser.firstName);
     setAvatarStyleDraft(nextUser.avatarStyle);
     setSelectedIntent(nextUser.defaultIntent);
-    setSelectedVibes(nextUser.defaultVibes);
+    setSelectedVibes(normalizeSingleVibe(nextUser.defaultVibes));
     setSettingsSaveState("saved");
     showToast("Profile saved");
     setTimeout(() => setSettingsSaveState("idle"), 1500);
@@ -1843,6 +1878,7 @@ export function LeftApp() {
             firstName={user?.firstName ?? "there"}
             venue={venueSummary}
             nearbyVenues={nearbyVenueOptions}
+            venueActivityById={venueActivityById}
             sessionVisible={sessionVisible}
             venueHidden={venueHidden}
             onBecomeVisible={() => openActivationFrom("home")}
@@ -1877,6 +1913,7 @@ export function LeftApp() {
           <VenueDetailScreen
             venue={selectedVenueDetail}
             venueSummary={displayVenueSummary}
+            venueActivity={isUuid(selectedVenueDetail.id) ? venueActivityById[selectedVenueDetail.id] ?? null : null}
             feed={visibleFeed}
             sessionVisible={sessionVisible}
             approachPrompt={venueApproachPromptDraft}

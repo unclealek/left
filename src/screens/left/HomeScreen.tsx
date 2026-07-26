@@ -11,7 +11,7 @@ import {
 import { styles, T } from "../../app/leftTheme";
 import { LeftDoorwayMark } from "../../components/left/LeftDoorwayMark";
 import { BrandPrimaryButton, VenueIdentityBlock } from "../../components/left/ui";
-import type { VenueContextSummary } from "../../types/left-domain";
+import type { VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
 
 const VENUE_ILLUSTRATIONS = {
   cafe: require("../../../output/illustrations/venues/cafe.png"),
@@ -28,6 +28,7 @@ export function HomeScreen({
   firstName,
   venue,
   nearbyVenues,
+  venueActivityById,
   sessionVisible,
   venueHidden,
   onBecomeVisible,
@@ -37,6 +38,7 @@ export function HomeScreen({
   firstName: string;
   venue: VenueContextSummary;
   nearbyVenues: RuntimeVenueCandidate[];
+  venueActivityById: Record<string, VenueActivityEnvelope>;
   sessionVisible: boolean;
   venueHidden: boolean;
   onBecomeVisible: () => void;
@@ -47,7 +49,7 @@ export function HomeScreen({
   const venueName = resolveVenueName(venue.venueName, nearbyVenues);
   const isVisible = sessionVisible && !venueHidden;
   const venueConfidence = resolveVenueConfidence(venue, nearbyVenues);
-  const nearbyCards = buildNearbyVenueCards(nearbyVenues, venueName);
+  const nearbyCards = buildNearbyVenueCards(nearbyVenues, venueName, venueActivityById);
   const heroVenueType = nearbyVenues[0]?.venueType ?? inferVenueTypeFromName(venueName);
   const heroIllustration = getVenueIllustrationSource(venueName, heroVenueType);
   const confidenceLabel = getVenueConfidenceLabel(venueConfidence);
@@ -176,6 +178,22 @@ export function HomeScreen({
                   <View style={styles.homeVenueStatusRow}>
                     <View style={[styles.homeVenueStatusDot, { backgroundColor: item.statusColor }]} />
                     <Text style={styles.homeVenueStatusText}>{item.energyLabel}</Text>
+                    {item.signalBars ? (
+                      <View style={styles.homeVenueSignalBars}>
+                        {item.signalBars.map((active, index) => (
+                          <View
+                            key={`${item.id}-signal-${index}`}
+                            style={[
+                              styles.homeVenueSignalBar,
+                              getCompactSignalBarHeightStyle(index),
+                              active
+                                ? [styles.homeVenueSignalBarActive, { backgroundColor: item.statusColor, borderColor: item.statusColor }]
+                                : [styles.homeVenueSignalBarInactive, { borderColor: `${item.statusColor}44` }],
+                            ]}
+                          />
+                        ))}
+                      </View>
+                    ) : null}
                   </View>
                 </View>
                 {isVisible ? (
@@ -291,6 +309,7 @@ function resolveVenueName(value: string, nearbyVenues: RuntimeVenueCandidate[]) 
 function buildNearbyVenueCards(
   nearbyVenues: RuntimeVenueCandidate[],
   currentVenueName: string,
+  venueActivityById: Record<string, VenueActivityEnvelope>,
 ) {
   const alternatives = nearbyVenues.filter((venue) => venue.name !== currentVenueName);
   const source = (alternatives.length ? alternatives : nearbyVenues).length
@@ -301,23 +320,23 @@ function buildNearbyVenueCards(
     const venueType = venue.venueType ?? inferVenueTypeFromName(venue.name);
     const looksLikeCafe = venueType === "cafe";
     const looksLikeMarket = /market|hall/i.test(venue.name);
-    const emoji = looksLikeCafe ? "☕" : looksLikeMarket ? "🏛️" : "📍";
     const seed = Math.abs(hashVenueName(venue.name));
     const peopleCount = 3 + (seed % 10);
     const placeholderProfile = buildVenuePlaceholderProfile(venueType, looksLikeMarket, seed);
+    const activity = venueActivityById[venue.id] ?? null;
 
     return {
       id: venue.id,
       venue,
       name: venue.name,
       venueType,
-      emoji,
       illustration: getVenueIllustrationSource(venue.name, venueType),
       featured: index === 0,
       peopleCount,
-      peopleText: `${peopleCount} people visible`,
+      peopleText: activity ? `${activity.leftPresence.visible} on Left` : `${peopleCount} people visible`,
       peopleColor: placeholderProfile.peopleColor,
-      energyLabel: placeholderProfile.energyLabel,
+      energyLabel: activity ? activity.activity.displayText : placeholderProfile.energyLabel,
+      signalBars: activity?.activity.score != null ? getSignalBarsForScore(activity.activity.score) : null,
       statusColor: placeholderProfile.statusColor,
       tags: placeholderProfile.tags,
       distanceLabel: venue.distanceMeters != null ? formatDistanceLabel(venue.distanceMeters) : "Nearby now",
@@ -353,6 +372,22 @@ function inferVenueTypeFromName(venueName: string) {
 
 function hashVenueName(value: string) {
   return value.split("").reduce((total, char) => total * 31 + char.charCodeAt(0), 7);
+}
+
+function getSignalBarsForScore(score: number) {
+  const activeCount =
+    score <= 20 ? 1 :
+    score <= 40 ? 2 :
+    score <= 60 ? 3 :
+    score <= 80 ? 4 : 5;
+  return Array.from({ length: 5 }, (_, index) => index < activeCount);
+}
+
+function getCompactSignalBarHeightStyle(index: number) {
+  const heights = [8, 11, 14, 17, 20];
+  return {
+    height: heights[index] ?? heights[heights.length - 1],
+  };
 }
 
 function buildVenuePlaceholderProfile(

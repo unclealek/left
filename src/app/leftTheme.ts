@@ -3136,6 +3136,24 @@ export const styles = StyleSheet.create({
     lineHeight: 17,
     fontFamily: T.fontBodyMedium,
   },
+  homeVenueSignalBars: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 2,
+    marginLeft: 4,
+  },
+  homeVenueSignalBar: {
+    width: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  homeVenueSignalBarActive: {
+    backgroundColor: T.primary,
+    borderColor: T.primary,
+  },
+  homeVenueSignalBarInactive: {
+    backgroundColor: "rgba(255,249,241,0.92)",
+  },
   homeVenuePeopleRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -4899,7 +4917,7 @@ export const styles = StyleSheet.create({
   brandPrimaryButtonHero: {
     minHeight: 82,
     justifyContent: "center",
-    paddingHorizontal: 22,
+    paddingHorizontal: 24,
     shadowColor: "#F4AE21",
     shadowOpacity: 0.18,
     shadowRadius: 16,
@@ -4919,11 +4937,11 @@ export const styles = StyleSheet.create({
     left: 20,
   },
   brandPrimaryButtonAccessoryRight: {
-    right: 20,
+    right: 18,
   },
   brandPrimaryButtonAccessoryHero: {
-    width: 36,
-    minWidth: 36,
+    width: 40,
+    minWidth: 40,
   },
   brandPrimaryButtonAccessoryGhost: {
     opacity: 0,
@@ -4942,8 +4960,8 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 52,
   },
   brandPrimaryButtonCopyHero: {
-    gap: 0,
-    transform: [{ translateY: 4 }],
+    gap: 1,
+    paddingHorizontal: 58,
   },
   brandPrimaryButtonLabel: {
     color: T.primary,
