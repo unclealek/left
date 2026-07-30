@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, AppState, ScrollView, Text, View } from "react-native";
 import * as Notifications from "expo-notifications";
 import type { Session } from "@supabase/supabase-js";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BackgroundWaveLayer } from "../components/left/BackgroundWaveLayer";
 import { SessionFooterNav } from "../components/left/navigation";
 import { AppDialog } from "../components/left/ui";
@@ -193,6 +194,7 @@ const PRIVATE_VENUE_SUMMARY: VenueContextSummary = {
 };
 
 export function LeftApp() {
+  const insets = useSafeAreaInsets();
   const [screen, setScreen] = useState<Screen>("auth");
   const [activationReturnScreen, setActivationReturnScreen] = useState<Screen>("home");
   const [safetyReturnScreen, setSafetyReturnScreen] = useState<Screen>("home");
@@ -1826,6 +1828,11 @@ export function LeftApp() {
   const locationStatus = locationEnabled
     ? "Background location is active. Venue matching runs on-device and only venue IDs are used for app state."
     : "Background location is not enabled yet.";
+  const scrollContentPaddingTop =
+    screen === "venue-detail" ? 0 : screen === "auth" ? 0 : Math.max(56, insets.top + 20);
+  const scrollContentPaddingBottom = SESSION_NAV_SCREENS.includes(screen)
+    ? 148 + insets.bottom
+    : 72 + insets.bottom;
 
   return (
     <View style={styles.shell}>
@@ -1834,8 +1841,11 @@ export function LeftApp() {
       <ScrollView
         contentContainerStyle={[
           styles.content,
+          {
+            paddingTop: scrollContentPaddingTop,
+            paddingBottom: scrollContentPaddingBottom,
+          },
           screen === "auth" && styles.fullContent,
-          SESSION_NAV_SCREENS.includes(screen) && styles.contentWithFooter,
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -1881,6 +1891,7 @@ export function LeftApp() {
             venueActivityById={venueActivityById}
             sessionVisible={sessionVisible}
             venueHidden={venueHidden}
+            activationSubmitting={activationSubmitting}
             onBecomeVisible={() => openActivationFrom("home")}
             onOpenVenueDetail={(venueCandidate) => openVenueDetail(venueCandidate, "home")}
             onOpenSafety={() => openSafetyFrom("home")}

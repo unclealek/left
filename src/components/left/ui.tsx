@@ -258,8 +258,8 @@ export function BrandPrimaryButton({
   const hero = size === "hero";
   const compactInline = !hero && !subtitle && trailingIcon === "none";
   const colors = disabled
-    ? (["rgba(255,195,77,0.36)", "rgba(255,195,77,0.28)"] as const)
-    : (["#FFD16B", "#FFBE45"] as const);
+    ? (["rgba(36,92,74,0.34)", "rgba(36,92,74,0.24)"] as const)
+    : (["#2B6A57", "#245C4A"] as const);
 
   return (
     <Pressable
@@ -285,25 +285,19 @@ export function BrandPrimaryButton({
           <>
             <View
               style={[
-                styles.brandPrimaryButtonAccessory,
-                styles.brandPrimaryButtonAccessoryLeft,
-                hero && styles.brandPrimaryButtonAccessoryHero,
-              ]}
-            >
-              <ButtonBrandMark size={hero ? 20 : 18} />
-            </View>
-            <View
-              style={[
-                styles.brandPrimaryButtonCopy,
+                styles.brandPrimaryButtonContentGroup,
                 hero && styles.brandPrimaryButtonCopyHero,
               ]}
             >
-              <Text style={[styles.brandPrimaryButtonLabel, hero && styles.brandPrimaryButtonLabelHero]}>
-                {label}
-              </Text>
-              {subtitle ? (
-                <Text style={styles.brandPrimaryButtonSubtitle}>{subtitle}</Text>
-              ) : null}
+              <ButtonBrandMark size={hero ? 20 : 18} />
+              <View style={styles.brandPrimaryButtonCopy}>
+                <Text style={[styles.brandPrimaryButtonLabel, hero && styles.brandPrimaryButtonLabelHero]}>
+                  {label}
+                </Text>
+                {subtitle ? (
+                  <Text style={styles.brandPrimaryButtonSubtitle}>{subtitle}</Text>
+                ) : null}
+              </View>
             </View>
             <View
               style={[
@@ -313,7 +307,9 @@ export function BrandPrimaryButton({
               ]}
             >
               {trailingIcon === "arrow" ? (
-                <Feather name="arrow-right" size={hero ? 24 : 20} color={T.primary} />
+                <View style={styles.brandPrimaryButtonArrowBubble}>
+                  <Feather name="arrow-up-right" size={hero ? 22 : 18} color={T.white} />
+                </View>
               ) : (
                 <View style={styles.brandPrimaryButtonAccessoryGhost}>
                   <ButtonBrandMark size={hero ? 20 : 18} />

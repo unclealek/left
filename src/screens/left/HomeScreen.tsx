@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { Animated, Easing, Image, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Animated, Easing, Image, Pressable, Text, View } from "react-native";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
 import {
   getVenueConfidenceCopy,
@@ -10,7 +10,7 @@ import {
 } from "../../features/location/venue-confidence";
 import { styles, T } from "../../app/leftTheme";
 import { LeftDoorwayMark } from "../../components/left/LeftDoorwayMark";
-import { BrandPrimaryButton, VenueIdentityBlock } from "../../components/left/ui";
+import { VenueIdentityBlock } from "../../components/left/ui";
 import type { VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
 
 const VENUE_ILLUSTRATIONS = {
@@ -31,6 +31,8 @@ export function HomeScreen({
   venueActivityById,
   sessionVisible,
   venueHidden,
+  activationSubmitting = false,
+  activationError = false,
   onBecomeVisible,
   onOpenVenueDetail,
   onOpenSafety,
@@ -41,6 +43,8 @@ export function HomeScreen({
   venueActivityById: Record<string, VenueActivityEnvelope>;
   sessionVisible: boolean;
   venueHidden: boolean;
+  activationSubmitting?: boolean;
+  activationError?: boolean;
   onBecomeVisible: () => void;
   onOpenVenueDetail: (venue: RuntimeVenueCandidate) => void;
   onOpenSafety: () => void;
@@ -82,6 +86,15 @@ export function HomeScreen({
       : venueConfidence === "nearby_guess"
         ? "Nearby match pending confirmation"
         : "Current venue still needs confirmation";
+  const hiddenCardHasError = activationError || venueConfidence === "needs_confirmation";
+  const hiddenMessage = hiddenCardHasError
+    ? "We couldn't confirm this venue yet. Check your current venue before going visible."
+    : "You're currently hidden from people here.";
+  const presenceStatusLabel = isVisible ? "YOU’RE HERE" : hiddenCardHasError ? "NEEDS ATTENTION" : "HIDDEN";
+  const presenceMessage = isVisible ? "You’re checked in here" : hiddenMessage;
+  const presencePrivacyLabel = isVisible ? "Visible now" : "Private by default";
+  const presencePrivacyAction = isVisible ? "Manage privacy" : "Go visible";
+  const primaryLabel = isVisible ? "Manage\nvisibility" : activationSubmitting ? "Becoming\nvisible..." : "Become\nvisible";
 
   return (
     <View style={styles.homePage}>
@@ -106,64 +119,103 @@ export function HomeScreen({
         <Text style={styles.homeHeroTitleBottom}>to connect ?</Text>
       </View>
 
-      <View style={styles.homeHeroCardV2}>
-        <View style={styles.homeHeroCardTopRow}>
-          <View style={styles.homeHeroCardCopyBlock}>
-            {isVisible ? (
-              <>
-                <View style={styles.homeHeroPresenceEyebrowRow}>
-                  <View style={styles.homeHeroPresenceEyebrowDot} />
-                  <Text style={styles.homeHeroPresenceEyebrow}>YOU’RE HERE</Text>
-                </View>
-                <Text style={styles.homeHeroVenueNameVisible}>{venueName}</Text>
-                <Text style={styles.homeHeroCardCopyVisible}>You’re checked in here</Text>
-              </>
-            ) : (
-              <>
-                <View style={styles.homeHeroStatusRow}>
-                  <View style={[styles.homeHeroStatusDot, isVisible ? styles.homeHeroStatusDotVisible : styles.homeHeroStatusDotHidden]} />
-                  <Text
-                    style={[
-                      styles.homeHeroStatusText,
-                      isVisible ? styles.homeHeroStatusTextVisible : styles.homeHeroStatusTextHidden,
-                    ]}
-                  >
-                    {heroStatus}
-                  </Text>
-                </View>
-                <Text style={styles.homeHeroCardCopy}>{heroCopy}</Text>
-              </>
-            )}
-          </View>
+      <View
+        style={[
+          styles.homeHeroCardV2,
+          styles.homeHeroCardV2Unified,
+          isVisible ? styles.homeHeroCardV2Visible : styles.homeHeroCardV2Hidden,
+          hiddenCardHasError && styles.homeHeroCardV2Error,
+        ]}
+      >
+        <View style={styles.homeHeroVisibleShell}>
           <LinearGradient
             colors={["#FFF4D8", "#FFF8EE", "#E9ECCE"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.homeHeroVenueArt}
+            style={styles.homeHeroVenueArtStacked}
           >
             <Image source={heroIllustration} style={styles.homeVenueIllustrationImage} resizeMode="cover" />
           </LinearGradient>
-        </View>
-        {isVisible ? (
-          <Pressable onPress={onBecomeVisible} style={({ pressed }) => [styles.homeVisibleHeroButton, pressed && styles.iconButtonPressed]}>
-            <View style={styles.homeVisibleHeroButtonMark}>
-              <LeftDoorwayMark size={20} archColor={"#FFBE45"} innerColor={"#FFE7A8"} baseColor={"#FFE7A8"} baseScale={0.54} />
+          <View style={styles.homeHeroVisibleInfoRow}>
+            <View style={styles.homeHeroVisibleInfoCopy}>
+              <View style={styles.homeHeroPresenceEyebrowRow}>
+                <View
+                  style={[
+                    styles.homeHeroPresenceEyebrowDot,
+                    !isVisible && styles.homeHeroPresenceEyebrowDotHidden,
+                    hiddenCardHasError && styles.homeHeroPresenceEyebrowDotError,
+                  ]}
+                />
+                <Text
+                  style={[
+                    styles.homeHeroPresenceEyebrow,
+                    !isVisible && styles.homeHeroPresenceEyebrowHidden,
+                    hiddenCardHasError && styles.homeHeroPresenceEyebrowError,
+                  ]}
+                >
+                  {presenceStatusLabel}
+                </Text>
+              </View>
+              <Text style={styles.homeHeroVenueNameVisible} numberOfLines={2} ellipsizeMode="tail">
+                {venueName}
+              </Text>
+              <Text style={styles.homeHeroCardCopyVisible}>{presenceMessage}</Text>
             </View>
-            <Text style={styles.homeVisibleHeroButtonText}>Manage visibility</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={isVisible ? "Manage visibility" : activationSubmitting ? "Becoming visible" : "Become visible"}
+              accessibilityHint={hiddenCardHasError ? "Resolve the venue issue before becoming visible." : "Open venue visibility controls."}
+              accessibilityState={{ disabled: (!isVisible && hiddenCardHasError) || activationSubmitting, busy: activationSubmitting }}
+              disabled={(!isVisible && hiddenCardHasError) || activationSubmitting}
+              onPress={onBecomeVisible}
+              style={({ pressed }) => [
+                styles.homeVisibleHeroButtonInline,
+                !isVisible && styles.homeVisibleHeroButtonInlineHidden,
+                hiddenCardHasError && styles.homeVisibleHeroButtonInlineError,
+                pressed && !activationSubmitting && !( !isVisible && hiddenCardHasError) && styles.iconButtonPressed,
+              ]}
+            >
+              {activationSubmitting ? (
+                <ActivityIndicator size="small" color={isVisible ? T.white : "#245C4A"} />
+              ) : (
+                <View style={styles.homeVisibleHeroButtonMark}>
+                  <LeftDoorwayMark
+                    size={20}
+                    archColor={isVisible ? "#F5BC4C" : "#245C4A"}
+                    innerColor={isVisible ? "#FFE3A0" : "#F3D88E"}
+                    baseColor={isVisible ? "#FFE3A0" : "#F3D88E"}
+                    baseScale={0.54}
+                  />
+                </View>
+              )}
+              <Text style={[styles.homeVisibleHeroButtonTextInline, !isVisible && styles.homeVisibleHeroButtonTextInlineHidden]}>
+                {primaryLabel}
+              </Text>
+            </Pressable>
+          </View>
+          <View style={styles.homeHeroVisibleDivider} />
+          <Pressable
+            onPress={onOpenSafety}
+            accessibilityRole="button"
+            accessibilityLabel={presencePrivacyLabel}
+            accessibilityHint="Open privacy and visibility controls."
+            style={({ pressed }) => [
+              styles.homeHeroPrivacyRowVisible,
+              pressed && styles.iconButtonPressed,
+            ]}
+          >
+            <View style={styles.homeHeroPrivacyIconWrapVisible}>
+              <Feather name="lock" size={18} color={"#59675F"} />
+            </View>
+            <View style={styles.homeHeroPrivacyCopyVisible}>
+              <Text style={styles.homeHeroPrivacyTextVisible}>
+                {presencePrivacyLabel} <Text style={styles.homeHeroPrivacySeparator}>·</Text>{" "}
+                <Text style={styles.homeHeroPrivacyHighlightVisible}>{presencePrivacyAction}</Text>
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={"#245842"} />
           </Pressable>
-        ) : (
-          <BrandPrimaryButton label={ctaLabel} onPress={onBecomeVisible} size="compact" />
-        )}
-        <Pressable onPress={onOpenSafety} style={({ pressed }) => [styles.homeHeroPrivacyRow, pressed && styles.iconButtonPressed]}>
-          <View style={styles.homeHeroPrivacyIconWrap}>
-            <Feather name="lock" size={17} color={"rgba(46,33,20,0.78)"} />
-          </View>
-          <View style={styles.homeHeroPrivacyCopy}>
-            <Text style={styles.homeHeroPrivacyText}>
-              Private by default, go be <Text style={styles.homeHeroPrivacyHighlight}>visible</Text>.
-            </Text>
-          </View>
-        </Pressable>
+        </View>
       </View>
 
       <View style={styles.homeExploreHeader}>
