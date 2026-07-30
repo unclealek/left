@@ -61,18 +61,11 @@ export function ActivationScreen(props: {
     <Card>
       <View style={styles.activationTopRow}>
         <BackNavButton label="" onPress={props.onBack} />
-        <View style={styles.activationProgressBlock}>
-          <Text style={styles.activationProgressEyebrow}>Step 1</Text>
-          <View style={styles.activationProgressDots}>
-            <View style={[styles.activationProgressDot, styles.activationProgressDotActive]} />
-            <View style={styles.activationProgressDot} />
-            <View style={styles.activationProgressDot} />
-          </View>
-          <Text style={styles.activationProgressMeta}>Step 1 of 3</Text>
+        <View style={styles.activationTopRowTitleWrap}>
+          <Text style={styles.activationTitle}>Your presence</Text>
         </View>
       </View>
       <View style={styles.activationHeader}>
-        <Text style={styles.activationTitle}>Your presence</Text>
         <Text style={styles.activationSubtitle}>
           Confirm the details below and go visible.
         </Text>
@@ -88,16 +81,14 @@ export function ActivationScreen(props: {
             <Text style={styles.activationVenueName}>{props.venueName}</Text>
             <Text style={styles.activationVenueBody}>{props.venueConfidenceCopy}</Text>
           </View>
-          <View style={styles.activationVenueStatusBadge}>
-            <View
-              style={[
-                styles.activationVenueStatusDot,
-                props.sessionVisible &&
-                  props.venueConfidenceLabel === "Confirmed venue" &&
-                  styles.activationVenueStatusDotConfirmed,
-              ]}
-            />
-          </View>
+          <View
+            style={[
+              styles.activationVenueStatusDot,
+              props.sessionVisible &&
+                props.venueConfidenceLabel === "Confirmed venue" &&
+                styles.activationVenueStatusDotConfirmed,
+            ]}
+          />
         </View>
       </View>
 

@@ -6,7 +6,7 @@ import { LeftDoorwayMark } from "../../components/left/LeftDoorwayMark";
 export function AuthScreen({ authError, onAuth }: { authError: string | null; onAuth: () => void }) {
   return (
     <View style={styles.authWrap}>
-      <LinearGradient colors={["#FFF9EF", "#FFF6E8", "#F8EEDB"]} style={styles.absoluteFill} />
+      <LinearGradient colors={["#FFFFFF", "#FBFDFC", "#F4F8F5"]} style={styles.absoluteFill} />
       <View style={styles.authGlowTop} pointerEvents="none" />
       <View style={styles.authGlowBottom} pointerEvents="none" />
       <View style={styles.authBrand}>

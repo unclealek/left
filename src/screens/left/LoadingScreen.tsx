@@ -6,7 +6,7 @@ import { LeftDoorwayMark } from "../../components/left/LeftDoorwayMark";
 export function LoadingScreen() {
   return (
     <View style={styles.loadingWrap}>
-      <LinearGradient colors={["#FFF9EF", "#FFF6E8", "#F8EEDB"]} style={StyleSheet.absoluteFillObject} />
+      <LinearGradient colors={["#FFFFFF", "#FBFDFC", "#F4F8F5"]} style={StyleSheet.absoluteFillObject} />
       <View style={styles.loadingCenter}>
         <View style={styles.loadingRing}>
           <LeftDoorwayMark size={54} archColor={T.secondary} innerColor={T.surface} baseColor={T.primarySoft} />

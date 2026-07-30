@@ -28,7 +28,7 @@ import type {
 } from "../../types/left-domain";
 import { formatIntent } from "../../app/leftConfig";
 import { T } from "../../app/leftTheme";
-import { BrandPrimaryButton, GhostButton } from "../../components/left/ui";
+import { GhostButton } from "../../components/left/ui";
 import { LeftDoorwayMark } from "../../components/left/LeftDoorwayMark";
 import { MAPBOX_ENABLED } from "../../lib/mapbox";
 
@@ -535,20 +535,44 @@ export function VenueScreen({
                 {currentVenueSummary}
               </Text>
             </View>
-            <Feather name="chevron-right" size={20} color={T.textPrimary} />
+            <View style={screenStyles.currentVenueArrowBubble}>
+              <Feather name="arrow-up-right" size={18} color={T.primary} />
+            </View>
           </Pressable>
         </View>
       </View>
 
       {showPrimaryCta ? (
         <View style={screenStyles.ctaBlock}>
-          <BrandPrimaryButton
-            label={primaryActionLabel}
-            subtitle={isPubliclyVisible ? "See who's nearby now" : "Let people discover you"}
+          <Pressable
             onPress={primaryAction}
-            size="hero"
-            trailingIcon="arrow"
-          />
+            style={({ pressed }) => [
+              screenStyles.primaryCtaButton,
+              pressed && screenStyles.pressed,
+            ]}
+          >
+            <View style={screenStyles.primaryCtaContent}>
+              <View style={screenStyles.primaryCtaMarkBubble}>
+                <LeftDoorwayMark
+                  size={18}
+                  archColor="#F6C857"
+                  innerColor="#FFF5D4"
+                  baseColor="#FFE39A"
+                />
+              </View>
+              <View style={screenStyles.primaryCtaCopy}>
+                <Text style={screenStyles.primaryCtaTitle} numberOfLines={1}>
+                  {primaryActionLabel}
+                </Text>
+                <Text style={screenStyles.primaryCtaSubtitle} numberOfLines={1}>
+                  {isPubliclyVisible ? "See who's nearby now" : "Let people discover you"}
+                </Text>
+              </View>
+            </View>
+            <View style={screenStyles.primaryCtaArrowBubble}>
+              <Feather name="arrow-up-right" size={22} color={T.white} />
+            </View>
+          </Pressable>
           <Text style={screenStyles.ctaFootnote}>{helperCopy}</Text>
         </View>
       ) : null}
@@ -736,14 +760,14 @@ const screenStyles = StyleSheet.create({
     maxWidth: 390,
     borderRadius: 28,
     borderWidth: 1,
-    borderColor: "rgba(214,198,169,0.34)",
-    backgroundColor: "rgba(255,252,247,0.98)",
+    borderColor: "rgba(36,92,74,0.08)",
+    backgroundColor: "rgba(255,255,255,0.98)",
     padding: 8,
-    shadowColor: "#DBC6A7",
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
+    shadowColor: "#245C4A",
+    shadowOpacity: 0.035,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   mapFrame: {
     width: "100%",
@@ -752,7 +776,7 @@ const screenStyles = StyleSheet.create({
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FBF8F1",
+    backgroundColor: "#F8FBF8",
   },
   mapbox: {
     ...StyleSheet.absoluteFillObject,
@@ -762,7 +786,7 @@ const screenStyles = StyleSheet.create({
   },
   mapWarmWash: {
     ...StyleSheet.absoluteFillObject,
-    opacity: 0.58,
+    opacity: 0.34,
   },
   mapPatchOne: {
     position: "absolute",
@@ -771,7 +795,7 @@ const screenStyles = StyleSheet.create({
     width: 120,
     height: 84,
     borderRadius: 26,
-    backgroundColor: "rgba(249,238,214,0.54)",
+    backgroundColor: "rgba(248,237,200,0.28)",
     transform: [{ rotate: "-14deg" }],
   },
   mapPatchTwo: {
@@ -781,7 +805,7 @@ const screenStyles = StyleSheet.create({
     width: 102,
     height: 68,
     borderRadius: 24,
-    backgroundColor: "rgba(220,237,211,0.68)",
+    backgroundColor: "rgba(226,239,228,0.52)",
   },
   mapPatchThree: {
     position: "absolute",
@@ -790,7 +814,7 @@ const screenStyles = StyleSheet.create({
     width: 94,
     height: 94,
     borderRadius: 47,
-    backgroundColor: "rgba(229,243,219,0.78)",
+    backgroundColor: "rgba(232,242,235,0.6)",
   },
   mapRoadHorizontal: {
     position: "absolute",
@@ -799,7 +823,7 @@ const screenStyles = StyleSheet.create({
     top: 210,
     height: 26,
     borderRadius: 14,
-    backgroundColor: "rgba(255,250,242,0.92)",
+    backgroundColor: "rgba(255,255,255,0.9)",
     borderWidth: 1,
     borderColor: "rgba(31,46,36,0.05)",
   },
@@ -810,7 +834,7 @@ const screenStyles = StyleSheet.create({
     left: 160,
     width: 24,
     borderRadius: 14,
-    backgroundColor: "rgba(255,250,242,0.92)",
+    backgroundColor: "rgba(255,255,255,0.9)",
     borderWidth: 1,
     borderColor: "rgba(31,46,36,0.05)",
   },
@@ -821,7 +845,7 @@ const screenStyles = StyleSheet.create({
     width: 240,
     height: 22,
     borderRadius: 12,
-    backgroundColor: "rgba(255,250,242,0.9)",
+    backgroundColor: "rgba(255,255,255,0.88)",
     borderWidth: 1,
     borderColor: "rgba(31,46,36,0.04)",
     transform: [{ rotate: "32deg" }],
@@ -833,7 +857,7 @@ const screenStyles = StyleSheet.create({
     borderRadius: 140,
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "rgba(103,128,113,0.14)",
+    borderColor: "rgba(103,128,113,0.10)",
   },
   ringMid: {
     position: "absolute",
@@ -842,7 +866,7 @@ const screenStyles = StyleSheet.create({
     borderRadius: 102,
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "rgba(103,128,113,0.14)",
+    borderColor: "rgba(103,128,113,0.10)",
   },
   ringInner: {
     position: "absolute",
@@ -851,14 +875,14 @@ const screenStyles = StyleSheet.create({
     borderRadius: 66,
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "rgba(255,194,77,0.18)",
+    borderColor: "rgba(217,172,69,0.14)",
   },
   centerVenueGlow: {
     position: "absolute",
     width: 146,
     height: 146,
     borderRadius: 73,
-    backgroundColor: "rgba(255,194,77,0.07)",
+    backgroundColor: "rgba(217,172,69,0.04)",
   },
   centerVenueBoundary: {
     position: "absolute",
@@ -866,8 +890,8 @@ const screenStyles = StyleSheet.create({
     height: 88,
     borderRadius: 44,
     borderWidth: 1,
-    borderColor: "rgba(255,194,77,0.58)",
-    backgroundColor: "rgba(255,221,164,0.06)",
+    borderColor: "rgba(217,172,69,0.32)",
+    backgroundColor: "rgba(217,172,69,0.04)",
   },
   venueMarker: {
     position: "absolute",
@@ -882,12 +906,12 @@ const screenStyles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "#1B4332",
+    backgroundColor: "#245C4A",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#1B4332",
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
+    shadowColor: "#245C4A",
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
     shadowOffset: { width: 0, height: 3 },
   },
   venueMarkerCopy: {
@@ -905,12 +929,12 @@ const screenStyles = StyleSheet.create({
     position: "absolute",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.9)",
+    backgroundColor: "rgba(255,255,255,0.94)",
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.98)",
-    shadowColor: "#7A8E73",
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
+    shadowColor: "#245C4A",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
   },
   personPulseFeatured: {
@@ -921,24 +945,24 @@ const screenStyles = StyleSheet.create({
     width: "100%",
     height: "100%",
     borderRadius: 999,
-    backgroundColor: "rgba(106,138,102,0.16)",
+    backgroundColor: "rgba(106,138,102,0.10)",
     borderWidth: 1,
-    borderColor: "rgba(106,138,102,0.18)",
+    borderColor: "rgba(106,138,102,0.12)",
   },
   centerBadge: {
     position: "absolute",
     width: 76,
     height: 76,
     borderRadius: 38,
-    backgroundColor: "rgba(255,252,247,0.98)",
-    borderWidth: 3,
-    borderColor: "rgba(255,255,255,0.92)",
+    backgroundColor: "rgba(255,255,255,0.96)",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.98)",
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
-    shadowColor: "#DBC6A7",
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    shadowColor: "#245C4A",
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
     shadowOffset: { width: 0, height: 3 },
   },
   centerBadgeSubtitle: {
@@ -957,21 +981,21 @@ const screenStyles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 13,
     borderRadius: 22,
-    backgroundColor: "rgba(255,252,247,0.98)",
+    backgroundColor: "rgba(255,255,255,0.98)",
     borderWidth: 1,
-    borderColor: "rgba(214,198,169,0.34)",
-    shadowColor: "#DBC6A7",
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
+    borderColor: "rgba(36,92,74,0.08)",
+    shadowColor: "#245C4A",
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
   },
   currentVenuePin: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: "rgba(233,236,206,0.78)",
+    backgroundColor: "rgba(36,92,74,0.08)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -983,24 +1007,95 @@ const screenStyles = StyleSheet.create({
   currentVenueChipText: {
     color: T.textPrimary,
     fontSize: 14,
-    lineHeight: 18,
+    lineHeight: 17,
     fontFamily: T.fontBodyMedium,
   },
   currentVenueChipMeta: {
     color: T.primary,
-    fontSize: 13,
-    lineHeight: 17,
+    fontSize: 12,
+    lineHeight: 16,
     fontFamily: T.fontBodyMedium,
+  },
+  currentVenueArrowBubble: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(36,92,74,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(36,92,74,0.08)",
   },
   ctaBlock: {
     width: "100%",
     maxWidth: 390,
-    gap: 8,
+    gap: 10,
+  },
+  primaryCtaButton: {
+    minHeight: 96,
+    borderRadius: 28,
+    backgroundColor: "#2B6A57",
+    paddingLeft: 22,
+    paddingRight: 18,
+    paddingVertical: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    shadowColor: "#245C4A",
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
+  },
+  primaryCtaContent: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16,
+    paddingLeft: 8,
+    paddingRight: 20,
+  },
+  primaryCtaMarkBubble: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  primaryCtaCopy: {
+    flexShrink: 1,
+    gap: 4,
+    alignItems: "flex-start",
+  },
+  primaryCtaTitle: {
+    color: T.white,
+    fontSize: 24,
+    lineHeight: 28,
+    fontFamily: T.fontDisplayBold,
+    letterSpacing: -0.5,
+  },
+  primaryCtaSubtitle: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 14,
+    lineHeight: 19,
+    fontFamily: T.fontBody,
+  },
+  primaryCtaArrowBubble: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.10)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.14)",
   },
   ctaFootnote: {
-    color: T.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
+    color: T.textMuted,
+    fontSize: 12,
+    lineHeight: 16,
     textAlign: "center",
     fontFamily: T.fontBody,
   },
@@ -1008,9 +1103,9 @@ const screenStyles = StyleSheet.create({
     width: "100%",
     maxWidth: 390,
     borderRadius: 22,
-    backgroundColor: "rgba(255,252,247,0.92)",
+    backgroundColor: "rgba(255,255,255,0.96)",
     borderWidth: 1,
-    borderColor: "rgba(214,198,169,0.44)",
+    borderColor: "rgba(36,92,74,0.10)",
     paddingHorizontal: 18,
     paddingVertical: 16,
     gap: 10,
