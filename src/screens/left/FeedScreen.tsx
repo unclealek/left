@@ -3,7 +3,7 @@ import type { NearbyFeedItem, VenueContextSummary } from "../../types/left-domai
 import { formatRemaining } from "../../app/leftConfig";
 import { styles } from "../../app/leftTheme";
 import { LeftAvatar } from "../../components/left/LeftAvatar";
-import { LeftDoorwayMark } from "../../components/left/LeftDoorwayMark";
+import { LeftLogoMark } from "../../components/left/LeftLogoMark";
 import { Chip, GhostButton, SafetyActionButton } from "../../components/left/ui";
 
 export function FeedScreen({
@@ -36,7 +36,7 @@ export function FeedScreen({
         <View style={styles.emptyState}>
           <View style={styles.emptyGlyphWrap}>
             <View style={styles.emptyGlyphMark}>
-              <LeftDoorwayMark size={30} />
+              <LeftLogoMark size={30} />
             </View>
           </View>
           <Text style={styles.emptyText}>{sessionVisible ? "No one visible yet." : "Start visibility to reveal your venue and see nearby people."}</Text>

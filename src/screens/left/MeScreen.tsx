@@ -1,10 +1,10 @@
-import { Feather } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import type { AppUser, AvatarStyle } from "../../types/left-domain";
 import { AVATAR_GLYPHS, avatarStyles, intents, vibeOptions } from "../../app/leftConfig";
 import { T, styles } from "../../app/leftTheme";
-import { LeftDoorwayMark } from "../../components/left/LeftDoorwayMark";
+import { LeftIcon, type LeftIconName } from "../../components/icons";
+import { LeftLogoMark } from "../../components/left/LeftLogoMark";
 import { PrimaryButton, SelectChip } from "../../components/left/ui";
 
 export function MeScreen({
@@ -98,7 +98,7 @@ export function MeScreen({
           onPress={editing ? () => setEditing(false) : onBack}
           style={({ pressed }) => [styles.profileHeaderButton, pressed && styles.iconButtonPressed]}
         >
-          <Feather name="chevron-left" size={28} color={T.textPrimary} />
+          <LeftIcon name="chevron-left" size={28} color={T.textPrimary} />
         </Pressable>
         <Text style={styles.profileHeaderTitle}>Profile</Text>
         <Pressable
@@ -114,7 +114,7 @@ export function MeScreen({
       <View style={styles.profileHeroCard}>
         <View style={styles.profileBrandHalo}>
           <View style={styles.profileBrandCore}>
-            <LeftDoorwayMark size={38} archColor={T.primary} innerColor={T.surface} baseColor={T.primarySoft} />
+            <LeftLogoMark size={40} />
           </View>
           <View style={styles.profileBrandSparkOne} />
           <View style={styles.profileBrandSparkTwo} />
@@ -130,7 +130,7 @@ export function MeScreen({
         {signalCards.map((card) => (
           <View key={card.label} style={styles.profileSignalCard}>
             <View style={styles.profileSignalIconWrap}>
-              <Feather name={card.icon} size={20} color={T.primary} />
+              <LeftIcon name={card.icon as LeftIconName} size={20} color={T.primary} />
             </View>
             <Text style={styles.profileSignalLabel}>{card.label}</Text>
             <Text style={styles.profileSignalValue}>{card.value}</Text>
@@ -205,7 +205,7 @@ export function MeScreen({
           <View style={styles.profileNowSection}>
             <View style={styles.profileSectionHeaderRow}>
               <View style={styles.profileSectionHeaderLeft}>
-                <Feather name="map-pin" size={16} color={T.primary} />
+                <LeftIcon name="map-pin" size={16} color={T.primary} />
                 <Text style={styles.profileSectionTitle}>Right now</Text>
               </View>
             </View>
@@ -217,7 +217,7 @@ export function MeScreen({
                   <Text style={styles.profilePresencePillText}>{venueMeta}</Text>
                 </View>
               </View>
-              <Feather name="chevron-right" size={22} color={"rgba(53,102,77,0.76)"} />
+              <LeftIcon name="chevron-right" size={22} color={T.textSecondary} />
             </View>
           </View>
 
@@ -225,14 +225,14 @@ export function MeScreen({
             <View style={styles.profileSectionHeaderRow}>
               <View style={styles.profileSectionHeaderLeft}>
                 <Text style={styles.profileSectionTitle}>My activity</Text>
-                <Feather name="minus" size={16} color={"rgba(53,102,77,0.55)"} />
+                <LeftIcon name="minus" size={16} color={T.textMuted} />
               </View>
             </View>
             <View style={styles.profileActivityCard}>
               {stats.map((stat, index) => (
                 <View key={stat.label} style={[styles.profileStatItem, index === stats.length - 1 && styles.profileStatItemLast]}>
                   <View style={styles.profileStatValueRow}>
-                    <Feather name={stat.icon} size={15} color={index === 1 ? T.accentBright : T.primary} />
+                    <LeftIcon name={stat.icon as LeftIconName} size={15} color={index === 1 ? T.accentBright : T.primary} />
                     <Text style={styles.profileStatValue}>{stat.value}</Text>
                   </View>
                   <Text style={styles.profileStatLabel}>{stat.label}</Text>
@@ -246,30 +246,11 @@ export function MeScreen({
               People see your intent and vibe, but not your name or details until you connect.
             </Text>
             <View style={styles.profilePrivacyIconWrap}>
-              <Feather name="lock" size={20} color={T.primary} />
+              <LeftIcon name="lock" size={20} color={T.primary} />
             </View>
           </View>
         </>
       )}
-    </View>
-  );
-}
-
-function ProfileInfoRow({
-  label,
-  value,
-  last = false,
-}: {
-  label: string;
-  value: string;
-  last?: boolean;
-}) {
-  return (
-    <View style={[styles.profileInfoRow, last && styles.profileInfoRowLast]}>
-      <Text style={styles.profileInfoLabel}>{label}</Text>
-      <View style={styles.profileInfoValueWrap}>
-        <Text style={styles.profileInfoValue} numberOfLines={1}>{value}</Text>
-      </View>
     </View>
   );
 }

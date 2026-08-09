@@ -21,9 +21,7 @@ import { initialFeed, initialVenueSummary, viewerSeed } from "../mocks/seed";
 import type {
   AppUser,
   ApproachAttempt,
-  AuthProvider,
   AvatarStyle,
-  IntentType,
   NearbyFeedItem,
   ReportCategory,
   SocialInteractionEventType,
@@ -198,7 +196,6 @@ export function LeftApp() {
   const [screen, setScreen] = useState<Screen>("auth");
   const [activationReturnScreen, setActivationReturnScreen] = useState<Screen>("home");
   const [safetyReturnScreen, setSafetyReturnScreen] = useState<Screen>("home");
-  const [authProvider, setAuthProvider] = useState<AuthProvider | null>(null);
   const [user, setUser] = useState<AppUser | null>(null);
   const [feed, setFeed] = useState<NearbyFeedItem[]>(initialFeed);
   const [selectedProfile, setSelectedProfile] = useState<NearbyFeedItem | null>(null);
@@ -947,14 +944,11 @@ export function LeftApp() {
     });
     if (!session) {
       setUser(null);
-      setAuthProvider(null);
       setScreen("auth");
       return;
     }
 
-    const provider = getProvider(session);
     const inferredFirstName = getFirstNameFromSession(session);
-    setAuthProvider(provider);
     setFirstNameDraft(inferredFirstName);
 
     const { profile, error } = await fetchUserProfile(session.user.id);
@@ -985,7 +979,6 @@ export function LeftApp() {
     const appUser = mapProfileToAppUser(profile);
     setUser(appUser);
     setFirstNameDraft(profile.first_name);
-    setAuthProvider(profile.auth_provider);
     const syncedVenuePreferences = await syncVenuePreferencesForUser(appUser.id);
     setVenuePreferences(syncedVenuePreferences);
     setVenueHidden(!!syncedVenuePreferences[venueSummary.venueId]?.hidden);
@@ -1019,13 +1012,11 @@ export function LeftApp() {
       );
       return;
     }
-
-    const provider = getProvider(session);
     const nextUser: AppUser = {
       ...viewerSeed,
       id: session.user.id,
-      authProvider: provider,
-      providerSubject: getProviderSubject(session, provider),
+      authProvider: getProvider(session),
+      providerSubject: getProviderSubject(session, getProvider(session)),
       firstName: firstNameDraft.trim() || getFirstNameFromSession(session),
       avatarStyle: avatarStyleDraft,
       onboardingCompleted: true,
@@ -1665,7 +1656,6 @@ export function LeftApp() {
 
   function clearLocalSessionState() {
     setUser(null);
-    setAuthProvider(null);
     setSelectedProfile(null);
     void endSessionState("session_ended", { toast: false });
     setApproach(null);
@@ -1831,7 +1821,7 @@ export function LeftApp() {
   const scrollContentPaddingTop =
     screen === "venue-detail" ? 0 : screen === "auth" ? 0 : Math.max(56, insets.top + 20);
   const scrollContentPaddingBottom = SESSION_NAV_SCREENS.includes(screen)
-    ? 148 + insets.bottom
+    ? 146 + insets.bottom
     : 72 + insets.bottom;
 
   return (
@@ -1895,7 +1885,6 @@ export function LeftApp() {
             onBecomeVisible={() => openActivationFrom("home")}
             onOpenVenueDetail={(venueCandidate) => openVenueDetail(venueCandidate, "home")}
             onOpenSafety={() => openSafetyFrom("home")}
-            onComingSoon={showToast}
           />
         )}
         {screen === "venue" && (

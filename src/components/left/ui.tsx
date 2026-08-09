@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import { Feather } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { Modal, Pressable, Text, View } from "react-native";
 import { styles, T } from "../../app/leftTheme";
-import { LeftDoorwayMark } from "./LeftDoorwayMark";
+import { GhostButton, PrimaryButton } from "../buttons";
+import { LeftIcon, type LeftIconName } from "../icons";
+export { BrandPrimaryButton, GhostButton, PrimaryButton } from "../buttons";
 
 export function Card({ children, step, total }: { children: ReactNode; step?: string; total?: string }) {
   return (
@@ -61,7 +61,7 @@ export function IconSelectChip({
   onPress,
 }: {
   label: string;
-  icon: keyof typeof Feather.glyphMap;
+  icon: LeftIconName;
   active: boolean;
   compact?: boolean;
   onPress: () => void;
@@ -76,11 +76,7 @@ export function IconSelectChip({
       ]}
     >
       {active ? <View style={styles.iconSelectChipGlow} /> : null}
-      <Feather
-        name={icon}
-        size={16}
-        color={active ? T.accentBright : "rgba(31,46,36,0.58)"}
-      />
+      <LeftIcon name={icon} size={16} color={active ? T.accentBright : "rgba(31,46,36,0.58)"} active={active} />
       <Text
         style={[
           styles.iconSelectChipLabel,
@@ -92,7 +88,7 @@ export function IconSelectChip({
       </Text>
       {active && !compact ? (
         <View style={styles.iconSelectChipCheck}>
-          <Feather name="check" size={11} color={T.white} />
+          <LeftIcon name="check" size={11} color={T.white} />
         </View>
       ) : null}
     </Pressable>
@@ -119,7 +115,7 @@ export function StatusPill({
         ]}
       />
       <Text style={styles.statusPillLabel}>{label}</Text>
-      {showChevron ? <Feather name="chevron-down" size={16} color={T.textSecondary} /> : null}
+      {showChevron ? <LeftIcon name="chevron-down" size={16} color={T.textSecondary} /> : null}
     </>
   );
 
@@ -142,7 +138,7 @@ export function UtilityIconButton({
   compact = false,
   showLabel = true,
 }: {
-  icon: keyof typeof Feather.glyphMap;
+  icon: LeftIconName;
   label: string;
   onPress: () => void;
   tint?: string;
@@ -161,7 +157,7 @@ export function UtilityIconButton({
         pressed && styles.primaryBtnPressed,
       ]}
     >
-      <Feather name={icon} size={18} color={tint} />
+      <LeftIcon name={icon} size={18} color={tint} />
       {showLabel ? <Text style={styles.utilityIconButtonLabel}>{label}</Text> : null}
     </Pressable>
   );
@@ -187,11 +183,11 @@ export function VenueIdentityBlock({
   emphasis = "regular",
   titleLines = 1,
 }: {
-  icon: keyof typeof Feather.glyphMap;
+  icon: LeftIconName;
   title: string;
-  metaIcon: keyof typeof Feather.glyphMap;
+  metaIcon: LeftIconName;
   metaText: string;
-  secondaryMetaIcon?: keyof typeof Feather.glyphMap;
+  secondaryMetaIcon?: LeftIconName;
   secondaryMetaText?: string;
   emphasis?: "regular" | "hero";
   titleLines?: number;
@@ -200,7 +196,7 @@ export function VenueIdentityBlock({
   return (
     <View style={styles.venueIdentityBlock}>
       <View style={[styles.venueIdentityBlockIconWrap, hero && styles.venueIdentityBlockIconWrapHero]}>
-        <Feather name={icon} size={hero ? 19 : 18} color={T.textPrimary} />
+        <LeftIcon name={icon} size={hero ? 19 : 18} color={T.textPrimary} />
       </View>
       <View style={styles.venueIdentityBlockCopy}>
         <Text
@@ -210,116 +206,19 @@ export function VenueIdentityBlock({
           {title}
         </Text>
         <View style={styles.venueIdentityBlockMetaRow}>
-          <Feather name={metaIcon} size={16} color={T.primary} />
+          <LeftIcon name={metaIcon} size={16} color={T.primary} />
           <Text style={[styles.venueIdentityBlockMetaText, hero && styles.venueIdentityBlockMetaTextHero]}>
             {metaText}
           </Text>
         </View>
         {secondaryMetaIcon && secondaryMetaText ? (
           <View style={styles.venueIdentityBlockMetaRow}>
-            <Feather name={secondaryMetaIcon} size={15} color={T.textMuted} />
+            <LeftIcon name={secondaryMetaIcon} size={15} color={T.textMuted} />
             <Text style={styles.venueIdentityBlockSecondaryText}>{secondaryMetaText}</Text>
           </View>
         ) : null}
       </View>
     </View>
-  );
-}
-
-export function ButtonBrandMark({ size = 18 }: { size?: number }) {
-  return (
-    <View style={styles.buttonBrandMarkShell}>
-      <LeftDoorwayMark
-        size={size}
-        archColor={T.primary}
-        innerColor={T.accent}
-        baseColor={T.accent}
-        baseScale={0.54}
-      />
-    </View>
-  );
-}
-
-export function BrandPrimaryButton({
-  label,
-  subtitle,
-  onPress,
-  disabled = false,
-  size = "compact",
-  trailingIcon = "none",
-}: {
-  label: string;
-  subtitle?: string;
-  onPress: () => void;
-  disabled?: boolean;
-  size?: "compact" | "hero";
-  trailingIcon?: "none" | "arrow";
-}) {
-  const hero = size === "hero";
-  const compactInline = !hero && !subtitle && trailingIcon === "none";
-  const colors = disabled
-    ? (["rgba(36,92,74,0.34)", "rgba(36,92,74,0.24)"] as const)
-    : (["#2B6A57", "#245C4A"] as const);
-
-  return (
-    <Pressable
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [styles.brandPrimaryButtonPressable, pressed && !disabled && styles.primaryBtnPressed]}
-    >
-      <LinearGradient
-        colors={colors}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={[
-          styles.brandPrimaryButton,
-          hero ? styles.brandPrimaryButtonHero : styles.brandPrimaryButtonCompact,
-        ]}
-      >
-        {compactInline ? (
-          <View style={styles.brandPrimaryButtonInlineGroup}>
-            <ButtonBrandMark size={18} />
-            <Text style={styles.brandPrimaryButtonLabel}>{label}</Text>
-          </View>
-        ) : (
-          <>
-            <View
-              style={[
-                styles.brandPrimaryButtonContentGroup,
-                hero && styles.brandPrimaryButtonCopyHero,
-              ]}
-            >
-              <ButtonBrandMark size={hero ? 20 : 18} />
-              <View style={styles.brandPrimaryButtonCopy}>
-                <Text style={[styles.brandPrimaryButtonLabel, hero && styles.brandPrimaryButtonLabelHero]}>
-                  {label}
-                </Text>
-                {subtitle ? (
-                  <Text style={styles.brandPrimaryButtonSubtitle}>{subtitle}</Text>
-                ) : null}
-              </View>
-            </View>
-            <View
-              style={[
-                styles.brandPrimaryButtonAccessory,
-                styles.brandPrimaryButtonAccessoryRight,
-                hero && styles.brandPrimaryButtonAccessoryHero,
-              ]}
-            >
-              {trailingIcon === "arrow" ? (
-                <View style={styles.brandPrimaryButtonArrowBubble}>
-                  <Feather name="arrow-up-right" size={hero ? 22 : 18} color={T.white} />
-                </View>
-              ) : (
-                <View style={styles.brandPrimaryButtonAccessoryGhost}>
-                  <ButtonBrandMark size={hero ? 20 : 18} />
-                </View>
-              )}
-            </View>
-          </>
-        )}
-      </LinearGradient>
-    </Pressable>
   );
 }
 
@@ -333,67 +232,6 @@ export function EnergyPill({ level }: { level: string }) {
         {level}
       </Text>
     </View>
-  );
-}
-
-export function PrimaryButton({
-  label,
-  onPress,
-  disabled = false,
-}: {
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <Pressable
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.primaryBtn,
-        disabled && styles.primaryBtnDisabled,
-        pressed && !disabled && styles.primaryBtnPressed,
-      ]}
-    >
-      <Text style={[styles.primaryBtnLabel, disabled && styles.primaryBtnLabelDisabled]}>{label}</Text>
-    </Pressable>
-  );
-}
-
-export function GhostButton({
-  label,
-  onPress,
-  compact = false,
-  destructive = false,
-  disabled = false,
-}: {
-  label: string;
-  onPress: () => void;
-  compact?: boolean;
-  destructive?: boolean;
-  disabled?: boolean;
-}) {
-  return (
-    <Pressable
-      disabled={disabled}
-      onPress={onPress}
-      style={[
-        styles.ghostBtn,
-        compact && styles.ghostBtnCompact,
-        destructive && styles.ghostBtnDestructive,
-        disabled && styles.ghostBtnDisabled,
-      ]}
-    >
-      <Text
-        style={[
-          styles.ghostBtnLabel,
-          destructive && styles.ghostBtnLabelDestructive,
-          disabled && styles.ghostBtnLabelDisabled,
-        ]}
-      >
-        {label}
-      </Text>
-    </Pressable>
   );
 }
 

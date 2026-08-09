@@ -1,8 +1,8 @@
-import { Feather } from "@expo/vector-icons";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Text, TextInput, View } from "react-native";
 import type { AppUser } from "../../types/left-domain";
 import { durationOptions, formatElapsedDuration, intents, vibeOptions } from "../../app/leftConfig";
 import { T, styles } from "../../app/leftTheme";
+import { LeftIcon, type LeftIconName } from "../../components/icons";
 import { BackNavButton } from "../../components/left/navigation";
 import { BrandPrimaryButton, Card, FieldBlock, IconSelectChip, PrimaryButton } from "../../components/left/ui";
 
@@ -74,7 +74,7 @@ export function ActivationScreen(props: {
       <View style={styles.activationVenueCard}>
         <View style={styles.activationVenueCardTopRow}>
           <View style={styles.activationVenueIconWrap}>
-            <Feather name="map-pin" size={18} color={T.primary} />
+            <LeftIcon name="map-pin" size={18} color={T.primary} />
           </View>
           <View style={styles.activationVenueCopy}>
             <Text style={styles.activationVenueEyebrow}>{props.venueConfidenceLabel}</Text>
@@ -138,7 +138,7 @@ export function ActivationScreen(props: {
       <FieldBlock label="Hint card" hint="Add a short hint to help people spot you.">
         <View style={styles.activationHintCard}>
           <View style={styles.activationHintIconWrap}>
-            <Feather name="edit-3" size={16} color={T.primary} />
+            <LeftIcon name="edit" size={16} color={T.primary} />
           </View>
           <View style={styles.activationHintContent}>
             <TextInput
@@ -175,7 +175,7 @@ export function ActivationScreen(props: {
   );
 }
 
-function getIntentIcon(intent: AppUser["defaultIntent"]) {
+function getIntentIcon(intent: AppUser["defaultIntent"]): LeftIconName {
   switch (intent) {
     case "open_to_conversation":
       return "message-circle" as const;
@@ -189,7 +189,7 @@ function getIntentIcon(intent: AppUser["defaultIntent"]) {
   }
 }
 
-function getVibeIcon(vibe: string) {
+function getVibeIcon(vibe: string): LeftIconName {
   switch (vibe) {
     case "AI/startups":
       return "cpu" as const;

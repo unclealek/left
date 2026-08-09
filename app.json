@@ -8,7 +8,7 @@
     "userInterfaceStyle": "dark",
     "scheme": "left",
     "splash": {
-      "image": "./app-icon.png",
+      "image": "./assets/brand/splash-logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#08080F"
     },
@@ -26,7 +26,7 @@
     "android": {
       "package": "com.left.mobile",
       "adaptiveIcon": {
-        "foregroundImage": "./app-icon.png",
+        "foregroundImage": "./assets/brand/left-app-icon-foreground.png",
         "backgroundColor": "#08080F"
       },
       "permissions": [

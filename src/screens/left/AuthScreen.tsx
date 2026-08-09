@@ -1,22 +1,17 @@
 import { Pressable, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { styles } from "../../app/leftTheme";
-import { LeftDoorwayMark } from "../../components/left/LeftDoorwayMark";
+import { styles, T } from "../../app/leftTheme";
+import { LeftLogoMark } from "../../components/left/LeftLogoMark";
 
 export function AuthScreen({ authError, onAuth }: { authError: string | null; onAuth: () => void }) {
   return (
     <View style={styles.authWrap}>
-      <LinearGradient colors={["#FFFFFF", "#FBFDFC", "#F4F8F5"]} style={styles.absoluteFill} />
+      <LinearGradient colors={[T.white, T.surface, T.primarySoft]} style={styles.absoluteFill} />
       <View style={styles.authGlowTop} pointerEvents="none" />
       <View style={styles.authGlowBottom} pointerEvents="none" />
       <View style={styles.authBrand}>
         <View style={styles.authMarkRing}>
-          <LeftDoorwayMark size={44} />
-        </View>
-        <View style={styles.authWordmarkWrap}>
-          <View style={styles.authWordmarkRule} />
-          <Text style={styles.authWordmark}>LEFT</Text>
-          <View style={styles.authWordmarkRule} />
+          <LeftLogoMark size={48} />
         </View>
       </View>
       <View style={styles.authCard}>
@@ -39,7 +34,7 @@ export function AuthScreen({ authError, onAuth }: { authError: string | null; on
           <Text style={styles.authFooterDivider}>·</Text>
           <Text style={styles.authFooterLink}>Terms of Service</Text>
         </View>
-        <Text style={styles.authFooterCopy}>© 2026 LEFT SOCIAL</Text>
+        <Text style={styles.authFooterCopy}>© 2026</Text>
       </View>
     </View>
   );

@@ -1,4 +1,3 @@
-import { Feather } from "@expo/vector-icons";
 import { useEffect, useMemo, useRef } from "react";
 import {
   Animated,
@@ -28,8 +27,9 @@ import type {
 } from "../../types/left-domain";
 import { formatIntent } from "../../app/leftConfig";
 import { T } from "../../app/leftTheme";
+import { LeftIcon, type LeftIconName } from "../../components/icons";
+import { LeftLogoMark } from "../../components/left/LeftLogoMark";
 import { GhostButton } from "../../components/left/ui";
-import { LeftDoorwayMark } from "../../components/left/LeftDoorwayMark";
 import { MAPBOX_ENABLED } from "../../lib/mapbox";
 
 const STAGE_SIZE = 350;
@@ -38,7 +38,6 @@ const PERSON_RING_RADII = [72, 106, 136] as const;
 const PERSON_ANGLES = [18, 58, 102, 138, 198, 236, 286, 332] as const;
 const VENUE_SLOT_ANGLES = [315, 225, 160, 20] as const;
 const VENUE_SLOT_RADII = [106, 106, 92, 92] as const;
-const MAX_DISPLAY_DISTANCE_METERS = 150;
 
 function toRadians(value: number) {
   return (value * Math.PI) / 180;
@@ -114,7 +113,7 @@ function resolveMapCenter(
   return { latitude: 60.1699, longitude: 24.9384 };
 }
 
-function getVenueMarkerIcon(name: string): keyof typeof Feather.glyphMap {
+function getVenueMarkerIcon(name: string): LeftIconName {
   const value = name.toLowerCase();
   if (value.includes("cafe") || value.includes("coffee")) return "coffee";
   if (value.includes("bar")) return "circle";
@@ -124,7 +123,7 @@ function getVenueMarkerIcon(name: string): keyof typeof Feather.glyphMap {
   return "map-pin";
 }
 
-function getIntentIcon(intent: string): keyof typeof Feather.glyphMap {
+function getIntentIcon(intent: string): LeftIconName {
   const value = intent.toLowerCase();
   if (value.includes("conversation") || value.includes("group")) return "message-circle";
   if (value.includes("network")) return "users";
@@ -313,16 +312,17 @@ export function VenueScreen({
                 Venue Radar
               </Text>
               <Animated.View style={[screenStyles.heroSignalWrap, pulseIconStyle]}>
-                <Feather name="radio" size={18} color={"#5D9A7B"} />
+                <LeftIcon name="radio" size={18} color={T.primary} active />
               </Animated.View>
             </View>
           </View>
           <View style={screenStyles.statusActionPill}>
             <View style={screenStyles.compactStatusPill}>
-              <Feather
+              <LeftIcon
                 name={isPubliclyVisible ? "eye" : "eye-off"}
                 size={17}
-                color={isPubliclyVisible ? T.primary : "#35664D"}
+                color={isPubliclyVisible ? T.primary : T.textSecondary}
+                active={isPubliclyVisible}
               />
               <Text style={screenStyles.compactStatusLabel}>{statusLabel}</Text>
             </View>
@@ -337,7 +337,7 @@ export function VenueScreen({
                 pressed && screenStyles.pressed,
               ]}
             >
-              <Feather name="shield" size={18} color={T.primary} />
+              <LeftIcon name="shield" size={18} color={T.primary} />
             </Pressable>
           </View>
         </View>
@@ -353,7 +353,7 @@ export function VenueScreen({
             </Text>
             <View style={screenStyles.insightValueRow}>
               <View style={screenStyles.insightIconBubble}>
-                <Feather name="wind" size={24} color={T.primary} />
+                <LeftIcon name="wind" size={24} color={T.primary} />
               </View>
               <Text
                 style={screenStyles.insightTitle}
@@ -373,7 +373,7 @@ export function VenueScreen({
             </Text>
             <View style={screenStyles.insightValueRow}>
               <View style={screenStyles.insightIconBubble}>
-                <Feather name={getIntentIcon(intentTitle)} size={23} color={T.primary} />
+                <LeftIcon name={getIntentIcon(intentTitle)} size={23} color={T.primary} />
               </View>
               <Text
                 style={screenStyles.insightTitle}
@@ -412,7 +412,7 @@ export function VenueScreen({
             </MapView>
           ) : (
             <LinearGradient
-              colors={["#FBF8F1", "#F8F0E4", "#FBF7F0"]}
+              colors={[T.surface, T.surfaceDim, T.surface]}
               style={screenStyles.mapFallback}
             >
               <View style={screenStyles.mapPatchOne} />
@@ -425,7 +425,7 @@ export function VenueScreen({
           )}
 
           <LinearGradient
-            colors={["rgba(255,255,255,0.08)", "rgba(255,190,64,0.08)"]}
+            colors={[T.surfaceGlassLilac, T.visibilityOffSoft]}
             style={screenStyles.mapWarmWash}
             pointerEvents="none"
           />
@@ -449,7 +449,7 @@ export function VenueScreen({
               hitSlop={8}
             >
               <View style={screenStyles.venueMarkerPin}>
-                <Feather
+                <LeftIcon
                   name={getVenueMarkerIcon(candidate.name)}
                   size={16}
                   color={T.white}
@@ -493,7 +493,7 @@ export function VenueScreen({
                       ]}
                     />
                   ) : null}
-                  <Feather
+                  <LeftIcon
                     name="user"
                     size={featured ? 17 : 15}
                     color={T.primary}
@@ -503,13 +503,7 @@ export function VenueScreen({
             : null}
 
           <View style={screenStyles.centerBadge} pointerEvents="none">
-            <LeftDoorwayMark
-              size={22}
-              archColor={isPubliclyVisible ? T.accent : T.primary}
-              innerColor={"rgba(255,252,247,0.98)"}
-              baseColor={isPubliclyVisible ? T.accent : T.primary}
-              baseScale={0.52}
-            />
+            <LeftLogoMark size={22} />
             <Text style={screenStyles.centerBadgeSubtitle}>
               {isPubliclyVisible ? "Visible" : "Hidden"}
             </Text>
@@ -525,7 +519,7 @@ export function VenueScreen({
             ]}
           >
             <View style={screenStyles.currentVenuePin}>
-              <Feather name="map-pin" size={18} color={T.primary} />
+              <LeftIcon name="map-pin" size={18} color={T.primary} />
             </View>
             <View style={screenStyles.currentVenueCopy}>
               <Text style={screenStyles.currentVenueChipText} numberOfLines={1}>
@@ -536,7 +530,7 @@ export function VenueScreen({
               </Text>
             </View>
             <View style={screenStyles.currentVenueArrowBubble}>
-              <Feather name="arrow-up-right" size={18} color={T.primary} />
+              <LeftIcon name="arrow-up-right" size={18} color={T.primary} />
             </View>
           </Pressable>
         </View>
@@ -553,12 +547,7 @@ export function VenueScreen({
           >
             <View style={screenStyles.primaryCtaContent}>
               <View style={screenStyles.primaryCtaMarkBubble}>
-                <LeftDoorwayMark
-                  size={18}
-                  archColor="#F6C857"
-                  innerColor="#FFF5D4"
-                  baseColor="#FFE39A"
-                />
+                <LeftLogoMark size={18} />
               </View>
               <View style={screenStyles.primaryCtaCopy}>
                 <Text style={screenStyles.primaryCtaTitle} numberOfLines={1}>
@@ -570,7 +559,7 @@ export function VenueScreen({
               </View>
             </View>
             <View style={screenStyles.primaryCtaArrowBubble}>
-              <Feather name="arrow-up-right" size={22} color={T.white} />
+              <LeftIcon name="arrow-up-right" size={22} color={T.white} />
             </View>
           </Pressable>
           <Text style={screenStyles.ctaFootnote}>{helperCopy}</Text>
@@ -642,9 +631,9 @@ const screenStyles = StyleSheet.create({
     alignItems: "center",
     flexShrink: 0,
     borderRadius: 999,
-    backgroundColor: "rgba(255,252,247,0.96)",
+    backgroundColor: T.surfaceGlassStrong,
     borderWidth: 1,
-    borderColor: "rgba(226,212,190,0.9)",
+    borderColor: T.border,
     paddingLeft: 4,
     paddingRight: 1,
     paddingVertical: 2,
@@ -667,7 +656,7 @@ const screenStyles = StyleSheet.create({
   statusActionDivider: {
     width: 1,
     height: 20,
-    backgroundColor: "rgba(214,198,169,0.46)",
+    backgroundColor: T.border,
     marginVertical: 0,
   },
   compactPrivacyButton: {
@@ -694,7 +683,7 @@ const screenStyles = StyleSheet.create({
     marginTop: 2,
   },
   heroSubtitle: {
-    color: "rgba(31,46,36,0.82)",
+    color: T.textSecondary,
     fontSize: 15,
     lineHeight: 22,
     fontFamily: T.fontBody,
@@ -708,12 +697,12 @@ const screenStyles = StyleSheet.create({
   insightCard: {
     flex: 1,
     borderRadius: 24,
-    backgroundColor: "rgba(255,252,247,0.96)",
+    backgroundColor: T.surfaceGlassStrong,
     borderWidth: 1,
-    borderColor: "rgba(214,198,169,0.34)",
+    borderColor: T.border,
     paddingHorizontal: 14,
     paddingVertical: 18,
-    shadowColor: "#DBC6A7",
+    shadowColor: T.primary,
     shadowOpacity: 0.08,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
@@ -721,7 +710,7 @@ const screenStyles = StyleSheet.create({
     gap: 14,
   },
   insightLabel: {
-    color: "rgba(31,46,36,0.56)",
+    color: T.textMuted,
     fontSize: 10,
     lineHeight: 14,
     textTransform: "uppercase",
@@ -737,7 +726,7 @@ const screenStyles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: "rgba(233,236,206,0.72)",
+    backgroundColor: T.primarySoft,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -750,7 +739,7 @@ const screenStyles = StyleSheet.create({
     fontFamily: T.fontBodyBold,
   },
   insightSubtext: {
-    color: "rgba(31,46,36,0.7)",
+    color: T.textSecondary,
     fontSize: 13,
     lineHeight: 18,
     fontFamily: T.fontBody,
@@ -760,10 +749,10 @@ const screenStyles = StyleSheet.create({
     maxWidth: 390,
     borderRadius: 28,
     borderWidth: 1,
-    borderColor: "rgba(36,92,74,0.08)",
-    backgroundColor: "rgba(255,255,255,0.98)",
+    borderColor: T.border,
+    backgroundColor: T.surfaceGlassStrong,
     padding: 8,
-    shadowColor: "#245C4A",
+    shadowColor: T.primary,
     shadowOpacity: 0.035,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
@@ -776,7 +765,7 @@ const screenStyles = StyleSheet.create({
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F8FBF8",
+    backgroundColor: T.primarySoft,
   },
   mapbox: {
     ...StyleSheet.absoluteFillObject,
@@ -795,7 +784,7 @@ const screenStyles = StyleSheet.create({
     width: 120,
     height: 84,
     borderRadius: 26,
-    backgroundColor: "rgba(248,237,200,0.28)",
+    backgroundColor: T.visibilityOffSoft,
     transform: [{ rotate: "-14deg" }],
   },
   mapPatchTwo: {
@@ -805,7 +794,7 @@ const screenStyles = StyleSheet.create({
     width: 102,
     height: 68,
     borderRadius: 24,
-    backgroundColor: "rgba(226,239,228,0.52)",
+    backgroundColor: T.primarySoft,
   },
   mapPatchThree: {
     position: "absolute",
@@ -814,7 +803,7 @@ const screenStyles = StyleSheet.create({
     width: 94,
     height: 94,
     borderRadius: 47,
-    backgroundColor: "rgba(232,242,235,0.6)",
+    backgroundColor: T.primarySoft,
   },
   mapRoadHorizontal: {
     position: "absolute",
@@ -823,9 +812,9 @@ const screenStyles = StyleSheet.create({
     top: 210,
     height: 26,
     borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.9)",
+    backgroundColor: T.surfaceGlassStrong,
     borderWidth: 1,
-    borderColor: "rgba(31,46,36,0.05)",
+    borderColor: T.borderBlackSoft,
   },
   mapRoadVertical: {
     position: "absolute",
@@ -834,9 +823,9 @@ const screenStyles = StyleSheet.create({
     left: 160,
     width: 24,
     borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.9)",
+    backgroundColor: T.surfaceGlassStrong,
     borderWidth: 1,
-    borderColor: "rgba(31,46,36,0.05)",
+    borderColor: T.borderBlackSoft,
   },
   mapRoadDiagonal: {
     position: "absolute",
@@ -845,9 +834,9 @@ const screenStyles = StyleSheet.create({
     width: 240,
     height: 22,
     borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.88)",
+    backgroundColor: T.surfaceGlassStrong,
     borderWidth: 1,
-    borderColor: "rgba(31,46,36,0.04)",
+    borderColor: T.borderBlackSoft,
     transform: [{ rotate: "32deg" }],
   },
   ringOuter: {
@@ -857,7 +846,7 @@ const screenStyles = StyleSheet.create({
     borderRadius: 140,
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "rgba(103,128,113,0.10)",
+    borderColor: T.border,
   },
   ringMid: {
     position: "absolute",
@@ -866,7 +855,7 @@ const screenStyles = StyleSheet.create({
     borderRadius: 102,
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "rgba(103,128,113,0.10)",
+    borderColor: T.border,
   },
   ringInner: {
     position: "absolute",
@@ -875,14 +864,14 @@ const screenStyles = StyleSheet.create({
     borderRadius: 66,
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "rgba(217,172,69,0.14)",
+    borderColor: T.visibilityOffSoft,
   },
   centerVenueGlow: {
     position: "absolute",
     width: 146,
     height: 146,
     borderRadius: 73,
-    backgroundColor: "rgba(217,172,69,0.04)",
+    backgroundColor: T.visibilityOffSoft,
   },
   centerVenueBoundary: {
     position: "absolute",
@@ -890,8 +879,8 @@ const screenStyles = StyleSheet.create({
     height: 88,
     borderRadius: 44,
     borderWidth: 1,
-    borderColor: "rgba(217,172,69,0.32)",
-    backgroundColor: "rgba(217,172,69,0.04)",
+    borderColor: T.visibilityOff,
+    backgroundColor: T.visibilityOffSoft,
   },
   venueMarker: {
     position: "absolute",
@@ -906,10 +895,10 @@ const screenStyles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "#245C4A",
+    backgroundColor: T.primary,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#245C4A",
+    shadowColor: T.primary,
     shadowOpacity: 0.08,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 3 },
@@ -929,38 +918,38 @@ const screenStyles = StyleSheet.create({
     position: "absolute",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.94)",
+    backgroundColor: T.surfaceGlassStrong,
     borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.98)",
-    shadowColor: "#245C4A",
+    borderColor: T.surfaceGlassStrong,
+    shadowColor: T.primary,
     shadowOpacity: 0.08,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
   },
   personPulseFeatured: {
-    backgroundColor: "#F9FFF6",
+    backgroundColor: T.primarySoft,
   },
   personPulseHalo: {
     position: "absolute",
     width: "100%",
     height: "100%",
     borderRadius: 999,
-    backgroundColor: "rgba(106,138,102,0.10)",
+    backgroundColor: T.primarySoft,
     borderWidth: 1,
-    borderColor: "rgba(106,138,102,0.12)",
+    borderColor: T.border,
   },
   centerBadge: {
     position: "absolute",
     width: 76,
     height: 76,
     borderRadius: 38,
-    backgroundColor: "rgba(255,255,255,0.96)",
+    backgroundColor: T.surfaceGlassStrong,
     borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.98)",
+    borderColor: T.surfaceGlassStrong,
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
-    shadowColor: "#245C4A",
+    shadowColor: T.primary,
     shadowOpacity: 0.04,
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 3 },
@@ -983,10 +972,10 @@ const screenStyles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 13,
     borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.98)",
+    backgroundColor: T.surfaceGlassStrong,
     borderWidth: 1,
-    borderColor: "rgba(36,92,74,0.08)",
-    shadowColor: "#245C4A",
+    borderColor: T.border,
+    shadowColor: T.primary,
     shadowOpacity: 0.03,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
@@ -995,7 +984,7 @@ const screenStyles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: "rgba(36,92,74,0.08)",
+    backgroundColor: T.surfaceMid,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1022,9 +1011,9 @@ const screenStyles = StyleSheet.create({
     borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(36,92,74,0.05)",
+    backgroundColor: T.surfaceMid,
     borderWidth: 1,
-    borderColor: "rgba(36,92,74,0.08)",
+    borderColor: T.border,
   },
   ctaBlock: {
     width: "100%",
@@ -1034,14 +1023,14 @@ const screenStyles = StyleSheet.create({
   primaryCtaButton: {
     minHeight: 96,
     borderRadius: 28,
-    backgroundColor: "#2B6A57",
+    backgroundColor: T.primary,
     paddingLeft: 22,
     paddingRight: 18,
     paddingVertical: 18,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    shadowColor: "#245C4A",
+    shadowColor: T.primary,
     shadowOpacity: 0.08,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 8 },
@@ -1060,7 +1049,7 @@ const screenStyles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: T.surfaceGlassLilac,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1077,7 +1066,7 @@ const screenStyles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   primaryCtaSubtitle: {
-    color: "rgba(255,255,255,0.82)",
+    color: T.surfaceGlassStrong,
     fontSize: 14,
     lineHeight: 19,
     fontFamily: T.fontBody,
@@ -1088,9 +1077,9 @@ const screenStyles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.10)",
+    backgroundColor: T.surfaceGlassLilac,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.14)",
+    borderColor: T.surfaceGlassStrong,
   },
   ctaFootnote: {
     color: T.textMuted,
@@ -1103,9 +1092,9 @@ const screenStyles = StyleSheet.create({
     width: "100%",
     maxWidth: 390,
     borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.96)",
+    backgroundColor: T.surfaceGlassStrong,
     borderWidth: 1,
-    borderColor: "rgba(36,92,74,0.10)",
+    borderColor: T.border,
     paddingHorizontal: 18,
     paddingVertical: 16,
     gap: 10,
@@ -1142,7 +1131,7 @@ const screenStyles = StyleSheet.create({
   momentumButton: {
     minHeight: 44,
     borderRadius: 15,
-    backgroundColor: "rgba(53,102,77,0.08)",
+    backgroundColor: T.surfaceMid,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 16,
