@@ -55,7 +55,8 @@ export function SessionFooterNav(props: {
   const showPrivateBadge =
     !props.sessionVisible &&
     props.activeDestination !== "home" &&
-    props.activeDestination !== "session";
+    props.activeDestination !== "session" &&
+    props.activeDestination !== "account";
 
   return (
     <View style={styles.footerShell}>
@@ -94,7 +95,12 @@ export function SessionFooterNav(props: {
               ]}
             >
               <View style={styles.footerNavIconBubbleActive}>
-                <LeftIcon name={activeItem.icon} size={21} color={T.white} active />
+                <LeftIcon
+                  name={activeItem.icon}
+                  size={19}
+                  color={T.white}
+                  active={activeItem.icon !== "home"}
+                />
               </View>
             </Animated.View>
           )}

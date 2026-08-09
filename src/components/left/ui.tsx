@@ -196,7 +196,7 @@ export function VenueIdentityBlock({
   return (
     <View style={styles.venueIdentityBlock}>
       <View style={[styles.venueIdentityBlockIconWrap, hero && styles.venueIdentityBlockIconWrapHero]}>
-        <LeftIcon name={icon} size={hero ? 19 : 18} color={T.textPrimary} />
+        <LeftIcon name={icon} size={hero ? 19 : 17} color={hero ? T.textPrimary : T.venueAccent} />
       </View>
       <View style={styles.venueIdentityBlockCopy}>
         <Text
@@ -206,7 +206,7 @@ export function VenueIdentityBlock({
           {title}
         </Text>
         <View style={styles.venueIdentityBlockMetaRow}>
-          <LeftIcon name={metaIcon} size={16} color={T.primary} />
+          <LeftIcon name={metaIcon} size={14} color={T.venueAccent} />
           <Text style={[styles.venueIdentityBlockMetaText, hero && styles.venueIdentityBlockMetaTextHero]}>
             {metaText}
           </Text>
