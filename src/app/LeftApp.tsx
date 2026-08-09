@@ -1821,12 +1821,12 @@ export function LeftApp() {
   const scrollContentPaddingTop =
     screen === "venue-detail" ? 0 : screen === "auth" ? 0 : Math.max(56, insets.top + 20);
   const scrollContentPaddingBottom = SESSION_NAV_SCREENS.includes(screen)
-    ? 146 + insets.bottom
+    ? 176 + insets.bottom
     : 72 + insets.bottom;
 
   return (
     <View style={styles.shell}>
-      <BackgroundWaveLayer />
+      {screen !== "me" ? <BackgroundWaveLayer /> : null}
       <View style={styles.grain} pointerEvents="none" />
       <ScrollView
         contentContainerStyle={[
@@ -2029,13 +2029,13 @@ export function LeftApp() {
             saveState={settingsSaveState}
             onSave={(input) => void saveSettings(input)}
             onOpenSettings={() => setScreen("settings")}
-            onBack={() => setScreen("home")}
             sessionVisible={sessionVisible}
             currentVenueName={displayVenueSummary.venueName}
             currentIntent={selectedIntent}
             currentVibes={selectedVibes}
             nearbyVenueCount={nearbyVenueOptions.length}
-            waveCount={socialMomentumEvents.filter((eventType) => eventType === "approach_started").length}
+            approachCount={socialMomentumEvents.filter((eventType) => eventType === "approach_started").length}
+            onBecomeVisible={() => openActivationFrom("me")}
           />
         )}
       </ScrollView>

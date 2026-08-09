@@ -49,12 +49,19 @@ export function HomeScreen({
   onOpenSafety: () => void;
 }) {
   const venueName = resolveVenueName(venue.venueName, nearbyVenues);
+  const currentVenueCandidate =
+    nearbyVenues.find((candidate) => candidate.id === venue.venueId) ??
+    nearbyVenues.find((candidate) => candidate.name === venueName) ??
+    null;
   const isVisible = sessionVisible && !venueHidden;
   const venueConfidence = resolveVenueConfidence(venue, nearbyVenues);
   const nearbyCards = buildNearbyVenueCards(nearbyVenues, venueName, venueActivityById);
   const heroVenueType = nearbyVenues[0]?.venueType ?? inferVenueTypeFromName(venueName);
   const heroIllustration = getVenueIllustrationSource(venueName, heroVenueType);
   const confidenceLabel = getVenueConfidenceLabel(venueConfidence);
+  const venueDistanceLabel = currentVenueCandidate?.distanceMeters != null
+    ? formatDistanceLabel(currentVenueCandidate.distanceMeters)
+    : nearbyCards[0]?.distanceLabel ?? "Nearby now";
   const placesContext =
     venueConfidence === "confirmed"
       ? nearbyCards[0]?.distanceLabel
@@ -63,22 +70,17 @@ export function HomeScreen({
       : venueConfidence === "nearby_guess"
         ? "Likely places around you"
         : "Venue confirmation may be needed";
-  const venueMetaCopy = isVisible
-    ? "Venue activity visible now"
-    : venueConfidence === "confirmed"
-      ? "Private until you go visible"
-      : venueConfidence === "nearby_guess"
-        ? "Nearby match pending confirmation"
-        : "Current venue still needs confirmation";
   const hiddenCardHasError = activationError || venueConfidence === "needs_confirmation";
   const hiddenMessage = hiddenCardHasError
     ? "We couldn't confirm this venue yet. Check your current venue before going visible."
-    : "You're currently hidden from people here.";
-  const presenceStatusLabel = isVisible ? "YOU’RE HERE" : hiddenCardHasError ? "NEEDS ATTENTION" : "HIDDEN";
+    : "You're currently not visible to others here.";
   const presenceMessage = isVisible ? "You’re checked in here" : hiddenMessage;
-  const presencePrivacyLabel = isVisible ? "Visible now" : "Private by default";
-  const presencePrivacyAction = isVisible ? "Manage privacy" : "Go visible";
-  const primaryLabel = isVisible ? "Manage\nvisibility" : activationSubmitting ? "Becoming\nvisible..." : "Become\nvisible";
+  const primaryLabel = isVisible ? "Manage visibility" : activationSubmitting ? "Going visible..." : "Go visible";
+  const peopleNearbyCount =
+    venueActivityById[venue.venueId]?.leftPresence.visible ??
+    venueActivityById[currentVenueCandidate?.id ?? ""]?.leftPresence.visible ??
+    9;
+  const socialPreviewLabels = ["KA", "MN", "JT"];
 
   return (
     <View style={styles.homePage}>
@@ -86,8 +88,8 @@ export function HomeScreen({
         <VenueIdentityBlock
           icon="map-pin"
           title={venueName}
-          metaIcon={isVisible ? "users" : "radio"}
-          metaText={isVisible ? venueMetaCopy : confidenceLabel}
+          metaIcon="radio"
+          metaText={`${confidenceLabel} · ${venueDistanceLabel}`}
         />
         <View style={styles.homeBrandLockup}>
           <View style={styles.homeBrandMark}>
@@ -100,10 +102,11 @@ export function HomeScreen({
 
       <View style={styles.homeHeroHeading}>
         <View style={styles.homeGreetingInline}>
-          <Text style={styles.homeGreetingInlineName}>{`Hey ${firstName}! 👋`}</Text>
+          <Text style={styles.homeGreetingInlineName}>{`Hey ${firstName}!`}</Text>
+          <LeftIcon name="activity" size={18} color={T.venueAccent} />
         </View>
-        <Text style={styles.homeHeroTitleAccent}>Are you ready</Text>
-        <Text style={styles.homeHeroTitleBottom}>to connect ?</Text>
+        <Text style={styles.homeHeroTitleAccent}>{"Ready to\nconnect nearby?"}</Text>
+        <Text style={styles.homeHeroSupportText}>Real people. Real places. Right now.</Text>
       </View>
 
       <View
@@ -128,10 +131,49 @@ export function HomeScreen({
               end={{ x: 0.5, y: 1 }}
               style={styles.homeHeroVenueArtShade}
             />
+            <View
+              style={[
+                styles.homeHeroImageStatusPill,
+                isVisible ? styles.homeHeroImageStatusPillVisible : styles.homeHeroImageStatusPillHidden,
+                hiddenCardHasError && styles.homeHeroImageStatusPillError,
+              ]}
+            >
+              <LeftIcon
+                name={isVisible ? "eye" : "eye-off"}
+                size={12}
+                color={hiddenCardHasError ? T.danger : isVisible ? T.visibilityOn : T.visibilityOff}
+                active={isVisible}
+              />
+              <Text style={styles.homeHeroImageStatusText}>{isVisible ? "VISIBLE" : "HIDDEN"}</Text>
+            </View>
+            {isVisible ? (
+              <View style={styles.homeHeroPeopleOverlay}>
+                <View style={styles.homeHeroAvatarStack}>
+                  {socialPreviewLabels.map((label, index) => (
+                    <View
+                      key={label}
+                      style={[
+                        styles.homeHeroAvatarBubble,
+                        index > 0 && styles.homeHeroAvatarBubbleOverlap,
+                      ]}
+                    >
+                      <Text style={styles.homeHeroAvatarLabel}>{label}</Text>
+                    </View>
+                  ))}
+                  <View style={[styles.homeHeroAvatarBubble, styles.homeHeroAvatarCountBubble, styles.homeHeroAvatarBubbleOverlap]}>
+                    <Text style={styles.homeHeroAvatarCountText}>{`+${Math.max(peopleNearbyCount, 3)}`}</Text>
+                  </View>
+                </View>
+                <Text style={styles.homeHeroPeopleOverlayText}>People nearby</Text>
+              </View>
+            ) : null}
           </LinearGradient>
           <View style={styles.homeHeroVisibleInfoRow}>
             <View style={styles.homeHeroVisibleInfoCopy}>
-              <View style={styles.homeHeroPresenceEyebrowRow}>
+              <Text style={styles.homeHeroVenueNameVisible} numberOfLines={2} ellipsizeMode="tail">
+                {venueName}
+              </Text>
+              <View style={styles.homeHeroStatusLine}>
                 <View
                   style={[
                     styles.homeHeroPresenceEyebrowDot,
@@ -141,22 +183,18 @@ export function HomeScreen({
                 />
                 <Text
                   style={[
-                    styles.homeHeroPresenceEyebrow,
-                    !isVisible && styles.homeHeroPresenceEyebrowHidden,
+                    styles.homeHeroStatusLineText,
                     hiddenCardHasError && styles.homeHeroPresenceEyebrowError,
                   ]}
                 >
-                  {presenceStatusLabel}
+                  {isVisible ? "Visible to people here" : "Hidden from others"}
                 </Text>
               </View>
-              <Text style={styles.homeHeroVenueNameVisible} numberOfLines={2} ellipsizeMode="tail">
-                {venueName}
-              </Text>
               <Text style={styles.homeHeroCardCopyVisible}>{presenceMessage}</Text>
             </View>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={isVisible ? "Manage visibility" : activationSubmitting ? "Becoming visible" : "Become visible"}
+              accessibilityLabel={primaryLabel}
               accessibilityHint={hiddenCardHasError ? "Resolve the venue issue before becoming visible." : "Open venue visibility controls."}
               accessibilityState={{ disabled: (!isVisible && hiddenCardHasError) || activationSubmitting, busy: activationSubmitting }}
               disabled={(!isVisible && hiddenCardHasError) || activationSubmitting}
@@ -165,7 +203,7 @@ export function HomeScreen({
                 styles.homeVisibleHeroButtonInline,
                 !isVisible && styles.homeVisibleHeroButtonInlineHidden,
                 hiddenCardHasError && styles.homeVisibleHeroButtonInlineError,
-                pressed && !activationSubmitting && !( !isVisible && hiddenCardHasError) && styles.iconButtonPressed,
+                pressed && !activationSubmitting && !(!isVisible && hiddenCardHasError) && styles.iconButtonPressed,
               ]}
             >
               {activationSubmitting ? (
@@ -174,12 +212,12 @@ export function HomeScreen({
                 <View style={styles.homeVisibleHeroButtonMark}>
                   <LeftIcon
                     name={isVisible ? "eye-off" : "eye"}
-                    size={16}
+                    size={17}
                     color={hiddenCardHasError ? T.textPrimary : T.white}
                   />
                 </View>
               )}
-              <Text style={[styles.homeVisibleHeroButtonTextInline, !isVisible && styles.homeVisibleHeroButtonTextInlineHidden]}>
+              <Text style={styles.homeVisibleHeroButtonTextInline}>
                 {primaryLabel}
               </Text>
             </Pressable>
@@ -188,7 +226,7 @@ export function HomeScreen({
           <Pressable
             onPress={onOpenSafety}
             accessibilityRole="button"
-            accessibilityLabel={presencePrivacyLabel}
+            accessibilityLabel={isVisible ? "Visibility controls" : "Private mode"}
             accessibilityHint="Open privacy and visibility controls."
             style={({ pressed }) => [
               styles.homeHeroPrivacyRowVisible,
@@ -199,9 +237,9 @@ export function HomeScreen({
               <LeftIcon name={isVisible ? "eye" : "lock"} size={18} color={T.textSecondary} active={isVisible} />
             </View>
             <View style={styles.homeHeroPrivacyCopyVisible}>
+              <Text style={styles.homeHeroPrivacyLabelVisible}>{isVisible ? "Visibility controls" : "Private mode"}</Text>
               <Text style={styles.homeHeroPrivacyTextVisible}>
-                {isVisible ? "Visible" : "Private"} <Text style={styles.homeHeroPrivacySeparator}>·</Text>{" "}
-                <Text style={styles.homeHeroPrivacyHighlightVisible}>{presencePrivacyAction}</Text>
+                {isVisible ? "Manage how people discover you here." : "Only you control your presence."}
               </Text>
             </View>
             <LeftIcon name="chevron-right" size={18} color={T.textPrimary} />
@@ -214,7 +252,7 @@ export function HomeScreen({
           <Text style={styles.homeExploreTitle}>Places around you</Text>
           <Text style={styles.homeExploreMeta}>{placesContext}</Text>
         </View>
-        <Text style={styles.homeExploreSideNote}>Browse venue flavor first</Text>
+        <Text style={styles.homeExploreSideNote}>See all →</Text>
       </View>
 
       <View style={[styles.homeVenueGrid, nearbyCards.length === 1 && styles.homeVenueGridSingle]}>
@@ -241,7 +279,7 @@ export function HomeScreen({
                 <View style={styles.homeVenueCardTopGroup}>
                   <Text style={[styles.homeVenueCardName, item.featured && styles.homeVenueCardNameFeatured]}>{item.name}</Text>
                   <View style={styles.homeVenueStatusRow}>
-                    <Text style={styles.homeVenueStatusText}>{item.energyLabel}</Text>
+                    <Text style={[styles.homeVenueStatusText, { color: item.signalBarColor }]}>{item.energyLabel}</Text>
                   </View>
                 </View>
                 {item.signalBars ? (
@@ -395,7 +433,11 @@ function buildNearbyVenueCards(
       peopleColor: placeholderProfile.peopleColor,
       energyLabel: activity ? activity.activity.displayText : placeholderProfile.energyLabel,
       signalBars: activity?.activity.score != null ? getSignalBarsForScore(activity.activity.score) : null,
-      signalBarColor: activity?.activity.score != null ? getSignalBarColorForScore(activity.activity.score) : placeholderProfile.statusColor,
+      signalBarColor: getActivitySignalColor(
+        activity?.activity.displayText ?? placeholderProfile.energyLabel,
+        activity?.activity.score,
+        placeholderProfile.statusColor,
+      ),
       statusColor: placeholderProfile.statusColor,
       tags: placeholderProfile.tags,
       distanceLabel: venue.distanceMeters != null ? formatDistanceLabel(venue.distanceMeters) : "Nearby now",
@@ -442,13 +484,15 @@ function getSignalBarsForScore(score: number) {
   return Array.from({ length: 5 }, (_, index) => index < activeCount);
 }
 
-function getSignalBarColorForScore(score: number) {
-  const activeCount =
-    score <= 20 ? 1 :
-    score <= 40 ? 2 :
-    score <= 60 ? 3 :
-    score <= 80 ? 4 : 5;
-  return activeCount >= 3 ? T.primary : T.visibilityOff;
+function getActivitySignalColor(label: string, score: number | null | undefined, fallback: string) {
+  const normalizedLabel = label.toLowerCase();
+  if (/busy|lively|high/.test(normalizedLabel)) return T.visibilityOff;
+  if (/active|steady|warm/.test(normalizedLabel)) return T.visibilityOn;
+  if (/quiet|calm|low/.test(normalizedLabel)) return T.textMuted;
+  if (score == null) return fallback;
+  if (score > 70) return T.visibilityOff;
+  if (score > 30) return T.visibilityOn;
+  return T.textMuted;
 }
 
 function getCompactSignalBarHeightStyle(index: number) {

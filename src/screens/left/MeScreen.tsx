@@ -12,13 +12,13 @@ export function MeScreen({
   saveState,
   onSave,
   onOpenSettings,
-  onBack,
   sessionVisible,
   currentVenueName,
   currentIntent,
   currentVibes,
   nearbyVenueCount,
-  waveCount,
+  approachCount,
+  onBecomeVisible,
 }: {
   user: AppUser;
   saveState: "idle" | "saving" | "saved" | "error";
@@ -30,13 +30,13 @@ export function MeScreen({
     profilePrompt: string;
   }) => void;
   onOpenSettings: () => void;
-  onBack: () => void;
   sessionVisible: boolean;
   currentVenueName: string;
   currentIntent: AppUser["defaultIntent"];
   currentVibes: string[];
   nearbyVenueCount: number;
-  waveCount: number;
+  approachCount: number;
+  onBecomeVisible: () => void;
 }) {
   function normalizeSingleVibe(vibes: string[] | null | undefined, fallback = "Open") {
     const first = Array.isArray(vibes) ? vibes.find((value) => value.trim().length > 0) : null;
@@ -71,54 +71,68 @@ export function MeScreen({
   }
 
   const intent = (user.defaultIntent ?? "networking").replaceAll("_", " ");
+  const intentLabel = intents.find((item) => item.id === user.defaultIntent)?.label ?? intent;
   const liveIntent = (currentIntent ?? user.defaultIntent ?? "networking").replaceAll("_", " ");
   const liveVibes = currentVibes.length ? normalizeSingleVibe(currentVibes) : normalizeSingleVibe(user.defaultVibes);
   const vibePreview = liveVibes[0] || "Open";
+  const vibeLabel = (normalizeSingleVibe(user.defaultVibes)[0] || "Open")
+    .replace("/", " / ")
+    .replace(/startups/i, "Startups");
+  const styleLabel = `${user.avatarStyle.charAt(0).toUpperCase()}${user.avatarStyle.slice(1)}`;
   const venueLabel = sessionVisible ? `At ${currentVenueName}` : "Hidden right now";
   const venueMeta = sessionVisible
     ? `${vibePreview || "Open"} · ${liveIntent}`
     : "People see your intent and vibe after you go visible.";
   const stats = [
     { icon: "radio", value: sessionVisible ? "1" : "0", label: "Live now" },
-    { icon: "send", value: String(waveCount), label: "Waves sent" },
+    { icon: "activity", value: String(approachCount), label: "Approaches started" },
     { icon: "map-pin", value: String(Math.max(1, nearbyVenueCount)), label: "Venues nearby" },
   ] as const;
   const signalCards = [
-    { icon: "target", label: "Intent", value: intent },
-    { icon: "star", label: "Vibe", value: normalizeSingleVibe(user.defaultVibes)[0] || "Open" },
-    { icon: "edit-3", label: "Style", value: user.avatarStyle },
+    { icon: "radio", label: "Intent", value: intentLabel },
+    { icon: "activity", label: "Vibe", value: vibeLabel },
+    { icon: "edit", label: "Style", value: styleLabel },
   ] as const;
 
   return (
     <View style={styles.profilePage}>
-      <View style={styles.profileTopBar}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={editing ? "Return to profile" : "Back"}
-          onPress={editing ? () => setEditing(false) : onBack}
-          style={({ pressed }) => [styles.profileHeaderButton, pressed && styles.iconButtonPressed]}
-        >
-          <LeftIcon name="chevron-left" size={28} color={T.textPrimary} />
-        </Pressable>
-        <Text style={styles.profileHeaderTitle}>Profile</Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={editing ? "Open settings" : "Edit profile"}
-          onPress={() => (editing ? onOpenSettings() : setEditing(true))}
-          style={({ pressed }) => [styles.profileEditHeaderButton, pressed && styles.iconButtonPressed]}
-        >
-          <Text style={styles.profileEditHeaderText}>{editing ? "Settings" : "Edit"}</Text>
-        </Pressable>
-      </View>
+      {editing ? (
+        <View style={styles.profileTopBar}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Return to profile"
+            onPress={() => setEditing(false)}
+            style={({ pressed }) => [styles.profileHeaderButton, pressed && styles.iconButtonPressed]}
+          >
+            <LeftIcon name="chevron-left" size={28} color={T.textPrimary} />
+          </Pressable>
+          <Text style={styles.profileHeaderTitle}>Profile</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open settings"
+            onPress={onOpenSettings}
+            style={({ pressed }) => [styles.profileEditHeaderButton, pressed && styles.iconButtonPressed]}
+          >
+            <Text style={styles.profileEditHeaderText}>Settings</Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       <View style={styles.profileHeroCard}>
+        {!editing ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Edit profile"
+            onPress={() => setEditing(true)}
+            style={({ pressed }) => [styles.profileHeroEditButton, pressed && styles.iconButtonPressed]}
+          >
+            <LeftIcon name="edit" size={18} color={T.textSecondary} />
+          </Pressable>
+        ) : null}
         <View style={styles.profileBrandHalo}>
           <View style={styles.profileBrandCore}>
             <LeftLogoMark size={40} />
           </View>
-          <View style={styles.profileBrandSparkOne} />
-          <View style={styles.profileBrandSparkTwo} />
-          <View style={styles.profileBrandSparkThree} />
         </View>
         <Text style={styles.profileDisplayName}>{user.firstName}</Text>
         <View style={styles.profileRolePill}>
@@ -203,21 +217,36 @@ export function MeScreen({
       ) : (
         <>
           <View style={styles.profileNowSection}>
-            <View style={styles.profileSectionHeaderRow}>
-              <View style={styles.profileSectionHeaderLeft}>
-                <LeftIcon name="map-pin" size={16} color={T.primary} />
-                <Text style={styles.profileSectionTitle}>Right now</Text>
-              </View>
-            </View>
             <View style={styles.profilePresenceCard}>
-              <View style={styles.profilePresenceCopy}>
-                <Text style={styles.profilePresenceVenue}>{venueLabel}</Text>
-                <View style={styles.profilePresencePill}>
-                  <View style={styles.profilePresenceDot} />
-                  <Text style={styles.profilePresencePillText}>{venueMeta}</Text>
+              <View style={styles.profilePresenceTopRow}>
+                <View style={styles.profilePresenceCopy}>
+                  <View style={styles.profilePresenceTitleRow}>
+                    <View style={[styles.profilePresenceIconWrap, sessionVisible && styles.profilePresenceIconWrapVisible]}>
+                      <LeftIcon name={sessionVisible ? "radio" : "lock"} size={18} color={sessionVisible ? T.visibilityOn : T.visibilityOff} />
+                    </View>
+                    <View style={styles.profilePresenceTitleCopy}>
+                      <Text style={styles.profilePresenceVenue}>{venueLabel}</Text>
+                      <Text style={styles.profilePresenceMessage}>{venueMeta}</Text>
+                    </View>
+                  </View>
+                </View>
+                <PrimaryButton label={sessionVisible ? "Manage" : "Go visible"} onPress={onBecomeVisible} compact />
+              </View>
+              <View style={styles.profilePresenceDivider} />
+              <View style={styles.profilePresenceNotesRow}>
+                <View style={styles.profilePresenceNote}>
+                  <View style={[styles.profilePresenceDot, sessionVisible && styles.profilePresenceDotVisible]} />
+                  <Text style={styles.profilePresenceNoteText}>{sessionVisible ? "Visible now" : "Right now"}</Text>
+                  <Text style={styles.profilePresenceNoteSeparator}>•</Text>
+                  <Text style={styles.profilePresenceNoteText}>{sessionVisible ? currentVenueName : "Location private"}</Text>
+                </View>
+                <View style={styles.profilePresencePrivacyNote}>
+                  <LeftIcon name="map-pin" size={15} color={T.textMuted} />
+                  <Text style={styles.profilePresencePrivacyText}>
+                    {sessionVisible ? "Your venue is visible during this session" : "Your location stays private until visible"}
+                  </Text>
                 </View>
               </View>
-              <LeftIcon name="chevron-right" size={22} color={T.textSecondary} />
             </View>
           </View>
 
@@ -225,7 +254,6 @@ export function MeScreen({
             <View style={styles.profileSectionHeaderRow}>
               <View style={styles.profileSectionHeaderLeft}>
                 <Text style={styles.profileSectionTitle}>My activity</Text>
-                <LeftIcon name="minus" size={16} color={T.textMuted} />
               </View>
             </View>
             <View style={styles.profileActivityCard}>
@@ -241,14 +269,6 @@ export function MeScreen({
             </View>
           </View>
 
-          <View style={styles.profilePrivacyCard}>
-            <Text style={styles.profilePrivacyText}>
-              People see your intent and vibe, but not your name or details until you connect.
-            </Text>
-            <View style={styles.profilePrivacyIconWrap}>
-              <LeftIcon name="lock" size={20} color={T.primary} />
-            </View>
-          </View>
         </>
       )}
     </View>

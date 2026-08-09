@@ -97,10 +97,12 @@ export function PrimaryButton({
   label,
   onPress,
   disabled = false,
+  compact = false,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
+  compact?: boolean;
 }) {
   return (
     <Pressable
@@ -108,6 +110,7 @@ export function PrimaryButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.primaryBtn,
+        compact && styles.primaryBtnCompact,
         disabled && styles.primaryBtnDisabled,
         pressed && !disabled && styles.primaryBtnPressed,
       ]}
@@ -259,6 +262,12 @@ const styles = StyleSheet.create({
   primaryBtnPressed: {
     opacity: 0.86,
     transform: [{ scale: 0.995 }],
+  },
+  primaryBtnCompact: {
+    minHeight: 44,
+    alignSelf: "flex-start",
+    paddingHorizontal: spacing[4],
+    borderRadius: radii.lg,
   },
   primaryBtnDisabled: {
     opacity: 0.45,
