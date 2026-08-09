@@ -1,6 +1,6 @@
-import { Feather } from "@expo/vector-icons";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { T, styles } from "../../app/leftTheme";
+import { LeftIcon, type LeftIconName } from "../../components/icons";
 import type { VenuePreference } from "../../features/location/location-storage";
 
 export function SafetyScreen({
@@ -69,7 +69,7 @@ export function SafetyScreen({
           accessibilityLabel="Back"
           style={({ pressed }) => [styles.profileHeaderButton, pressed && styles.iconButtonPressed]}
         >
-          <Feather name="chevron-left" size={28} color={T.textPrimary} />
+          <LeftIcon name="chevron-left" size={28} color={T.textPrimary} />
         </Pressable>
         <Text style={screenStyles.topBarTitle}>Privacy and safety</Text>
         <View style={styles.profileHeaderButton} />
@@ -111,7 +111,7 @@ export function SafetyScreen({
             pressed && !visibilityAction && screenStyles.buttonPressed,
           ]}
         >
-          <Feather
+          <LeftIcon
             name={sessionVisible ? "pause-circle" : "eye-off"}
             size={18}
             color={T.white}
@@ -180,7 +180,7 @@ export function SafetyScreen({
 
         <View style={screenStyles.privateVenueNote}>
           <View style={screenStyles.privateVenueIcon}>
-            <Feather name="lock" size={16} color={T.white} />
+            <LeftIcon name="lock" size={16} color={T.white} />
           </View>
           <Text style={screenStyles.privateVenueText}>
             Your venue stays private until you're visible.
@@ -206,7 +206,7 @@ export function SafetyScreen({
         {venuePreferences.length === 0 ? (
           <View style={screenStyles.emptyState}>
             <View style={screenStyles.emptyIconBubble}>
-              <Feather name="archive" size={24} color={T.primary} />
+              <LeftIcon name="archive" size={24} color={T.primary} />
             </View>
             <Text style={screenStyles.emptyTitle}>No hidden or muted venues yet.</Text>
             <Text style={screenStyles.emptyBody}>
@@ -273,7 +273,7 @@ function RowAction({
   onPress,
   disabled = false,
 }: {
-  icon: keyof typeof Feather.glyphMap;
+  icon: LeftIconName;
   label: string;
   onPress: () => void;
   disabled?: boolean;
@@ -289,10 +289,10 @@ function RowAction({
       ]}
     >
       <View style={screenStyles.rowIconBubble}>
-        <Feather name={icon} size={20} color={T.textPrimary} />
+        <LeftIcon name={icon} size={20} color={T.textPrimary} />
       </View>
       <Text style={screenStyles.rowLabel}>{label}</Text>
-      <Feather name="chevron-right" size={22} color={T.textSecondary} />
+      <LeftIcon name="chevron-right" size={22} color={T.textSecondary} />
     </Pressable>
   );
 }
@@ -362,12 +362,12 @@ const screenStyles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     borderColor: T.border,
-    backgroundColor: "rgba(255,255,255,0.98)",
+    backgroundColor: T.surfaceGlassStrong,
     paddingHorizontal: 18,
     paddingTop: 18,
     paddingBottom: 18,
     gap: 12,
-    shadowColor: "#245C4A",
+    shadowColor: T.primary,
     shadowOpacity: 0.04,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 8 },
@@ -401,7 +401,7 @@ const screenStyles = StyleSheet.create({
     backgroundColor: T.visibilityOn,
   },
   statusDotHidden: {
-    backgroundColor: "rgba(31,46,36,0.38)",
+    backgroundColor: T.textMuted,
   },
   statusPillText: {
     color: T.textPrimary,
@@ -431,7 +431,7 @@ const screenStyles = StyleSheet.create({
     gap: 10,
   },
   primaryActionDisabled: {
-    backgroundColor: "rgba(110,126,118,0.42)",
+    backgroundColor: T.textMuted,
   },
   primaryActionText: {
     color: T.white,
@@ -444,7 +444,7 @@ const screenStyles = StyleSheet.create({
     minHeight: 56,
     borderRadius: 18,
     borderWidth: 1.2,
-    borderColor: "rgba(31,46,36,0.32)",
+    borderColor: T.borderBlack,
     backgroundColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
@@ -488,7 +488,7 @@ const screenStyles = StyleSheet.create({
   privateVenueNote: {
     minHeight: 68,
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.96)",
+    backgroundColor: T.surfaceGlassStrong,
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
@@ -555,14 +555,14 @@ const screenStyles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: T.border,
-    backgroundColor: "rgba(255,255,255,0.98)",
+    backgroundColor: T.surfaceGlassStrong,
   },
   preferenceRow: {
     gap: 10,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(214,198,169,0.24)",
+    borderBottomColor: T.border,
   },
   preferenceRowLast: {
     borderBottomWidth: 0,
@@ -593,13 +593,13 @@ const screenStyles = StyleSheet.create({
     paddingHorizontal: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F4E7C7",
+    backgroundColor: T.primarySoft,
   },
   miniActionButtonDisabled: {
     opacity: 0.56,
   },
   miniActionText: {
-    color: "#6D4A00",
+    color: T.textPrimary,
     fontSize: 13,
     lineHeight: 16,
     fontFamily: T.fontBodyMedium,

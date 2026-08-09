@@ -1,12 +1,12 @@
-import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
 import { Alert, Linking, Pressable, Text, View } from "react-native";
 import type { AppUser } from "../../types/left-domain";
 import { T, styles } from "../../app/leftTheme";
+import { LeftIcon, type LeftIconName } from "../../components/icons";
 import { GhostButton } from "../../components/left/ui";
 
 type SettingsMenuRowProps = {
-  icon: keyof typeof Feather.glyphMap;
+  icon: LeftIconName;
   label: string;
   helper?: string;
   value?: string;
@@ -61,7 +61,7 @@ export function SettingsScreen({
     <View style={styles.settingsPage}>
       <View style={styles.settingsTopBar}>
         <Pressable onPress={onBack} accessibilityRole="button" style={({ pressed }) => [styles.profileHeaderButton, pressed && styles.iconButtonPressed]}>
-          <Feather name="chevron-left" size={28} color={T.textPrimary} />
+          <LeftIcon name="chevron-left" size={28} color={T.textPrimary} />
         </Pressable>
         <Text style={styles.profileHeaderTitle}>Settings</Text>
         <View style={styles.profileHeaderButton} />
@@ -81,7 +81,7 @@ export function SettingsScreen({
       {settingsActionMessage ? <Text style={styles.settingsInfoBody}>{settingsActionMessage}</Text> : null}
 
       <Pressable onPress={confirmSignOut} style={({ pressed }) => [styles.settingsLogoutButton, pressed && styles.primaryBtnPressed]}>
-        <Feather name="log-out" size={20} color={T.white} />
+        <LeftIcon name="log-out" size={20} color={T.white} />
         <Text style={styles.settingsLogoutText}>Log out</Text>
       </Pressable>
 
@@ -111,13 +111,13 @@ export function SettingsScreen({
 function SettingsMenuRow({ icon, label, helper, value, onPress, last = false }: SettingsMenuRowProps) {
   const rowContent = (
     <>
-      <Feather name={icon} size={22} color={T.textPrimary} />
+      <LeftIcon name={icon} size={22} color={T.textPrimary} />
       <View style={styles.settingsMenuTextBlock}>
         <Text style={styles.settingsMenuLabel}>{label}</Text>
         {helper ? <Text style={styles.settingsMenuHelper}>{helper}</Text> : null}
       </View>
       {value ? <Text style={styles.settingsMenuValue}>{value}</Text> : null}
-      {onPress ? <Feather name="chevron-right" size={21} color={T.textSecondary} /> : null}
+      {onPress ? <LeftIcon name="chevron-right" size={21} color={T.textSecondary} /> : null}
     </>
   );
 

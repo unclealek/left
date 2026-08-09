@@ -1,15 +1,14 @@
 import { useEffect, useRef } from "react";
-import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { ActivityIndicator, Animated, Easing, Image, Pressable, Text, View } from "react-native";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
 import {
-  getVenueConfidenceCopy,
   getVenueConfidenceLabel,
   resolveVenueConfidence,
 } from "../../features/location/venue-confidence";
 import { styles, T } from "../../app/leftTheme";
-import { LeftDoorwayMark } from "../../components/left/LeftDoorwayMark";
+import { LeftIcon } from "../../components/icons";
+import { LeftLogoMark } from "../../components/left/LeftLogoMark";
 import { VenueIdentityBlock } from "../../components/left/ui";
 import type { VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
 
@@ -48,7 +47,6 @@ export function HomeScreen({
   onBecomeVisible: () => void;
   onOpenVenueDetail: (venue: RuntimeVenueCandidate) => void;
   onOpenSafety: () => void;
-  onComingSoon: (label: string) => void;
 }) {
   const venueName = resolveVenueName(venue.venueName, nearbyVenues);
   const isVisible = sessionVisible && !venueHidden;
@@ -57,20 +55,6 @@ export function HomeScreen({
   const heroVenueType = nearbyVenues[0]?.venueType ?? inferVenueTypeFromName(venueName);
   const heroIllustration = getVenueIllustrationSource(venueName, heroVenueType);
   const confidenceLabel = getVenueConfidenceLabel(venueConfidence);
-  const confidenceCopy = getVenueConfidenceCopy(venueConfidence);
-  const heroStatus = isVisible
-    ? `Visible at ${venueName}`
-    : venueConfidence === "confirmed"
-      ? `Hidden at ${venueName}`
-      : venueConfidence === "nearby_guess"
-        ? `Nearby match: ${venueName}`
-        : "Venue needs confirmation";
-  const heroCopy = isVisible
-    ? "You are currently present here."
-    : venueConfidence === "confirmed"
-      ? "People here can't see you yet."
-      : confidenceCopy;
-  const ctaLabel = isVisible ? "Manage visibility" : "Go visible";
   const placesContext =
     venueConfidence === "confirmed"
       ? nearbyCards[0]?.distanceLabel
@@ -105,9 +89,12 @@ export function HomeScreen({
           metaIcon={isVisible ? "users" : "radio"}
           metaText={isVisible ? venueMetaCopy : confidenceLabel}
         />
-        <View style={styles.homeBrandMark}>
-          <LeftDoorwayMark size={24} archColor={T.primary} innerColor={T.accent} baseColor={T.accent} baseScale={0.52} />
-          <PresencePulseIndicator isVisible={isVisible} />
+        <View style={styles.homeBrandLockup}>
+          <View style={styles.homeBrandMark}>
+            <LeftLogoMark size={24} tone="light" />
+            <PresencePulseIndicator isVisible={isVisible} />
+          </View>
+          <Text style={styles.homeBrandLabel}>Left</Text>
         </View>
       </View>
 
@@ -129,12 +116,18 @@ export function HomeScreen({
       >
         <View style={styles.homeHeroVisibleShell}>
           <LinearGradient
-            colors={["#FFF4D8", "#FFF8EE", "#E9ECCE"]}
+            colors={[T.surfaceDim, T.surface, T.primarySoft]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.homeHeroVenueArtStacked}
           >
             <Image source={heroIllustration} style={styles.homeVenueIllustrationImage} resizeMode="cover" />
+            <LinearGradient
+              colors={["rgba(255,247,235,0.34)", "rgba(255,247,235,0.08)", "transparent"]}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+              style={styles.homeHeroVenueArtShade}
+            />
           </LinearGradient>
           <View style={styles.homeHeroVisibleInfoRow}>
             <View style={styles.homeHeroVisibleInfoCopy}>
@@ -176,15 +169,13 @@ export function HomeScreen({
               ]}
             >
               {activationSubmitting ? (
-                <ActivityIndicator size="small" color={isVisible ? T.white : "#245C4A"} />
+                <ActivityIndicator size="small" color={hiddenCardHasError ? T.textPrimary : T.white} />
               ) : (
                 <View style={styles.homeVisibleHeroButtonMark}>
-                  <LeftDoorwayMark
-                    size={20}
-                    archColor={isVisible ? "#F5BC4C" : "#245C4A"}
-                    innerColor={isVisible ? "#FFE3A0" : "#F3D88E"}
-                    baseColor={isVisible ? "#FFE3A0" : "#F3D88E"}
-                    baseScale={0.54}
+                  <LeftIcon
+                    name={isVisible ? "eye-off" : "eye"}
+                    size={16}
+                    color={hiddenCardHasError ? T.textPrimary : T.white}
                   />
                 </View>
               )}
@@ -205,15 +196,15 @@ export function HomeScreen({
             ]}
           >
             <View style={styles.homeHeroPrivacyIconWrapVisible}>
-              <Feather name="lock" size={18} color={"#59675F"} />
+              <LeftIcon name={isVisible ? "eye" : "lock"} size={18} color={T.textSecondary} active={isVisible} />
             </View>
             <View style={styles.homeHeroPrivacyCopyVisible}>
               <Text style={styles.homeHeroPrivacyTextVisible}>
-                {presencePrivacyLabel} <Text style={styles.homeHeroPrivacySeparator}>·</Text>{" "}
+                {isVisible ? "Visible" : "Private"} <Text style={styles.homeHeroPrivacySeparator}>·</Text>{" "}
                 <Text style={styles.homeHeroPrivacyHighlightVisible}>{presencePrivacyAction}</Text>
               </Text>
             </View>
-            <Feather name="chevron-right" size={18} color={"#245842"} />
+            <LeftIcon name="chevron-right" size={18} color={T.textPrimary} />
           </Pressable>
         </View>
       </View>
@@ -239,7 +230,7 @@ export function HomeScreen({
           >
             <View style={styles.homeVenueCardRow}>
               <LinearGradient
-                colors={item.featured ? ["#F6D6C5", "#FFF2E8", "#E9ECCE"] : ["#E7E0D3", "#FFF6EA", "#DCE8D8"]}
+                colors={item.featured ? [T.primarySoft, T.surface, T.surfaceDim] : [T.surfaceDim, T.surface, T.primarySoft]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[styles.homeVenueThumb, item.featured && styles.homeVenueThumbFeatured]}
@@ -261,7 +252,7 @@ export function HomeScreen({
                     ]}
                   >
                     <View style={styles.homeVenueSignalIconWrap}>
-                      <Feather name="users" size={15} color={item.signalBarColor} />
+                      <LeftIcon name="users" size={15} color={item.signalBarColor} />
                     </View>
                     <View style={styles.homeVenueSignalBars}>
                       {item.signalBars.map((active, index) => (
@@ -280,12 +271,12 @@ export function HomeScreen({
                   </View>
                 ) : null}
                 <View style={styles.homeVenueDistanceRow}>
-                  <Feather name="map-pin" size={15} color={T.textMuted} />
+                  <LeftIcon name="map-pin" size={15} color={T.textMuted} />
                   <Text style={styles.homeVenueDistanceText}>{item.distanceLabel}</Text>
                 </View>
               </View>
               <View style={styles.homeVenueChevronBubble}>
-                <Feather name="chevron-right" size={22} color={T.secondary} />
+                <LeftIcon name="chevron-right" size={22} color={T.secondary} />
               </View>
             </View>
           </Pressable>
@@ -295,14 +286,14 @@ export function HomeScreen({
       <Pressable onPress={onOpenSafety} style={({ pressed }) => [styles.homeSafetyCard, pressed && styles.iconButtonPressed]}>
         <View style={styles.homeSafetyCardLeft}>
           <View style={styles.homeSafetyCardIconWrap}>
-            <Feather name="shield" size={20} color={T.primary} />
+            <LeftIcon name="shield" size={20} color={T.primary} />
           </View>
           <View style={styles.homeSafetyCardCopy}>
             <Text style={styles.homeSafetyCardTitle}>Safety controls</Text>
             <Text style={styles.homeSafetyCardSubtitle}>Control how you are discovered.</Text>
           </View>
         </View>
-        <Feather name="chevron-right" size={22} color={"rgba(46,33,20,0.72)"} />
+        <LeftIcon name="chevron-right" size={22} color={T.textSecondary} />
       </Pressable>
     </View>
   );
@@ -386,7 +377,6 @@ function buildNearbyVenueCards(
 
   return source.map((venue, index) => {
     const venueType = venue.venueType ?? inferVenueTypeFromName(venue.name);
-    const looksLikeCafe = venueType === "cafe";
     const looksLikeMarket = /market|hall/i.test(venue.name);
     const seed = Math.abs(hashVenueName(venue.name));
     const peopleCount = 3 + (seed % 10);
@@ -458,7 +448,7 @@ function getSignalBarColorForScore(score: number) {
     score <= 40 ? 2 :
     score <= 60 ? 3 :
     score <= 80 ? 4 : 5;
-  return activeCount >= 3 ? T.primary : "#FDB64A";
+  return activeCount >= 3 ? T.primary : T.visibilityOff;
 }
 
 function getCompactSignalBarHeightStyle(index: number) {
@@ -478,48 +468,48 @@ function buildVenuePlaceholderProfile(
   if (venueType === "cafe") {
     return {
       energyLabel: "Warm",
-      statusColor: "#D89A2B",
-      peopleColor: "#35664D",
+      statusColor: T.visibilityOff,
+      peopleColor: T.primary,
       tags,
     };
   }
   if (venueType === "library") {
     return {
       energyLabel: "Calm",
-      statusColor: "#7A8A76",
-      peopleColor: "#4D8164",
+      statusColor: T.secondary,
+      peopleColor: T.primary,
       tags,
     };
   }
   if (venueType === "coworking_space") {
     return {
       energyLabel: "Focused",
-      statusColor: "#4D8164",
-      peopleColor: "#35664D",
+      statusColor: T.primary,
+      peopleColor: T.primary,
       tags,
     };
   }
   if (venueType === "university") {
     return {
       energyLabel: "Active",
-      statusColor: "#FF6B4A",
-      peopleColor: "#FF6B4A",
+      statusColor: T.danger,
+      peopleColor: T.danger,
       tags,
     };
   }
   if (looksLikeMarket) {
     return {
       energyLabel: "Busy",
-      statusColor: "#FF6B4A",
-      peopleColor: "#D89A2B",
+      statusColor: T.danger,
+      peopleColor: T.visibilityOff,
       tags,
     };
   }
 
   const fallbackProfiles = [
-    { energyLabel: "Warm", statusColor: "#D89A2B", peopleColor: "#35664D" },
-    { energyLabel: "Calm", statusColor: "#7A8A76", peopleColor: "#4D8164" },
-    { energyLabel: "Active", statusColor: "#FF6B4A", peopleColor: "#FF6B4A" },
+    { energyLabel: "Warm", statusColor: T.visibilityOff, peopleColor: T.primary },
+    { energyLabel: "Calm", statusColor: T.secondary, peopleColor: T.primary },
+    { energyLabel: "Active", statusColor: T.danger, peopleColor: T.danger },
   ] as const;
   const fallbackProfile = fallbackProfiles[seed % fallbackProfiles.length];
   return {
@@ -535,44 +525,44 @@ function buildVenueTags(
 ) {
   if (venueType === "cafe") {
     return [
-      { label: "Networking", tint: "#E7EEDF" },
-      { label: "Coffee", tint: "#F4E9D5" },
+      { label: "Networking", tint: T.primarySoft },
+      { label: "Coffee", tint: T.surfaceDim },
     ];
   }
   if (venueType === "library") {
     return [
-      { label: "Study", tint: "#E7EEDF" },
-      { label: "Quiet", tint: "#F4E9D5" },
+      { label: "Study", tint: T.primarySoft },
+      { label: "Quiet", tint: T.surfaceDim },
     ];
   }
   if (venueType === "coworking_space") {
     return [
-      { label: "Focus", tint: "#E9ECCE" },
-      { label: "Builders", tint: "#F5EAD8" },
+      { label: "Focus", tint: T.primarySoft },
+      { label: "Builders", tint: T.surfaceDim },
     ];
   }
   if (venueType === "university") {
     return [
-      { label: "Campus", tint: "#E7EEDF" },
-      { label: "Conversation", tint: "#F8E1D9" },
+      { label: "Campus", tint: T.primarySoft },
+      { label: "Conversation", tint: T.surfaceGlassUltra },
     ];
   }
   if (looksLikeMarket) {
     return [
-      { label: "Browsing", tint: "#E9ECCE" },
-      { label: "Shopping", tint: "#F5EAD8" },
+      { label: "Browsing", tint: T.primarySoft },
+      { label: "Shopping", tint: T.surfaceDim },
     ];
   }
 
   const variants = [
     [
-      { label: "Chill", tint: "#E9ECCE" },
-      { label: "Drinks", tint: "#F4E9D5" },
-      { label: "Music", tint: "#F8E1D9" },
+      { label: "Chill", tint: T.primarySoft },
+      { label: "Drinks", tint: T.surfaceDim },
+      { label: "Music", tint: T.surfaceGlassUltra },
     ],
     [
-      { label: "Design", tint: "#E7EEDF" },
-      { label: "Coffee", tint: "#F4E9D5" },
+      { label: "Design", tint: T.primarySoft },
+      { label: "Coffee", tint: T.surfaceDim },
     ],
   ] as const;
 

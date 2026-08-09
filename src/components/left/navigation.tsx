@@ -1,16 +1,16 @@
-import { Feather } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
 import type { AppUser } from "../../types/left-domain";
 import { formatIntent, type FooterDestination } from "../../app/leftConfig";
 import { styles, T } from "../../app/leftTheme";
-import { LeftDoorwayMark } from "./LeftDoorwayMark";
+import { LeftIcon, type LeftIconName } from "../icons";
+import { LeftLogoMark } from "./LeftLogoMark";
 
 export function BackNavButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.backNavButton, pressed && styles.backNavButtonPressed]}>
       <View style={styles.backNavIconWrap}>
-        <Feather name="arrow-left" size={22} color={T.primary} />
+        <LeftIcon name="arrow-left" size={22} color={T.primary} />
       </View>
       {label ? <Text style={styles.backNavLabel}>{label}</Text> : null}
     </Pressable>
@@ -25,10 +25,10 @@ export function SessionFooterNav(props: {
   activeDestination: FooterDestination;
   onNavigate: (destination: FooterDestination) => void;
 }) {
-  const items: Array<{ key: FooterDestination; label: string; icon?: keyof typeof Feather.glyphMap; brand?: boolean }> = [
+  const items: Array<{ key: FooterDestination; label: string; icon: LeftIconName }> = [
     { key: "home", label: "Home", icon: "home" },
     { key: "nearby", label: "Map", icon: "map-pin" },
-    { key: "session", label: "Venues", brand: true },
+    { key: "session", label: "Venues", icon: "venue" },
     { key: "account", label: "Profile", icon: "user" },
   ];
   const activeIndex = items.findIndex((item) => item.key === props.activeDestination);
@@ -94,17 +94,7 @@ export function SessionFooterNav(props: {
               ]}
             >
               <View style={styles.footerNavIconBubbleActive}>
-                {activeItem.brand ? (
-                  <LeftDoorwayMark
-                    size={20}
-                    archColor={T.white}
-                    innerColor={T.accent}
-                    baseColor={T.accent}
-                    baseScale={0.52}
-                  />
-                ) : (
-                  <Feather name={activeItem.icon!} size={21} color={T.white} />
-                )}
+                <LeftIcon name={activeItem.icon} size={21} color={T.white} active />
               </View>
             </Animated.View>
           )}
@@ -122,21 +112,7 @@ export function SessionFooterNav(props: {
                 {!active ? (
                   <>
                     <View style={styles.footerNavIconBubble}>
-                      {item.brand ? (
-                        <LeftDoorwayMark
-                          size={18}
-                          archColor={"rgba(31,46,36,0.78)"}
-                          innerColor={T.accent}
-                          baseColor={T.accent}
-                          baseScale={0.52}
-                        />
-                      ) : (
-                        <Feather
-                          name={item.icon!}
-                          size={21}
-                          color={"rgba(31,46,36,0.78)"}
-                        />
-                      )}
+                      <LeftIcon name={item.icon} size={21} color={"rgba(31,46,36,0.78)"} />
                     </View>
                     <Text style={styles.footerNavLabel}>{item.label}</Text>
                   </>

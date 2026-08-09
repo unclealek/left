@@ -46,7 +46,6 @@ Shared building blocks should be reused before adding new one-off variants:
 
 - [src/components/left/ui.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/components/left/ui.tsx)
 - [src/components/left/navigation.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/components/left/navigation.tsx)
-- [src/components/left/LeftDoorwayMark.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/components/left/LeftDoorwayMark.tsx)
 - [src/app/leftTheme.ts](/Users/kelvinaliche/Desktop/Projects/leftApp/src/app/leftTheme.ts)
 
 Rules:

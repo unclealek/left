@@ -1,10 +1,11 @@
-import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
 import type { NearbyFeedItem, VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
 import { T } from "../../app/leftTheme";
+import { alpha } from "../../components/color";
+import { LeftIcon, type LeftIconName } from "../../components/icons";
 import { BackNavButton } from "../../components/left/navigation";
 
 const VENUE_ILLUSTRATIONS = {
@@ -18,11 +19,11 @@ const VENUE_ILLUSTRATIONS = {
   generic: require("../../../output/illustrations/venues/generic-place.png"),
 } as const;
 
-const INTENT_TINT = "#F5EFE3";
+const INTENT_TINT = T.surfaceDim;
 
 type DetailIntent = {
   label: string;
-  icon: keyof typeof Feather.glyphMap;
+  icon: LeftIconName;
   count: number;
   tint: string;
   iconColor: string;
@@ -87,7 +88,6 @@ export function VenueDetailScreen({
             : "Activity unavailable",
       }
     : getPulseStatus(fallbackEnergy);
-  const primaryLabel = isCurrentVenue && sessionVisible ? "See People Here" : isCurrentVenue ? "Go Visible Here" : "Use This Venue";
   const primaryCaption = isCurrentVenue && sessionVisible ? "Open the people visible at this venue" : isCurrentVenue ? "Let others know you're here" : "Make this your active venue";
   const updatedAtCopy = venueActivity?.activity.updatedAt
     ? formatUpdatedAt(venueActivity.activity.updatedAt, venueActivity.activity.liveAvailable)
@@ -98,7 +98,7 @@ export function VenueDetailScreen({
       <View style={[screenStyles.hero, { marginTop: -topInset }]}>
         <Image source={imageSource} style={screenStyles.heroImage} resizeMode="cover" />
         <LinearGradient
-          colors={["rgba(17,15,12,0.04)", "rgba(17,15,12,0.10)", "rgba(253,249,238,0.88)"]}
+          colors={[alpha("#110F0C", 0.04), alpha("#110F0C", 0.1), T.surfaceGlassStrong]}
           style={screenStyles.heroShade}
         />
         <View style={[screenStyles.heroControls, { top: topInset + 6 }]}>
@@ -118,12 +118,12 @@ export function VenueDetailScreen({
 
         <View style={screenStyles.pulseHeader}>
           <View style={screenStyles.pulseHeaderLeft}>
-            <Feather name="activity" size={19} color={T.textPrimary} />
+            <LeftIcon name="activity" size={19} color={T.textPrimary} />
             <Text style={screenStyles.sectionTitle}>Live Pulse</Text>
           </View>
           <View style={screenStyles.pulseHeaderRight}>
             <Text style={screenStyles.pulseMeta}>{updatedAtCopy}</Text>
-            <Feather name="rotate-cw" size={16} color={T.textSecondary} />
+            <LeftIcon name="rotate-cw" size={16} color={T.textSecondary} />
           </View>
         </View>
 
@@ -134,7 +134,7 @@ export function VenueDetailScreen({
             end={{ x: 1, y: 1 }}
             style={screenStyles.pulseIconWrap}
           >
-            <Feather name="users" size={26} color={pulseTone.iconColor} />
+            <LeftIcon name="users" size={26} color={pulseTone.iconColor} />
           </LinearGradient>
           <View style={screenStyles.pulseCopy}>
             <Text style={[screenStyles.pulseStatus, { color: pulseTone.titleColor }]}>
@@ -161,7 +161,7 @@ export function VenueDetailScreen({
         <View style={screenStyles.statsRow}>
           <View style={screenStyles.statCard}>
             <View style={[screenStyles.statIconBubble, screenStyles.statIconWarm]}>
-              <Feather name="users" size={21} color={"#982206"} />
+              <LeftIcon name="users" size={21} color={T.textPrimary} />
             </View>
             <Text style={screenStyles.statTitle}>People on Left</Text>
             <Text style={screenStyles.statValue}>{visibleCount}</Text>
@@ -169,7 +169,7 @@ export function VenueDetailScreen({
           </View>
           <View style={screenStyles.statCard}>
             <View style={[screenStyles.statIconBubble, screenStyles.statIconCool]}>
-              <Feather name="clock" size={21} color={"#325735"} />
+              <LeftIcon name="clock" size={21} color={T.primary} />
             </View>
             <Text style={screenStyles.statTitle}>Usual at this time</Text>
             <Text style={screenStyles.statValue}>{usualCount}</Text>
@@ -186,7 +186,7 @@ export function VenueDetailScreen({
               {intents.map((intent) => (
                 <View key={intent.label} style={screenStyles.intentItem}>
                   <View style={[screenStyles.intentIconBubble, { backgroundColor: intent.tint }]}>
-                    <Feather name={intent.icon} size={23} color={intent.iconColor} />
+                    <LeftIcon name={intent.icon} size={23} color={intent.iconColor} />
                   </View>
                   <Text style={screenStyles.intentLabel}>{intent.label}</Text>
                   <Text style={screenStyles.intentCount}>{intent.count}</Text>
@@ -304,8 +304,8 @@ function buildIntentBreakdown(
 
 function buildIntentItem(label: string, count: number, highlighted = false): DetailIntent {
   const normalized = label.toLowerCase();
-  const tint = highlighted ? "#FFB950" : INTENT_TINT;
-  const iconColor = highlighted ? "#291800" : T.textPrimary;
+  const tint = highlighted ? T.visibilityOffSoft : INTENT_TINT;
+  const iconColor = T.textPrimary;
   if (normalized.includes("study") || normalized.includes("focus")) {
     return { label, icon: "book-open", count, tint, iconColor };
   }
@@ -361,43 +361,43 @@ function getPulseTone(level: VenueContextSummary["energyLevel"]) {
   switch (level) {
     case "busy":
       return {
-        titleColor: "#C1462E",
-        iconColor: "#C1462E",
-        barColor: "#C1462E",
-        barBorderColor: "rgba(193,70,46,0.24)",
-        iconGradient: ["#F9DDD6", "#FFF4EF"] as [string, string],
+        titleColor: T.dangerText,
+        iconColor: T.dangerText,
+        barColor: T.danger,
+        barBorderColor: T.dangerBorder,
+        iconGradient: [T.surfaceDim, T.surface] as [string, string],
       };
     case "active":
       return {
         titleColor: T.primary,
         iconColor: T.primary,
         barColor: T.primary,
-        barBorderColor: "rgba(53,102,77,0.24)",
-        iconGradient: [T.primarySoft, "#FFF7EB"] as [string, string],
+        barBorderColor: T.borderAccent,
+        iconGradient: [T.primarySoft, T.surface] as [string, string],
       };
     case "warm":
       return {
-        titleColor: "#825500",
-        iconColor: "#825500",
-        barColor: "#FDB64A",
-        barBorderColor: "rgba(253,182,74,0.34)",
-        iconGradient: ["#FFDDB3", "#FFF8EA"] as [string, string],
+        titleColor: T.textPrimary,
+        iconColor: T.textPrimary,
+        barColor: T.visibilityOff,
+        barBorderColor: T.visibilityOff,
+        iconGradient: [T.visibilityOffSoft, T.surface] as [string, string],
       };
     case "focused":
       return {
-        titleColor: "#4C5B8F",
-        iconColor: "#4C5B8F",
-        barColor: "#4C5B8F",
-        barBorderColor: "rgba(76,91,143,0.24)",
-        iconGradient: ["#E8ECF8", "#F8F9FE"] as [string, string],
+        titleColor: T.teal,
+        iconColor: T.teal,
+        barColor: T.teal,
+        barBorderColor: T.tealDim,
+        iconGradient: [T.surfaceGlassStrong, T.surface] as [string, string],
       };
     default:
       return {
-        titleColor: "#7A8478",
-        iconColor: "#7A8478",
-        barColor: "#7A8478",
-        barBorderColor: "rgba(122,132,120,0.24)",
-        iconGradient: ["#EEF1EA", "#FAFBF8"] as [string, string],
+        titleColor: T.secondary,
+        iconColor: T.secondary,
+        barColor: T.secondary,
+        barBorderColor: T.borderAccent,
+        iconGradient: [T.primarySoft, T.surface] as [string, string],
       };
   }
 }
@@ -453,43 +453,43 @@ function getSignalBarColorForScore(score: number) {
     score <= 40 ? 2 :
     score <= 60 ? 3 :
     score <= 80 ? 4 : 5;
-  return activeCount >= 3 ? T.primary : "#FDB64A";
+  return activeCount >= 3 ? T.primary : T.visibilityOff;
 }
 
 function getPulseToneForActivityLabel(label: VenueActivityEnvelope["activity"]["label"]) {
   switch (label) {
     case "quiet":
       return {
-        titleColor: "#7A8478",
-        iconColor: "#7A8478",
-        barColor: "#7A8478",
-        barBorderColor: "rgba(122,132,120,0.24)",
-        iconGradient: ["#EEF1EA", "#FAFBF8"] as [string, string],
+        titleColor: T.secondary,
+        iconColor: T.secondary,
+        barColor: T.secondary,
+        barBorderColor: T.borderAccent,
+        iconGradient: [T.primarySoft, T.surface] as [string, string],
       };
     case "light":
       return {
-        titleColor: "#825500",
-        iconColor: "#825500",
-        barColor: "#FDB64A",
-        barBorderColor: "rgba(253,182,74,0.34)",
-        iconGradient: ["#FFDDB3", "#FFF8EA"] as [string, string],
+        titleColor: T.textPrimary,
+        iconColor: T.textPrimary,
+        barColor: T.visibilityOff,
+        barBorderColor: T.visibilityOff,
+        iconGradient: [T.visibilityOffSoft, T.surface] as [string, string],
       };
     case "active":
       return {
         titleColor: T.primary,
         iconColor: T.primary,
         barColor: T.primary,
-        barBorderColor: "rgba(53,102,77,0.24)",
-        iconGradient: [T.primarySoft, "#FFF7EB"] as [string, string],
+        barBorderColor: T.borderAccent,
+        iconGradient: [T.primarySoft, T.surface] as [string, string],
       };
     case "busy":
     case "packed":
       return {
-        titleColor: "#C1462E",
-        iconColor: "#C1462E",
-        barColor: "#C1462E",
-        barBorderColor: "rgba(193,70,46,0.24)",
-        iconGradient: ["#F9DDD6", "#FFF4EF"] as [string, string],
+        titleColor: T.dangerText,
+        iconColor: T.dangerText,
+        barColor: T.danger,
+        barBorderColor: T.dangerBorder,
+        iconGradient: [T.surfaceDim, T.surface] as [string, string],
       };
     case "closed":
     case "unknown":
@@ -532,7 +532,7 @@ const screenStyles = StyleSheet.create({
     overflow: "hidden",
     borderBottomLeftRadius: 34,
     borderBottomRightRadius: 34,
-    backgroundColor: "#E6ECE7",
+    backgroundColor: T.primarySoft,
   },
   heroImage: {
     width: "100%",
@@ -555,7 +555,7 @@ const screenStyles = StyleSheet.create({
     borderTopRightRadius: 34,
     borderBottomLeftRadius: 34,
     borderBottomRightRadius: 34,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: T.surfaceCard,
     paddingHorizontal: 22,
     paddingTop: 22,
     paddingBottom: 34,
@@ -571,7 +571,7 @@ const screenStyles = StyleSheet.create({
     gap: 6,
   },
   title: {
-    color: "#211814",
+    color: T.textPrimary,
     fontSize: 28,
     lineHeight: 34,
     fontFamily: T.fontDisplayBold,
@@ -585,7 +585,7 @@ const screenStyles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: "rgba(31,46,36,0.10)",
+    backgroundColor: T.border,
   },
   pulseHeader: {
     flexDirection: "row",
@@ -615,14 +615,14 @@ const screenStyles = StyleSheet.create({
   pulseCard: {
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "rgba(31,46,36,0.10)",
-    backgroundColor: "#FFFFFF",
+    borderColor: T.borderBlack,
+    backgroundColor: T.surfaceCard,
     paddingHorizontal: 18,
     paddingVertical: 16,
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    shadowColor: "#245C4A",
+    shadowColor: T.primary,
     shadowOpacity: 0.04,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
@@ -665,8 +665,8 @@ const screenStyles = StyleSheet.create({
     borderColor: T.primary,
   },
   pulseBarInactive: {
-    backgroundColor: "#F8FBF8",
-    borderColor: "rgba(53,102,77,0.24)",
+    backgroundColor: T.primarySoft,
+    borderColor: T.borderAccent,
   },
   statsRow: {
     flexDirection: "row",
@@ -677,13 +677,13 @@ const screenStyles = StyleSheet.create({
     minHeight: 164,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "rgba(31,46,36,0.10)",
-    backgroundColor: "#FFFFFF",
+    borderColor: T.borderBlack,
+    backgroundColor: T.surfaceCard,
     paddingHorizontal: 18,
     paddingTop: 14,
     paddingBottom: 16,
     gap: 4,
-    shadowColor: "#245C4A",
+    shadowColor: T.primary,
     shadowOpacity: 0.03,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
@@ -698,10 +698,10 @@ const screenStyles = StyleSheet.create({
     marginBottom: 10,
   },
   statIconWarm: {
-    backgroundColor: "#F8EDC8",
+    backgroundColor: T.visibilityOffSoft,
   },
   statIconCool: {
-    backgroundColor: "#E8F2EB",
+    backgroundColor: T.primarySoft,
   },
   statTitle: {
     color: T.textPrimary,
@@ -740,11 +740,11 @@ const screenStyles = StyleSheet.create({
   intentCard: {
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "rgba(31,46,36,0.10)",
-    backgroundColor: "#FBF8F1",
+    borderColor: T.borderBlack,
+    backgroundColor: T.surface,
     paddingHorizontal: 16,
     paddingVertical: 18,
-    shadowColor: "#000",
+    shadowColor: T.primary,
     shadowOpacity: 0.04,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
@@ -782,7 +782,7 @@ const screenStyles = StyleSheet.create({
     fontFamily: T.fontBodyBold,
   },
   privacyNote: {
-    color: "rgba(31,46,36,0.38)",
+    color: T.textMuted,
     fontSize: 12,
     lineHeight: 20,
     textAlign: "center",
@@ -806,15 +806,15 @@ const screenStyles = StyleSheet.create({
   promptCard: {
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: "rgba(31,46,36,0.10)",
-    backgroundColor: "#FBF8F1",
+    borderColor: T.borderBlack,
+    backgroundColor: T.surface,
     padding: 16,
     gap: 12,
   },
   promptInput: {
     minHeight: 92,
     borderRadius: 18,
-    backgroundColor: "#F3EEE1",
+    backgroundColor: T.surfaceDim,
     paddingHorizontal: 14,
     paddingVertical: 12,
     color: T.textPrimary,
@@ -843,18 +843,18 @@ const screenStyles = StyleSheet.create({
     opacity: 0.88,
   },
   primaryButtonFill: {
-    backgroundColor: "#FDB64A",
+    backgroundColor: T.primary,
     paddingVertical: 18,
     alignItems: "center",
     gap: 1,
   },
   primaryButtonText: {
-    color: "#704800",
+    color: T.white,
     fontSize: 17,
     fontFamily: T.fontBodyBold,
   },
   primaryButtonSubtext: {
-    color: "rgba(112,72,0,0.82)",
+    color: T.surfaceGlassStrong,
     fontSize: 13,
     fontFamily: T.fontBody,
   },

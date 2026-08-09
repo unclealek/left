@@ -84,11 +84,7 @@ The staging LAN callback URL should not be required for store builds.
 
 ## App Icon
 
-The app uses `app-icon.png` for Expo-managed icon and splash config. Because the repository includes a native `ios/` directory, iOS also uses the native icon asset at:
-
-```text
-ios/Left/Images.xcassets/AppIcon.appiconset/App-Icon-1024x1024@1x.png
-```
+The repository previously used committed app-icon assets for Expo and the native iOS asset catalog. Those brand assets have been removed and need replacement before the next branded release build.
 
 If the simulator still shows an old icon after rebuilding, delete the installed `Left` app from the simulator and reinstall it.
 

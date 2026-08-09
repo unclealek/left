@@ -204,16 +204,16 @@ const localStyles = StyleSheet.create({
     borderWidth: 1,
   },
   fieldBadgeRequired: {
-    backgroundColor: "rgba(255,107,74,0.08)",
-    borderColor: "rgba(255,107,74,0.24)",
+    backgroundColor: T.dangerDim,
+    borderColor: T.dangerBorder,
   },
   fieldBadgeImportant: {
-    backgroundColor: "rgba(255,195,77,0.14)",
-    borderColor: "rgba(255,195,77,0.28)",
+    backgroundColor: T.visibilityOffSoft,
+    borderColor: T.visibilityOff,
   },
   fieldBadgeOptional: {
-    backgroundColor: "rgba(31,46,36,0.05)",
-    borderColor: "rgba(31,46,36,0.12)",
+    backgroundColor: T.surfaceMid,
+    borderColor: T.borderBlack,
   },
   fieldBadgeText: {
     fontSize: 11,
@@ -224,7 +224,7 @@ const localStyles = StyleSheet.create({
     color: T.accentBright,
   },
   fieldBadgeTextImportant: {
-    color: "#9A6A00",
+    color: T.textPrimary,
   },
   fieldBadgeTextOptional: {
     color: T.textSecondary,

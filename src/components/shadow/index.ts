@@ -1,0 +1,33 @@
+import type { ViewStyle } from "react-native";
+import { alpha, leftColors } from "../color";
+
+export const leftShadows = {
+  small: {
+    shadowColor: leftColors.inkBlack,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  } satisfies ViewStyle,
+  medium: {
+    shadowColor: leftColors.inkBlack,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 24,
+    elevation: 6,
+  } satisfies ViewStyle,
+  large: {
+    shadowColor: leftColors.inkBlack,
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.08,
+    shadowRadius: 60,
+    elevation: 12,
+  } satisfies ViewStyle,
+  glow: {
+    shadowColor: alpha(leftColors.inkBlack, 0.18),
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    elevation: 0,
+  } satisfies ViewStyle,
+} as const;
