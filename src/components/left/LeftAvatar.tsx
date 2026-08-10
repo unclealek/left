@@ -52,6 +52,7 @@ export function LeftAvatar({
           styles.leftAvatarText,
           isLarge && styles.leftAvatarTextLg,
           isSmall && styles.leftAvatarTextSm,
+          resolvedStyle === "abstract" && styles.leftAvatarTextAbstract,
           resolvedStyle === "minimal" && styles.leftAvatarTextMinimal,
         ]}
       >

@@ -34,6 +34,9 @@ export function BrandPrimaryButton({
 
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={subtitle ? `${label}. ${subtitle}` : label}
+      accessibilityState={{ disabled, busy: disabled && label.includes("...") }}
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
@@ -106,6 +109,9 @@ export function PrimaryButton({
 }) {
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
@@ -135,6 +141,9 @@ export function GhostButton({
 }) {
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
       style={[

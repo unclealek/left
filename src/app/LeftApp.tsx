@@ -65,7 +65,6 @@ import {
   type RuntimeVenueCandidate,
   type VenueApproachPrompt,
   type VenuePreference,
-  upsertVenueApproachPrompt,
 } from "../features/location/location-storage";
 import {
   getVenueConfidenceCopy,
@@ -231,6 +230,7 @@ export function LeftApp() {
     actions: DialogAction[];
   } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activationAttemptRef = useRef(false);
   const [nearbyVenueOptions, setNearbyVenueOptions] = useState<RuntimeVenueCandidate[]>([]);
   const [lastKnownCoords, setLastKnownCoords] = useState<RuntimeCoords | null>(null);
   const [venueSelectionRequired, setVenueSelectionRequired] = useState(false);
@@ -243,8 +243,6 @@ export function LeftApp() {
   const [venueActivityById, setVenueActivityById] = useState<Record<string, VenueActivityEnvelope>>({});
   const [venueDetailReturnScreen, setVenueDetailReturnScreen] = useState<Screen>("home");
   const [venueApproachPrompts, setVenueApproachPrompts] = useState<Record<string, VenueApproachPrompt>>({});
-  const [venueApproachPromptDraft, setVenueApproachPromptDraft] = useState("");
-  const [venueApproachPromptSaving, setVenueApproachPromptSaving] = useState(false);
   const [reportCategory, setReportCategory] = useState<ReportCategory>("unsafe_behavior");
   const [reportNotes, setReportNotes] = useState("");
   const [reportSubmitting, setReportSubmitting] = useState(false);
@@ -350,14 +348,9 @@ export function LeftApp() {
   }
 
   function openVenueDetail(candidate?: RuntimeVenueCandidate | null, origin: Screen = screen) {
-    if (!sessionVisible || venueHidden) {
-      showDialog("Visibility required", "Go visible to see more.");
-      return;
-    }
     const resolvedCandidate = resolveVenueDetailCandidate(candidate);
     if (!resolvedCandidate) return;
     setSelectedVenueDetail(resolvedCandidate);
-    setVenueApproachPromptDraft(resolveApproachPromptForVenue(resolvedCandidate.id));
     setVenueDetailReturnScreen(origin);
     setScreen("venue-detail");
   }
@@ -453,6 +446,24 @@ export function LeftApp() {
     void refreshVenueContext(venueSummary.venueId);
     void refreshNearbyFeed(user.id, venueSummary.venueId);
   }, [user?.id, venueSummary.venueId, activePresenceSessionId, sessionVisible]);
+
+  useEffect(() => {
+    if (
+      screen !== "feed" ||
+      !user ||
+      !sessionVisible ||
+      !isUuid(user.id) ||
+      !isUuid(venueSummary.venueId)
+    ) {
+      return;
+    }
+
+    void refreshNearbyFeed(user.id, venueSummary.venueId);
+    const interval = setInterval(() => {
+      void refreshNearbyFeed(user.id, venueSummary.venueId);
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [screen, user?.id, venueSummary.venueId, sessionVisible]);
 
   useEffect(() => {
     const venueIds = nearbyVenueOptions
@@ -846,27 +857,6 @@ export function LeftApp() {
     await confirmVenueSelection(selectedVenueDetail.id);
   }
 
-  async function saveVenueDetailApproachPrompt() {
-    if (!selectedVenueDetail) return;
-    const nextPrompt = venueApproachPromptDraft.trim() || defaultApproachPrompt;
-    setVenueApproachPromptSaving(true);
-    try {
-      const savedPrompt = await upsertVenueApproachPrompt(
-        selectedVenueDetail.id,
-        selectedVenueDetail.name,
-        nextPrompt,
-      );
-      setVenueApproachPrompts((current) => ({
-        ...current,
-        [selectedVenueDetail.id]: savedPrompt,
-      }));
-      setVenueApproachPromptDraft(savedPrompt.promptText);
-      showToast("Venue prompt saved");
-    } finally {
-      setVenueApproachPromptSaving(false);
-    }
-  }
-
   async function submitVenueSuggestion() {
     if (!user || !lastKnownCoords) {
       Alert.alert("Venue location missing", "Move around the venue once so Left has a recent device location.");
@@ -1044,7 +1034,22 @@ export function LeftApp() {
 
   async function activatePresence() {
     if (!user) return;
-    if (activationSubmitting) return;
+    if (activationAttemptRef.current) return;
+    activationAttemptRef.current = true;
+    setActivationSubmitting(true);
+
+    try {
+      await performPresenceActivation();
+    } catch {
+      showDialog("Could not start visibility", "Left could not complete the location check. Please try again.");
+    } finally {
+      activationAttemptRef.current = false;
+      setActivationSubmitting(false);
+    }
+  }
+
+  async function performPresenceActivation() {
+    if (!user) return;
     let runtime = await getLocationRuntimeState();
     console.info("[activation] starting presence activation", {
       permissionGranted: runtime.permissionGranted,
@@ -1059,7 +1064,7 @@ export function LeftApp() {
       const locationResult = await requestLocationAccess();
       setLocationEnabled(locationResult.granted);
       if (!locationResult.granted) {
-        Alert.alert(
+        showDialog(
           "Location needed",
           locationResult.reason === "background_denied"
             ? "Allow 'Always' location access so Left can confirm your venue before you go visible."
@@ -1113,7 +1118,7 @@ export function LeftApp() {
       return;
     }
     if (venueHidden) {
-      Alert.alert("Venue hidden", "Unhide this venue in Settings before becoming visible here again.");
+      showDialog("Venue hidden", "Unhide this venue in Settings before becoming visible here again.");
       return;
     }
     if (!resolvedVenueId || !isUuid(resolvedVenueId)) {
@@ -1172,8 +1177,6 @@ export function LeftApp() {
     const intent = selectedIntent ?? "networking";
     const vibes = normalizeSingleVibe(selectedVibes);
     const hintText = hintDraft.trim() || null;
-    setActivationSubmitting(true);
-
     try {
       void saveLastActivationDefaults({
         intent,
@@ -1195,7 +1198,7 @@ export function LeftApp() {
         });
 
         if (!presenceSessionId) {
-          Alert.alert("Could not start visibility", "Your session was not saved. Try again before becoming visible.");
+          showDialog("Could not start visibility", "Your session was not saved. Try again before becoming visible.");
           return;
         }
 
@@ -1220,9 +1223,7 @@ export function LeftApp() {
       showToast("You are visible");
       setScreen("venue");
     } catch {
-      Alert.alert("Could not start visibility", "Please try again.");
-    } finally {
-      setActivationSubmitting(false);
+      showDialog("Could not start visibility", "Please try again.");
     }
   }
 
@@ -1665,6 +1666,7 @@ export function LeftApp() {
     setDeletionRequestState("idle");
     setReportSubmitting(false);
     setActivationSubmitting(false);
+    activationAttemptRef.current = false;
     setProfileAction(null);
     setVisibilityAction(null);
     setReportCategory("unsafe_behavior");
@@ -1883,6 +1885,7 @@ export function LeftApp() {
             venueHidden={venueHidden}
             activationSubmitting={activationSubmitting}
             onBecomeVisible={() => openActivationFrom("home")}
+            onOpenAllVenues={() => setScreen("venue")}
             onOpenVenueDetail={(venueCandidate) => openVenueDetail(venueCandidate, "home")}
             onOpenSafety={() => openSafetyFrom("home")}
           />
@@ -1912,14 +1915,10 @@ export function LeftApp() {
         {screen === "venue-detail" && selectedVenueDetail && (
           <VenueDetailScreen
             venue={selectedVenueDetail}
-            venueSummary={displayVenueSummary}
+            venueSummary={venueSummary}
             venueActivity={isUuid(selectedVenueDetail.id) ? venueActivityById[selectedVenueDetail.id] ?? null : null}
             feed={visibleFeed}
             sessionVisible={sessionVisible}
-            approachPrompt={venueApproachPromptDraft}
-            approachPromptSaving={venueApproachPromptSaving}
-            onChangeApproachPrompt={setVenueApproachPromptDraft}
-            onSaveApproachPrompt={() => void saveVenueDetailApproachPrompt()}
             onBack={() => setScreen(venueDetailReturnScreen)}
             onPrimaryAction={() => void handleVenueDetailPrimaryAction()}
           />
@@ -1991,6 +1990,7 @@ export function LeftApp() {
         {screen === "safety" && (
           <SafetyScreen
             venueName={sessionVisible ? venueSummary.venueName : "current venue"}
+            venueHidden={venueHidden || !!currentVenuePreference?.hidden}
             venueMuted={!!currentVenuePreference?.muted}
             venueAction={safetyVenueAction}
             venueMessage={currentVenuePreferenceMessage}

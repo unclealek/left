@@ -18,11 +18,30 @@ export function Card({ children, step, total }: { children: ReactNode; step?: st
   );
 }
 
-export function FieldBlock({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+export function FieldBlock({
+  label,
+  hint,
+  children,
+  step,
+  variant = "default",
+}: {
+  label: string;
+  hint?: string;
+  children: ReactNode;
+  step?: number;
+  variant?: "default" | "section";
+}) {
+  const section = variant === "section";
+
   return (
-    <View style={styles.fieldBlock}>
-      <Text style={styles.fieldLabel}>{label.toUpperCase()}</Text>
-      {hint ? <Text style={styles.fieldHint}>{hint}</Text> : null}
+    <View style={[styles.fieldBlock, section && styles.fieldBlockSection]}>
+      <View style={section ? styles.fieldSectionHeadingRow : undefined}>
+        {section && step ? <Text style={styles.fieldSectionStep}>{step}.</Text> : null}
+        <Text style={section ? styles.fieldSectionLabel : styles.fieldLabel}>
+          {section ? label : label.toUpperCase()}
+        </Text>
+      </View>
+      {hint ? <Text style={[styles.fieldHint, section && styles.fieldSectionHint]}>{hint}</Text> : null}
       {children}
     </View>
   );
@@ -58,24 +77,28 @@ export function IconSelectChip({
   icon,
   active,
   compact = false,
+  halfWidth = false,
   onPress,
 }: {
   label: string;
   icon: LeftIconName;
   active: boolean;
   compact?: boolean;
+  halfWidth?: boolean;
   onPress: () => void;
 }) {
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
       onPress={onPress}
       style={[
         styles.iconSelectChip,
         compact && styles.iconSelectChipCompact,
+        halfWidth && styles.iconSelectChipHalfWidth,
         active && styles.iconSelectChipActive,
       ]}
     >
-      {active ? <View style={styles.iconSelectChipGlow} /> : null}
       <LeftIcon name={icon} size={16} color={active ? T.accentBright : "rgba(31,46,36,0.58)"} active={active} />
       <Text
         style={[
@@ -86,7 +109,7 @@ export function IconSelectChip({
       >
         {label}
       </Text>
-      {active && !compact ? (
+      {active ? (
         <View style={styles.iconSelectChipCheck}>
           <LeftIcon name="check" size={11} color={T.white} />
         </View>

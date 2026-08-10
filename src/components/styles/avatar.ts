@@ -7,14 +7,14 @@ export const avatarStyles = {
     borderRadius: 61,
     borderWidth: 3,
     borderColor: T.white,
-    backgroundColor: "rgba(251,143,255,0.18)",
+    backgroundColor: T.surfaceCard,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#FB8FFF",
-    shadowOpacity: 0.18,
+    shadowColor: T.primary,
+    shadowOpacity: 0.06,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    elevation: 2,
   },
   leftAvatarCircle: {
     width: 52,
@@ -22,7 +22,7 @@ export const avatarStyles = {
     borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FB8FFF",
+    backgroundColor: T.venueAccentSoft,
     overflow: "hidden",
   },
   leftAvatarCircleSm: {
@@ -36,19 +36,19 @@ export const avatarStyles = {
     borderRadius: 54,
   },
   leftAvatarCircleAbstract: {
-    backgroundColor: "#86162F",
+    backgroundColor: T.secondary,
   },
   leftAvatarCircleMinimal: {
-    backgroundColor: "#F8F1EA",
-    borderWidth: 2,
-    borderColor: "#FB8FFF",
+    backgroundColor: T.surfaceCard,
+    borderWidth: 1,
+    borderColor: T.borderAccent,
   },
   leftAvatarCircleSoft: {
-    backgroundColor: "#FB8FFF",
+    backgroundColor: T.venueSurface,
   },
   leftAvatarGlyphMark: {
     position: "absolute",
-    color: "rgba(255,255,255,0.22)",
+    color: T.borderAccent,
     fontSize: 28,
     lineHeight: 32,
     fontWeight: "800",
@@ -62,7 +62,7 @@ export const avatarStyles = {
     lineHeight: 64,
   },
   leftAvatarText: {
-    color: T.white,
+    color: T.textPrimary,
     fontSize: 17,
     lineHeight: 22,
     fontWeight: "800",
@@ -77,7 +77,10 @@ export const avatarStyles = {
     fontSize: 34,
     lineHeight: 40,
   },
+  leftAvatarTextAbstract: {
+    color: T.white,
+  },
   leftAvatarTextMinimal: {
-    color: "#FB8FFF",
+    color: T.venueAccent,
   },
 } as const;

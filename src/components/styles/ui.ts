@@ -1,4 +1,3 @@
-import { StyleSheet } from "react-native";
 import { T } from "../theme";
 import { leftShadows } from "../shadow";
 
@@ -54,32 +53,26 @@ export const uiStyles = {
     minHeight: 52,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: "rgba(53,102,77,0.12)",
-    backgroundColor: "rgba(255,251,245,0.88)",
+    borderColor: T.borderAccent,
+    backgroundColor: T.surfaceGlassStrong,
     paddingHorizontal: 18,
     paddingVertical: 14,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    ...leftShadows.small,
   },
   iconSelectChipCompact: {
-    minWidth: 98,
+    minWidth: 88,
+    flex: 1,
     justifyContent: "center",
   },
-  iconSelectChipActive: {
-    borderColor: "rgba(255,195,77,0.9)",
-    backgroundColor: "rgba(255,195,77,0.12)",
-    shadowColor: T.accent,
-    shadowOpacity: 0.14,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
+  iconSelectChipHalfWidth: {
+    flexBasis: "47%",
+    flexGrow: 1,
   },
-  iconSelectChipGlow: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,195,77,0.06)",
+  iconSelectChipActive: {
+    borderColor: T.visibilityOff,
+    backgroundColor: T.visibilityOffSoft,
   },
   iconSelectChipLabel: {
     color: T.textSecondary,
@@ -92,7 +85,7 @@ export const uiStyles = {
     lineHeight: 18,
   },
   iconSelectChipLabelActive: {
-    color: T.accentBright,
+    color: T.textPrimary,
     fontFamily: T.fontBodyBold,
   },
   iconSelectChipCheck: {

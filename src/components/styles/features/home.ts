@@ -58,6 +58,14 @@ export const homeStyles = {
     lineHeight: 18,
     fontFamily: T.fontDisplayBold,
   },
+  homeGreetingActivityIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: T.venueSurface,
+  },
   homeHeroTitleAccent: {
     color: T.textPrimary,
     fontSize: 29,
