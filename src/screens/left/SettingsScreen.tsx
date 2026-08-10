@@ -61,7 +61,7 @@ export function SettingsScreen({
     <View style={styles.settingsPage}>
       <View style={styles.settingsTopBar}>
         <Pressable onPress={onBack} accessibilityRole="button" style={({ pressed }) => [styles.profileHeaderButton, pressed && styles.iconButtonPressed]}>
-          <LeftIcon name="chevron-left" size={28} color={T.textPrimary} />
+          <LeftIcon name="arrow-left" size={22} color={T.textPrimary} />
         </Pressable>
         <Text style={styles.profileHeaderTitle}>Settings</Text>
         <View style={styles.profileHeaderButton} />
@@ -71,17 +71,17 @@ export function SettingsScreen({
       <View style={styles.settingsMenuCard}>
         <SettingsMenuRow icon="user" label="Account information" value={user.firstName} />
         <SettingsMenuRow icon="shield" label="Privacy and safety" helper="Manage blocks and hidden venues." onPress={onOpenSafety} />
-        <SettingsMenuRow icon="bell" label="Notifications" helper="Manage alerts." onPress={openNotificationPreferences} last />
+        <SettingsMenuRow icon="radio" label="Notifications" helper="Manage alerts." onPress={openNotificationPreferences} last />
       </View>
 
       <Text style={styles.settingsGroupTitle}>General</Text>
       <View style={styles.settingsMenuCard}>
-        <SettingsMenuRow icon="info" label="About Left" helper="App info and updates." onPress={openAboutLeft} last />
+        <SettingsMenuRow icon="activity" label="About Left" helper="App info and updates." onPress={openAboutLeft} last />
       </View>
       {settingsActionMessage ? <Text style={styles.settingsInfoBody}>{settingsActionMessage}</Text> : null}
 
       <Pressable onPress={confirmSignOut} style={({ pressed }) => [styles.settingsLogoutButton, pressed && styles.primaryBtnPressed]}>
-        <LeftIcon name="log-out" size={20} color={T.white} />
+        <LeftIcon name="log-out" size={20} color={T.dangerText} />
         <Text style={styles.settingsLogoutText}>Log out</Text>
       </Pressable>
 
@@ -111,7 +111,9 @@ export function SettingsScreen({
 function SettingsMenuRow({ icon, label, helper, value, onPress, last = false }: SettingsMenuRowProps) {
   const rowContent = (
     <>
-      <LeftIcon name={icon} size={22} color={T.textPrimary} />
+      <View style={styles.settingsMenuIconWrap}>
+        <LeftIcon name={icon} size={19} color={T.textPrimary} />
+      </View>
       <View style={styles.settingsMenuTextBlock}>
         <Text style={styles.settingsMenuLabel}>{label}</Text>
         {helper ? <Text style={styles.settingsMenuHelper}>{helper}</Text> : null}

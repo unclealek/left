@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import type { AppUser, AvatarStyle } from "../../types/left-domain";
-import { AVATAR_GLYPHS, avatarStyles, intents, vibeOptions } from "../../app/leftConfig";
+import { avatarStyles, intents, vibeOptions } from "../../app/leftConfig";
 import { T, styles } from "../../app/leftTheme";
 import { LeftIcon, type LeftIconName } from "../../components/icons";
 import { LeftLogoMark } from "../../components/left/LeftLogoMark";
@@ -86,7 +86,7 @@ export function MeScreen({
   const stats = [
     { icon: "radio", value: sessionVisible ? "1" : "0", label: "Live now" },
     { icon: "activity", value: String(approachCount), label: "Approaches started" },
-    { icon: "map-pin", value: String(Math.max(1, nearbyVenueCount)), label: "Venues nearby" },
+    { icon: "map-pin", value: String(nearbyVenueCount), label: "Venues nearby" },
   ] as const;
   const signalCards = [
     { icon: "radio", label: "Intent", value: intentLabel },
@@ -104,9 +104,9 @@ export function MeScreen({
             onPress={() => setEditing(false)}
             style={({ pressed }) => [styles.profileHeaderButton, pressed && styles.iconButtonPressed]}
           >
-            <LeftIcon name="chevron-left" size={28} color={T.textPrimary} />
+            <LeftIcon name="arrow-left" size={22} color={T.textPrimary} />
           </Pressable>
-          <Text style={styles.profileHeaderTitle}>Profile</Text>
+          <Text style={styles.profileHeaderTitle}>Edit profile</Text>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Open settings"
@@ -118,8 +118,9 @@ export function MeScreen({
         </View>
       ) : null}
 
-      <View style={styles.profileHeroCard}>
-        {!editing ? (
+      {!editing ? (
+        <>
+          <View style={styles.profileHeroCard}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Edit profile"
@@ -128,29 +129,30 @@ export function MeScreen({
           >
             <LeftIcon name="edit" size={18} color={T.textSecondary} />
           </Pressable>
-        ) : null}
-        <View style={styles.profileBrandHalo}>
-          <View style={styles.profileBrandCore}>
-            <LeftLogoMark size={40} />
-          </View>
-        </View>
-        <Text style={styles.profileDisplayName}>{user.firstName}</Text>
-        <View style={styles.profileRolePill}>
-          <Text style={styles.profileRoleText}>{intent}</Text>
-        </View>
-      </View>
-
-      <View style={styles.profileSignalGrid}>
-        {signalCards.map((card) => (
-          <View key={card.label} style={styles.profileSignalCard}>
-            <View style={styles.profileSignalIconWrap}>
-              <LeftIcon name={card.icon as LeftIconName} size={20} color={T.primary} />
+          <View style={styles.profileBrandHalo}>
+            <View style={styles.profileBrandCore}>
+              <LeftLogoMark size={40} />
             </View>
-            <Text style={styles.profileSignalLabel}>{card.label}</Text>
-            <Text style={styles.profileSignalValue}>{card.value}</Text>
           </View>
-        ))}
-      </View>
+          <Text style={styles.profileDisplayName}>{user.firstName}</Text>
+          <View style={styles.profileRolePill}>
+            <Text style={styles.profileRoleText}>{intent}</Text>
+          </View>
+        </View>
+
+          <View style={styles.profileSignalGrid}>
+            {signalCards.map((card) => (
+              <View key={card.label} style={styles.profileSignalCard}>
+                <View style={styles.profileSignalIconWrap}>
+                  <LeftIcon name={card.icon as LeftIconName} size={20} color={T.primary} />
+                </View>
+                <Text style={styles.profileSignalLabel}>{card.label}</Text>
+                <Text style={styles.profileSignalValue}>{card.value}</Text>
+              </View>
+            ))}
+          </View>
+        </>
+      ) : null}
 
       {editing ? (
         <View style={styles.profileEditCard}>
@@ -171,7 +173,7 @@ export function MeScreen({
             {avatarStyles.map((style) => (
               <SelectChip
                 key={style}
-                label={`${AVATAR_GLYPHS[style]} ${style}`}
+                label={`${style.charAt(0).toUpperCase()}${style.slice(1)}`}
                 active={avatarStyle === style}
                 onPress={() => setAvatarStyle(style)}
               />

@@ -1,10 +1,10 @@
 import { Pressable, Text, View } from "react-native";
 import type { NearbyFeedItem, VenueContextSummary } from "../../types/left-domain";
-import { formatRemaining } from "../../app/leftConfig";
-import { styles } from "../../app/leftTheme";
+import { formatIntent, formatRemaining } from "../../app/leftConfig";
+import { styles, T } from "../../app/leftTheme";
+import { LeftIcon } from "../../components/icons";
 import { LeftAvatar } from "../../components/left/LeftAvatar";
-import { LeftLogoMark } from "../../components/left/LeftLogoMark";
-import { Chip, GhostButton, SafetyActionButton } from "../../components/left/ui";
+import { SafetyActionButton } from "../../components/left/ui";
 
 export function FeedScreen({
   venue,
@@ -21,45 +21,107 @@ export function FeedScreen({
   onOpenVenueDetail: () => void;
   onOpenSafety: () => void;
 }) {
+  const peopleLabel = `${feed.length} ${feed.length === 1 ? "person" : "people"} visible`;
+
   return (
-    <View>
+    <View style={styles.feedPage}>
       <View style={styles.feedHead}>
-        <Pressable onPress={onOpenVenueDetail} style={({ pressed }) => [pressed && styles.feedCardPressed]}>
-          <Text style={styles.feedHeadVenue}>{sessionVisible ? venue.venueName : "Nearby"}</Text>
-          <Text style={styles.feedHeadCount}>
-            {sessionVisible ? `${feed.length} ${feed.length === 1 ? "person" : "people"} visible` : "Your venue stays private until you start visibility"}
+        <View style={styles.feedHeadCopy}>
+          <Text style={styles.feedTitle}>People nearby</Text>
+          <Text style={styles.feedSubtitle}>
+            {sessionVisible ? "People choosing to be visible at this venue." : "Go visible to see people at your venue."}
           </Text>
-        </Pressable>
+        </View>
         <SafetyActionButton onPress={onOpenSafety} compact />
       </View>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Open details for ${sessionVisible ? venue.venueName : "nearby venues"}`}
+        onPress={onOpenVenueDetail}
+        style={({ pressed }) => [styles.feedVenueRow, pressed && styles.feedCardPressed]}
+      >
+        <View style={styles.feedVenueIconWrap}>
+          <LeftIcon name={sessionVisible ? "map-pin" : "lock"} size={18} color={sessionVisible ? T.venueAccent : T.textSecondary} active={sessionVisible} />
+        </View>
+        <View style={styles.feedVenueCopy}>
+          <Text numberOfLines={1} style={styles.feedHeadVenue}>{sessionVisible ? venue.venueName : "Venue private"}</Text>
+          <View style={styles.feedCountRow}>
+            <View style={[styles.feedCountDot, sessionVisible && styles.feedCountDotVisible]} />
+            <Text style={styles.feedHeadCount}>
+              {sessionVisible ? peopleLabel : "Your venue stays private until visible"}
+            </Text>
+          </View>
+        </View>
+        <LeftIcon name="chevron-right" size={18} color={T.textSecondary} />
+      </Pressable>
+
       {feed.length === 0 ? (
         <View style={styles.emptyState}>
           <View style={styles.emptyGlyphWrap}>
-            <View style={styles.emptyGlyphMark}>
-              <LeftLogoMark size={30} />
-            </View>
+            <LeftIcon name={sessionVisible ? "users" : "lock"} size={28} color={T.venueAccent} />
           </View>
-          <Text style={styles.emptyText}>{sessionVisible ? "No one visible yet." : "Start visibility to reveal your venue and see nearby people."}</Text>
+          <Text style={styles.emptyTitle}>{sessionVisible ? "No one else is visible yet" : "Your nearby feed is private"}</Text>
+          <Text style={styles.emptyText}>
+            {sessionVisible
+              ? "You are the first person showing up here. New people will appear automatically."
+              : "Start a presence when you are ready to see and be seen by people at your venue."}
+          </Text>
         </View>
       ) : (
-        feed.map((item) => (
-          <Pressable key={item.profileUserId} onPress={() => onOpenProfile(item)} style={({ pressed }) => [styles.feedCard, pressed && styles.feedCardPressed]}>
-            <View style={styles.feedCardTop}>
-              <LeftAvatar name={item.firstName} avatarStyle={item.avatarStyle} size="sm" />
-              <View style={styles.feedCardInfo}>
-                <Text style={styles.feedCardName}>{item.firstName}</Text>
-                <Text style={styles.feedCardIntent}>{item.intent.replaceAll("_", " ")}</Text>
-              </View>
-              <Text style={styles.feedCardTime}>{formatRemaining(item.sessionDurationRemaining)}</Text>
-            </View>
-            {item.hintText ? <Text style={styles.feedCardHint}>{item.hintText}</Text> : null}
-            <View style={styles.feedCardFooter}>
-              <Chip label={item.primaryVibe ?? "Open"} />
-              <GhostButton label="View profile →" onPress={() => onOpenProfile(item)} compact />
-            </View>
-          </Pressable>
-        ))
+        <View style={styles.feedList}>
+          {feed.map((item) => (
+            <PersonCard key={item.profileUserId} item={item} onPress={() => onOpenProfile(item)} />
+          ))}
+        </View>
       )}
     </View>
+  );
+}
+
+function PersonCard({ item, onPress }: { item: NearbyFeedItem; onPress: () => void }) {
+  const intent = formatIntent(item.intent);
+  const intentLabel = intent.charAt(0).toUpperCase() + intent.slice(1);
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`View ${item.firstName}'s profile. ${intentLabel}. ${formatRemaining(item.sessionDurationRemaining)} remaining.`}
+      onPress={onPress}
+      style={({ pressed }) => [styles.feedCard, pressed && styles.feedCardPressed]}
+    >
+      <View style={styles.feedCardTop}>
+        <LeftAvatar name={item.firstName} avatarStyle={item.avatarStyle} />
+        <View style={styles.feedCardInfo}>
+          <Text style={styles.feedCardName}>{item.firstName}</Text>
+          <View style={styles.feedCardIntentRow}>
+            <LeftIcon name="radio" size={14} color={T.venueAccent} />
+            <Text style={styles.feedCardIntent}>{intentLabel}</Text>
+          </View>
+        </View>
+        <View style={styles.feedCardTimePill}>
+          <LeftIcon name="clock" size={13} color={T.textSecondary} />
+          <Text style={styles.feedCardTime}>{formatRemaining(item.sessionDurationRemaining)}</Text>
+        </View>
+      </View>
+
+      {item.hintText ? (
+        <View style={styles.feedCardHintRow}>
+          <LeftIcon name="edit" size={15} color={T.textMuted} />
+          <Text style={styles.feedCardHint}>{item.hintText}</Text>
+        </View>
+      ) : null}
+
+      <View style={styles.feedCardFooter}>
+        <View style={styles.feedVibePill}>
+          <LeftIcon name="activity" size={14} color={T.venueAccent} />
+          <Text style={styles.feedVibeText}>{item.primaryVibe ?? "Open"}</Text>
+        </View>
+        <View style={styles.feedProfileAction}>
+          <Text style={styles.feedProfileActionText}>View profile</Text>
+          <LeftIcon name="chevron-right" size={16} color={T.textPrimary} />
+        </View>
+      </View>
+    </Pressable>
   );
 }

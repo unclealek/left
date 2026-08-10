@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
-import { ActivityIndicator, Animated, Easing, Image, Pressable, Text, View } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Animated, Easing, Image, Pressable, Text, View } from "react-native";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
 import {
   getVenueConfidenceLabel,
@@ -33,6 +33,7 @@ export function HomeScreen({
   activationSubmitting = false,
   activationError = false,
   onBecomeVisible,
+  onOpenAllVenues,
   onOpenVenueDetail,
   onOpenSafety,
 }: {
@@ -45,6 +46,7 @@ export function HomeScreen({
   activationSubmitting?: boolean;
   activationError?: boolean;
   onBecomeVisible: () => void;
+  onOpenAllVenues: () => void;
   onOpenVenueDetail: (venue: RuntimeVenueCandidate) => void;
   onOpenSafety: () => void;
 }) {
@@ -54,6 +56,8 @@ export function HomeScreen({
     nearbyVenues.find((candidate) => candidate.name === venueName) ??
     null;
   const isVisible = sessionVisible && !venueHidden;
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const greetingHeartbeat = useRef(new Animated.Value(0)).current;
   const venueConfidence = resolveVenueConfidence(venue, nearbyVenues);
   const nearbyCards = buildNearbyVenueCards(nearbyVenues, venueName, venueActivityById);
   const heroVenueType = nearbyVenues[0]?.venueType ?? inferVenueTypeFromName(venueName);
@@ -82,6 +86,68 @@ export function HomeScreen({
     9;
   const socialPreviewLabels = ["KA", "MN", "JT"];
 
+  useEffect(() => {
+    void AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+    const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduceMotion);
+    return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible || reduceMotion) {
+      greetingHeartbeat.stopAnimation();
+      greetingHeartbeat.setValue(0);
+      return;
+    }
+
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(greetingHeartbeat, {
+          toValue: 1,
+          duration: 120,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(greetingHeartbeat, {
+          toValue: 0,
+          duration: 130,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.delay(90),
+        Animated.timing(greetingHeartbeat, {
+          toValue: 0.72,
+          duration: 110,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(greetingHeartbeat, {
+          toValue: 0,
+          duration: 170,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.delay(900),
+      ]),
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [greetingHeartbeat, isVisible, reduceMotion]);
+
+  const greetingHeartbeatStyle = {
+    transform: [
+      {
+        scale: greetingHeartbeat.interpolate({
+          inputRange: [0, 1],
+          outputRange: [1, 1.22],
+        }),
+      },
+    ],
+    opacity: greetingHeartbeat.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.82, 1],
+    }),
+  };
+
   return (
     <View style={styles.homePage}>
       <View style={styles.homeVenueHeader}>
@@ -103,7 +169,13 @@ export function HomeScreen({
       <View style={styles.homeHeroHeading}>
         <View style={styles.homeGreetingInline}>
           <Text style={styles.homeGreetingInlineName}>{`Hey ${firstName}!`}</Text>
-          <LeftIcon name="activity" size={18} color={T.venueAccent} />
+          <Animated.View
+            accessible
+            accessibilityLabel={isVisible ? "Presence live" : "Presence hidden"}
+            style={[styles.homeGreetingActivityIcon, greetingHeartbeatStyle]}
+          >
+            <LeftIcon name="activity" size={18} color={isVisible ? T.visibilityOn : T.venueAccent} />
+          </Animated.View>
         </View>
         <Text style={styles.homeHeroTitleAccent}>{"Ready to\nconnect nearby?"}</Text>
         <Text style={styles.homeHeroSupportText}>Real people. Real places. Right now.</Text>
@@ -252,7 +324,15 @@ export function HomeScreen({
           <Text style={styles.homeExploreTitle}>Places around you</Text>
           <Text style={styles.homeExploreMeta}>{placesContext}</Text>
         </View>
-        <Text style={styles.homeExploreSideNote}>See all →</Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="See all nearby venues"
+          onPress={onOpenAllVenues}
+          hitSlop={10}
+          style={({ pressed }) => pressed && styles.iconButtonPressed}
+        >
+          <Text style={styles.homeExploreSideNote}>See all →</Text>
+        </Pressable>
       </View>
 
       <View style={[styles.homeVenueGrid, nearbyCards.length === 1 && styles.homeVenueGridSingle]}>
@@ -339,8 +419,21 @@ export function HomeScreen({
 
 function PresencePulseIndicator({ isVisible }: { isVisible: boolean }) {
   const pulse = useRef(new Animated.Value(0)).current;
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
+    void AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+    const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduceMotion);
+    return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible || reduceMotion) {
+      pulse.stopAnimation();
+      pulse.setValue(0);
+      return;
+    }
+
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, {
@@ -358,7 +451,7 @@ function PresencePulseIndicator({ isVisible }: { isVisible: boolean }) {
     );
     animation.start();
     return () => animation.stop();
-  }, [pulse]);
+  }, [isVisible, pulse, reduceMotion]);
 
   const pulseStyle = {
     transform: [

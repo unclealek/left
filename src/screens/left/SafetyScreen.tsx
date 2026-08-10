@@ -6,6 +6,7 @@ import type { VenuePreference } from "../../features/location/location-storage";
 export function SafetyScreen({
   venueName,
   sessionVisible,
+  venueHidden,
   venueMuted,
   venueAction,
   venueMessage,
@@ -25,6 +26,7 @@ export function SafetyScreen({
 }: {
   venueName: string;
   sessionVisible: boolean;
+  venueHidden: boolean;
   venueMuted: boolean;
   venueAction: "hiding" | "muting" | null;
   venueMessage: { tone: "success" | "error"; text: string } | null;
@@ -112,7 +114,7 @@ export function SafetyScreen({
           ]}
         >
           <LeftIcon
-            name={sessionVisible ? "pause-circle" : "eye-off"}
+            name={sessionVisible ? "pause-circle" : "eye"}
             size={18}
             color={T.white}
           />
@@ -130,7 +132,7 @@ export function SafetyScreen({
           onPress={onEndSession}
           style={({ pressed }) => [
             screenStyles.secondaryAction,
-            (!sessionVisible || visibilityAction === "pause") && screenStyles.secondaryActionDisabled,
+            (!sessionVisible || !!visibilityAction) && screenStyles.secondaryActionDisabled,
             pressed && sessionVisible && !visibilityAction && screenStyles.buttonPressed,
           ]}
         >
@@ -148,9 +150,9 @@ export function SafetyScreen({
 
         <RowAction
           icon="shield"
-          label="Hide this venue"
+          label={venueHidden ? "Venue already hidden" : "Hide this venue"}
           onPress={confirmHideVenue}
-          disabled={!!venueAction}
+          disabled={!!venueAction || venueHidden}
         />
         <RowAction
           icon="bell"

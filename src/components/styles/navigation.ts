@@ -1,4 +1,6 @@
 import { T } from "../theme";
+import { leftShadows } from "../shadow";
+import { radii } from "../token";
 
 export function createNavigationStyles(contentRailWidth: "92%", contentRailMax: number) {
   return {
@@ -13,19 +15,15 @@ export function createNavigationStyles(contentRailWidth: "92%", contentRailMax: 
       opacity: 0.8,
     },
     backNavIconWrap: {
-      width: 52,
-      height: 52,
-      borderRadius: 26,
-      backgroundColor: "rgba(255,251,245,0.92)",
+      width: 46,
+      height: 46,
+      borderRadius: radii.pill,
+      backgroundColor: T.surfaceGlassStrong,
       borderWidth: 1,
-      borderColor: "rgba(53,102,77,0.14)",
+      borderColor: T.border,
       alignItems: "center",
       justifyContent: "center",
-      shadowColor: "#DCCCB3",
-      shadowOpacity: 0.1,
-      shadowRadius: 12,
-      shadowOffset: { width: 0, height: 8 },
-      elevation: 3,
+      ...leftShadows.small,
     },
     backNavLabel: {
       color: T.textSecondary,

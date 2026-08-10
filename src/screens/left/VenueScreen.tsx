@@ -3,7 +3,6 @@ import {
   Animated,
   Easing,
   Pressable,
-  StyleSheet,
   Text,
   View,
 } from "react-native";
@@ -27,6 +26,7 @@ import type {
 } from "../../types/left-domain";
 import { formatIntent } from "../../app/leftConfig";
 import { T } from "../../app/leftTheme";
+import { venueRadarStyles as screenStyles } from "../../components/styles/features/venue";
 import { LeftIcon, type LeftIconName } from "../../components/icons";
 import { LeftLogoMark } from "../../components/left/LeftLogoMark";
 import { GhostButton } from "../../components/left/ui";
@@ -121,14 +121,6 @@ function getVenueMarkerIcon(name: string): LeftIconName {
   if (value.includes("gift") || value.includes("shop") || value.includes("boutique")) return "gift";
   if (value.includes("press") || value.includes("library")) return "book-open";
   return "map-pin";
-}
-
-function getIntentIcon(intent: string): LeftIconName {
-  const value = intent.toLowerCase();
-  if (value.includes("conversation") || value.includes("group")) return "message-circle";
-  if (value.includes("network")) return "users";
-  if (value.includes("study") || value.includes("focus")) return "book-open";
-  return "message-circle";
 }
 
 function getCompactIntentLabel(intent: string) {
@@ -262,9 +254,11 @@ export function VenueScreen({
   });
 
   const statusLabel = isPubliclyVisible ? "Visible" : "Hidden";
-  const helperCopy = isPubliclyVisible
-    ? venue.pulseCopy?.trim() || "Open the nearby feed to see who has surfaced."
-    : "Go visible to discover who's around and be discovered.";
+  const radarSubtitle = isPubliclyVisible
+    ? "Your venue is confirmed.\nSee who's around while you stay visible."
+    : venueConfidence === "nearby_guess"
+      ? "Left found a likely nearby venue.\nIt has not been fully confirmed yet."
+      : confidenceCopy;
   const energyTitle =
     venue.energyLevel === "busy"
       ? "Busy"
@@ -285,15 +279,20 @@ export function VenueScreen({
           : venue.energyLevel === "warm"
             ? "Easy to join"
             : "Low activity";
+  const energySignalColor =
+    venue.energyLevel === "busy"
+      ? T.visibilityOff
+      : venue.energyLevel === "active" || venue.energyLevel === "warm"
+        ? T.visibilityOn
+        : T.venueAccent;
+  const energyIsBusy = venue.energyLevel === "busy";
   const intentTitle = useMemo(() => {
     const raw = formatIntent(venue.popularIntents[0] ?? "open_to_conversation");
     return raw.charAt(0).toUpperCase() + raw.slice(1);
   }, [venue.popularIntents]);
   const intentSubtext = isPubliclyVisible ? "Most common here" : "Likely nearby";
   const currentVenueSummary = `${energyTitle} · ${getCompactIntentLabel(intentTitle)}`;
-  const primaryActionLabel = isPubliclyVisible ? "Open Nearby Feed" : "Go Visible";
   const primaryAction = isPubliclyVisible ? onOpenFeed : onActivate;
-  const showPrimaryCta = !isPubliclyVisible || !socialMomentum;
   const pulseIconStyle = {
     transform: [{ scale: pulseScale }],
     opacity: pingPulse.interpolate({
@@ -309,7 +308,7 @@ export function VenueScreen({
           <View style={screenStyles.headerCopy}>
             <View style={screenStyles.heroTitleRow}>
               <Text style={screenStyles.heroTitle} maxFontSizeMultiplier={1.2}>
-                Venue Radar
+                Venue radar
               </Text>
               <Animated.View style={[screenStyles.heroSignalWrap, pulseIconStyle]}>
                 <LeftIcon name="radio" size={18} color={T.primary} active />
@@ -317,15 +316,24 @@ export function VenueScreen({
             </View>
           </View>
           <View style={screenStyles.statusActionPill}>
-            <View style={screenStyles.compactStatusPill}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={isPubliclyVisible ? "Open nearby feed" : "Go visible"}
+              onPress={primaryAction}
+              style={({ pressed }) => [
+                screenStyles.compactStatusPill,
+                isPubliclyVisible ? screenStyles.compactStatusPillVisible : screenStyles.compactStatusPillHidden,
+                pressed && screenStyles.pressed,
+              ]}
+            >
               <LeftIcon
                 name={isPubliclyVisible ? "eye" : "eye-off"}
                 size={17}
-                color={isPubliclyVisible ? T.primary : T.textSecondary}
+                color={isPubliclyVisible ? T.visibilityOn : T.visibilityOff}
                 active={isPubliclyVisible}
               />
               <Text style={screenStyles.compactStatusLabel}>{statusLabel}</Text>
-            </View>
+            </Pressable>
             <View style={screenStyles.statusActionDivider} />
             <Pressable
               accessibilityRole="button"
@@ -342,9 +350,7 @@ export function VenueScreen({
           </View>
         </View>
         <Text style={screenStyles.heroSubtitle} maxFontSizeMultiplier={1.3}>
-          {isPubliclyVisible
-            ? "See who's around while you stay visible."
-            : confidenceCopy}
+          {radarSubtitle}
         </Text>
         <View style={screenStyles.insightRow}>
           <View style={screenStyles.insightCard}>
@@ -352,8 +358,13 @@ export function VenueScreen({
               Energy
             </Text>
             <View style={screenStyles.insightValueRow}>
-              <View style={screenStyles.insightIconBubble}>
-                <LeftIcon name="wind" size={24} color={T.primary} />
+              <View
+                style={[
+                  screenStyles.insightIconBubble,
+                  energyIsBusy ? screenStyles.insightIconBubbleBusy : screenStyles.insightIconBubbleEnergy,
+                ]}
+              >
+                <LeftIcon name="activity" size={21} color={energySignalColor} />
               </View>
               <Text
                 style={screenStyles.insightTitle}
@@ -372,8 +383,8 @@ export function VenueScreen({
               Top intent
             </Text>
             <View style={screenStyles.insightValueRow}>
-              <View style={screenStyles.insightIconBubble}>
-                <LeftIcon name={getIntentIcon(intentTitle)} size={23} color={T.primary} />
+              <View style={[screenStyles.insightIconBubble, screenStyles.insightIconBubbleIntent]}>
+                <LeftIcon name="users" size={20} color={T.visibilityOff} />
               </View>
               <Text
                 style={screenStyles.insightTitle}
@@ -425,17 +436,28 @@ export function VenueScreen({
           )}
 
           <LinearGradient
-            colors={[T.surfaceGlassLilac, T.visibilityOffSoft]}
+            colors={isPubliclyVisible
+              ? [T.surfaceGlassSoft, T.visibilityOnSoft]
+              : [T.surfaceGlassSoft, T.visibilityOffSoft]}
             style={screenStyles.mapWarmWash}
             pointerEvents="none"
           />
 
           <View style={screenStyles.ringOuter} pointerEvents="none" />
           <View style={screenStyles.ringMid} pointerEvents="none" />
-          <View style={screenStyles.ringInner} pointerEvents="none" />
+          <View
+            style={[screenStyles.ringInner, isPubliclyVisible && screenStyles.ringInnerVisible]}
+            pointerEvents="none"
+          />
 
-          <View style={screenStyles.centerVenueGlow} pointerEvents="none" />
-          <View style={screenStyles.centerVenueBoundary} pointerEvents="none" />
+          <View
+            style={[screenStyles.centerVenueGlow, isPubliclyVisible && screenStyles.centerVenueGlowVisible]}
+            pointerEvents="none"
+          />
+          <View
+            style={[screenStyles.centerVenueBoundary, isPubliclyVisible && screenStyles.centerVenueBoundaryVisible]}
+            pointerEvents="none"
+          />
 
           {venuePlacements.map(({ candidate, left, top }) => (
             <Pressable
@@ -519,7 +541,7 @@ export function VenueScreen({
             ]}
           >
             <View style={screenStyles.currentVenuePin}>
-              <LeftIcon name="map-pin" size={18} color={T.primary} />
+              <LeftIcon name="map-pin" size={18} color={T.venueAccent} />
             </View>
             <View style={screenStyles.currentVenueCopy}>
               <Text style={screenStyles.currentVenueChipText} numberOfLines={1}>
@@ -535,36 +557,6 @@ export function VenueScreen({
           </Pressable>
         </View>
       </View>
-
-      {showPrimaryCta ? (
-        <View style={screenStyles.ctaBlock}>
-          <Pressable
-            onPress={primaryAction}
-            style={({ pressed }) => [
-              screenStyles.primaryCtaButton,
-              pressed && screenStyles.pressed,
-            ]}
-          >
-            <View style={screenStyles.primaryCtaContent}>
-              <View style={screenStyles.primaryCtaMarkBubble}>
-                <LeftLogoMark size={18} />
-              </View>
-              <View style={screenStyles.primaryCtaCopy}>
-                <Text style={screenStyles.primaryCtaTitle} numberOfLines={1}>
-                  {primaryActionLabel}
-                </Text>
-                <Text style={screenStyles.primaryCtaSubtitle} numberOfLines={1}>
-                  {isPubliclyVisible ? "See who's nearby now" : "Let people discover you"}
-                </Text>
-              </View>
-            </View>
-            <View style={screenStyles.primaryCtaArrowBubble}>
-              <LeftIcon name="arrow-up-right" size={22} color={T.white} />
-            </View>
-          </Pressable>
-          <Text style={screenStyles.ctaFootnote}>{helperCopy}</Text>
-        </View>
-      ) : null}
 
       {socialMomentum && isPubliclyVisible ? (
         <View style={screenStyles.momentumCard}>
@@ -602,546 +594,3 @@ export function VenueScreen({
     </View>
   );
 }
-
-const screenStyles = StyleSheet.create({
-  page: {
-    width: "100%",
-    alignItems: "center",
-    gap: 16,
-  },
-  titleBlock: {
-    width: "100%",
-    maxWidth: 390,
-    gap: 12,
-  },
-  headerRow: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10,
-  },
-  headerCopy: {
-    flex: 1,
-    minWidth: 0,
-    paddingRight: 4,
-  },
-  statusActionPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexShrink: 0,
-    borderRadius: 999,
-    backgroundColor: T.surfaceGlassStrong,
-    borderWidth: 1,
-    borderColor: T.border,
-    paddingLeft: 4,
-    paddingRight: 1,
-    paddingVertical: 2,
-    gap: 2,
-  },
-  compactStatusPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingLeft: 7,
-    paddingRight: 8,
-    paddingVertical: 6,
-  },
-  compactStatusLabel: {
-    color: T.textPrimary,
-    fontSize: 13,
-    lineHeight: 17,
-    fontFamily: T.fontBodyMedium,
-  },
-  statusActionDivider: {
-    width: 1,
-    height: 20,
-    backgroundColor: T.border,
-    marginVertical: 0,
-  },
-  compactPrivacyButton: {
-    width: 34,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  heroTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  heroTitle: {
-    flexShrink: 1,
-    color: T.textPrimary,
-    fontSize: 26,
-    lineHeight: 31,
-    fontFamily: T.fontDisplayBold,
-    letterSpacing: -0.7,
-  },
-  heroSignalWrap: {
-    marginTop: 2,
-  },
-  heroSubtitle: {
-    color: T.textSecondary,
-    fontSize: 15,
-    lineHeight: 22,
-    fontFamily: T.fontBody,
-    maxWidth: 360,
-  },
-  insightRow: {
-    width: "100%",
-    flexDirection: "row",
-    gap: 14,
-  },
-  insightCard: {
-    flex: 1,
-    borderRadius: 24,
-    backgroundColor: T.surfaceGlassStrong,
-    borderWidth: 1,
-    borderColor: T.border,
-    paddingHorizontal: 14,
-    paddingVertical: 18,
-    shadowColor: T.primary,
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
-    gap: 14,
-  },
-  insightLabel: {
-    color: T.textMuted,
-    fontSize: 10,
-    lineHeight: 14,
-    textTransform: "uppercase",
-    fontFamily: T.fontBodyBold,
-    letterSpacing: 2,
-  },
-  insightValueRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-  },
-  insightIconBubble: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: T.primarySoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  insightTitle: {
-    color: T.textPrimary,
-    flex: 1,
-    flexShrink: 1,
-    fontSize: 12.5,
-    lineHeight: 16,
-    fontFamily: T.fontBodyBold,
-  },
-  insightSubtext: {
-    color: T.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
-    fontFamily: T.fontBody,
-  },
-  mapCard: {
-    width: "100%",
-    maxWidth: 390,
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: T.border,
-    backgroundColor: T.surfaceGlassStrong,
-    padding: 8,
-    shadowColor: T.primary,
-    shadowOpacity: 0.035,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
-  },
-  mapFrame: {
-    width: "100%",
-    height: 438,
-    borderRadius: 24,
-    overflow: "hidden",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: T.primarySoft,
-  },
-  mapbox: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  mapFallback: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  mapWarmWash: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.34,
-  },
-  mapPatchOne: {
-    position: "absolute",
-    top: 52,
-    left: 30,
-    width: 120,
-    height: 84,
-    borderRadius: 26,
-    backgroundColor: T.visibilityOffSoft,
-    transform: [{ rotate: "-14deg" }],
-  },
-  mapPatchTwo: {
-    position: "absolute",
-    right: 34,
-    top: 92,
-    width: 102,
-    height: 68,
-    borderRadius: 24,
-    backgroundColor: T.primarySoft,
-  },
-  mapPatchThree: {
-    position: "absolute",
-    right: 44,
-    bottom: 76,
-    width: 94,
-    height: 94,
-    borderRadius: 47,
-    backgroundColor: T.primarySoft,
-  },
-  mapRoadHorizontal: {
-    position: "absolute",
-    left: -20,
-    right: -20,
-    top: 210,
-    height: 26,
-    borderRadius: 14,
-    backgroundColor: T.surfaceGlassStrong,
-    borderWidth: 1,
-    borderColor: T.borderBlackSoft,
-  },
-  mapRoadVertical: {
-    position: "absolute",
-    top: 42,
-    bottom: -20,
-    left: 160,
-    width: 24,
-    borderRadius: 14,
-    backgroundColor: T.surfaceGlassStrong,
-    borderWidth: 1,
-    borderColor: T.borderBlackSoft,
-  },
-  mapRoadDiagonal: {
-    position: "absolute",
-    left: 42,
-    top: 132,
-    width: 240,
-    height: 22,
-    borderRadius: 12,
-    backgroundColor: T.surfaceGlassStrong,
-    borderWidth: 1,
-    borderColor: T.borderBlackSoft,
-    transform: [{ rotate: "32deg" }],
-  },
-  ringOuter: {
-    position: "absolute",
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: T.border,
-  },
-  ringMid: {
-    position: "absolute",
-    width: 204,
-    height: 204,
-    borderRadius: 102,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: T.border,
-  },
-  ringInner: {
-    position: "absolute",
-    width: 132,
-    height: 132,
-    borderRadius: 66,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: T.visibilityOffSoft,
-  },
-  centerVenueGlow: {
-    position: "absolute",
-    width: 146,
-    height: 146,
-    borderRadius: 73,
-    backgroundColor: T.visibilityOffSoft,
-  },
-  centerVenueBoundary: {
-    position: "absolute",
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    borderWidth: 1,
-    borderColor: T.visibilityOff,
-    backgroundColor: T.visibilityOffSoft,
-  },
-  venueMarker: {
-    position: "absolute",
-    width: 74,
-    minHeight: 48,
-    alignItems: "center",
-  },
-  venueMarkerHidden: {
-    opacity: 0.78,
-  },
-  venueMarkerPin: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: T.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: T.primary,
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 3 },
-  },
-  venueMarkerCopy: {
-    marginTop: 6,
-    alignItems: "center",
-  },
-  venueMarkerName: {
-    color: T.textPrimary,
-    fontSize: 10.5,
-    lineHeight: 13,
-    fontFamily: T.fontBodyMedium,
-    textAlign: "center",
-  },
-  personPulse: {
-    position: "absolute",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: T.surfaceGlassStrong,
-    borderWidth: 2,
-    borderColor: T.surfaceGlassStrong,
-    shadowColor: T.primary,
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  personPulseFeatured: {
-    backgroundColor: T.primarySoft,
-  },
-  personPulseHalo: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    borderRadius: 999,
-    backgroundColor: T.primarySoft,
-    borderWidth: 1,
-    borderColor: T.border,
-  },
-  centerBadge: {
-    position: "absolute",
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: T.surfaceGlassStrong,
-    borderWidth: 2,
-    borderColor: T.surfaceGlassStrong,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    shadowColor: T.primary,
-    shadowOpacity: 0.04,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 3 },
-  },
-  centerBadgeSubtitle: {
-    color: T.textSecondary,
-    fontSize: 10,
-    lineHeight: 12,
-    fontFamily: T.fontBody,
-    textAlign: "center",
-  },
-  currentVenueChip: {
-    position: "absolute",
-    left: 42,
-    right: 42,
-    bottom: 66,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    borderRadius: 22,
-    backgroundColor: T.surfaceGlassStrong,
-    borderWidth: 1,
-    borderColor: T.border,
-    shadowColor: T.primary,
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  currentVenuePin: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: T.surfaceMid,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  currentVenueCopy: {
-    flex: 1,
-    alignItems: "flex-start",
-    gap: 1,
-  },
-  currentVenueChipText: {
-    color: T.textPrimary,
-    fontSize: 14,
-    lineHeight: 17,
-    fontFamily: T.fontBodyMedium,
-  },
-  currentVenueChipMeta: {
-    color: T.primary,
-    fontSize: 12,
-    lineHeight: 16,
-    fontFamily: T.fontBodyMedium,
-  },
-  currentVenueArrowBubble: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: T.surfaceMid,
-    borderWidth: 1,
-    borderColor: T.border,
-  },
-  ctaBlock: {
-    width: "100%",
-    maxWidth: 390,
-    gap: 10,
-  },
-  primaryCtaButton: {
-    minHeight: 96,
-    borderRadius: 28,
-    backgroundColor: T.primary,
-    paddingLeft: 22,
-    paddingRight: 18,
-    paddingVertical: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    shadowColor: T.primary,
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
-  },
-  primaryCtaContent: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 16,
-    paddingLeft: 8,
-    paddingRight: 20,
-  },
-  primaryCtaMarkBubble: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    backgroundColor: T.surfaceGlassLilac,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  primaryCtaCopy: {
-    flexShrink: 1,
-    gap: 4,
-    alignItems: "flex-start",
-  },
-  primaryCtaTitle: {
-    color: T.white,
-    fontSize: 24,
-    lineHeight: 28,
-    fontFamily: T.fontDisplayBold,
-    letterSpacing: -0.5,
-  },
-  primaryCtaSubtitle: {
-    color: T.surfaceGlassStrong,
-    fontSize: 14,
-    lineHeight: 19,
-    fontFamily: T.fontBody,
-  },
-  primaryCtaArrowBubble: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: T.surfaceGlassLilac,
-    borderWidth: 1,
-    borderColor: T.surfaceGlassStrong,
-  },
-  ctaFootnote: {
-    color: T.textMuted,
-    fontSize: 12,
-    lineHeight: 16,
-    textAlign: "center",
-    fontFamily: T.fontBody,
-  },
-  momentumCard: {
-    width: "100%",
-    maxWidth: 390,
-    borderRadius: 22,
-    backgroundColor: T.surfaceGlassStrong,
-    borderWidth: 1,
-    borderColor: T.border,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    gap: 10,
-  },
-  momentumHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  momentumEyebrow: {
-    color: T.textMuted,
-    fontSize: 11,
-    textTransform: "uppercase",
-    letterSpacing: 1.1,
-    fontFamily: T.fontBodyBold,
-  },
-  momentumDismiss: {
-    color: T.accentBright,
-    fontSize: 13,
-    fontFamily: T.fontBodyBold,
-  },
-  momentumTitle: {
-    color: T.textPrimary,
-    fontSize: 18,
-    lineHeight: 22,
-    fontFamily: T.fontDisplayBold,
-  },
-  momentumBody: {
-    color: T.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
-    fontFamily: T.fontBody,
-  },
-  momentumButton: {
-    minHeight: 44,
-    borderRadius: 15,
-    backgroundColor: T.surfaceMid,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-  },
-  momentumButtonLabel: {
-    color: T.primary,
-    fontSize: 15,
-    fontFamily: T.fontBodyBold,
-  },
-  pressed: {
-    transform: [{ scale: 0.98 }],
-  },
-});

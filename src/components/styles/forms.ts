@@ -42,6 +42,27 @@ export const formStyles = {
   fieldBlock: {
     gap: 12,
   },
+  fieldBlockSection: {
+    gap: 8,
+  },
+  fieldSectionHeadingRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 8,
+  },
+  fieldSectionStep: {
+    color: T.textPrimary,
+    fontSize: 18,
+    lineHeight: 24,
+    fontFamily: T.fontBodyBold,
+  },
+  fieldSectionLabel: {
+    color: T.textPrimary,
+    fontSize: 18,
+    lineHeight: 24,
+    fontFamily: T.fontBodyBold,
+    letterSpacing: -0.3,
+  },
   fieldLabel: {
     color: T.textMuted,
     fontSize: 10,
@@ -55,6 +76,10 @@ export const formStyles = {
     lineHeight: 21,
     marginTop: -2,
     fontFamily: T.fontBody,
+  },
+  fieldSectionHint: {
+    marginTop: -4,
+    marginLeft: 27,
   },
   infoBlock: {
     gap: 8,
