@@ -28,6 +28,7 @@ import { formatIntent } from "../../app/leftConfig";
 import { T } from "../../app/leftTheme";
 import { venueRadarStyles as screenStyles } from "../../components/styles/features/venue";
 import { LeftIcon, type LeftIconName } from "../../components/icons";
+import { GlassSurface, glassRadii } from "../../components/glass";
 import { LeftLogoMark } from "../../components/left/LeftLogoMark";
 import { GhostButton } from "../../components/left/ui";
 import { MAPBOX_ENABLED } from "../../lib/mapbox";
@@ -315,7 +316,11 @@ export function VenueScreen({
               </Animated.View>
             </View>
           </View>
-          <View style={screenStyles.statusActionPill}>
+          <GlassSurface
+            variant="soft"
+            radius={glassRadii.pill}
+            contentStyle={screenStyles.statusActionPill}
+          >
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={isPubliclyVisible ? "Open nearby feed" : "Go visible"}
@@ -347,7 +352,7 @@ export function VenueScreen({
             >
               <LeftIcon name="shield" size={18} color={T.primary} />
             </Pressable>
-          </View>
+          </GlassSurface>
         </View>
         <Text style={screenStyles.heroSubtitle} maxFontSizeMultiplier={1.3}>
           {radarSubtitle}
@@ -443,17 +448,11 @@ export function VenueScreen({
             pointerEvents="none"
           />
 
-          <View style={screenStyles.ringOuter} pointerEvents="none" />
-          <View style={screenStyles.ringMid} pointerEvents="none" />
           <View
             style={[screenStyles.ringInner, isPubliclyVisible && screenStyles.ringInnerVisible]}
             pointerEvents="none"
           />
 
-          <View
-            style={[screenStyles.centerVenueGlow, isPubliclyVisible && screenStyles.centerVenueGlowVisible]}
-            pointerEvents="none"
-          />
           <View
             style={[screenStyles.centerVenueBoundary, isPubliclyVisible && screenStyles.centerVenueBoundaryVisible]}
             pointerEvents="none"
@@ -524,37 +523,49 @@ export function VenueScreen({
               ))
             : null}
 
-          <View style={screenStyles.centerBadge} pointerEvents="none">
+          <GlassSurface
+            pointerEvents="none"
+            variant="soft"
+            radius={glassRadii.pill}
+            style={screenStyles.centerBadge}
+            contentStyle={screenStyles.centerBadgeContent}
+          >
             <LeftLogoMark size={22} />
             <Text style={screenStyles.centerBadgeSubtitle}>
               {isPubliclyVisible ? "Visible" : "Hidden"}
             </Text>
-          </View>
+          </GlassSurface>
 
-          <Pressable
-            onPress={() => {
-              if (activeVenueCandidate) onOpenVenueDetail(activeVenueCandidate);
-            }}
-            style={({ pressed }) => [
-              screenStyles.currentVenueChip,
-              pressed && screenStyles.pressed,
-            ]}
+          <GlassSurface
+            variant="medium"
+            radius={glassRadii.card}
+            style={screenStyles.currentVenueGlass}
           >
-            <View style={screenStyles.currentVenuePin}>
-              <LeftIcon name="map-pin" size={18} color={T.venueAccent} />
-            </View>
-            <View style={screenStyles.currentVenueCopy}>
-              <Text style={screenStyles.currentVenueChipText} numberOfLines={1}>
-                You are here
-              </Text>
-              <Text style={screenStyles.currentVenueChipMeta} numberOfLines={1}>
-                {currentVenueSummary}
-              </Text>
-            </View>
-            <View style={screenStyles.currentVenueArrowBubble}>
-              <LeftIcon name="arrow-up-right" size={18} color={T.primary} />
-            </View>
-          </Pressable>
+            <Pressable
+              onPress={() => {
+                if (activeVenueCandidate) onOpenVenueDetail(activeVenueCandidate);
+              }}
+              style={({ pressed }) => [
+                screenStyles.currentVenueChip,
+                pressed && screenStyles.pressed,
+              ]}
+            >
+              <View style={screenStyles.currentVenuePin}>
+                <LeftIcon name="map-pin" size={18} color={T.venueAccent} />
+              </View>
+              <View style={screenStyles.currentVenueCopy}>
+                <Text style={screenStyles.currentVenueChipText} numberOfLines={1}>
+                  You are here
+                </Text>
+                <Text style={screenStyles.currentVenueChipMeta} numberOfLines={1}>
+                  {currentVenueSummary}
+                </Text>
+              </View>
+              <View style={screenStyles.currentVenueArrowBubble}>
+                <LeftIcon name="arrow-up-right" size={18} color={T.primary} />
+              </View>
+            </Pressable>
+          </GlassSurface>
         </View>
       </View>
 

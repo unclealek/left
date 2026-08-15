@@ -169,19 +169,17 @@ export const homeStyles = {
   homeHeroVenueArtShade: {
     ...StyleSheet.absoluteFillObject,
   },
-  homeHeroImageStatusPill: {
+  homeHeroImageStatusGlass: {
     position: "absolute",
     top: 12,
     right: 12,
+  },
+  homeHeroImageStatusPill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
     paddingHorizontal: 9,
     paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: T.surfaceCard,
-    borderWidth: 1,
-    borderColor: T.border,
   },
   homeHeroImageStatusPillVisible: {
     backgroundColor: T.visibilityOnSoft,
@@ -202,14 +200,17 @@ export const homeStyles = {
     fontFamily: T.fontBodyBold,
     letterSpacing: 0.35,
   },
-  homeHeroPeopleOverlay: {
+  homeHeroPeopleGlass: {
     position: "absolute",
     left: 14,
     bottom: 14,
+  },
+  homeHeroPeopleOverlay: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    paddingRight: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
   },
   homeHeroAvatarStack: {
     flexDirection: "row",
@@ -244,13 +245,10 @@ export const homeStyles = {
     fontFamily: T.fontBodyBold,
   },
   homeHeroPeopleOverlayText: {
-    color: T.white,
+    color: T.textPrimary,
     fontSize: 11,
     lineHeight: 13,
     fontFamily: T.fontBodyMedium,
-    textShadowColor: "rgba(17,15,12,0.22)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
   },
   homeHeroVisibleInfoStack: {
     gap: 12,
@@ -328,7 +326,7 @@ export const homeStyles = {
     width: 132,
     minHeight: 62,
     borderRadius: 16,
-    backgroundColor: T.primary,
+    backgroundColor: T.actionSurface,
     paddingHorizontal: 13,
     paddingVertical: 10,
     flexDirection: "row",
@@ -338,7 +336,7 @@ export const homeStyles = {
     marginTop: 0,
   },
   homeVisibleHeroButtonInlineHidden: {
-    backgroundColor: T.primary,
+    backgroundColor: T.actionSurface,
   },
   homeVisibleHeroButtonInlineError: {
     backgroundColor: T.surfaceDim,
@@ -349,18 +347,21 @@ export const homeStyles = {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: T.surfaceGlassLilac,
+    backgroundColor: T.actionContentSoft,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
   homeVisibleHeroButtonTextInline: {
-    color: T.white,
+    color: T.actionContent,
     fontSize: 13,
     lineHeight: 16,
     fontFamily: T.fontBodyBold,
     textAlign: "left",
     flexShrink: 1,
+  },
+  homeVisibleHeroButtonTextInlineError: {
+    color: T.dangerText,
   },
   homeHeroVisibleDivider: {
     height: 1,
@@ -430,7 +431,7 @@ export const homeStyles = {
     fontFamily: T.fontBodyMedium,
   },
   homeExploreSideNote: {
-    color: T.venueAccent,
+    color: T.textSecondary,
     fontSize: 12,
     lineHeight: 16,
     fontFamily: T.fontBodyBold,

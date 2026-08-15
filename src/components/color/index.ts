@@ -9,11 +9,14 @@ export const leftColors = {
   charcoal: "#4B4745",
   espresso: "#2D2A28",
   inkBlack: "#000000",
+  actionBrown: "#170A04",
   white: "#FFFFFF",
   moss: "#6F8F72",
   terracotta: "#C77B5A",
   ochre: "#D4A64A",
   slateBlue: "#5F7896",
+  creoleBrown: "#1F0E06",
+  yellowGreen: "#C6E385",
 } as const;
 
 export const semanticColors = {

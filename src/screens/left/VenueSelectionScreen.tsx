@@ -85,8 +85,10 @@ export function VenueSelectionScreen({
         {venues.map((venue) => (
           <GhostButton
             key={venue.id}
-            label={`${venue.name}${venue.distanceMeters ? ` · ${Math.round(venue.distanceMeters)}m` : ""}${currentVenueId === venue.id ? " ✓" : ""}`}
+            label={`${venue.name}${venue.distanceMeters ? ` · ${Math.round(venue.distanceMeters)}m` : ""}`}
             onPress={() => onSelectVenue(venue.id)}
+            selected={currentVenueId === venue.id}
+            trailingIcon={currentVenueId === venue.id ? "check" : undefined}
           />
         ))}
       </View>
@@ -184,7 +186,7 @@ export function VenueAddScreen({
           multiline
         />
       </VenueFieldBlock>
-      <PrimaryButton label={submitting ? "Saving venue..." : "Save venue"} onPress={onSubmit} />
+      <PrimaryButton label={submitting ? "Saving venue..." : "Save venue"} onPress={onSubmit} loading={submitting} />
       <GhostButton label="Back to nearby venues" onPress={onBack} />
     </Card>
   );

@@ -85,23 +85,66 @@ export const settingsStyles = {
     paddingVertical: 12,
     fontSize: 15,
   },
-  settingsLogoutButton: {
-    minHeight: 52,
-    borderRadius: 18,
-    backgroundColor: T.dangerDim,
+  settingsActionSection: {
+    gap: 10,
+  },
+  settingsActionHint: {
+    color: T.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
+    marginLeft: 2,
+  },
+  settingsDangerCard: {
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: T.dangerBorder,
+    backgroundColor: T.surfaceCard,
+    padding: 18,
+    gap: 16,
+  },
+  settingsDangerHeader: {
     flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  settingsDangerIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: T.dangerDim,
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
-    shadowOpacity: 0,
-    elevation: 0,
   },
-  settingsLogoutText: {
+  settingsDangerCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  settingsDangerTitle: {
     color: T.dangerText,
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: 16,
+    fontFamily: T.fontBodyBold,
+  },
+  settingsDangerBody: {
+    color: T.textSecondary,
+    fontSize: 13,
+    lineHeight: 19,
+    fontFamily: T.fontBody,
+  },
+  settingsRemovalStatus: {
+    borderRadius: 16,
+    backgroundColor: T.surfaceCard,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  settingsRemovalStatusCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  settingsRemovalStatusTitle: {
+    color: T.visibilityOn,
+    fontSize: 14,
     fontFamily: T.fontBodyBold,
   },
   settingsInfoBody: {
@@ -110,7 +153,7 @@ export const settingsStyles = {
     lineHeight: 21,
   },
   settingsSuccessText: {
-    color: T.visibilityOn,
+    color: T.textSecondary,
     fontSize: 13,
     lineHeight: 19,
   },

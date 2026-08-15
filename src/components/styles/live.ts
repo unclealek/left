@@ -7,7 +7,7 @@ export const liveStyles = {
   energyPill: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "rgba(53,102,77,0.14)",
+    borderColor: "rgba(198,227,133,0.14)",
     backgroundColor: "rgba(255,248,236,0.92)",
     paddingHorizontal: 12,
     paddingVertical: 7,
@@ -24,7 +24,7 @@ export const liveStyles = {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "rgba(53,102,77,0.42)",
+    backgroundColor: "rgba(198,227,133,0.42)",
   },
   energyPillDotHigh: {
     backgroundColor: T.teal,

@@ -1,7 +1,7 @@
 # Left Product Spec
 
 Status:
-- current MVP spec aligned to the implemented mobile app as of July 18, 2026
+- current MVP spec aligned to the implemented mobile app as of August 10, 2026
 - includes venue selection, venue submission, Social Momentum, post-approach follow-up behavior, hidden-state venue browsing, and the current footer/app-shell naming
 
 Source inputs:
@@ -106,7 +106,8 @@ Included:
 - persistent safety controls
 - session duration tracking and active-session recovery
 - persistent footer navigation: `Home`, `Map`, `Venues`, `Profile`
-- signed-in settings screen for profile defaults and prompt customization
+- signed-in Profile editing for identity style and default social context
+- signed-in Settings screen for safety access, notifications, app information, session logout, and identity removal
 - venue preference management for hidden and muted venues
 - identity-removal request flow backed by Supabase
 
@@ -137,10 +138,13 @@ Before entering the core loop, the user must be able to create an account or sig
 - Google
 
 MVP requirements:
+- present the signed-out value proposition as `People. Places. Presence.`
 - support account creation and returning sign-in through Google
+- show email sign-in only as an explicitly labeled future option until its complete authentication and recovery flow exists
 - preserve a single user identity across sessions
 - collect only the minimum profile data needed for the soft-anonymity model
 - derive a usable first name from the provider profile when available
+- reassure users before authentication that exact location is not public and visibility remains their choice
 
 Post-auth minimum profile state:
 - authenticated user id
@@ -150,10 +154,16 @@ Post-auth minimum profile state:
 - approach prompt
 - onboarding flag
 
-Onboarding flow is fixed to three screens:
+Onboarding has three required setup steps plus a completion reveal:
 1. Sign in with Google. Pull first name automatically and allow edit, but first name only.
-2. Choose avatar style from four illustrated options: `geometric`, `abstract`, `minimal`, `soft`.
-3. Request location permission with explicit explanation that location is used to detect social venues and is never shared.
+2. Choose a “social shape” from four illustrated options backed by the stored values `geometric`, `abstract`, `minimal`, and `soft`; support “Surprise me” and show a nearby-profile preview.
+3. Request location permission after explaining the venue-detection sequence and that exact location is not shown to other people.
+4. After successful profile persistence, reveal the finished name + social shape and offer `See what’s nearby`.
+
+Onboarding visual direction:
+- Creole Brown `#1F0E06` is the primary ink/action color
+- Yellow Green `#C6E385` is the progress, feedback, and social-shape accent
+- the tone is playful and tactile while remaining calm and privacy-forward
 
 Onboarding exclusions:
 - no bio
@@ -249,21 +259,28 @@ At any point, the user can:
 - use safety zones
 - block or report another person
 
-### 7.6 Settings And Account
+### 7.6 Profile, Settings, And Account
 
 The signed-in user has a dedicated `Profile` destination in the footer navigation.
 
-That screen currently supports:
+The `Profile` screen currently supports:
 - editing first name
 - changing avatar style
 - setting default intent
 - setting default vibes
-- customizing the nearby-profile prompt
-- customizing the approach prompt
-- opening safety controls
-- clearing hidden or muted venue preferences
-- signing out
-- requesting identity removal
+
+The separate `Settings` screen currently supports:
+- opening privacy and safety controls
+- opening operating-system notification settings
+- viewing About Left information
+- logging out from a neutral `Session` section
+- requesting identity removal from a visually isolated danger card
+
+Account-action hierarchy:
+- logout is reversible and must not use destructive styling
+- identity removal is consequential and must include retained-record explanation plus confirmation
+- loading states prevent duplicate requests
+- a recorded identity-removal request is shown as status, not as another tappable action
 
 ## 8. Core Screens
 
@@ -283,6 +300,7 @@ Functional requirements:
 - up to two vibes in the current implementation
 - visible session starts only after confirmation
 - duration must auto-expire
+- expiry must be enforced by both the active client and scheduled backend cleanup
 - activation should default from the last successful session where possible
 - active sessions should restore on app restart or resume when the backend session is still valid
 - the live session view shows elapsed visible time after activation
@@ -402,27 +420,40 @@ Functional requirements:
 - support the ambient visual identity without becoming the primary MVP discovery surface
 - remain strictly secondary to the nearby feed in the implementation order
 
-### 8.8 Profile / Account
+### 8.8 Profile
 
 Purpose:
-- provide a signed-in destination for account defaults, prompt customization, sign-out, and identity-removal request handling
+- provide a signed-in self-view and editing destination for profile defaults
 
 Required content:
 - first name
 - avatar style
 - default intent
 - default vibes
-- nearby prompt template
-- approach prompt template
-- stored hidden/muted venue preferences
-- sign-out action
-- identity-removal request action
 
 Functional requirements:
 - profile defaults persist to `public.users`
-- prompt templates persist to `public.users`
-- account actions live under `Profile`, not under safety
+- profile editing and account/session actions remain separate so destructive controls do not compete with routine editing
+
+### 8.9 Settings / Account Actions
+
+Purpose:
+- provide a dedicated destination for general settings, session logout, and identity-removal request handling
+
+Required content:
+- account information summary
+- privacy and safety link
+- notification preferences link
+- About Left information
+- neutral logout action with confirmation
+- isolated identity-removal danger card
+
+Functional requirements:
+- notification preferences deep-link to operating-system settings
+- logout is presented as reversible and neutral
 - identity removal follows the retained-record policy defined in `identity-removal-policy.md`
+- identity-removal confirmation names the retained-record behavior
+- submit, error/retry, duplicate, queued, and recorded states are legible
 
 ## 9. Interaction Model
 
@@ -701,6 +732,7 @@ Primary app states:
 - onboarding_name
 - onboarding_avatar
 - onboarding_location
+- onboarding_complete
 - venue
 - activate
 - feed
@@ -711,7 +743,8 @@ Primary app states:
 
 Critical transitions:
 - auth -> onboarding_name
-- onboarding_location -> venue
+- onboarding_location -> onboarding_complete after permission and persistence succeed
+- onboarding_complete -> home
 - venue -> activate
 - activate -> feed
 - feed -> profile

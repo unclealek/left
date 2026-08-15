@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Alert, Linking, Pressable, Text, View } from "react-native";
+import { Linking, Pressable, Text, View } from "react-native";
 import type { AppUser } from "../../types/left-domain";
 import { T, styles } from "../../app/leftTheme";
 import { LeftIcon, type LeftIconName } from "../../components/icons";
-import { GhostButton } from "../../components/left/ui";
+import { GhostButton, type ShowAppDialog } from "../../components/left/ui";
+import { ScreenHeader } from "../../components/left/navigation";
 
 type SettingsMenuRowProps = {
   icon: LeftIconName;
@@ -20,6 +21,7 @@ export function SettingsScreen({
   onOpenSafety,
   onSignOut,
   onRequestDeletion,
+  onShowDialog,
   onBack,
 }: {
   user: AppUser;
@@ -27,6 +29,7 @@ export function SettingsScreen({
   onOpenSafety: () => void;
   onSignOut: () => void;
   onRequestDeletion: () => void;
+  onShowDialog: ShowAppDialog;
   onBack: () => void;
 }) {
   const [settingsActionMessage, setSettingsActionMessage] = useState<string | null>(null);
@@ -40,32 +43,26 @@ export function SettingsScreen({
 
   function openAboutLeft() {
     setSettingsActionMessage(null);
-    Alert.alert(
+    onShowDialog(
       "About Left",
       "Left helps you signal presence at real venues, discover nearby social energy, and control how you are seen.",
     );
   }
 
   function confirmSignOut() {
-    Alert.alert(
+    onShowDialog(
       "Log out?",
       "You can sign back in anytime.",
       [
-        { text: "Cancel", style: "cancel" },
-        { text: "Log out", style: "destructive", onPress: onSignOut },
+        { label: "Cancel", variant: "ghost" },
+        { label: "Log out", variant: "destructive", onPress: onSignOut },
       ],
     );
   }
 
   return (
     <View style={styles.settingsPage}>
-      <View style={styles.settingsTopBar}>
-        <Pressable onPress={onBack} accessibilityRole="button" style={({ pressed }) => [styles.profileHeaderButton, pressed && styles.iconButtonPressed]}>
-          <LeftIcon name="arrow-left" size={22} color={T.textPrimary} />
-        </Pressable>
-        <Text style={styles.profileHeaderTitle}>Settings</Text>
-        <View style={styles.profileHeaderButton} />
-      </View>
+      <ScreenHeader title="Settings" onBack={onBack} variant="utility" />
 
       <Text style={styles.settingsGroupTitle}>Account</Text>
       <View style={styles.settingsMenuCard}>
@@ -80,30 +77,52 @@ export function SettingsScreen({
       </View>
       {settingsActionMessage ? <Text style={styles.settingsInfoBody}>{settingsActionMessage}</Text> : null}
 
-      <Pressable onPress={confirmSignOut} style={({ pressed }) => [styles.settingsLogoutButton, pressed && styles.primaryBtnPressed]}>
-        <LeftIcon name="log-out" size={20} color={T.dangerText} />
-        <Text style={styles.settingsLogoutText}>Log out</Text>
-      </Pressable>
+      <View style={styles.settingsActionSection}>
+        <Text style={styles.settingsGroupTitle}>Session</Text>
+        <Text style={styles.settingsActionHint}>Sign out on this device. You can sign back in anytime.</Text>
+        <GhostButton label="Log out" onPress={confirmSignOut} leadingIcon="log-out" />
+      </View>
 
-      <Text style={styles.settingsInfoBody}>Need your identity removed from Left? Submit a request below.</Text>
-      <GhostButton
-        label={
-          deletionState === "submitting"
-            ? "Sending request..."
-            : deletionState === "submitted"
-              ? "Removal requested"
-              : "Request identity removal"
-        }
-        onPress={onRequestDeletion}
-        destructive
-        disabled={deletionState === "submitting" || deletionState === "submitted"}
-      />
-      {deletionState === "submitted" ? (
-        <Text style={styles.settingsSuccessText}>We recorded your identity-removal request and the backend can now process it under the retention policy.</Text>
-      ) : null}
-      {deletionState === "error" ? (
-        <Text style={styles.errorText}>We could not submit your identity-removal request yet.</Text>
-      ) : null}
+      <View style={styles.settingsDangerCard}>
+        <View style={styles.settingsDangerHeader}>
+          <View style={styles.settingsDangerIconWrap}>
+            <LeftIcon name="user-x" size={19} color={T.dangerText} />
+          </View>
+          <View style={styles.settingsDangerCopy}>
+            <Text style={styles.settingsDangerTitle}>Identity removal</Text>
+            <Text style={styles.settingsDangerBody}>
+              Request removal of your direct identity details from Left. Retained safety and operational records remain under the current policy.
+            </Text>
+          </View>
+        </View>
+
+        {deletionState === "submitted" ? (
+          <View style={styles.settingsRemovalStatus} accessibilityRole="text">
+            <LeftIcon name="check-circle" size={19} color={T.visibilityOn} />
+            <View style={styles.settingsRemovalStatusCopy}>
+              <Text style={styles.settingsRemovalStatusTitle}>Removal requested</Text>
+              <Text style={styles.settingsSuccessText}>Your request is recorded and ready for processing.</Text>
+            </View>
+          </View>
+        ) : (
+          <GhostButton
+            label={
+              deletionState === "submitting"
+                ? "Sending request..."
+                : deletionState === "error"
+                  ? "Try request again"
+                  : "Request identity removal"
+            }
+            onPress={onRequestDeletion}
+            destructive
+            loading={deletionState === "submitting"}
+            leadingIcon="user-x"
+          />
+        )}
+        {deletionState === "error" ? (
+          <Text style={styles.errorText}>We could not submit your request. Nothing was removed.</Text>
+        ) : null}
+      </View>
     </View>
   );
 }

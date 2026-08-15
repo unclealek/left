@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/brand/splash-logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#08080F"
+      "backgroundColor": "#FBF7F5"
     },
     "ios": {
       "supportsTablet": false,
@@ -27,7 +27,7 @@
       "package": "com.left.mobile",
       "adaptiveIcon": {
         "foregroundImage": "./assets/brand/left-app-icon-foreground.png",
-        "backgroundColor": "#08080F"
+        "backgroundColor": "#C6E385"
       },
       "permissions": [
         "ACCESS_COARSE_LOCATION",

@@ -6,6 +6,7 @@ import { T, styles } from "../../app/leftTheme";
 import { LeftIcon, type LeftIconName } from "../../components/icons";
 import { LeftLogoMark } from "../../components/left/LeftLogoMark";
 import { PrimaryButton, SelectChip } from "../../components/left/ui";
+import { ScreenHeader } from "../../components/left/navigation";
 
 export function MeScreen({
   user,
@@ -97,25 +98,21 @@ export function MeScreen({
   return (
     <View style={styles.profilePage}>
       {editing ? (
-        <View style={styles.profileTopBar}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Return to profile"
-            onPress={() => setEditing(false)}
-            style={({ pressed }) => [styles.profileHeaderButton, pressed && styles.iconButtonPressed]}
-          >
-            <LeftIcon name="arrow-left" size={22} color={T.textPrimary} />
-          </Pressable>
-          <Text style={styles.profileHeaderTitle}>Edit profile</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Open settings"
-            onPress={onOpenSettings}
-            style={({ pressed }) => [styles.profileEditHeaderButton, pressed && styles.iconButtonPressed]}
-          >
-            <Text style={styles.profileEditHeaderText}>Settings</Text>
-          </Pressable>
-        </View>
+        <ScreenHeader
+          title="Edit profile"
+          onBack={() => setEditing(false)}
+          variant="utility"
+          trailing={(
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open settings"
+              onPress={onOpenSettings}
+              style={({ pressed }) => [styles.profileEditHeaderButton, pressed && styles.iconButtonPressed]}
+            >
+              <Text style={styles.profileEditHeaderText}>Settings</Text>
+            </Pressable>
+          )}
+        />
       ) : null}
 
       {!editing ? (
@@ -208,7 +205,7 @@ export function MeScreen({
             <PrimaryButton
               label={saveState === "saving" ? "Saving..." : saveState === "saved" ? "Saved" : "Save Changes"}
               onPress={saveProfileDefaults}
-              disabled={saveState === "saving"}
+              loading={saveState === "saving"}
             />
             <Pressable onPress={() => setEditing(false)} style={({ pressed }) => [styles.profileEditCancel, pressed && styles.iconButtonPressed]}>
               <Text style={styles.profileEditCancelText}>Cancel</Text>

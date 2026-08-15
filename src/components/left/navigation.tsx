@@ -1,19 +1,73 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import type { AppUser } from "../../types/left-domain";
 import { formatIntent, type FooterDestination } from "../../app/leftConfig";
 import { styles, T } from "../../app/leftTheme";
 import { LeftIcon, type LeftIconName } from "../icons";
+import { GlassSurface, glassRadii } from "../glass";
 import { LeftLogoMark } from "./LeftLogoMark";
 
 export function BackNavButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.backNavButton, pressed && styles.backNavButtonPressed]}>
-      <View style={styles.backNavIconWrap}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label || "Back"}
+      onPress={onPress}
+      style={({ pressed }) => [styles.backNavButton, pressed && styles.backNavButtonPressed]}
+    >
+      <GlassSurface
+        variant="soft"
+        radius={glassRadii.pill}
+        style={styles.backNavIconWrap}
+        contentStyle={styles.backNavIconContent}
+      >
         <LeftIcon name="arrow-left" size={22} color={T.primary} />
-      </View>
+      </GlassSurface>
       {label ? <Text style={styles.backNavLabel}>{label}</Text> : null}
     </Pressable>
+  );
+}
+
+export function ScreenHeader({
+  title,
+  subtitle,
+  onBack,
+  variant = "hero",
+  trailing,
+}: {
+  title: string;
+  subtitle?: string;
+  onBack: () => void;
+  variant?: "hero" | "utility";
+  trailing?: ReactNode;
+}) {
+  if (variant === "utility") {
+    return (
+      <View style={styles.screenHeaderUtility}>
+        <View style={styles.screenHeaderUtilityRow}>
+          <View style={styles.screenHeaderSideSlot}>
+            <BackNavButton label="" onPress={onBack} />
+          </View>
+          <Text numberOfLines={2} style={styles.screenHeaderUtilityTitle}>{title}</Text>
+          <View style={[styles.screenHeaderSideSlot, styles.screenHeaderTrailingSlot]}>
+            {trailing ?? null}
+          </View>
+        </View>
+        {subtitle ? <Text style={styles.screenHeaderUtilitySubtitle}>{subtitle}</Text> : null}
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.screenHeaderHero}>
+      <BackNavButton label="" onPress={onBack} />
+      <View style={styles.screenHeaderHeroCopy}>
+        <Text style={styles.screenHeaderHeroTitle}>{title}</Text>
+        {subtitle ? <Text style={styles.screenHeaderHeroSubtitle}>{subtitle}</Text> : null}
+      </View>
+      {trailing ? <View style={styles.screenHeaderHeroTrailing}>{trailing}</View> : null}
+    </View>
   );
 }
 
@@ -23,6 +77,8 @@ export function SessionFooterNav(props: {
   intent: AppUser["defaultIntent"];
   sessionVisible: boolean;
   activeDestination: FooterDestination;
+  showContextSummary?: boolean;
+  bottomInset?: number;
   onNavigate: (destination: FooterDestination) => void;
 }) {
   const items: Array<{ key: FooterDestination; label: string; icon: LeftIconName }> = [
@@ -44,7 +100,7 @@ export function SessionFooterNav(props: {
     }).start();
   }, [activeIndex, slideAnim]);
 
-  const trackHorizontalInset = 24;
+  const trackHorizontalInset = 32;
   const trackInnerWidth = trackWidth > 0 ? Math.max(trackWidth - trackHorizontalInset, 0) : 0;
   const slotWidth = trackInnerWidth > 0 ? trackInnerWidth / items.length : 0;
   const bubbleTranslateX = slideAnim.interpolate({
@@ -59,9 +115,13 @@ export function SessionFooterNav(props: {
     props.activeDestination !== "account";
 
   return (
-    <View style={styles.footerShell}>
-      {props.sessionVisible && props.activeDestination !== "home" ? (
-        <View style={styles.footerSummaryRow}>
+    <View style={[styles.footerShell, { paddingBottom: Math.max(props.bottomInset ?? 0, 8) }]}>
+      {props.showContextSummary !== false && props.sessionVisible && props.activeDestination !== "home" ? (
+        <GlassSurface
+          variant="medium"
+          radius={glassRadii.compactCard}
+          contentStyle={styles.footerSummaryRow}
+        >
           <View style={styles.footerVenueBlock}>
             <Text style={styles.footerVenueLabel}>AT</Text>
             <Text style={styles.footerVenueName}>{props.venueName}</Text>
@@ -72,17 +132,35 @@ export function SessionFooterNav(props: {
               {props.vibe} · {formatIntent(props.intent ?? "networking")}
             </Text>
           </View>
-        </View>
+        </GlassSurface>
       ) : showPrivateBadge ? (
         <View style={styles.footerPrivateRow}>
-          <View style={styles.footerPrivateBadge}>
+          <GlassSurface
+            variant="soft"
+            radius={glassRadii.pill}
+            contentStyle={styles.footerPrivateBadge}
+          >
             <View style={styles.footerPrivateDot} />
             <Text style={styles.footerPrivateText}>Your venue stays private until visible</Text>
-          </View>
+          </GlassSurface>
         </View>
       ) : null}
       <View style={styles.footerNavRow}>
-        <View style={styles.footerNavTrack} onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}>
+        <GlassSurface
+          variant="soft"
+          tone="creole"
+          blurIntensity={42}
+          radius={glassRadii.navigation}
+          style={styles.footerNavTrack}
+          contentStyle={styles.footerNavTrackContent}
+          onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}
+        >
+          <LinearGradient
+            pointerEvents="none"
+            colors={["rgba(255,255,255,0.09)", "rgba(255,255,255,0.02)", "rgba(23,10,4,0.10)"]}
+            locations={[0, 0.42, 1]}
+            style={styles.footerNavSpecular}
+          />
           {slotWidth > 0 && (
             <Animated.View
               pointerEvents="none"
@@ -97,8 +175,8 @@ export function SessionFooterNav(props: {
               <View style={styles.footerNavIconBubbleActive}>
                 <LeftIcon
                   name={activeItem.icon}
-                  size={19}
-                  color={T.white}
+                  size={16}
+                  color="#C6E385"
                   active={activeItem.icon !== "home"}
                 />
               </View>
@@ -118,7 +196,7 @@ export function SessionFooterNav(props: {
                 {!active ? (
                   <>
                     <View style={styles.footerNavIconBubble}>
-                      <LeftIcon name={item.icon} size={21} color={"rgba(31,46,36,0.78)"} />
+                      <LeftIcon name={item.icon} size={18} color={"rgba(198,227,133,0.74)"} />
                     </View>
                     <Text style={styles.footerNavLabel}>{item.label}</Text>
                   </>
@@ -131,7 +209,7 @@ export function SessionFooterNav(props: {
               </Pressable>
             );
           })}
-        </View>
+        </GlassSurface>
       </View>
     </View>
   );

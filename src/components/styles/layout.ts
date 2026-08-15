@@ -7,10 +7,29 @@ export const layoutStyles = {
     flex: 1,
     backgroundColor: T.ink,
   },
-  grain: {
+  pulseLayer: {
     ...StyleSheet.absoluteFillObject,
-    opacity: 0.008,
-    backgroundColor: "transparent",
+    overflow: "hidden",
+    zIndex: 2,
+  },
+  pulseRing: {
+    position: "absolute",
+    width: 10,
+    height: 10,
+    marginLeft: -5,
+    marginTop: -5,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: "rgba(31,14,6,0.38)",
+    backgroundColor: "rgba(198,227,133,0.24)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pulseCore: {
+    width: 2.5,
+    height: 2.5,
+    borderRadius: 1.25,
+    backgroundColor: T.onboardingInk,
   },
   toast: {
     position: "absolute",

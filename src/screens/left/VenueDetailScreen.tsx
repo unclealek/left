@@ -5,6 +5,7 @@ import type { NearbyFeedItem, VenueActivityEnvelope, VenueContextSummary } from 
 import { T } from "../../app/leftTheme";
 import { PrimaryButton } from "../../components/buttons";
 import { LeftIcon } from "../../components/icons";
+import { GlassSurface, glassRadii } from "../../components/glass";
 import { BackNavButton } from "../../components/left/navigation";
 import { venueDetailStyles as styles } from "../../components/styles/features/venue-detail";
 
@@ -65,10 +66,15 @@ export function VenueDetailScreen({
         <View style={styles.heroBackButton}>
           <BackNavButton label="" onPress={onBack} />
         </View>
-        <View style={styles.heroStatusPill}>
+        <GlassSurface
+          variant="soft"
+          radius={glassRadii.pill}
+          style={styles.heroStatusGlass}
+          contentStyle={styles.heroStatusPill}
+        >
           <LeftIcon name="map-pin" size={15} color={T.textPrimary} />
           <Text style={styles.heroStatusText}>{statusLabel}</Text>
-        </View>
+        </GlassSurface>
       </View>
 
       <View style={styles.content}>

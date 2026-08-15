@@ -1,5 +1,6 @@
 import { T } from "../../theme";
 import { leftShadows } from "../../shadow";
+import { screenTypography } from "../../token";
 
 export const feedStyles = {
   feedPage: {
@@ -17,8 +18,8 @@ export const feedStyles = {
   },
   feedTitle: {
     color: T.textPrimary,
-    fontSize: 30,
-    lineHeight: 36,
+    fontSize: screenTypography.heroTitle,
+    lineHeight: screenTypography.heroTitleLineHeight,
     fontFamily: T.fontDisplayBold,
     letterSpacing: -0.8,
   },

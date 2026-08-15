@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
 import { leftShadows } from "../../shadow";
 import { T } from "../../theme";
-import { radii, spacing } from "../../token";
+import { radii, screenTypography, spacing } from "../../token";
 
 export const venueDetailStyles = StyleSheet.create({
   page: {
@@ -27,17 +27,15 @@ export const venueDetailStyles = StyleSheet.create({
     top: 12,
     left: 12,
   },
-  heroStatusPill: {
+  heroStatusGlass: {
     position: "absolute",
     left: spacing[4],
     bottom: spacing[4],
+  },
+  heroStatusPill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 7,
-    borderRadius: 999,
-    backgroundColor: T.surfaceGlassStrong,
-    borderWidth: 1,
-    borderColor: T.border,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
   },
@@ -57,8 +55,8 @@ export const venueDetailStyles = StyleSheet.create({
   },
   title: {
     color: T.textPrimary,
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: screenTypography.heroTitle,
+    lineHeight: screenTypography.heroTitleLineHeight,
     fontFamily: T.fontDisplayBold,
     letterSpacing: -0.9,
   },

@@ -101,9 +101,14 @@ The request row itself is **not** deleted after completion.
 
 The intended in-app flow is:
 
-1. User submits an identity-removal request.
-2. Backend processing runs.
-3. On successful in-app completion, the user is signed out.
+1. User opens Settings and reviews the isolated Identity removal card.
+2. User taps `Request identity removal` and receives a destructive confirmation explaining retained records.
+3. The client shows a busy state and prevents duplicate submission.
+4. Backend processing runs.
+5. A submitted or duplicate request becomes a non-interactive recorded status; a failure states that nothing was removed and allows retry.
+6. On successful in-app completion, the user is signed out.
+
+Logout is a separate, reversible session action. It is displayed with neutral styling and must never be presented as equivalent to identity removal.
 
 If backend processing is completed manually or outside the normal in-app success path, the device may still hold a cached local session until the user signs out or the session is otherwise cleared.
 

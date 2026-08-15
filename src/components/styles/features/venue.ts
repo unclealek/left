@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 import { T } from "../../theme";
+import { screenTypography } from "../../token";
 
 export const venueRadarStyles = StyleSheet.create({
   page: {
@@ -28,10 +29,6 @@ export const venueRadarStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flexShrink: 0,
-    borderRadius: 999,
-    backgroundColor: T.surfaceCard,
-    borderWidth: 1,
-    borderColor: T.border,
     paddingLeft: 4,
     paddingRight: 1,
     paddingVertical: 2,
@@ -79,8 +76,8 @@ export const venueRadarStyles = StyleSheet.create({
   heroTitle: {
     flexShrink: 1,
     color: T.textPrimary,
-    fontSize: 25,
-    lineHeight: 30,
+    fontSize: screenTypography.heroTitle,
+    lineHeight: screenTypography.heroTitleLineHeight,
     fontFamily: T.fontDisplayBold,
     letterSpacing: -0.7,
   },
@@ -180,13 +177,14 @@ export const venueRadarStyles = StyleSheet.create({
   },
   mapbox: {
     ...StyleSheet.absoluteFillObject,
+    opacity: 0.74,
   },
   mapFallback: {
     ...StyleSheet.absoluteFillObject,
   },
   mapWarmWash: {
     ...StyleSheet.absoluteFillObject,
-    opacity: 0.2,
+    opacity: 0.3,
   },
   mapPatchOne: {
     position: "absolute",
@@ -363,17 +361,12 @@ export const venueRadarStyles = StyleSheet.create({
     position: "absolute",
     width: 76,
     height: 76,
-    borderRadius: 38,
-    backgroundColor: T.surfaceGlassStrong,
-    borderWidth: 2,
-    borderColor: T.surfaceGlassStrong,
+  },
+  centerBadgeContent: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
-    shadowColor: T.primary,
-    shadowOpacity: 0.04,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 3 },
   },
   centerBadgeSubtitle: {
     color: T.textSecondary,
@@ -382,24 +375,18 @@ export const venueRadarStyles = StyleSheet.create({
     fontFamily: T.fontBody,
     textAlign: "center",
   },
-  currentVenueChip: {
+  currentVenueGlass: {
     position: "absolute",
     left: 42,
     right: 42,
     bottom: 66,
+  },
+  currentVenueChip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 13,
-    borderRadius: 22,
-    backgroundColor: T.surfaceGlassStrong,
-    borderWidth: 1,
-    borderColor: T.border,
-    shadowColor: T.primary,
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
   },
   currentVenuePin: {
     width: 42,
@@ -479,13 +466,13 @@ export const venueRadarStyles = StyleSheet.create({
   momentumButton: {
     minHeight: 44,
     borderRadius: 15,
-    backgroundColor: T.surfaceMid,
+    backgroundColor: T.actionSurface,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 16,
   },
   momentumButtonLabel: {
-    color: T.primary,
+    color: T.actionContent,
     fontSize: 15,
     fontFamily: T.fontBodyBold,
   },

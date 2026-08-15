@@ -19,7 +19,7 @@ These pieces align with the PDF and can be reused:
 These areas exist but do not yet match the PDF requirements:
 
 - venue discovery is currently done from the mobile client through Supabase and Google, not through Edge Functions
-- Google Places is currently called from the app with `EXPO_PUBLIC_GOOGLE_PLACES_API_KEY`, which is client-exposed by design
+- Google Places is called by the authenticated `nearby-venues` Edge Function with the server-only `GOOGLE_PLACES_API_KEY` secret
 - venue detail currently shows fabricated pulse text and placeholder counts rather than normalized BestTime activity
 - presence uses `public.presence_sessions`, not the PDF's proposed `public.venue_presence` model
 - there is no activity cache table, BestTime venue linking, or provider refresh locking

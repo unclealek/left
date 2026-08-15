@@ -208,19 +208,19 @@ Visible in UI but incompletely backed:
 
 From audited code and docs:
 - `LeftApp.tsx` is too large and mixes orchestration with domain logic
-- session expiry is incomplete and not enforced by scheduled cleanup
+- client expiry is enforced and migration `0021_expire_stale_lifecycle_records.sql` adds scheduled server cleanup when `pg_cron` is available; staging application was reported complete August 10, 2026 and behavior validation remains
 - feed refresh is not realtime
 - loading, error, offline, disabled, and permission-denied states are inconsistent
 - crash reporting and structured logging are missing
 - production-safe handling of third-party venue APIs is incomplete
-- no automated tests are visible
-- Supabase migrations were not fully validated in a clean local/staging environment
+- initial Vitest lifecycle coverage exists, but RLS, SQL integration, and E2E coverage remain
+- Supabase migrations through `0023` were confirmed synchronized with staging and linked schema lint returned no errors; clean reset and integration validation remain
 
 ### 2.6 Security and privacy risks
 
 - exact occupancy language in some surfaces can violate privacy intent
 - third-party venue and density provider access should be moved behind server-side functions only
-- local mock fallback in production builds risks logic divergence
+- production runtime no longer substitutes seeded people or venues; clean backend seed tooling is still needed for development
 - incomplete enforcement after reports limits safety response
 - account deletion is currently identity removal, not full erasure
 - limited observability makes abuse detection weak
@@ -979,6 +979,12 @@ Sections:
 - safety and support
 - about
 
+Current MVP alignment:
+- Profile editing remains on the Profile screen
+- Logout is a neutral, reversible action under `Session`
+- identity removal is a separate danger card with retained-record explanation, confirmation, loading, retry, and recorded states
+- future full account deletion must remain distinct from the current identity-removal-only flow
+
 ### 8.30 `BlockedUsers`
 
 Elements:
@@ -1029,9 +1035,9 @@ Elements:
 ## 9. Component System
 
 Core reusable components:
+- `BrandPrimaryButton`
 - `PrimaryButton`
-- `SecondaryButton`
-- `DestructiveButton`
+- `GhostButton` with neutral, selected, and destructive variants
 - `IconButton`
 - `TextField`
 - `SearchField`
@@ -1063,7 +1069,8 @@ Core reusable components:
 - `NotificationRow`
 
 Component rules:
-- every button supports default, pressed, focused, disabled, loading
+- every button supports default, pressed, focused, disabled, loading/busy, icon, and accessibility states
+- ordinary logout must not share destructive styling with identity removal or full deletion
 - every input supports label, helper, validation, error, success, accessibility label
 - cards never own business logic; they receive formatted props
 - density and energy must use centralized formatting utilities
@@ -1094,7 +1101,7 @@ Recommended palette:
 - focused accent: slate blue
 - backgrounds: bone, warm white, soft sand
 - danger: brick red
-- success: forest green
+- success: Left Yellow Green `#C6E385`
 - warning: ochre
 
 Density colors:

@@ -232,6 +232,8 @@ Settings:
 • Focus mode
 • Blocked users
 • Visibility preferences
+• Neutral session logout with confirmation
+• Separate identity-removal danger area with retained-record explanation
 
 10. Venue Page Definition
 The venue page represents the current local social environment.
@@ -329,6 +331,20 @@ This state machine powers:
 • Notifications
 • Settings/privacy
 • Admin moderation dashboard
+
+Shared surface treatment:
+• use glass to communicate foreground layering, not as decoration on every card
+• soft warm glass belongs on navigation, pills, chips, and compact floating controls
+• medium warm glass belongs on map overlays, confirmation strips, and modal-like floating surfaces
+• information-heavy venue, profile, settings, form, and metric cards stay solid or near-solid
+• the base canvas remains warm porcelain #FBF7F5; decorative full-screen pulse fields are not used
+• glass falls back to an opaque warm surface when reduced transparency is enabled
+• the welcome logo badge uses a slow, restrained breathing pulse
+
+Shared primary action treatment:
+• primary and high-commitment action buttons use a #170A04 surface
+• labels, icons, and loading indicators on those buttons use #C6E385
+• secondary, destructive, disabled, navigation, and semantic status controls keep their own treatments
 
 16. Technical Stack
 Frontend:

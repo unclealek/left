@@ -8,6 +8,7 @@ import {
 } from "../../features/location/venue-confidence";
 import { styles, T } from "../../app/leftTheme";
 import { LeftIcon } from "../../components/icons";
+import { GlassSurface, glassRadii } from "../../components/glass";
 import { LeftLogoMark } from "../../components/left/LeftLogoMark";
 import { VenueIdentityBlock } from "../../components/left/ui";
 import type { VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
@@ -203,12 +204,11 @@ export function HomeScreen({
               end={{ x: 0.5, y: 1 }}
               style={styles.homeHeroVenueArtShade}
             />
-            <View
-              style={[
-                styles.homeHeroImageStatusPill,
-                isVisible ? styles.homeHeroImageStatusPillVisible : styles.homeHeroImageStatusPillHidden,
-                hiddenCardHasError && styles.homeHeroImageStatusPillError,
-              ]}
+            <GlassSurface
+              variant="soft"
+              radius={glassRadii.pill}
+              style={styles.homeHeroImageStatusGlass}
+              contentStyle={styles.homeHeroImageStatusPill}
             >
               <LeftIcon
                 name={isVisible ? "eye" : "eye-off"}
@@ -217,27 +217,32 @@ export function HomeScreen({
                 active={isVisible}
               />
               <Text style={styles.homeHeroImageStatusText}>{isVisible ? "VISIBLE" : "HIDDEN"}</Text>
-            </View>
+            </GlassSurface>
             {isVisible ? (
-              <View style={styles.homeHeroPeopleOverlay}>
-                <View style={styles.homeHeroAvatarStack}>
-                  {socialPreviewLabels.map((label, index) => (
-                    <View
-                      key={label}
-                      style={[
-                        styles.homeHeroAvatarBubble,
-                        index > 0 && styles.homeHeroAvatarBubbleOverlap,
-                      ]}
-                    >
-                      <Text style={styles.homeHeroAvatarLabel}>{label}</Text>
+              <GlassSurface
+                variant="soft"
+                radius={glassRadii.pill}
+                style={styles.homeHeroPeopleGlass}
+                contentStyle={styles.homeHeroPeopleOverlay}
+              >
+                  <View style={styles.homeHeroAvatarStack}>
+                    {socialPreviewLabels.map((label, index) => (
+                      <View
+                        key={label}
+                        style={[
+                          styles.homeHeroAvatarBubble,
+                          index > 0 && styles.homeHeroAvatarBubbleOverlap,
+                        ]}
+                      >
+                        <Text style={styles.homeHeroAvatarLabel}>{label}</Text>
+                      </View>
+                    ))}
+                    <View style={[styles.homeHeroAvatarBubble, styles.homeHeroAvatarCountBubble, styles.homeHeroAvatarBubbleOverlap]}>
+                      <Text style={styles.homeHeroAvatarCountText}>{`+${Math.max(peopleNearbyCount, 3)}`}</Text>
                     </View>
-                  ))}
-                  <View style={[styles.homeHeroAvatarBubble, styles.homeHeroAvatarCountBubble, styles.homeHeroAvatarBubbleOverlap]}>
-                    <Text style={styles.homeHeroAvatarCountText}>{`+${Math.max(peopleNearbyCount, 3)}`}</Text>
                   </View>
-                </View>
-                <Text style={styles.homeHeroPeopleOverlayText}>People nearby</Text>
-              </View>
+                  <Text style={styles.homeHeroPeopleOverlayText}>People nearby</Text>
+              </GlassSurface>
             ) : null}
           </LinearGradient>
           <View style={styles.homeHeroVisibleInfoRow}>
@@ -279,17 +284,22 @@ export function HomeScreen({
               ]}
             >
               {activationSubmitting ? (
-                <ActivityIndicator size="small" color={hiddenCardHasError ? T.textPrimary : T.white} />
+                <ActivityIndicator size="small" color={hiddenCardHasError ? T.textPrimary : T.actionContent} />
               ) : (
                 <View style={styles.homeVisibleHeroButtonMark}>
                   <LeftIcon
                     name={isVisible ? "eye-off" : "eye"}
                     size={17}
-                    color={hiddenCardHasError ? T.textPrimary : T.white}
+                    color={hiddenCardHasError ? T.textPrimary : T.actionContent}
                   />
                 </View>
               )}
-              <Text style={styles.homeVisibleHeroButtonTextInline}>
+              <Text
+                style={[
+                  styles.homeVisibleHeroButtonTextInline,
+                  hiddenCardHasError && styles.homeVisibleHeroButtonTextInlineError,
+                ]}
+              >
                 {primaryLabel}
               </Text>
             </Pressable>

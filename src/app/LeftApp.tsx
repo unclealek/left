@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Alert, AppState, ScrollView, Text, View } from "react-native";
+import { AppState, ScrollView, Text, View } from "react-native";
 import * as Notifications from "expo-notifications";
 import type { Session } from "@supabase/supabase-js";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -17,7 +17,7 @@ import {
 } from "./leftConfig";
 import { styles } from "./leftTheme";
 import { supabase } from "../lib/supabase";
-import { initialFeed, initialVenueSummary, viewerSeed } from "../mocks/seed";
+import { EMPTY_NEARBY_FEED, INITIAL_VENUE_SUMMARY } from "./initialState";
 import type {
   AppUser,
   ApproachAttempt,
@@ -30,7 +30,7 @@ import type {
   VenueContextSummary,
 } from "../types/left-domain";
 import { AuthScreen } from "../screens/left/AuthScreen";
-import { NameScreen, AvatarScreen, LocationScreen } from "../screens/left/OnboardingScreens";
+import { NameScreen, AvatarScreen, CompleteScreen, LocationScreen } from "../screens/left/OnboardingScreens";
 import { VenueScreen } from "../screens/left/VenueScreen";
 import { HomeScreen } from "../screens/left/HomeScreen";
 import { ActivationScreen } from "../screens/left/ActivationScreen";
@@ -85,7 +85,9 @@ import {
   blockUserForActor,
   createApproachAttempt,
   hideUserForActor,
+  markApproachCancelled,
   markApproachConnected,
+  markApproachExpired,
   reportUserForActor,
 } from "../features/interactions/interaction-service";
 import {
@@ -119,6 +121,7 @@ import {
   getProviderSubject,
   startGoogleAuthSession,
 } from "../features/auth/auth-service";
+import { getRemainingSeconds, hasExpired } from "../features/lifecycle/session-lifecycle";
 
 function logAuthDebug(step: string, payload?: Record<string, unknown>) {
   if (payload) {
@@ -196,9 +199,9 @@ export function LeftApp() {
   const [activationReturnScreen, setActivationReturnScreen] = useState<Screen>("home");
   const [safetyReturnScreen, setSafetyReturnScreen] = useState<Screen>("home");
   const [user, setUser] = useState<AppUser | null>(null);
-  const [feed, setFeed] = useState<NearbyFeedItem[]>(initialFeed);
+  const [feed, setFeed] = useState<NearbyFeedItem[]>(EMPTY_NEARBY_FEED);
   const [selectedProfile, setSelectedProfile] = useState<NearbyFeedItem | null>(null);
-  const [venueSummary, setVenueSummary] = useState<VenueContextSummary>(initialVenueSummary);
+  const [venueSummary, setVenueSummary] = useState<VenueContextSummary>(INITIAL_VENUE_SUMMARY);
   const [firstNameDraft, setFirstNameDraft] = useState("Kelvin");
   const [avatarStyleDraft, setAvatarStyleDraft] = useState<AvatarStyle>("geometric");
   const [locationEnabled, setLocationEnabled] = useState(false);
@@ -212,9 +215,11 @@ export function LeftApp() {
   const [venueHidden, setVenueHidden] = useState(false);
   const [sessionVisible, setSessionVisible] = useState(false);
   const [sessionStartedAt, setSessionStartedAt] = useState<string | null>(null);
+  const [sessionExpiresAt, setSessionExpiresAt] = useState<string | null>(null);
   const [sessionNowMs, setSessionNowMs] = useState(() => Date.now());
   const [activePresenceSessionId, setActivePresenceSessionId] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [authBusy, setAuthBusy] = useState(false);
   const [settingsSaveState, setSettingsSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [deletionRequestState, setDeletionRequestState] = useState<"idle" | "submitting" | "submitted" | "error">("idle");
   const [venuePreferences, setVenuePreferences] = useState<Record<string, VenuePreference>>({});
@@ -286,7 +291,7 @@ export function LeftApp() {
   );
   const approachRemainingSeconds = useMemo(() => {
     if (!approach || approach.status !== "started") return 0;
-    return Math.max(0, Math.ceil((new Date(approach.expiresAt).getTime() - sessionNowMs) / 1000));
+    return getRemainingSeconds(approach.expiresAt, sessionNowMs);
   }, [approach, sessionNowMs]);
 
   function showToast(message: string) {
@@ -435,6 +440,11 @@ export function LeftApp() {
   }, [sessionStartedAt, sessionVisible]);
 
   useEffect(() => {
+    if (!sessionVisible || !hasExpired(sessionExpiresAt, sessionNowMs)) return;
+    void endSessionState("session_ended", { toastMessage: "Visibility session expired" });
+  }, [sessionExpiresAt, sessionNowMs, sessionVisible]);
+
+  useEffect(() => {
     void refreshVenuePreferences();
   }, [venueSummary.venueId]);
 
@@ -565,6 +575,7 @@ export function LeftApp() {
       setActivePresenceSessionId(null);
       setSessionVisible(false);
       setSessionStartedAt(null);
+      setSessionExpiresAt(null);
       setSocialMomentumEvents([]);
       return false;
     }
@@ -575,6 +586,7 @@ export function LeftApp() {
       setActivePresenceSessionId(null);
       setSessionVisible(false);
       setSessionStartedAt(null);
+      setSessionExpiresAt(null);
       setSocialMomentumEvents([]);
       setFeed([]);
       return false;
@@ -583,6 +595,7 @@ export function LeftApp() {
     setActivePresenceSessionId(activeSession.id);
     await refreshSocialMomentumEvents(activeSession.id, appUser.id);
     setSessionStartedAt(activeSession.startedAt);
+    setSessionExpiresAt(activeSession.expiresAt);
     setSessionNowMs(Date.now());
     setSessionVisible(true);
     setSelectedIntent(activeSession.intent);
@@ -718,6 +731,13 @@ export function LeftApp() {
     if (!storedApproach) return;
     if (Date.now() < new Date(storedApproach.expiresAt).getTime()) return;
 
+    if (isUuid(storedApproach.approachId)) {
+      await markApproachExpired({
+        approachId: storedApproach.approachId,
+        expiredAt: storedApproach.expiresAt,
+      });
+    }
+
     const nextPending: PendingApproachFeedback = {
       userId: storedApproach.userId,
       approachId: storedApproach.approachId,
@@ -767,6 +787,13 @@ export function LeftApp() {
 
     if (!nextPending) return;
 
+    if (isUuid(approach.id)) {
+      await markApproachExpired({
+        approachId: approach.id,
+        expiredAt: approach.expiresAt,
+      });
+    }
+
     await savePendingApproachFeedback(nextPending);
     await clearStoredActiveApproach();
     setApproach((current) => (current ? { ...current, status: "confirmed_going", updatedAt: new Date().toISOString() } : current));
@@ -783,7 +810,7 @@ export function LeftApp() {
     await clearPendingApproachFeedback();
     setPendingApproachFeedback(null);
     setApproach(null);
-    Alert.alert(
+    showDialog(
       "Feedback saved",
       feedbackWentOver
         ? feedbackUsedIcebreaker
@@ -816,7 +843,7 @@ export function LeftApp() {
     const chosenVenue = runtime.nearbyVenues.find((venue) => venue.id === venueId) ?? null;
     const selected = await selectNearbyVenue(venueId);
     if (!selected) {
-      Alert.alert("Venue unavailable", "That nearby venue is no longer available. Try again from the refreshed list.");
+      showDialog("Venue unavailable", "That nearby venue is no longer available. Try again from the refreshed list.");
       await refreshVenueFromRuntime();
       return;
     }
@@ -859,11 +886,11 @@ export function LeftApp() {
 
   async function submitVenueSuggestion() {
     if (!user || !lastKnownCoords) {
-      Alert.alert("Venue location missing", "Move around the venue once so Left has a recent device location.");
+      showDialog("Venue location missing", "Move around the venue once so Left has a recent device location.");
       return;
     }
     if (!venueDraftName.trim() || !venueDraftAddress.trim()) {
-      Alert.alert("Missing venue details", "Add both a venue name and an address or landmark.");
+      showDialog("Missing venue details", "Add both a venue name and an address or landmark.");
       return;
     }
 
@@ -872,7 +899,7 @@ export function LeftApp() {
     if (duplicateVenue) {
       setVenueDraftSubmitting(false);
       await confirmVenueSelection(duplicateVenue.id);
-      Alert.alert("Venue already exists", `${duplicateVenue.name} is already pinned nearby, so Left reused it instead of creating a duplicate.`);
+      showDialog("Venue already exists", `${duplicateVenue.name} is already pinned nearby, so Left reused it instead of creating a duplicate.`);
       return;
     }
 
@@ -889,7 +916,7 @@ export function LeftApp() {
 
     if (!submittedVenue) {
       setVenueDraftSubmitting(false);
-      Alert.alert("Venue submission failed", "We could not submit that venue yet.");
+      showDialog("Venue submission failed", "We could not submit that venue yet.");
       return;
     }
 
@@ -978,8 +1005,13 @@ export function LeftApp() {
 
   async function startGoogleAuth() {
     setAuthError(null);
-    const result = await startGoogleAuthSession(logAuthDebug);
-    if (result.status === "failed") setAuthError(result.message);
+    setAuthBusy(true);
+    try {
+      const result = await startGoogleAuthSession(logAuthDebug);
+      if (result.status === "failed") setAuthError(result.message);
+    } finally {
+      setAuthBusy(false);
+    }
   }
 
   async function finishOnboarding() {
@@ -1002,14 +1034,23 @@ export function LeftApp() {
       );
       return;
     }
+    const now = new Date().toISOString();
     const nextUser: AppUser = {
-      ...viewerSeed,
       id: session.user.id,
       authProvider: getProvider(session),
       providerSubject: getProviderSubject(session, getProvider(session)),
       firstName: firstNameDraft.trim() || getFirstNameFromSession(session),
       avatarStyle: avatarStyleDraft,
+      defaultIntent: "networking",
+      defaultVibes: ["Open"],
+      profilePrompt: defaultProfilePrompt,
+      approachPrompt: defaultApproachPrompt,
+      focusModeEnabled: false,
+      promptsEnabled: true,
+      identityRemoved: false,
       onboardingCompleted: true,
+      createdAt: now,
+      updatedAt: now,
     };
 
     const saved = await upsertOnboardingProfile(nextUser);
@@ -1021,7 +1062,7 @@ export function LeftApp() {
 
     setUser(nextUser);
     setLocationBusy(false);
-    setScreen("home");
+    setScreen("onboarding-complete");
   }
 
   function toggleVibe(vibe: string) {
@@ -1213,6 +1254,7 @@ export function LeftApp() {
 
       setSessionNowMs(Date.now());
       setSessionStartedAt(startedAt);
+      setSessionExpiresAt(expiresAt);
       setSessionVisible(true);
       setVenueSummary((current) => ({
         ...current,
@@ -1261,7 +1303,7 @@ export function LeftApp() {
       });
 
       if (!persistedApproachId) {
-        Alert.alert("Could not start approach", "Please try again.");
+        showDialog("Could not start approach", "Please try again.");
         return;
       }
 
@@ -1313,7 +1355,7 @@ export function LeftApp() {
       });
 
       if (!updated) {
-        Alert.alert("Could not confirm connection", "Please try again.");
+        showDialog("Could not confirm connection", "Please try again.");
         return;
       }
     }
@@ -1326,6 +1368,28 @@ export function LeftApp() {
     setApproach((current) =>
       current ? { ...current, status: "connected", completedAt } : current,
     );
+    setScreen("feed");
+  }
+
+  async function cancelApproach() {
+    const cancelledAt = new Date().toISOString();
+    if (approach && isUuid(approach.id)) {
+      const updated = await markApproachCancelled({ approachId: approach.id, cancelledAt });
+      if (!updated) {
+        showDialog("Could not cancel approach", "Please try again so the cancellation is saved.");
+        return;
+      }
+    }
+
+    await clearStoredActiveApproach();
+    await clearPendingApproachFeedback();
+    setPendingApproachFeedback(null);
+    void recordSocialInteractionEvent("approach_cancelled", {
+      targetUserId: approach?.toUserId ?? selectedProfile?.profileUserId ?? null,
+      visibilitySessionId: activePresenceSessionId ?? approach?.presenceSessionId ?? null,
+      metadata: { approachId: approach?.id ?? null },
+    });
+    setApproach(null);
     setScreen("feed");
   }
 
@@ -1342,7 +1406,7 @@ export function LeftApp() {
         });
 
         if (!hidden) {
-          Alert.alert("Could not hide person", "Please try again.");
+          showDialog("Could not hide person", "Please try again.");
           return;
         }
       }
@@ -1375,7 +1439,7 @@ export function LeftApp() {
         });
 
         if (!blocked) {
-          Alert.alert("Could not block person", "Please try again.");
+          showDialog("Could not block person", "Please try again.");
           return;
         }
       }
@@ -1411,7 +1475,7 @@ export function LeftApp() {
 
       if (!reported) {
         setReportSubmitting(false);
-        Alert.alert("Could not submit report", "Please try again.");
+        showDialog("Could not submit report", "Please try again.");
         return;
       }
     }
@@ -1676,7 +1740,7 @@ export function LeftApp() {
 
   async function endSessionState(
     status: "paused" | "session_ended" = "session_ended",
-    options: { toast?: boolean } = {},
+    options: { toast?: boolean; toastMessage?: string } = {},
   ) {
     if (visibilityAction) return;
     setVisibilityAction(status === "paused" ? "pause" : "end");
@@ -1684,6 +1748,7 @@ export function LeftApp() {
     try {
       setSessionVisible(false);
       setSessionStartedAt(null);
+      setSessionExpiresAt(null);
       setActivePresenceSessionId(null);
       setSocialMomentumEvents([]);
       setSessionNowMs(Date.now());
@@ -1694,11 +1759,11 @@ export function LeftApp() {
         const updated = await updatePresenceSessionEndState(sessionId, status);
 
         if (!updated) {
-          Alert.alert("Could not update visibility", "Your local session is hidden, but the server did not confirm the change.");
+          showDialog("Could not update visibility", "Your local session is hidden, but the server did not confirm the change.");
         }
       }
       if (options.toast !== false) {
-        showToast(status === "paused" ? "Visibility paused" : "Session ended");
+        showToast(options.toastMessage ?? (status === "paused" ? "Visibility paused" : "Session ended"));
       }
     } finally {
       setVisibilityAction(null);
@@ -1707,14 +1772,14 @@ export function LeftApp() {
 
   async function requestAccountDeletion() {
     if (!user) return;
-    Alert.alert(
-      "Request identity removal",
-      "We will start a request to remove your direct identity details.",
+    showDialog(
+      "Remove your identity from Left?",
+      "This requests removal of your direct identity details and may sign you out when processing completes. Retained safety and operational records remain under the current policy.",
       [
-        { text: "Cancel", style: "cancel" },
+        { label: "Keep my identity", variant: "ghost" },
         {
-          text: "Send request",
-          style: "destructive",
+          label: "Request removal",
+          variant: "destructive",
           onPress: () => {
             void submitAccountDeletionRequest();
           },
@@ -1730,24 +1795,25 @@ export function LeftApp() {
 
     if (result === "duplicate") {
       setDeletionRequestState("submitted");
-      Alert.alert("Identity removal", "You already have an open identity-removal request.");
+      showDialog("Identity removal", "You already have an open identity-removal request.");
       return;
     }
 
     if (result === "failed") {
       setDeletionRequestState("error");
-      Alert.alert("Identity removal failed", "We could not create your identity-removal request.");
+      showDialog("Identity removal failed", "We could not create your identity-removal request.");
       return;
     }
 
     if (result === "queued") {
       setDeletionRequestState("submitted");
-      Alert.alert(
+      showDialog(
         "Identity removal queued",
         "We recorded your request, but backend processing did not finish yet. Your request is still on file for follow-up.",
         [
           {
-            text: "OK",
+            label: "OK",
+            variant: "primary",
             onPress: () => {
               void signOut();
             },
@@ -1758,12 +1824,13 @@ export function LeftApp() {
     }
 
     setDeletionRequestState("submitted");
-    Alert.alert(
+    showDialog(
       "Identity removed",
       "Direct identity fields were removed. Your retained records stay in place under the current policy.",
       [
         {
-          text: "OK",
+          label: "OK",
+          variant: "primary",
           onPress: () => {
             void signOut();
           },
@@ -1820,16 +1887,18 @@ export function LeftApp() {
   const locationStatus = locationEnabled
     ? "Background location is active. Venue matching runs on-device and only venue IDs are used for app state."
     : "Background location is not enabled yet.";
+  const isOnboardingScreen = screen.startsWith("onboarding-");
   const scrollContentPaddingTop =
     screen === "venue-detail" ? 0 : screen === "auth" ? 0 : Math.max(56, insets.top + 20);
-  const scrollContentPaddingBottom = SESSION_NAV_SCREENS.includes(screen)
-    ? 176 + insets.bottom
-    : 72 + insets.bottom;
+  const scrollContentPaddingBottom = isOnboardingScreen
+    ? 24 + insets.bottom
+    : SESSION_NAV_SCREENS.includes(screen)
+      ? 176 + insets.bottom
+      : 72 + insets.bottom;
 
   return (
     <View style={styles.shell}>
-      {screen !== "me" ? <BackgroundWaveLayer /> : null}
-      <View style={styles.grain} pointerEvents="none" />
+      {screen !== "me" && !isOnboardingScreen ? <BackgroundWaveLayer /> : null}
       <ScrollView
         contentContainerStyle={[
           styles.content,
@@ -1841,15 +1910,25 @@ export function LeftApp() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {screen === "auth" && <AuthScreen authError={authError} onAuth={startGoogleAuth} />}
+        {screen === "auth" && (
+          <AuthScreen
+            authError={authError}
+            busy={authBusy}
+            onAuth={startGoogleAuth}
+            onEmail={() => showDialog("Email sign-in is coming soon", "Google is the working sign-in method in this build.")}
+          />
+        )}
         {screen === "onboarding-name" && (
           <NameScreen firstNameDraft={firstNameDraft} onChangeFirstName={setFirstNameDraft} onContinue={() => setScreen("onboarding-avatar")} />
         )}
         {screen === "onboarding-avatar" && (
-          <AvatarScreen avatarStyle={avatarStyleDraft} onPick={setAvatarStyleDraft} onContinue={() => setScreen("onboarding-location")} />
+          <AvatarScreen firstName={firstNameDraft.trim()} avatarStyle={avatarStyleDraft} onPick={setAvatarStyleDraft} onContinue={() => setScreen("onboarding-location")} />
         )}
         {screen === "onboarding-location" && (
-          <LocationScreen authError={authError} enabled={locationEnabled} busy={locationBusy} onToggle={() => setLocationEnabled((current) => !current)} onContinue={() => void finishOnboarding()} />
+          <LocationScreen authError={authError} busy={locationBusy} onContinue={() => void finishOnboarding()} />
+        )}
+        {screen === "onboarding-complete" && (
+          <CompleteScreen firstName={firstNameDraft.trim()} avatarStyle={avatarStyleDraft} onContinue={() => setScreen("home")} />
         )}
         {screen === "venue-select" && (
           <VenueSelectionScreen
@@ -1927,7 +2006,7 @@ export function LeftApp() {
           <ActivationScreen
             sessionVisible={sessionVisible}
             venueHidden={venueHidden}
-            venueName={displayVenueSummary.venueName}
+            venueName={venueSummary.venueName}
             venueConfidenceLabel={venueConfidenceLabel}
             venueConfidenceCopy={venueConfidenceCopy}
             selectedIntent={selectedIntent}
@@ -1975,6 +2054,7 @@ export function LeftApp() {
             onChangeReportNotes={setReportNotes}
             onReport={() => void reportUser()}
             onOpenSafety={() => openSafetyFrom("profile")}
+            onShowDialog={showDialog}
           />
         )}
         {screen === "approach" && selectedProfile && approach && (
@@ -1982,7 +2062,7 @@ export function LeftApp() {
             item={selectedProfile}
             approachPrompt={activeApproachPrompt}
             remainingSeconds={approachRemainingSeconds}
-            onCancel={() => setScreen("feed")}
+            onCancel={() => void cancelApproach()}
             onConfirmConnected={() => void confirmConnected()}
             onOpenSafety={() => openSafetyFrom("approach")}
           />
@@ -2011,6 +2091,7 @@ export function LeftApp() {
             onMuteVenue={() => void muteVenueNotifications()}
             onClearVenueHidden={(venueId, venueName) => void clearVenueHidden(venueId, venueName)}
             onClearVenueMuted={(venueId, venueName) => void clearVenueMuted(venueId, venueName)}
+            onShowDialog={showDialog}
           />
         )}
         {screen === "settings" && user && (
@@ -2020,6 +2101,7 @@ export function LeftApp() {
             onOpenSafety={() => openSafetyFrom("settings")}
             onSignOut={() => void signOut()}
             onRequestDeletion={() => void requestAccountDeletion()}
+            onShowDialog={showDialog}
             onBack={() => setScreen("me")}
           />
         )}
@@ -2046,6 +2128,8 @@ export function LeftApp() {
           intent={footerSummary.intent}
           sessionVisible={footerSummary.sessionVisible}
           activeDestination={footerSummary.activeDestination}
+          showContextSummary={screen !== "activate"}
+          bottomInset={insets.bottom}
           onNavigate={goToFooterDestination}
         />
       )}
