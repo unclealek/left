@@ -39,7 +39,7 @@ The database change is in:
 supabase/migrations/0015_social_momentum_events.sql
 ```
 
-Apply this migration to staging before testing preview builds. The app will continue to render without it, but event logging and session recovery for Social Momentum will warn/fail until the table exists.
+Migration `0015` was included in the staging migration set reported applied through `0021` on August 10, 2026. Verify event logging and session recovery in staging before relying on Social Momentum for release.
 
 ## Implementation
 

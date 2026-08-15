@@ -11,8 +11,8 @@ This repository contains:
 - product, engineering, and ops documentation in `docs/`
 
 The current app includes:
-- Google sign-in
-- three-step onboarding: first name, avatar style, background location
+- a privacy-forward welcome screen with working Google sign-in and an explicitly deferred email option
+- three profile-setup steps plus a completion reveal: first name, social shape, background location, and “signal ready” handoff
 - venue home with venue pulse, bubble preview, and Social Momentum card
 - venue disambiguation when multiple nearby venues are detected
 - user-submitted venue suggestions when the right venue is missing
@@ -21,7 +21,9 @@ The current app includes:
 - profile inspection with approach, hide, block, and report actions
 - approach countdown flow plus delayed follow-up feedback prompt
 - safety controls for pause, end session, hide venue, and mute venue notifications
-- settings for profile defaults, prompt templates, venue preferences, sign-out, and identity removal
+- profile editing for first name, avatar style, default intent, and default vibes
+- settings for safety access, notification preferences, app information, logout, and identity removal
+- shared action buttons with pressed, disabled, loading, icon, destructive, and selected states
 
 The canonical implementation lives in [src/app/LeftApp.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/app/LeftApp.tsx).
 
@@ -51,7 +53,10 @@ cp .env.example admin/.env
 Required mobile env vars:
 - `EXPO_PUBLIC_SUPABASE_URL`
 - `EXPO_PUBLIC_SUPABASE_ANON_KEY`
-- `EXPO_PUBLIC_GOOGLE_PLACES_API_KEY`
+- `EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN`
+
+Required Supabase Edge Function secret:
+- `GOOGLE_PLACES_API_KEY`
 
 Required admin env vars:
 - `VITE_SUPABASE_URL`
@@ -80,6 +85,7 @@ Useful checks:
 
 ```bash
 npm run typecheck
+npm test
 npm --prefix admin run typecheck
 npm run admin:web
 npm run admin:build
@@ -88,7 +94,7 @@ npm run admin:build
 Expected local outcome:
 - the Expo app starts and can render the signed-out shell
 - Google sign-in and live backend flows require valid Supabase project configuration
-- venue detection works best when `EXPO_PUBLIC_GOOGLE_PLACES_API_KEY` is set
+- venue detection uses the authenticated `nearby-venues` Edge Function; its server environment must contain `GOOGLE_PLACES_API_KEY`
 - the admin app requires a valid reviewer account in `public.admin_reviewers`
 
 ## Local Backend
@@ -103,11 +109,13 @@ Use [docs/local-development.md](/Users/kelvinaliche/Desktop/Projects/leftApp/doc
 ## Documentation
 
 - Local development: [docs/local-development.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/local-development.md)
+- Current implementation contract: [docs/current-implementation-contract.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/current-implementation-contract.md)
 - Product: [docs/left-product-spec.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/left-product-spec.md)
 - Engineering: [docs/left-engineering-build-spec.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/left-engineering-build-spec.md)
 - Location + venue logic: [docs/location-venue-logic.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/location-venue-logic.md)
 - Admin safety operations: [docs/admin-safety-ops.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/admin-safety-ops.md)
 - Production release: [docs/mobile-production-release.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/mobile-production-release.md)
+- Mobile QA: [docs/mobile-qa-checklist.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/mobile-qa-checklist.md)
 - Known gaps: [docs/not-production-ready.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/not-production-ready.md)
 - Identity removal policy: [docs/identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/identity-removal-policy.md)
 - Social Momentum: [docs/social-momentum.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/social-momentum.md)

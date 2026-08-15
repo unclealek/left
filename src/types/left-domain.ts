@@ -65,6 +65,7 @@ export type SocialInteractionEventType =
   | "became_visible"
   | "profile_viewed"
   | "approach_started"
+  | "approach_cancelled"
   | "approach_connected"
   | "prompt_dismissed"
   | "user_hidden"

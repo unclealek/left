@@ -1,7 +1,7 @@
 # Left Engineering Build Spec
 
 Status:
-- engineering-ready build spec aligned to the current app implementation as of July 18, 2026
+- engineering-ready build spec aligned to the current app implementation as of August 10, 2026
 - includes venue disambiguation, venue submission, Social Momentum, delayed approach follow-up, hidden-state venue browsing, and the current `Home / Map / Venues / Profile` footer model
 
 Depends on:
@@ -65,6 +65,15 @@ Current coordinating modules:
 Reusable UI/navigation:
 - [src/components/left/ui.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/components/left/ui.tsx)
 - [src/components/left/navigation.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/components/left/navigation.tsx)
+- [src/components/glass/GlassSurface.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/components/glass/GlassSurface.tsx)
+- [src/components/glass/tokens.ts](/Users/kelvinaliche/Desktop/Projects/leftApp/src/components/glass/tokens.ts)
+
+Header hierarchy:
+- `ScreenHeader` owns navigable hero and utility headers
+- hero titles use `screenTypography.heroTitle` at 28/33
+- utility titles use `screenTypography.utilityTitle` at 20/24
+- `BackNavButton` is a 44px soft-glass control using the custom Left arrow
+- Home and onboarding may use larger expressive headings by design
 
 Screens:
 - [src/screens/left/AuthScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/AuthScreen.tsx)
@@ -125,6 +134,8 @@ Footer navigation is persistent across in-session screens and uses four destinat
 - `Venues`
 - `Profile`
 
+The footer is a single `GlassSurface` with the reusable `creole` tone rather than an opaque color bar. It combines Creole Brown blur, a translucent light border, a restrained black active control, and Yellow Green navigation states. Summary and privacy controls floating above it retain the lighter shared glass variants.
+
 Navigation rules:
 - `Home` routes to the home screen
 - `Map` routes to the nearby feed when visible and to the venue radar when hidden
@@ -142,13 +153,23 @@ Purpose:
 - create or resume an application session through Google OAuth
 
 Display fields:
-- welcome copy
+- brand mark and curved accent field
+- `People. Places. Presence.` welcome headline
+- connection-focused supporting copy
 - `Continue with Google`
+- `Continue with email` with a visible `Coming soon` label
+- privacy reassurance explaining that exact location is not shown to other people
 - loading state
 - auth error state
 
 Primary actions:
 - `sign_in_with_google`
+- `show_email_sign_in_coming_soon`
+
+Action-state rules:
+- Google auth disables repeat taps and changes its label while the provider is opening
+- email must not appear functional until an email authentication backend and recovery flow exist
+- the email row currently opens an informational dialog and does not create a session
 
 Success result:
 - authenticated session created
@@ -164,6 +185,7 @@ Failure states:
 Implementation notes:
 - current auth callback target is `left://auth/callback`
 - Expo Go callback URLs are not the intended production/dev-build path
+- auth and onboarding share Creole Brown `#1F0E06` and Yellow Green `#C6E385`
 
 ### 6.1 Onboarding
 
@@ -172,14 +194,31 @@ Purpose:
 
 Steps:
 1. first name
-2. avatar style
-3. location permission
+2. social-shape/avatar selection
+3. venue-detection location permission
+4. persisted-profile completion reveal
+
+Action-state rules:
+- first-name Continue is disabled while the trimmed value is empty
+- Continue actions use a trailing navigation icon
+- social-shape selection exposes presentation labels without changing stored `AvatarStyle` values
+- `Surprise me` selects another valid stored avatar style
+- Turn on venue detection shows a spinner/busy state and prevents duplicate location requests
+- completion renders only after `upsertOnboardingProfile` succeeds
+- `See what’s nearby` routes from `onboarding-complete` to `home`
+
+Visual tokens:
+- onboarding ink: `#1F0E06`
+- onboarding accent: `#C6E385`
+- shared action surface: `#170A04`
+- shared action content: `#C6E385`
 
 Primary actions:
 - `set_first_name`
 - `pick_avatar_style`
 - `toggle_location_permission_state`
 - `finish_onboarding`
+- `continue_from_onboarding_complete`
 
 Persisted fields:
 - `first_name`
@@ -286,11 +325,16 @@ Primary actions:
 - `cancel_activation`
 
 Current implementation notes:
+- the final Go Visible commitment is slide-to-confirm; completion requires crossing the drag threshold and exposes an accessibility activate action
+- the active Presence view uses a duration-backed circular countdown ring, compact solid venue/intent/vibe/hint rows, a primary nearby-feed action, a distinct destructive end action, and a precise-location privacy note
+- the floating navigation suppresses its optional context summary on the active Presence view because the venue is already represented in the screen content
 - activation inserts a `public.presence_sessions` row when the signed-in user and current venue are UUID-backed
 - one existing active session is ended before a new visible session is created
 - the app restores active visible sessions from Supabase on auth bootstrap and app resume
+- the client automatically ends a visible session when `expires_at` is reached
+- migration `0021_expire_stale_lifecycle_records.sql` expires stale sessions server-side every minute when `pg_cron` is available
 - activation is blocked until venue selection is resolved when multiple nearby venues are detected
-- local mock IDs still use local state so seeded development screens keep working
+- unconfirmed/mock venue IDs cannot create a production presence session
 
 ### 6.5 Nearby Feed
 
@@ -370,7 +414,9 @@ Primary actions:
 
 Rules:
 - approach attempts are persisted to `public.approach_attempts` when UUID-backed records are available
-- expired approach currently transitions to a pending local follow-up prompt backed by AsyncStorage
+- Back from an active attempt persists `cancelled` with `cancelled_at` before clearing local recovery state
+- an elapsed attempt persists `expired` and transitions to a pending local follow-up prompt backed by AsyncStorage
+- migration `0021_expire_stale_lifecycle_records.sql` also expires stale attempts when no client is open
 - prompt is owned by the signed-in viewer and saved in user settings
 
 ### 6.7.1 Approach Follow-Up Prompt
@@ -419,10 +465,10 @@ Rules:
 - pause and end update the active `public.presence_sessions` row when available
 - reports are reviewable through `public.safety_report_review`
 
-### 6.9 Profile / Account
+### 6.9 Profile
 
 Purpose:
-- signed-in account and customization destination
+- signed-in profile and customization destination
 - show a lightweight live self-view plus editable defaults
 
 Display fields:
@@ -443,8 +489,6 @@ Primary actions:
 - `edit_profile_defaults`
 - `open_safety_controls`
 - `open_settings`
-- `sign_out`
-- `request_identity_removal`
 
 Persisted fields on save:
 - `first_name`
@@ -454,17 +498,43 @@ Persisted fields on save:
 - `profile_prompt`
 - `approach_prompt`
 
-Identity-removal rules:
-- request writes to `public.identity_removal_requests`
-- app then calls the backend processor
-- retained/removed behavior is defined in [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/identity-removal-policy.md)
-
 Rules:
 - the non-edit profile view is intentionally lightweight and live-state aware
 - `wave count` is currently derived from `approach_started` interaction events
 - `nearby venue count` is runtime context, not historical venue history
 
-### 6.10 Bubble Visualization Layer
+### 6.10 Settings / Account Actions
+
+Purpose:
+- separate routine settings, reversible session logout, and consequential identity removal
+
+Display sections:
+- `Account`: account summary, Privacy and Safety, Notifications
+- `General`: About Left
+- `Session`: neutral logout action and reversible-action explanation
+- `Identity removal`: isolated danger card with retained-record explanation
+
+Primary actions:
+- `open_safety_controls`
+- `open_notification_preferences`
+- `open_about_left`
+- `sign_out`
+- `request_identity_removal`
+
+Interaction rules:
+- logout uses neutral `GhostButton` styling and requires confirmation
+- identity removal uses destructive styling inside a separate danger card
+- the identity-removal confirmation explains retained records and possible sign-out
+- submission uses a loading/busy state and blocks duplicate taps
+- a submitted/duplicate request renders as non-interactive success status
+- an error explicitly says nothing was removed and exposes a retry action
+
+Identity-removal rules:
+- request writes to `public.identity_removal_requests`
+- app then calls the backend processor
+- retained/removed behavior is defined in [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/identity-removal-policy.md)
+
+### 6.11 Bubble Visualization Layer
 
 Purpose:
 - optional ambient layer over nearby feed data
@@ -482,6 +552,7 @@ App-level screens:
 - `onboarding-name`
 - `onboarding-avatar`
 - `onboarding-location`
+- `onboarding-complete`
 - `home`
 - `venue`
 - `venue-select`
@@ -799,9 +870,15 @@ Purpose:
 - create an audit request and invoke backend identity removal
 
 Current path:
+- show a destructive confirmation that distinguishes identity removal from logout
 - insert into `identity_removal_requests`
 - invoke Edge Function `process-identity-removal`
 - backend SQL processor `public.process_identity_removal_request(...)`
+
+Client states:
+- `submitting`: spinner shown and repeat submission disabled
+- `submitted`: non-interactive recorded status shown
+- `error`: retry action shown with explicit no-removal copy
 
 Key files:
 - [supabase/functions/process-identity-removal/index.ts](/Users/kelvinaliche/Desktop/Projects/leftApp/supabase/functions/process-identity-removal/index.ts)
@@ -812,6 +889,7 @@ Key files:
 ### 11.6 sign_out
 
 Current path:
+- confirm from the neutral `Session` section in Settings
 - `supabase.auth.signOut()`
 
 ## 12. Client Events

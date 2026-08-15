@@ -1,18 +1,12 @@
 import { T } from "../theme";
-import { leftShadows } from "../shadow";
 
 export const uiStyles = {
   chip: {
-    borderRadius: 999,
-    backgroundColor: T.tealDim,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: T.borderAccent,
   },
   chipSubtle: {
-    backgroundColor: T.surfaceCard,
-    borderColor: T.border,
+    opacity: 0.82,
   },
   chipLabel: {
     color: T.teal,
@@ -50,13 +44,13 @@ export const uiStyles = {
   },
   iconSelectChip: {
     position: "relative",
-    minHeight: 52,
-    borderRadius: 22,
+    minHeight: 46,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: T.borderAccent,
-    backgroundColor: T.surfaceGlassStrong,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    borderColor: T.border,
+    backgroundColor: "rgba(255,255,255,0.72)",
+    paddingHorizontal: 14,
+    paddingVertical: 11,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
@@ -71,35 +65,31 @@ export const uiStyles = {
     flexGrow: 1,
   },
   iconSelectChipActive: {
-    borderColor: T.visibilityOff,
-    backgroundColor: T.visibilityOffSoft,
+    borderColor: "rgba(214,138,40,0.44)",
+    backgroundColor: "rgba(214,138,40,0.10)",
   },
   iconSelectChipLabel: {
     color: T.textSecondary,
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     fontFamily: T.fontBodyMedium,
   },
   iconSelectChipLabelCompact: {
-    fontSize: 16,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 17,
   },
   iconSelectChipLabelActive: {
     color: T.textPrimary,
     fontFamily: T.fontBodyBold,
   },
   iconSelectChipCheck: {
-    position: "absolute",
-    right: -6,
-    top: -6,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: T.secondary,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: T.visibilityOff,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2,
-    borderColor: T.white,
+    marginLeft: "auto",
   },
   statusPillBase: {
     flexDirection: "row",
@@ -107,10 +97,6 @@ export const uiStyles = {
     gap: 8,
     minHeight: 36,
     paddingHorizontal: 14,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.88)",
-    borderWidth: 1,
-    borderColor: "#E2E8E1",
   },
   statusPillDot: {
     width: 10,
@@ -118,7 +104,7 @@ export const uiStyles = {
     borderRadius: 5,
   },
   statusPillDotVisible: {
-    backgroundColor: "#2E7D32",
+    backgroundColor: T.visibilityOn,
   },
   statusPillDotHidden: {
     backgroundColor: "#FFC24D",
@@ -131,15 +117,10 @@ export const uiStyles = {
   utilityIconButton: {
     minWidth: 74,
     height: 74,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.82)",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255,107,74,0.10)",
     gap: 6,
     paddingHorizontal: 10,
-    ...leftShadows.medium,
   },
   utilityIconButtonCompact: {
     minWidth: 52,

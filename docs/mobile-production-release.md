@@ -24,7 +24,7 @@ eas --version
 ```bash
 eas env:create production --scope project --type string --visibility sensitive --name EXPO_PUBLIC_SUPABASE_URL --value "<production Supabase URL>"
 eas env:create production --scope project --type string --visibility sensitive --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "<production anon key>"
-eas env:create production --scope project --type string --visibility sensitive --name EXPO_PUBLIC_GOOGLE_PLACES_API_KEY --value "<production Google Places key>"
+eas env:create production --scope project --type string --visibility sensitive --name EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN --value "<restricted public Mapbox token>"
 ```
 
 Expo embeds every `EXPO_PUBLIC_*` value in the compiled app, so these variables cannot be true secrets. Use Google Cloud restrictions to protect the Google Places key.
@@ -34,10 +34,16 @@ Older EAS CLI versions used `secret:create`, but that command is deprecated:
 ```bash
 eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "<production Supabase URL>"
 eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "<production anon key>"
-eas secret:create --scope project --name EXPO_PUBLIC_GOOGLE_PLACES_API_KEY --value "<production Google Places key>"
+eas secret:create --scope project --name EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN --value "<restricted public Mapbox token>"
 ```
 
 Use staging values in the `preview` environment so internal builds avoid production data.
+
+Google Places is server-side. Set it in the Supabase project that hosts the Edge Functions:
+
+```bash
+supabase secrets set GOOGLE_PLACES_API_KEY="<restricted production Google Places key>"
+```
 
 ## Local Checks
 
@@ -45,6 +51,7 @@ Run these before starting an EAS build:
 
 ```bash
 npm run typecheck
+npm test
 npx expo install --check
 NODE_ENV=production npx expo export --platform all --output-dir dist-mobile-check
 rm -rf dist-mobile-check
@@ -84,9 +91,7 @@ The staging LAN callback URL should not be required for store builds.
 
 ## App Icon
 
-The repository previously used committed app-icon assets for Expo and the native iOS asset catalog. Those brand assets have been removed and need replacement before the next branded release build.
-
-If the simulator still shows an old icon after rebuilding, delete the installed `Left` app from the simulator and reinstall it.
+The repository contains Expo, Android adaptive-icon, splash, and native iOS app-icon assets. The production icon uses a flat Yellow Green `#C6E385` background with the centered black Left mark enlarged by 20% from the original asset so the change remains visible at launcher size; Android adaptive-icon configuration uses the same background color and scaled foreground. Verify the system-applied mask and appearance in the device preview build before submission.
 
 ## Release Test Pass
 
@@ -99,5 +104,12 @@ Test these on a real device before submitting:
 - Approach countdown expiry and delayed follow-up prompt recovery after app resume.
 - Hide, block, report, and safety controls.
 - Hidden/muted venue preference clearing from settings.
-- Account deletion request flow.
-- Logout and fresh sign-in.
+- Identity-removal request, confirmation, loading, retry, recorded status, and forced sign-out flow.
+- Neutral Logout action, confirmation, and fresh sign-in.
+- Shared button pressed, disabled, loading, selected, icon, and destructive states.
+- Automatic visibility expiry while the app is open and after the app has been backgrounded.
+- Persisted approach cancellation and automatic approach expiry.
+
+## Dependency Audit
+
+Run `npm audit fix` without `--force`. As of August 10, 2026, the remaining advisories are in Expo/Metro build-tool dependencies and require a breaking Expo SDK upgrade to resolve. Do not force that upgrade inside a release candidate; track and test it as a dedicated SDK migration.

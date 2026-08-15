@@ -21,7 +21,7 @@ export const loadingStyles = {
     height: 120,
     borderRadius: 60,
     borderWidth: 1,
-    borderColor: "rgba(36,92,74,0.10)",
+    borderColor: "rgba(198,227,133,0.10)",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255,255,255,0.96)",

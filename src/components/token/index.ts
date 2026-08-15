@@ -43,6 +43,15 @@ export const typography = {
   tiny: 12,
 } as const;
 
+export const screenTypography = {
+  heroTitle: 28,
+  heroTitleLineHeight: 33,
+  utilityTitle: 20,
+  utilityTitleLineHeight: 24,
+  subtitle: 14,
+  subtitleLineHeight: 20,
+} as const;
+
 export const motion = {
   calm: 350,
   base: 425,

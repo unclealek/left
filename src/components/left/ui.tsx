@@ -3,7 +3,16 @@ import { Modal, Pressable, Text, View } from "react-native";
 import { styles, T } from "../../app/leftTheme";
 import { GhostButton, PrimaryButton } from "../buttons";
 import { LeftIcon, type LeftIconName } from "../icons";
-export { BrandPrimaryButton, GhostButton, PrimaryButton } from "../buttons";
+import { GlassSurface, glassRadii } from "../glass";
+export { BrandPrimaryButton, GhostButton, PrimaryButton, SlideToConfirmButton } from "../buttons";
+
+export type AppDialogAction = {
+  label: string;
+  onPress?: () => void;
+  variant?: "primary" | "ghost" | "destructive";
+};
+
+export type ShowAppDialog = (title: string, message: string, actions?: AppDialogAction[]) => void;
 
 export function Card({ children, step, total }: { children: ReactNode; step?: string; total?: string }) {
   return (
@@ -58,9 +67,13 @@ export function InfoBlock({ label, children }: { label: string; children: ReactN
 
 export function Chip({ label, subtle = false }: { label: string; subtle?: boolean }) {
   return (
-    <View style={[styles.chip, subtle && styles.chipSubtle]}>
+    <GlassSurface
+      variant="soft"
+      radius={glassRadii.pill}
+      contentStyle={[styles.chip, subtle && styles.chipSubtle]}
+    >
       <Text style={[styles.chipLabel, subtle && styles.chipLabelSubtle]}>{label}</Text>
-    </View>
+    </GlassSurface>
   );
 }
 
@@ -99,7 +112,7 @@ export function IconSelectChip({
         active && styles.iconSelectChipActive,
       ]}
     >
-      <LeftIcon name={icon} size={16} color={active ? T.accentBright : "rgba(31,46,36,0.58)"} active={active} />
+      <LeftIcon name={icon} size={16} color={active ? T.accentBright : T.textSecondary} active={active} />
       <Text
         style={[
           styles.iconSelectChipLabel,
@@ -143,13 +156,19 @@ export function StatusPill({
   );
 
   if (!onPress) {
-    return <View style={styles.statusPillBase}>{content}</View>;
+    return (
+      <GlassSurface variant="soft" radius={glassRadii.pill} contentStyle={styles.statusPillBase}>
+        {content}
+      </GlassSurface>
+    );
   }
 
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.statusPillBase, pressed && styles.primaryBtnPressed]}>
-      {content}
-    </Pressable>
+    <GlassSurface variant="soft" radius={glassRadii.pill}>
+      <Pressable onPress={onPress} style={({ pressed }) => [styles.statusPillBase, pressed && styles.primaryBtnPressed]}>
+        {content}
+      </Pressable>
+    </GlassSurface>
   );
 }
 
@@ -169,20 +188,22 @@ export function UtilityIconButton({
   showLabel?: boolean;
 }) {
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.utilityIconButton,
-        compact && styles.utilityIconButtonCompact,
-        !showLabel && styles.utilityIconButtonIconOnly,
-        pressed && styles.primaryBtnPressed,
-      ]}
-    >
-      <LeftIcon name={icon} size={18} color={tint} />
-      {showLabel ? <Text style={styles.utilityIconButtonLabel}>{label}</Text> : null}
-    </Pressable>
+    <GlassSurface variant="soft" radius={compact ? glassRadii.compactCard : glassRadii.card}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.utilityIconButton,
+          compact && styles.utilityIconButtonCompact,
+          !showLabel && styles.utilityIconButtonIconOnly,
+          pressed && styles.primaryBtnPressed,
+        ]}
+      >
+        <LeftIcon name={icon} size={18} color={tint} />
+        {showLabel ? <Text style={styles.utilityIconButtonLabel}>{label}</Text> : null}
+      </Pressable>
+    </GlassSurface>
   );
 }
 
@@ -284,18 +305,34 @@ export function AppDialog({
             <Text style={styles.dialogBody}>{message}</Text>
           </View>
           <View style={styles.dialogActions}>
-            {actions.map((action) =>
-              action.variant === "primary" ? (
-                <PrimaryButton key={action.label} label={action.label} onPress={action.onPress} />
-              ) : (
-                <GhostButton
+            {actions.map((action) => {
+              const variant = action.variant ?? "ghost";
+              return (
+                <Pressable
                   key={action.label}
-                  label={action.label}
+                  accessibilityRole="button"
+                  accessibilityLabel={action.label}
                   onPress={action.onPress}
-                  destructive={action.variant === "destructive"}
-                />
-              ),
-            )}
+                  style={({ pressed }) => [
+                    styles.dialogAction,
+                    variant === "primary" && styles.dialogActionPrimary,
+                    variant === "ghost" && styles.dialogActionGhost,
+                    variant === "destructive" && styles.dialogActionDestructive,
+                    pressed && styles.dialogActionPressed,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.dialogActionLabel,
+                      variant === "primary" && styles.dialogActionLabelPrimary,
+                      variant === "destructive" && styles.dialogActionLabelDestructive,
+                    ]}
+                  >
+                    {action.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
       </View>

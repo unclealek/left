@@ -39,8 +39,6 @@ type DbVenueRow = {
   source_payload?: Record<string, unknown> | null;
 };
 
-const LOCAL_VENUE_CATALOG: DetectedVenue[] = [];
-
 function toRadians(value: number) {
   return (value * Math.PI) / 180;
 }
@@ -142,35 +140,6 @@ function lookupDbVenues(coords: LocationObjectCoords, rows: DbVenueRow[]) {
   return venues;
 }
 
-function lookupLocalVenues(coords: LocationObjectCoords) {
-  const matches = LOCAL_VENUE_CATALOG
-    .map((venue) => ({
-      ...venue,
-      distanceMeters: distanceMeters(coords.latitude, coords.longitude, venue.latitude, venue.longitude),
-    }))
-    .filter(
-      (venue) =>
-        (venue.distanceMeters ?? Number.MAX_SAFE_INTEGER) <=
-        Math.min(venue.radiusMeters, VENUE_CANDIDATE_MAX_DISTANCE_METERS),
-    )
-    .sort((a, b) => (a.distanceMeters ?? Number.MAX_SAFE_INTEGER) - (b.distanceMeters ?? Number.MAX_SAFE_INTEGER));
-
-  if (matches.length) {
-    console.info(
-      "[location][venues] local fallback venues matched",
-      matches.map((venue) => ({
-        venueId: venue.id,
-        venueName: venue.name,
-        distanceMeters: venue.distanceMeters ? Math.round(venue.distanceMeters) : null,
-      })),
-    );
-  } else {
-    console.info("[location][venues] no local fallback venue matched");
-  }
-
-  return matches;
-}
-
 function dedupeVenues(venues: DetectedVenue[]) {
   const deduped: DetectedVenue[] = [];
   for (const venue of venues) {
@@ -230,11 +199,8 @@ export async function getNearbyVenues(coords: LocationObjectCoords) {
     return dedupeVenues(dbVenues);
   }
 
-  const fallbackVenues = lookupLocalVenues(coords);
-  if (!fallbackVenues.length) {
-    console.info("[location][venues] no venue match for current coordinates");
-  }
-  return dedupeVenues(fallbackVenues);
+  console.info("[location][venues] no confirmed venue match for current coordinates");
+  return [];
 }
 
 export async function detectVenueFromCoords(coords: LocationObjectCoords, preferredVenueId?: string | null) {

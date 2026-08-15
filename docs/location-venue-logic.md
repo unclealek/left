@@ -98,29 +98,28 @@ Core logic:
 
 This file maps coordinates to one or more venue candidates.
 
-It currently uses three paths, in strict order:
+It currently uses two confirmed-venue paths, in strict order:
 
-- Supabase `public.venues` lookup for canonical app venues
-- Google Places API lookup only when the DB path returns no nearby venues
-- local fallback catalog only when both DB and Google return nothing
+- authenticated Supabase `nearby-venues` Edge Function, which checks canonical venues and uses Google Places only when needed
+- direct Supabase `public.venues` lookup as a resilience path if the function returns no candidates
 
 Current matching behavior:
 
 - fetch active Supabase venue rows
 - normalize them into nearby candidates using saved geofence centers and radii
 - if one or more DB candidates survive the radius check, return them immediately
-- only if the DB returns zero nearby venues, call Google Places
+- only if the server-side canonical lookup returns zero nearby venues, call Google Places inside the Edge Function
 - Google search uses a 100 meter radius and fetches up to 5 candidates
 - discard Google candidates farther than 120 meters from the current device fix
 - canonicalize Google matches into `public.venues`
 - normalize those canonical venue rows and return them
-- fall back to the local venue catalog only when backend and Google candidate lists are both empty
+- return an empty candidate list when no confirmed venue exists
 - return a candidate list instead of only a single guessed venue
 
 Important implementation detail:
 
-- the local fallback catalog is intentionally empty today
-- the runtime is effectively DB-first, Google-second, and local-catalog-last with no seeded sample venue safety net
+- Google Places credentials stay in the Edge Function environment
+- the runtime does not substitute a seeded sample venue when confirmation fails
 
 ### Local Persistence
 
@@ -274,10 +273,10 @@ The app currently supports two persisted venue-level controls:
 - `Hide me at [venue]`
 - `Never notify me here`
 
-These are exposed in:
+These are managed in Safety, with Settings providing the navigation entry:
 
 - [src/screens/left/SafetyScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/SafetyScreen.tsx:6)
-- [src/screens/left/SettingsScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/SettingsScreen.tsx:9)
+- [src/screens/left/SettingsScreen.tsx](/Users/kelvinaliche/Desktop/Projects/leftApp/src/screens/left/SettingsScreen.tsx)
 
 Behavior:
 
@@ -323,7 +322,7 @@ Relevant schema file:
 
 - [supabase/migrations/0001_left_mvp.sql](/Users/kelvinaliche/Desktop/Projects/leftApp/supabase/migrations/0001_left_mvp.sql:95)
 
-When the signed-in user and selected venue are real UUID-backed records, successful visibility activation now creates a backend `presence_sessions` row. The app also refreshes venue context and nearby feed data from Supabase. Local/mock venue IDs still use the seeded development path.
+When the signed-in user and selected venue are real UUID-backed records, successful visibility activation creates a backend `presence_sessions` row. The app also refreshes venue context and nearby feed data from Supabase. Production runtime no longer falls back to seeded venue records.
 
 ## Configuration
 
@@ -338,29 +337,26 @@ Current config includes:
 - Android location permissions
 - Expo plugins for `expo-location` and `expo-notifications`
 
-### Optional Environment Variable
+### Required Edge Function Secret
 
-- `EXPO_PUBLIC_GOOGLE_PLACES_API_KEY`
+- `GOOGLE_PLACES_API_KEY`
 
-If this is missing, venue detection falls back to the local venue catalog.
+This secret belongs to the Supabase Edge Function environment, not the Expo client. If it is missing, detection can return existing database venues but cannot ingest a new Google Places match.
 
 ## Current Limitations
 
 Important gaps remain:
 
-- venue preferences are stored locally only, not synced per user in Supabase
-- the local fallback catalog is still tiny
-- venue density, pulse copy, and nearby feed are Supabase-backed only when real UUID venue/user records are available
-- location-driven venue detection still has a local/mock fallback path for development
+- venue preferences sync to Supabase for UUID-backed users and keep a local cache for recovery
+- venue density, pulse copy, and nearby feed require real UUID venue/user records
+- location-driven venue detection returns an honest empty state when neither the Edge Function nor database finds a confirmed venue
 - Expo Go is not a reliable environment for testing this flow; it should be tested in a dev build or native run
 
 ## Recommended Next Steps
 
-1. Add a backend table for per-user venue preferences so hide/mute rules persist across reinstalls and devices.
-2. Strengthen deduplication beyond exact-name matching.
-3. Replace the local fallback catalog with a real venue ingestion strategy for development and production.
-4. Add analytics/logging around permission denial, venue detection, venue selection, prompt firing, and prompt response outcomes.
-5. Add automated integration tests for presence activation, pause/end, feed filtering, and report creation.
+1. Strengthen deduplication beyond exact-name matching.
+2. Add analytics/logging around permission denial, venue detection, venue selection, prompt firing, and prompt response outcomes.
+3. Add automated integration tests for presence activation, pause/end, feed filtering, and report creation.
 
 ## Summary
 

@@ -54,6 +54,46 @@ export async function markApproachConnected(input: {
   return true;
 }
 
+async function markApproachFinished(input: {
+  approachId: string;
+  status: "cancelled" | "expired";
+  finishedAt: string;
+}) {
+  if (!isUuid(input.approachId)) return false;
+
+  const updates = input.status === "cancelled"
+    ? { status: input.status, cancelled_at: input.finishedAt }
+    : { status: input.status };
+  const { error } = await supabase
+    .from("approach_attempts")
+    .update(updates)
+    .eq("id", input.approachId)
+    .eq("status", "started");
+
+  if (error) {
+    console.warn(`[interactions] approach ${input.status} update failed`, error.message);
+    return false;
+  }
+
+  return true;
+}
+
+export function markApproachCancelled(input: { approachId: string; cancelledAt: string }) {
+  return markApproachFinished({
+    approachId: input.approachId,
+    status: "cancelled",
+    finishedAt: input.cancelledAt,
+  });
+}
+
+export function markApproachExpired(input: { approachId: string; expiredAt: string }) {
+  return markApproachFinished({
+    approachId: input.approachId,
+    status: "expired",
+    finishedAt: input.expiredAt,
+  });
+}
+
 export async function hideUserForActor(input: {
   actorUserId: string;
   targetUserId: string;

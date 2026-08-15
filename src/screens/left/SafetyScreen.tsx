@@ -1,6 +1,8 @@
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { T, styles } from "../../app/leftTheme";
+import { ScreenHeader } from "../../components/left/navigation";
 import { LeftIcon, type LeftIconName } from "../../components/icons";
+import type { ShowAppDialog } from "../../components/left/ui";
 import type { VenuePreference } from "../../features/location/location-storage";
 
 export function SafetyScreen({
@@ -23,6 +25,7 @@ export function SafetyScreen({
   onMuteVenue,
   onClearVenueHidden,
   onClearVenueMuted,
+  onShowDialog,
 }: {
   venueName: string;
   sessionVisible: boolean;
@@ -46,14 +49,15 @@ export function SafetyScreen({
   onMuteVenue: () => void;
   onClearVenueHidden: (venueId: string, venueName: string) => void;
   onClearVenueMuted: (venueId: string, venueName: string) => void;
+  onShowDialog: ShowAppDialog;
 }) {
   function confirmHideVenue() {
-    Alert.alert(
+    onShowDialog(
       "Hide this venue?",
       `You will not appear at ${venueName} until you unhide it.`,
       [
-        { text: "Cancel", style: "cancel" },
-        { text: "Hide venue", style: "destructive", onPress: onHideVenue },
+        { label: "Cancel", variant: "ghost" },
+        { label: "Hide venue", variant: "destructive", onPress: onHideVenue },
       ],
     );
   }
@@ -64,24 +68,12 @@ export function SafetyScreen({
       contentContainerStyle={screenStyles.content}
       showsVerticalScrollIndicator={false}
     >
-      <View style={screenStyles.topBar}>
-        <Pressable
-          onPress={onBack}
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          style={({ pressed }) => [styles.profileHeaderButton, pressed && styles.iconButtonPressed]}
-        >
-          <LeftIcon name="chevron-left" size={28} color={T.textPrimary} />
-        </Pressable>
-        <Text style={screenStyles.topBarTitle}>Privacy and safety</Text>
-        <View style={styles.profileHeaderButton} />
-      </View>
-
-      <View style={screenStyles.header}>
-        <Text style={screenStyles.subtitle}>
-          Control visibility, venue privacy, and alerts from one place.
-        </Text>
-      </View>
+      <ScreenHeader
+        title="Privacy and safety"
+        subtitle="Control visibility, venue privacy, and alerts from one place."
+        onBack={onBack}
+        variant="utility"
+      />
 
       <View style={screenStyles.card}>
         <Text style={screenStyles.sectionTitle}>Current visibility</Text>
@@ -116,7 +108,7 @@ export function SafetyScreen({
           <LeftIcon
             name={sessionVisible ? "pause-circle" : "eye"}
             size={18}
-            color={T.white}
+            color={T.actionContent}
           />
           <Text style={screenStyles.primaryActionText}>
             {sessionVisible
@@ -426,17 +418,17 @@ const screenStyles = StyleSheet.create({
   primaryAction: {
     minHeight: 56,
     borderRadius: 18,
-    backgroundColor: T.primary,
+    backgroundColor: T.actionSurface,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
   },
   primaryActionDisabled: {
-    backgroundColor: T.textMuted,
+    opacity: 0.5,
   },
   primaryActionText: {
-    color: T.white,
+    color: T.actionContent,
     fontSize: 16,
     lineHeight: 20,
     fontFamily: T.fontBodyBold,

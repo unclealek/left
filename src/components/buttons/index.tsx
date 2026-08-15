@@ -1,10 +1,11 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { leftColors } from "../color";
-import { LeftIcon } from "../icons";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Animated, PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
+import { LeftIcon, type LeftIconName } from "../icons";
 import { LeftLogoMark } from "../light_logo/LeftLogoMark";
 import { leftShadows } from "../shadow";
 import { T } from "../theme";
 import { radii, spacing, typography } from "../token";
+import { hasCompletedSlide } from "./slide-confirm";
 
 function ButtonAccentGlyph({ size = 18 }: { size?: number }) {
   return (
@@ -19,6 +20,7 @@ export function BrandPrimaryButton({
   subtitle,
   onPress,
   disabled = false,
+  loading = false,
   size = "compact",
   trailingIcon = "none",
 }: {
@@ -26,34 +28,40 @@ export function BrandPrimaryButton({
   subtitle?: string;
   onPress: () => void;
   disabled?: boolean;
+  loading?: boolean;
   size?: "compact" | "hero";
   trailingIcon?: "none" | "arrow";
 }) {
   const hero = size === "hero";
   const compactInline = !hero && !subtitle && trailingIcon === "none";
+  const inactive = disabled || loading;
 
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={subtitle ? `${label}. ${subtitle}` : label}
-      accessibilityState={{ disabled, busy: disabled && label.includes("...") }}
-      disabled={disabled}
+      accessibilityState={{ disabled: inactive, busy: loading }}
+      disabled={inactive}
       onPress={onPress}
       style={({ pressed }) => [
         styles.brandPrimaryButtonPressable,
-        pressed && !disabled && styles.primaryBtnPressed,
+        pressed && !inactive && styles.primaryBtnPressed,
       ]}
     >
       <View
         style={[
           styles.brandPrimaryButton,
           hero ? styles.brandPrimaryButtonHero : styles.brandPrimaryButtonCompact,
-          disabled && styles.brandPrimaryButtonDisabled,
+          inactive && styles.brandPrimaryButtonDisabled,
         ]}
       >
         {compactInline ? (
           <View style={styles.brandPrimaryButtonInlineGroup}>
-            <ButtonAccentGlyph size={18} />
+            {loading ? (
+              <ActivityIndicator size="small" color={T.actionContent} />
+            ) : (
+              <ButtonAccentGlyph size={18} />
+            )}
             <Text style={styles.brandPrimaryButtonLabel}>{label}</Text>
           </View>
         ) : (
@@ -64,7 +72,11 @@ export function BrandPrimaryButton({
                 hero && styles.brandPrimaryButtonCopyHero,
               ]}
             >
-              <ButtonAccentGlyph size={hero ? 20 : 18} />
+              {loading ? (
+                <ActivityIndicator size="small" color={T.actionContent} />
+              ) : (
+                <ButtonAccentGlyph size={hero ? 20 : 18} />
+              )}
               <View style={styles.brandPrimaryButtonCopy}>
                 <Text style={[styles.brandPrimaryButtonLabel, hero && styles.brandPrimaryButtonLabelHero]}>
                   {label}
@@ -100,29 +112,186 @@ export function PrimaryButton({
   label,
   onPress,
   disabled = false,
+  loading = false,
   compact = false,
+  tone = "default",
+  leadingIcon,
+  trailingIcon,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
+  loading?: boolean;
   compact?: boolean;
+  tone?: "default" | "onboarding";
+  leadingIcon?: LeftIconName;
+  trailingIcon?: LeftIconName;
 }) {
+  const inactive = disabled || loading;
+  const contentColor = T.actionContent;
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
+      accessibilityState={{ disabled: inactive, busy: loading }}
+      disabled={inactive}
       onPress={onPress}
       style={({ pressed }) => [
         styles.primaryBtn,
+        tone === "onboarding" && styles.primaryBtnOnboarding,
         compact && styles.primaryBtnCompact,
-        disabled && styles.primaryBtnDisabled,
-        pressed && !disabled && styles.primaryBtnPressed,
+        inactive && styles.primaryBtnDisabled,
+        pressed && !inactive && styles.primaryBtnPressed,
       ]}
     >
-      <Text style={[styles.primaryBtnLabel, disabled && styles.primaryBtnLabelDisabled]}>{label}</Text>
+      <View style={styles.buttonLabelRow}>
+        {loading ? (
+          <ActivityIndicator size="small" color={contentColor} />
+        ) : leadingIcon ? (
+          <LeftIcon name={leadingIcon} size={18} color={contentColor} />
+        ) : null}
+        <Text
+          style={[
+            styles.primaryBtnLabel,
+            tone === "onboarding" && styles.primaryBtnLabelOnboarding,
+            inactive && styles.primaryBtnLabelDisabled,
+          ]}
+        >
+          {label}
+        </Text>
+        {!loading && trailingIcon ? <LeftIcon name={trailingIcon} size={18} color={contentColor} /> : null}
+      </View>
     </Pressable>
+  );
+}
+
+export function SlideToConfirmButton({
+  label,
+  subtitle,
+  onConfirm,
+  disabled = false,
+  loading = false,
+}: {
+  label: string;
+  subtitle?: string;
+  onConfirm: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+}) {
+  const [trackWidth, setTrackWidth] = useState(0);
+  const translateX = useRef(new Animated.Value(0)).current;
+  const dragStart = useRef(0);
+  const completionFired = useRef(false);
+  const thumbSize = 42;
+  const trackInset = 5;
+  const maxTravel = Math.max(trackWidth - thumbSize - trackInset * 2, 0);
+  const inactive = disabled || loading;
+
+  function resetThumb() {
+    Animated.spring(translateX, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 180,
+      friction: 18,
+    }).start();
+  }
+
+  function completeSlide() {
+    if (inactive || completionFired.current || maxTravel <= 0) return;
+    completionFired.current = true;
+    Animated.timing(translateX, {
+      toValue: maxTravel,
+      duration: 140,
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) onConfirm();
+    });
+  }
+
+  useEffect(() => {
+    if (loading && maxTravel > 0) {
+      Animated.timing(translateX, {
+        toValue: maxTravel,
+        duration: 140,
+        useNativeDriver: true,
+      }).start();
+      return;
+    }
+
+    completionFired.current = false;
+    resetThumb();
+  }, [disabled, loading, maxTravel, translateX]);
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_, gesture) =>
+          !inactive &&
+          maxTravel > 0 &&
+          gesture.dx > 4 &&
+          Math.abs(gesture.dx) > Math.abs(gesture.dy),
+        onPanResponderGrant: () => {
+          translateX.stopAnimation((value) => {
+            dragStart.current = value;
+          });
+        },
+        onPanResponderMove: (_, gesture) => {
+          const nextValue = Math.max(0, Math.min(dragStart.current + gesture.dx, maxTravel));
+          translateX.setValue(nextValue);
+        },
+        onPanResponderRelease: (_, gesture) => {
+          const releasedAt = Math.max(0, Math.min(dragStart.current + gesture.dx, maxTravel));
+          if (hasCompletedSlide(releasedAt, maxTravel)) {
+            completeSlide();
+          } else {
+            resetThumb();
+          }
+        },
+        onPanResponderTerminate: resetThumb,
+      }),
+    [inactive, maxTravel, onConfirm, translateX],
+  );
+
+  return (
+    <View
+      accessible
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityHint="Swipe the handle to the right to confirm."
+      accessibilityState={{ disabled: inactive, busy: loading }}
+      accessibilityActions={[{ name: "activate", label: "Confirm" }]}
+      onAccessibilityAction={(event) => {
+        if (event.nativeEvent.actionName === "activate") completeSlide();
+      }}
+      onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}
+      style={[styles.slideConfirmTrack, inactive && styles.slideConfirmTrackDisabled]}
+    >
+      <View pointerEvents="none" style={styles.slideConfirmCopy}>
+        <Text style={styles.slideConfirmLabel}>{loading ? "Going visible..." : label}</Text>
+        {subtitle ? <Text style={styles.slideConfirmSubtitle}>{subtitle}</Text> : null}
+      </View>
+      <Animated.View
+        {...panResponder.panHandlers}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={[
+          styles.slideConfirmThumb,
+          {
+            width: thumbSize,
+            height: thumbSize,
+            transform: [{ translateX }],
+          },
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color={T.actionSurface} />
+        ) : (
+          <LeftLogoMark size={20} />
+        )}
+      </Animated.View>
+    </View>
   );
 }
 
@@ -132,36 +301,58 @@ export function GhostButton({
   compact = false,
   destructive = false,
   disabled = false,
+  loading = false,
+  selected = false,
+  leadingIcon,
+  trailingIcon,
 }: {
   label: string;
   onPress: () => void;
   compact?: boolean;
   destructive?: boolean;
   disabled?: boolean;
+  loading?: boolean;
+  selected?: boolean;
+  leadingIcon?: LeftIconName;
+  trailingIcon?: LeftIconName;
 }) {
+  const inactive = disabled || loading;
+  const labelColor = destructive ? T.dangerText : selected ? T.primary : T.textPrimary;
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
+      accessibilityState={{ disabled: inactive, busy: loading, selected }}
+      disabled={inactive}
       onPress={onPress}
-      style={[
+      style={({ pressed }) => [
         styles.ghostBtn,
         compact && styles.ghostBtnCompact,
+        selected && styles.ghostBtnSelected,
         destructive && styles.ghostBtnDestructive,
-        disabled && styles.ghostBtnDisabled,
+        inactive && styles.ghostBtnDisabled,
+        pressed && !inactive && styles.ghostBtnPressed,
       ]}
     >
-      <Text
-        style={[
-          styles.ghostBtnLabel,
-          destructive && styles.ghostBtnLabelDestructive,
-          disabled && styles.ghostBtnLabelDisabled,
-        ]}
-      >
-        {label}
-      </Text>
+      <View style={styles.buttonLabelRow}>
+        {loading ? (
+          <ActivityIndicator size="small" color={labelColor} />
+        ) : leadingIcon ? (
+          <LeftIcon name={leadingIcon} size={18} color={labelColor} />
+        ) : null}
+        <Text
+          style={[
+            styles.ghostBtnLabel,
+            selected && styles.ghostBtnLabelSelected,
+            destructive && styles.ghostBtnLabelDestructive,
+            inactive && styles.ghostBtnLabelDisabled,
+          ]}
+        >
+          {label}
+        </Text>
+        {!loading && trailingIcon ? <LeftIcon name={trailingIcon} size={18} color={labelColor} /> : null}
+      </View>
     </Pressable>
   );
 }
@@ -173,7 +364,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: leftColors.white,
+    backgroundColor: T.actionContent,
   },
   brandPrimaryButtonPressable: {
     width: "100%",
@@ -182,12 +373,12 @@ const styles = StyleSheet.create({
     minHeight: 60,
     borderRadius: radii.xl,
     paddingHorizontal: spacing[4],
-    backgroundColor: T.primary,
+    backgroundColor: T.actionSurface,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     borderWidth: 1,
-    borderColor: T.primary,
+    borderColor: T.actionSurface,
     ...leftShadows.medium,
   },
   brandPrimaryButtonCompact: {
@@ -215,7 +406,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: radii.pill,
-    backgroundColor: leftColors.white,
+    backgroundColor: T.actionContent,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -241,7 +432,7 @@ const styles = StyleSheet.create({
     gap: spacing[1],
   },
   brandPrimaryButtonLabel: {
-    color: leftColors.white,
+    color: T.actionContent,
     fontSize: typography.body,
     lineHeight: 22,
     fontFamily: typography.fontBodyBold,
@@ -252,7 +443,7 @@ const styles = StyleSheet.create({
     lineHeight: 26,
   },
   brandPrimaryButtonSubtitle: {
-    color: "rgba(255,255,255,0.72)",
+    color: "rgba(198,227,133,0.72)",
     fontSize: typography.caption,
     lineHeight: 18,
     fontFamily: typography.fontBody,
@@ -260,9 +451,9 @@ const styles = StyleSheet.create({
   primaryBtn: {
     minHeight: 54,
     borderRadius: radii.xl,
-    backgroundColor: T.primary,
+    backgroundColor: T.actionSurface,
     borderWidth: 1,
-    borderColor: T.primary,
+    borderColor: T.actionSurface,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: spacing[5],
@@ -278,17 +469,84 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[4],
     borderRadius: radii.lg,
   },
+  primaryBtnOnboarding: {
+    minHeight: 58,
+    borderRadius: radii.xl,
+    backgroundColor: T.actionSurface,
+    borderColor: T.actionSurface,
+    shadowColor: T.actionSurface,
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+  },
   primaryBtnDisabled: {
     opacity: 0.45,
   },
   primaryBtnLabel: {
-    color: leftColors.white,
+    color: T.actionContent,
     fontSize: typography.body,
     lineHeight: 20,
     fontFamily: typography.fontBodyBold,
   },
+  primaryBtnLabelOnboarding: {
+    color: T.onboardingAccent,
+  },
   primaryBtnLabelDisabled: {
-    color: "rgba(255,255,255,0.7)",
+    color: "rgba(198,227,133,0.7)",
+  },
+  slideConfirmTrack: {
+    width: "100%",
+    minHeight: 52,
+    borderRadius: radii.xl,
+    backgroundColor: T.actionSurface,
+    borderWidth: 1,
+    borderColor: T.actionSurface,
+    justifyContent: "center",
+    overflow: "hidden",
+    ...leftShadows.small,
+  },
+  slideConfirmTrackDisabled: {
+    opacity: 0.46,
+  },
+  slideConfirmCopy: {
+    minHeight: 52,
+    justifyContent: "center",
+    paddingLeft: 60,
+    paddingRight: 14,
+    gap: 0,
+  },
+  slideConfirmLabel: {
+    color: "rgba(198,227,133,0.84)",
+    fontSize: 14,
+    lineHeight: 17,
+    fontFamily: typography.fontBodyMedium,
+    letterSpacing: -0.1,
+  },
+  slideConfirmSubtitle: {
+    color: "rgba(198,227,133,0.52)",
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: typography.fontBody,
+  },
+  slideConfirmThumb: {
+    position: "absolute",
+    left: 5,
+    top: 4,
+    borderRadius: radii.pill,
+    backgroundColor: T.actionContent,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: T.actionSurface,
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
+  },
+  buttonLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing[2],
   },
   ghostBtn: {
     minHeight: 52,
@@ -309,6 +567,14 @@ const styles = StyleSheet.create({
     borderColor: T.dangerBorder,
     backgroundColor: T.dangerDim,
   },
+  ghostBtnSelected: {
+    borderColor: T.primary,
+    backgroundColor: T.primarySoft,
+  },
+  ghostBtnPressed: {
+    opacity: 0.78,
+    transform: [{ scale: 0.995 }],
+  },
   ghostBtnDisabled: {
     opacity: 0.45,
   },
@@ -320,6 +586,10 @@ const styles = StyleSheet.create({
   },
   ghostBtnLabelDestructive: {
     color: T.dangerText,
+  },
+  ghostBtnLabelSelected: {
+    color: T.primary,
+    fontFamily: typography.fontBodyBold,
   },
   ghostBtnLabelDisabled: {
     color: T.textMuted,

@@ -216,17 +216,24 @@ Goal:
 
 Primary actions:
 - continue with Google
+- inspect the clearly deferred email option
 
 Low-fi wireframe:
 
 ```text
 +--------------------------------------------------+
-| LEFT                                             |
-| ambient intro / positioning copy                 |
+|                 LEFT mark                        |
+|                                                  |
+|          WELCOME TO LEFT                         |
+|        People. Places. Presence.                 |
+|   Connection starts with being there.            |
 |                                                  |
 | [ Continue with Google ]                         |
+| ----------------- or -----------------           |
+| Continue with email — COMING SOON                |
 |                                                  |
 | auth error state if needed                       |
+| lock  Your presence. Your choice.                |
 +--------------------------------------------------+
 ```
 
@@ -234,6 +241,8 @@ Rules:
 - Google is the primary working auth provider today
 - auth returns into the native app via `left://auth/callback`
 - no local email/password flow in the current app
+- the email row opens a coming-soon explanation and must not imply that email auth is available
+- the welcome screen shares the onboarding Creole Brown and Yellow Green palette
 
 ## Screen 0.1: Onboarding
 
@@ -245,6 +254,7 @@ Primary actions:
 - choose avatar style
 - allow location
 - finish onboarding
+- continue from the completion reveal
 
 Low-fi wireframe:
 
@@ -255,18 +265,28 @@ Low-fi wireframe:
 | [ Continue ]                                     |
 +--------------------------------------------------+
 | Step 2: avatar style                             |
-| [geometric] [abstract] [minimal] [soft]          |
+| [Soft Square] [Echo] [Orbit] [Pebble]            |
+| [ Surprise me ]                                  |
+| nearby-profile preview                           |
 | [ Continue ]                                     |
 +--------------------------------------------------+
-| Step 3: location                                 |
-| [ Enable location ]                              |
-| [ Finish ]                                       |
+| Step 3: venue detection                          |
+| enter place -> detect venue -> nearby people     |
+| exact location is not shown to other people      |
+| [ Turn on venue detection ]                      |
++--------------------------------------------------+
+| Completion                                       |
+| social shape + first name                        |
+| "Your signal is ready."                         |
+| [ See what's nearby ]                            |
 +--------------------------------------------------+
 ```
 
 Rules:
-- onboarding is three-step and linear in the current build
-- finishing onboarding persists the `public.users` profile row
+- onboarding is three required steps followed by a completion reveal
+- Creole Brown `#1F0E06` and Yellow Green `#C6E385` own the onboarding palette
+- finishing venue detection persists the `public.users` profile row before the completion reveal
+- the completion action routes to Home without writing the profile a second time
 
 ## Screen 1: Venue Home
 
@@ -542,20 +562,18 @@ Rules:
 - hiding or ending a session should be fast and reversible where safe
 - blocking/reporting should require minimal effort
 
-## Screen 8: Settings / You
+## Screen 8: Profile And Settings
 
 Goal:
-- give the signed-in user a dedicated place for profile defaults, prompt customization, sign-out, and identity removal
+- give the signed-in user separate destinations for profile editing and account actions
 
 Primary actions:
 - edit first name
 - edit avatar style
 - edit default intent
 - edit default vibes
-- edit nearby prompt
-- edit approach prompt
 - open safety controls
-- sign out
+- log out
 - request identity removal
 
 Low-fi wireframe:
@@ -574,26 +592,33 @@ Low-fi wireframe:
 | Default intent / vibes                           |
 | [Networking] [AI/startups] [Design]              |
 |                                                  |
-| Nearby prompt                                    |
-| [ Ask what they're building...__________ ]       |
-|                                                  |
-| Approach prompt                                  |
-| [ What are you working on...___________ ]        |
-|                                                  |
 | [ Save profile defaults ]                        |
-| [ Safety controls ]                              |
-|                                                  |
++--------------------------------------------------+
+| Settings                                         |
 | Account                                          |
-| [ Sign out ]                                     |
-| [ Request identity removal ]                     |
+| [ Privacy and safety                         > ]  |
+| [ Notifications                              > ]  |
+| General                                          |
+| [ About Left                                  > ] |
+|                                                  |
+| Session                                          |
+| Sign out on this device; sign in again anytime.  |
+| [ Log out ]                                      |
+|                                                  |
+| / Identity removal ----------------------------\ |
+| | Removes direct identity details. Retained    | |
+| | safety/operational records remain.           | |
+| | [ Request identity removal ]                 | |
+| \----------------------------------------------/ |
 +--------------------------------------------------+
 | Footer: Home | Nearby | Session | You            |
 +--------------------------------------------------+
 ```
 
 Rules:
-- prompt customization is persisted on the user profile
-- account actions live under `You`, not under safety
+- profile defaults are edited on Profile; account actions live on Settings
+- logout is neutral and visually separate from identity removal
+- identity removal is isolated in a danger card and requires confirmation
 - identity removal is not full deletion; it follows the retained-record policy
 
 ## Screen 9: Bubble Visualization Layer
@@ -675,16 +700,18 @@ Low-fi wireframe:
 
 The current account-removal flow in the app is:
 
-1. user opens `You`
-2. user taps `Request identity removal`
-3. app creates `public.identity_removal_requests`
-4. app calls the backend processor
-5. backend redacts direct identity fields and marks `public.users.identity_removed = true` if processing succeeds
-6. app signs the user out after the request flow completes
-7. future app bootstrap must force local sign-out if a cached session still exists for a profile marked `identity_removed = true`
-8. selected product records are retained under policy
+1. user opens `Profile`, then `Settings`
+2. user reviews the separate `Session` and `Identity removal` sections
+3. user taps `Request identity removal`
+4. app confirms the consequences and retained-record policy
+5. app creates `public.identity_removal_requests`
+6. app calls the backend processor while showing a busy state
+7. backend redacts direct identity fields and marks `public.users.identity_removed = true` if processing succeeds
+8. app shows recorded/queued feedback and signs the user out when the completion flow requires it
+9. future app bootstrap must force local sign-out if a cached session still exists for a profile marked `identity_removed = true`
+10. selected product records are retained under policy
 
-This flow is documented in more detail in [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/left%20app/docs/identity-removal-policy.md).
+This flow is documented in more detail in [identity-removal-policy.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/identity-removal-policy.md).
 
 ## Open Gaps Before Build
 

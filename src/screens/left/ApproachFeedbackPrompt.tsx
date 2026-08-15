@@ -2,6 +2,7 @@ import { Text, View } from "react-native";
 import { styles } from "../../app/leftTheme";
 import type { PendingApproachFeedback } from "../../features/interactions/approach-feedback-storage";
 import { GhostButton, PrimaryButton, SelectChip } from "../../components/left/ui";
+import { GlassSurface, glassRadii } from "../../components/glass";
 
 export function ApproachFeedbackPrompt({
   feedback,
@@ -24,7 +25,12 @@ export function ApproachFeedbackPrompt({
 
   return (
     <View style={styles.feedbackPromptOverlay}>
-      <View style={styles.feedbackPromptCard}>
+      <GlassSurface
+        variant="medium"
+        radius={glassRadii.card}
+        style={styles.feedbackPromptGlass}
+        contentStyle={styles.feedbackPromptCard}
+      >
         <Text style={styles.feedbackPromptEyebrow}>Quick follow-up</Text>
         <Text style={styles.feedbackPromptTitle}>How did it go with {feedback.targetFirstName}?</Text>
         <Text style={styles.feedbackPromptBody}>
@@ -52,11 +58,11 @@ export function ApproachFeedbackPrompt({
 
         <View style={styles.feedbackPromptActions}>
           <GhostButton label="Later" onPress={onLater} />
-          <PrimaryButton label="Save feedback" onPress={onSubmit} />
+          <PrimaryButton label="Save feedback" onPress={onSubmit} disabled={!canSubmit} />
         </View>
 
         {!canSubmit ? <Text style={styles.feedbackPromptHint}>Answer the prompt above to continue.</Text> : null}
-      </View>
+      </GlassSurface>
     </View>
   );
 }

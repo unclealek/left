@@ -42,7 +42,11 @@ Mobile app variables:
 
 - `EXPO_PUBLIC_SUPABASE_URL`
 - `EXPO_PUBLIC_SUPABASE_ANON_KEY`
-- `EXPO_PUBLIC_GOOGLE_PLACES_API_KEY`
+- `EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN`
+
+Supabase Edge Function secret:
+
+- `GOOGLE_PLACES_API_KEY`
 
 Admin app variables:
 
@@ -53,7 +57,8 @@ Important rules:
 
 - point the mobile and admin apps at the same Supabase project unless you are intentionally testing split environments
 - `EXPO_PUBLIC_*` values are embedded in Expo builds and are not secret
-- the Google Places key should be restricted in Google Cloud because it is client-exposed by design
+- Google Places is called only by the authenticated `nearby-venues` Edge Function; do not expose its key through an `EXPO_PUBLIC_*` variable
+- set the hosted secret with `supabase secrets set GOOGLE_PLACES_API_KEY=<value>` and restrict it in Google Cloud
 
 ## 4. Run The Apps
 
@@ -80,6 +85,7 @@ Useful checks:
 
 ```bash
 npm run typecheck
+npm test
 npm --prefix admin run typecheck
 npm run admin:build
 ```
@@ -161,11 +167,13 @@ Use the identity removal policy and engineering spec together when validating th
 
 ## 9. Known Local Dev Caveats
 
-- There is no visible automated test suite in the repo today.
-- The mobile app still contains mock fallback paths for some development states.
-- Social Momentum migration validation is called out as incomplete in [docs/not-production-ready.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/not-production-ready.md:62).
+- Vitest covers the extracted lifecycle rules, but backend RLS/integration and device E2E coverage are still missing.
+- Production runtime does not use seeded people or venues; local backend development therefore needs real seed data or manual records.
+- Migrations through `0021_expire_stale_lifecycle_records.sql` were confirmed synchronized with staging on August 10, 2026.
+- Migration `0022_fix_staging_function_lint.sql` was applied and fixed the identity-removal schema-lint error.
+- Migration `0023_fix_safety_review_parameter_binding.sql` was applied and linked staging schema lint completed without errors on August 10, 2026.
+- Clean local reset and staging behavior validation remain.
 - The missing `supabase/seed.sql` file is the main local backend reproducibility gap.
-- This shell environment may not always include Node/npm tooling, so command verification should be treated separately from documentation edits.
 
 ## 10. Recommended Next Docs Cleanup
 

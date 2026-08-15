@@ -4,19 +4,17 @@ import { T } from "../../theme";
 export const feedbackStyles = {
   feedbackPromptOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(251,143,255,0.14)",
+    backgroundColor: "rgba(31,14,6,0.18)",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
     zIndex: 30,
   },
-  feedbackPromptCard: {
+  feedbackPromptGlass: {
     width: "100%",
     maxWidth: 360,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: T.borderBlack,
-    backgroundColor: T.surface,
+  },
+  feedbackPromptCard: {
     paddingHorizontal: 20,
     paddingTop: 22,
     paddingBottom: 18,
