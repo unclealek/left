@@ -379,7 +379,11 @@ export function LeftApp() {
   }, []);
 
   useEffect(() => {
-    if (!sessionVisible && !venueSelectionRequired && screen !== "venue-select" && screen !== "venue-add") return;
+    const shouldMonitorVenueRuntime =
+      SESSION_NAV_SCREENS.includes(screen) ||
+      screen === "venue-select" ||
+      screen === "venue-add";
+    if (!shouldMonitorVenueRuntime) return;
     const subscription = AppState.addEventListener("change", (nextState) => {
       if (nextState === "active") {
         void refreshVenueFromRuntime();
@@ -512,6 +516,9 @@ export function LeftApp() {
   async function bootstrapDeviceState() {
     const runtime = await syncLocationRegistrationState();
     setLocationEnabled(runtime.permissionGranted);
+    if (runtime.permissionGranted) {
+      await primeLocationFix();
+    }
     await refreshVenueFromRuntime();
     const defaults = await loadLastActivationDefaults();
     if (defaults) {
@@ -528,7 +535,11 @@ export function LeftApp() {
     const runtime = await getLocationRuntimeState();
     setNearbyVenueOptions(runtime.nearbyVenues);
     setLastKnownCoords(runtime.lastKnownCoords);
-    setVenueSelectionRequired(runtime.nearbyVenues.length > 1 && !runtime.selectedVenueId);
+    setVenueSelectionRequired(
+      runtime.nearbyVenues.length > 0 &&
+      !runtime.selectedVenueId &&
+      (!runtime.currentVenueId || runtime.nearbyVenues.length > 1),
+    );
     if (!runtime.currentVenueId || !runtime.currentVenueName) return;
     const currentVenueId = runtime.currentVenueId;
     const currentVenueName = runtime.currentVenueName;

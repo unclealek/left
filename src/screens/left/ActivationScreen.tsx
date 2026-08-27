@@ -109,6 +109,7 @@ export function ActivationScreen(props: {
           title="Presence live"
           subtitle="You are visible to people at this venue."
           onBack={props.onBack}
+          variant="utility"
         />
 
         <View style={styles.activationLiveHero}>
@@ -175,7 +176,7 @@ export function ActivationScreen(props: {
           label="Open nearby feed"
           subtitle="See who is visible here"
           onPress={props.onOpenFeed}
-          size="hero"
+          size="compact"
           trailingIcon="arrow"
         />
         <GhostButton

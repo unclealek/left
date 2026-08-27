@@ -58,13 +58,11 @@ export async function findNearbyVenueRows(
         latitude,
         longitude,
       );
-      const radiusMeters = Math.min(
+      const radiusMeters =
         typeof row.geofence_json?.radius_meters === "number"
           ? row.geofence_json.radius_meters
-          : input.radiusMetres,
-        input.radiusMetres,
-      );
-      if (distanceMetres > radiusMeters) return null;
+          : 120;
+      if (distanceMetres > input.radiusMetres) return null;
 
       return {
         ...row,

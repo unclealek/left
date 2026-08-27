@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { IntentType, VenueType } from "../../types/left-domain";
+import { VENUE_DISCOVERY_RADIUS_METERS } from "./venue-distance-policy";
 
 const STORAGE_KEYS = {
   runtime: "left/location/runtime",
@@ -8,7 +9,7 @@ const STORAGE_KEYS = {
   venueApproachPrompts: "left/location/venue-approach-prompts",
 } as const;
 
-const MAX_PERSISTED_VENUE_DISTANCE_METERS = 120;
+const MAX_PERSISTED_VENUE_DISTANCE_METERS = VENUE_DISCOVERY_RADIUS_METERS;
 
 export type VenuePreference = {
   venueId: string;

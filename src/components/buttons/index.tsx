@@ -226,7 +226,8 @@ export function SlideToConfirmButton({
   const panResponder = useMemo(
     () =>
       PanResponder.create({
-        onStartShouldSetPanResponder: () => false,
+        onStartShouldSetPanResponder: () => !inactive && maxTravel > 0,
+        onStartShouldSetPanResponderCapture: () => !inactive && maxTravel > 0,
         onMoveShouldSetPanResponder: (_, gesture) =>
           !inactive &&
           maxTravel > 0 &&
@@ -249,7 +250,9 @@ export function SlideToConfirmButton({
             resetThumb();
           }
         },
+        onPanResponderTerminationRequest: () => false,
         onPanResponderTerminate: resetThumb,
+        onShouldBlockNativeResponder: () => true,
       }),
     [inactive, maxTravel, onConfirm, translateX],
   );
@@ -274,6 +277,7 @@ export function SlideToConfirmButton({
       </View>
       <Animated.View
         {...panResponder.panHandlers}
+        hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
         style={[

@@ -12,6 +12,7 @@ import { GlassSurface, glassRadii } from "../../components/glass";
 import { LeftLogoMark } from "../../components/left/LeftLogoMark";
 import { VenueIdentityBlock } from "../../components/left/ui";
 import type { VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
+import { getNearbyPeopleCount } from "./home-presence";
 
 const VENUE_ILLUSTRATIONS = {
   cafe: require("../../../output/illustrations/venues/cafe.png"),
@@ -81,11 +82,11 @@ export function HomeScreen({
     : "You're currently not visible to others here.";
   const presenceMessage = isVisible ? "You’re checked in here" : hiddenMessage;
   const primaryLabel = isVisible ? "Manage visibility" : activationSubmitting ? "Going visible..." : "Go visible";
-  const peopleNearbyCount =
+  const reportedVisibleCount =
     venueActivityById[venue.venueId]?.leftPresence.visible ??
     venueActivityById[currentVenueCandidate?.id ?? ""]?.leftPresence.visible ??
-    9;
-  const socialPreviewLabels = ["KA", "MN", "JT"];
+    0;
+  const peopleNearbyCount = getNearbyPeopleCount(reportedVisibleCount, isVisible);
 
   useEffect(() => {
     void AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
@@ -218,7 +219,7 @@ export function HomeScreen({
               />
               <Text style={styles.homeHeroImageStatusText}>{isVisible ? "VISIBLE" : "HIDDEN"}</Text>
             </GlassSurface>
-            {isVisible ? (
+            {isVisible && peopleNearbyCount > 0 ? (
               <GlassSurface
                 variant="soft"
                 radius={glassRadii.pill}
@@ -226,22 +227,13 @@ export function HomeScreen({
                 contentStyle={styles.homeHeroPeopleOverlay}
               >
                   <View style={styles.homeHeroAvatarStack}>
-                    {socialPreviewLabels.map((label, index) => (
-                      <View
-                        key={label}
-                        style={[
-                          styles.homeHeroAvatarBubble,
-                          index > 0 && styles.homeHeroAvatarBubbleOverlap,
-                        ]}
-                      >
-                        <Text style={styles.homeHeroAvatarLabel}>{label}</Text>
-                      </View>
-                    ))}
-                    <View style={[styles.homeHeroAvatarBubble, styles.homeHeroAvatarCountBubble, styles.homeHeroAvatarBubbleOverlap]}>
-                      <Text style={styles.homeHeroAvatarCountText}>{`+${Math.max(peopleNearbyCount, 3)}`}</Text>
+                    <View style={[styles.homeHeroAvatarBubble, styles.homeHeroAvatarCountBubble]}>
+                      <Text style={styles.homeHeroAvatarCountText}>{peopleNearbyCount}</Text>
                     </View>
                   </View>
-                  <Text style={styles.homeHeroPeopleOverlayText}>People nearby</Text>
+                  <Text style={styles.homeHeroPeopleOverlayText}>
+                    {peopleNearbyCount === 1 ? "Person nearby" : "People nearby"}
+                  </Text>
               </GlassSurface>
             ) : null}
           </LinearGradient>
@@ -520,7 +512,6 @@ function buildNearbyVenueCards(
     const venueType = venue.venueType ?? inferVenueTypeFromName(venue.name);
     const looksLikeMarket = /market|hall/i.test(venue.name);
     const seed = Math.abs(hashVenueName(venue.name));
-    const peopleCount = 3 + (seed % 10);
     const placeholderProfile = buildVenuePlaceholderProfile(venueType, looksLikeMarket, seed);
     const activity = venueActivityById[venue.id] ?? null;
 
@@ -531,8 +522,6 @@ function buildNearbyVenueCards(
       venueType,
       illustration: getVenueIllustrationSource(venue.name, venueType),
       featured: index === 0,
-      peopleCount,
-      peopleText: activity ? `${activity.leftPresence.visible} on Left` : `${peopleCount} people visible`,
       peopleColor: placeholderProfile.peopleColor,
       energyLabel: activity ? activity.activity.displayText : placeholderProfile.energyLabel,
       signalBars: activity?.activity.score != null ? getSignalBarsForScore(activity.activity.score) : null,
