@@ -2,6 +2,11 @@ import type { LocationObjectCoords } from "expo-location";
 import { supabase } from "../../lib/supabase";
 import type { VenueType } from "../../types/left-domain";
 import { fetchNearbyVenuesFromServer } from "./nearby-venues-service";
+import {
+  isVenueWithinConfirmationRange,
+  VENUE_CONFIRMATION_MAX_DISTANCE_METERS,
+  VENUE_DISCOVERY_RADIUS_METERS,
+} from "./venue-distance-policy";
 
 export type DetectedVenue = {
   id: string;
@@ -15,8 +20,8 @@ export type DetectedVenue = {
   photoUrl: string | null;
 };
 
-const VENUE_SEARCH_RADIUS_METERS = 100;
-const VENUE_CANDIDATE_MAX_DISTANCE_METERS = 120;
+const VENUE_SEARCH_RADIUS_METERS = VENUE_DISCOVERY_RADIUS_METERS;
+const VENUE_CANDIDATE_MAX_DISTANCE_METERS = VENUE_CONFIRMATION_MAX_DISTANCE_METERS;
 const DB_VENUE_NAME_DEDUPE_DISTANCE_METERS = 35;
 
 type VenueGeofenceJson = {
@@ -203,12 +208,24 @@ export async function getNearbyVenues(coords: LocationObjectCoords) {
   return [];
 }
 
-export async function detectVenueFromCoords(coords: LocationObjectCoords, preferredVenueId?: string | null) {
-  const venues = await getNearbyVenues(coords);
-  if (!venues.length) return null;
+export async function detectVenueFromCoords(
+  coords: LocationObjectCoords,
+  preferredVenueId?: string | null,
+  discoveredVenues?: DetectedVenue[],
+) {
+  const venues = discoveredVenues ?? await getNearbyVenues(coords);
+  const confirmableVenues = venues.filter(isVenueWithinConfirmationRange);
+  if (!confirmableVenues.length) {
+    console.info("[location][venues] nearby venues require user confirmation", {
+      discoveredCount: venues.length,
+    });
+    return null;
+  }
 
-  const preferredVenue = preferredVenueId ? venues.find((venue) => venue.id === preferredVenueId) : null;
-  const chosenVenue = preferredVenue ?? venues[0];
+  const preferredVenue = preferredVenueId
+    ? confirmableVenues.find((venue) => venue.id === preferredVenueId)
+    : null;
+  const chosenVenue = preferredVenue ?? confirmableVenues[0];
 
   console.info("[location][venues] using venue candidate", {
     venueId: chosenVenue.id,

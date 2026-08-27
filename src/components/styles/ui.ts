@@ -44,6 +44,7 @@ export const uiStyles = {
   },
   iconSelectChip: {
     position: "relative",
+    overflow: "hidden",
     minHeight: 46,
     borderRadius: 16,
     borderWidth: 1,
@@ -59,6 +60,8 @@ export const uiStyles = {
     minWidth: 88,
     flex: 1,
     justifyContent: "center",
+    gap: 6,
+    paddingHorizontal: 10,
   },
   iconSelectChipHalfWidth: {
     flexBasis: "47%",
@@ -69,6 +72,9 @@ export const uiStyles = {
     backgroundColor: "rgba(214,138,40,0.10)",
   },
   iconSelectChipLabel: {
+    flex: 1,
+    minWidth: 0,
+    flexShrink: 1,
     color: T.textSecondary,
     fontSize: 14,
     lineHeight: 18,
@@ -81,15 +87,6 @@ export const uiStyles = {
   iconSelectChipLabelActive: {
     color: T.textPrimary,
     fontFamily: T.fontBodyBold,
-  },
-  iconSelectChipCheck: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: T.visibilityOff,
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: "auto",
   },
   statusPillBase: {
     flexDirection: "row",

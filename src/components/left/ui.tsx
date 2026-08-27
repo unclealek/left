@@ -122,11 +122,6 @@ export function IconSelectChip({
       >
         {label}
       </Text>
-      {active ? (
-        <View style={styles.iconSelectChipCheck}>
-          <LeftIcon name="check" size={11} color={T.white} />
-        </View>
-      ) : null}
     </Pressable>
   );
 }

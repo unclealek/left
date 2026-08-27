@@ -277,8 +277,27 @@ export async function processLocationFix(coords: Location.LocationObjectCoords) 
   const preferredVenueId = nearbyVenues.some((venue) => venue.id === runtime.selectedVenueId)
     ? runtime.selectedVenueId
     : null;
-  const venue = await detectVenueFromCoords(coords, preferredVenueId);
-  if (!venue) return;
+  const venue = await detectVenueFromCoords(coords, preferredVenueId, nearbyVenues);
+  if (!venue) {
+    console.info("[location] nearby venues found, awaiting venue confirmation");
+    await saveLocationRuntimeState({
+      ...runtime,
+      currentVenueId: null,
+      currentVenueName: null,
+      selectedVenueId: null,
+      selectedVenueName: null,
+      nearbyVenues,
+      lastKnownCoords: {
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        accuracy: coords.accuracy ?? null,
+      },
+      dwellEnteredAt: null,
+      dwellLastSeenAt: null,
+      prompt: null,
+    });
+    return;
+  }
 
   const preferences = await getVenuePreferences();
   const venuePreference = preferences[venue.id];

@@ -109,7 +109,7 @@ export function MeScreen({
               onPress={onOpenSettings}
               style={({ pressed }) => [styles.profileEditHeaderButton, pressed && styles.iconButtonPressed]}
             >
-              <Text style={styles.profileEditHeaderText}>Settings</Text>
+              <LeftIcon name="settings" size={20} color={T.primary} />
             </Pressable>
           )}
         />
