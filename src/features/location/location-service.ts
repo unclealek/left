@@ -1,6 +1,7 @@
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import type { NotificationResponse } from "expo-notifications";
+import { Platform } from "react-native";
 import {
   getActivationDefaults,
   getDefaultRuntimeState,
@@ -96,7 +97,16 @@ export async function requestLocationAccess() {
         permissionGranted: false,
         backgroundRegistered: false,
       });
-      return { granted: false, reason: "foreground_denied" as const };
+      return { granted: false, notificationsGranted: false, reason: "foreground_denied" as const };
+    }
+
+    if (Platform.OS === "web") {
+      await updateLocationRuntimeState((current) => ({
+        ...current,
+        permissionGranted: true,
+        backgroundRegistered: false,
+      }));
+      return { granted: true as const, notificationsGranted: false };
     }
 
     console.info("[location] requesting background permission");
@@ -108,10 +118,11 @@ export async function requestLocationAccess() {
         permissionGranted: false,
         backgroundRegistered: false,
       });
-      return { granted: false, reason: "background_denied" as const };
+      return { granted: false, notificationsGranted: false, reason: "background_denied" as const };
     }
 
-    await Notifications.requestPermissionsAsync();
+    const notificationPermission = await Notifications.requestPermissionsAsync();
+    const notificationsGranted = notificationPermission.status === "granted";
     await registerVenuePromptCategory();
     const alreadyStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
     console.info("[location] background registration state", { alreadyStarted });
@@ -140,7 +151,7 @@ export async function requestLocationAccess() {
       permissionGranted: true,
       backgroundRegistered: true,
     }));
-    return { granted: true as const };
+    return { granted: true as const, notificationsGranted };
   } catch (error) {
     console.warn("[location] requestLocationAccess failed", error);
     await saveLocationRuntimeState({
@@ -148,7 +159,7 @@ export async function requestLocationAccess() {
       permissionGranted: false,
       backgroundRegistered: false,
     });
-    return { granted: false, reason: "registration_failed" as const };
+    return { granted: false, notificationsGranted: false, reason: "registration_failed" as const };
   }
 }
 
@@ -171,6 +182,15 @@ export async function primeLocationFix() {
 }
 
 export async function syncLocationRegistrationState() {
+  if (Platform.OS === "web") {
+    const foreground = await Location.getForegroundPermissionsAsync();
+    return updateLocationRuntimeState((current) => ({
+      ...current,
+      permissionGranted: foreground.status === "granted",
+      backgroundRegistered: false,
+    }));
+  }
+
   const foreground = await Location.getForegroundPermissionsAsync();
   const background = await Location.getBackgroundPermissionsAsync();
   const backgroundRegistered = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
@@ -239,9 +259,7 @@ export async function storeUserSubmittedVenue(candidate: RuntimeVenueCandidate) 
 
 export async function processLocationFix(coords: Location.LocationObjectCoords) {
   console.info("[location] processing location fix", {
-    latitude: coords.latitude,
-    longitude: coords.longitude,
-    accuracy: coords.accuracy ?? null,
+    accuracyAvailable: coords.accuracy != null,
   });
   const runtime = await getLocationRuntimeState();
 

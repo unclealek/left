@@ -49,7 +49,7 @@ export const uiStyles = {
     borderRadius: 16,
     borderWidth: 1,
     borderColor: T.border,
-    backgroundColor: "rgba(255,255,255,0.72)",
+    backgroundColor: T.surfaceGlass,
     paddingHorizontal: 14,
     paddingVertical: 11,
     flexDirection: "row",
@@ -68,8 +68,8 @@ export const uiStyles = {
     flexGrow: 1,
   },
   iconSelectChipActive: {
-    borderColor: "rgba(214,138,40,0.44)",
-    backgroundColor: "rgba(214,138,40,0.10)",
+    borderColor: T.warningBorder,
+    backgroundColor: T.visibilityOffSoft,
   },
   iconSelectChipLabel: {
     flex: 1,
@@ -104,7 +104,7 @@ export const uiStyles = {
     backgroundColor: T.visibilityOn,
   },
   statusPillDotHidden: {
-    backgroundColor: "#FFC24D",
+    backgroundColor: T.visibilityOff,
   },
   statusPillLabel: {
     color: T.textPrimary,

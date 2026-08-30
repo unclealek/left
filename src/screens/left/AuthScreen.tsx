@@ -1,23 +1,51 @@
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, ActivityIndicator, Animated, Easing, Pressable, Text, useWindowDimensions, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Path } from "react-native-svg";
 import { styles, T } from "../../app/leftTheme";
 import { LeftLogoMark } from "../../components/left/LeftLogoMark";
 import { LeftIcon } from "../../components/icons";
 import { GlassSurface, glassRadii } from "../../components/glass";
+
+function GoogleLogo() {
+  return (
+    <Svg width={21} height={21} viewBox="0 0 24 24" accessibilityLabel="Google">
+      <Path
+        fill="#4285F4"
+        d="M21.35 11.1h-9.18v3.8h5.26c-.23 1.22-.93 2.25-1.98 2.94l3.2 2.48c1.87-1.72 2.95-4.26 2.95-7.28 0-.69-.06-1.35-.25-1.94Z"
+      />
+      <Path
+        fill="#34A853"
+        d="M12.17 22c2.67 0 4.91-.88 6.55-2.38l-3.2-2.48c-.88.59-2.01.94-3.35.94-2.58 0-4.77-1.74-5.55-4.09H3.31v2.56A9.9 9.9 0 0 0 12.17 22Z"
+      />
+      <Path
+        fill="#FBBC05"
+        d="M6.62 13.99a5.98 5.98 0 0 1 0-3.81V7.62H3.31a9.93 9.93 0 0 0 0 8.94l3.31-2.57Z"
+      />
+      <Path
+        fill="#EA4335"
+        d="M12.17 6.09c1.45 0 2.75.5 3.78 1.48l2.84-2.84C17.08 3.14 14.84 2 12.17 2a9.9 9.9 0 0 0-8.86 5.62l3.31 2.56c.78-2.35 2.97-4.09 5.55-4.09Z"
+      />
+    </Svg>
+  );
+}
 
 export function AuthScreen({
   authError,
   busy = false,
   onAuth,
   onEmail,
+  onOpenLegal,
 }: {
   authError: string | null;
   busy?: boolean;
   onAuth: () => void;
   onEmail: () => void;
+  onOpenLegal: (document: "terms" | "privacy" | "community") => void;
 }) {
   const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const logoPulse = useRef(new Animated.Value(0)).current;
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -63,9 +91,18 @@ export function AuthScreen({
   });
 
   return (
-    <View style={[styles.authWrap, { minHeight: Math.max(790, height) }]}>
+    <View
+      style={[
+        styles.authWrap,
+        {
+          minHeight: Math.max(620, height),
+          paddingTop: Math.max(48, insets.top + 16),
+          paddingBottom: Math.max(24, insets.bottom + 16),
+        },
+      ]}
+    >
       <LinearGradient
-        colors={["rgba(198,227,133,0.24)", "rgba(198,227,133,0.08)", "rgba(255,255,255,0)"]}
+        colors={[T.onboardingAccentMedium, T.onboardingAccentFaint, "transparent"]}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 1 }}
         style={styles.authHeroArc}
@@ -73,8 +110,9 @@ export function AuthScreen({
 
       <View style={styles.authBrand}>
         <Animated.View style={[styles.authMarkRing, { transform: [{ scale: logoScale }] }]}>
-          <LeftLogoMark size={70} />
+          <LeftLogoMark size={58} />
         </Animated.View>
+        <Text style={styles.authWordmark}>LEFT</Text>
       </View>
 
       <GlassSurface
@@ -103,12 +141,7 @@ export function AuthScreen({
             {busy ? (
               <ActivityIndicator size="small" color={T.onboardingInk} />
             ) : (
-              <>
-                <Text style={styles.authGoogleLetter}>G</Text>
-                <View style={[styles.authGoogleDot, styles.authGoogleDotRed]} />
-                <View style={[styles.authGoogleDot, styles.authGoogleDotYellow]} />
-                <View style={[styles.authGoogleDot, styles.authGoogleDotGreen]} />
-              </>
+              <GoogleLogo />
             )}
           </View>
           <Text style={styles.authGoogleLabel}>{busy ? "Opening Google..." : "Continue with Google"}</Text>
@@ -130,10 +163,24 @@ export function AuthScreen({
             <Text style={styles.authEmailLabel}>Continue with email</Text>
             <Text style={styles.authEmailComingSoon}>Coming soon</Text>
           </View>
-          <LeftIcon name="chevron-right" size={19} color="rgba(31,14,6,0.42)" />
+          <LeftIcon name="chevron-right" size={19} color={T.onboardingInkMuted} />
         </Pressable>
 
         {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
+
+        <View style={styles.authLegalRow}>
+          <Pressable accessibilityRole="link" onPress={() => onOpenLegal("terms")}>
+            <Text style={styles.authLegalLink}>Terms</Text>
+          </Pressable>
+          <Text style={styles.authLegalSeparator}>·</Text>
+          <Pressable accessibilityRole="link" onPress={() => onOpenLegal("privacy")}>
+            <Text style={styles.authLegalLink}>Privacy</Text>
+          </Pressable>
+          <Text style={styles.authLegalSeparator}>·</Text>
+          <Pressable accessibilityRole="link" onPress={() => onOpenLegal("community")}>
+            <Text style={styles.authLegalLink}>Guidelines</Text>
+          </Pressable>
+        </View>
       </GlassSurface>
 
       <View style={styles.authPrivacyRow}>

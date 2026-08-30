@@ -1,0 +1,90 @@
+Act as a senior mobile product designer and React Native engineer. Audit the existing Left app before making any changes.
+
+Please inspect the entire app and report on the following areas:
+
+### 1. Color consistency
+
+Review all screens, components, buttons, cards, modals, navigation elements, icons, text colors, borders, backgrounds, active states, disabled states, and form fields.
+
+Check whether the app consistently follows the current Left design system and brand colors.
+
+Look specifically for:
+
+* Hardcoded colors that should use theme/design tokens
+* Slightly different versions of the same background, black, grey, border, or accent color
+* Inconsistent button colors
+* Inconsistent text hierarchy/colors
+* Screens that still use older brand colors
+* Components that don't respect dark/light or shared theme values, if applicable
+* Duplicate color definitions across different style files
+
+Do not immediately change anything.
+
+First give me:
+
+1. A list of inconsistencies
+2. The affected files/components
+3. What the correct shared color/token should be
+4. Your recommended cleanup approach
+
+### 2. Terms & Conditions / legal screens
+
+Check whether the app currently has:
+
+* Terms & Conditions / Terms of Service page
+* Privacy Policy page
+* Links to these pages from onboarding/signup
+* Links from Settings
+* User consent/acceptance where required
+* Any placeholder legal screens or unfinished routes
+
+Tell me exactly what already exists, what is incomplete, and what is missing.
+
+Do not invent legal content if it doesn't already exist.
+
+### 3. Onboarding audit
+
+Inspect the complete onboarding flow and determine whether it is production-ready.
+
+Check:
+
+* First-name step
+* Avatar/style selection
+* Location permission flow
+* Progress indicator
+* Back/continue behaviour
+* Validation
+* Loading states
+* Error handling
+* Permission denied flow
+* Persistence so onboarding doesn't repeat unnecessarily
+* Small-screen responsiveness
+* Keyboard behaviour
+* Accessibility
+* Reduced-motion support
+* Haptic/animation behaviour
+* Visual consistency with the rest of Left
+* Terms/Privacy consent if needed
+* What happens when onboarding finishes
+
+Also check whether there are any unfinished TODOs, mocked data, placeholder copy, dead buttons, incomplete routes, or temporary implementations.
+
+### Output
+
+Give me the audit in four sections:
+
+1. **Color inconsistencies**
+2. **Terms & Privacy status**
+3. **Onboarding readiness**
+4. **Recommended fixes ranked by priority**
+
+For every issue, label it:
+
+* Critical
+* High
+* Medium
+* Low
+
+Include the exact file/component involved whenever possible.
+
+Do not refactor or redesign anything yet. I want the audit first so we can approve the changes before implementation.

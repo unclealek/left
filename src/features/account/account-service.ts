@@ -2,6 +2,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 import type { AppUser, AvatarStyle } from "../../types/left-domain";
 import type { UserProfileRow } from "../../app/leftConfig";
+import type { LegalDocumentId } from "../legal/legal-content";
 
 export type AccountDeletionResult = "processed" | "queued" | "duplicate" | "failed";
 
@@ -10,7 +11,17 @@ export async function fetchUserProfile(userId: string) {
   return { profile: data as UserProfileRow | null, error };
 }
 
-export async function upsertOnboardingProfile(user: AppUser) {
+export async function upsertOnboardingProfile(
+  user: AppUser,
+  legalAcceptance?: {
+    versions: Record<LegalDocumentId, string>;
+  } | null,
+) {
+  if (legalAcceptance) {
+    const acceptance = await recordLegalAcceptance(legalAcceptance.versions);
+    if (!acceptance.ok) return acceptance;
+  }
+
   const { error } = await supabase.from("users").upsert(
     {
       id: user.id,
@@ -29,7 +40,37 @@ export async function upsertOnboardingProfile(user: AppUser) {
     { onConflict: "id" },
   );
 
-  return !error;
+  return { ok: !error, error };
+}
+
+export async function recordLegalAcceptance(versions: Record<LegalDocumentId, string>) {
+  const { error } = await supabase.rpc("record_current_legal_acceptance", {
+    expected_terms_version: versions.terms,
+    expected_privacy_version: versions.privacy,
+    expected_community_version: versions.community,
+  });
+  return { ok: !error, error };
+}
+
+export async function hasAcceptedLegalVersions(
+  userId: string,
+  versions: Record<LegalDocumentId, string>,
+) {
+  const { data, error } = await supabase
+    .from("legal_acceptances")
+    .select("document_id, document_version")
+    .eq("user_id", userId);
+
+  if (error) return { accepted: false, error };
+  const accepted = new Map(
+    (data ?? []).map((row) => [row.document_id as LegalDocumentId, row.document_version as string]),
+  );
+  return {
+    accepted: (Object.keys(versions) as LegalDocumentId[]).every(
+      (documentId) => accepted.get(documentId) === versions[documentId],
+    ),
+    error: null,
+  };
 }
 
 export async function updateUserSettings(input: {

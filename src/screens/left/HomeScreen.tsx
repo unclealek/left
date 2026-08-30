@@ -69,7 +69,9 @@ export function HomeScreen({
     ? formatDistanceLabel(currentVenueCandidate.distanceMeters)
     : nearbyCards[0]?.distanceLabel ?? "Nearby now";
   const placesContext =
-    venueConfidence === "confirmed"
+    nearbyCards.length === 0
+      ? "No nearby places detected yet"
+      : venueConfidence === "confirmed"
       ? nearbyCards[0]?.distanceLabel
         ? `Closest ${nearbyCards[0].distanceLabel}`
         : "Nearby right now"
@@ -338,6 +340,15 @@ export function HomeScreen({
       </View>
 
       <View style={[styles.homeVenueGrid, nearbyCards.length === 1 && styles.homeVenueGridSingle]}>
+        {nearbyCards.length === 0 ? (
+          <View accessibilityRole="text" style={styles.homeVenueEmptyState}>
+            <LeftIcon name="map-pin" size={21} color={T.textMuted} />
+            <Text style={styles.homeVenueEmptyTitle}>No live venue data yet</Text>
+            <Text style={styles.homeVenueEmptyBody}>
+              Keep location access on. Places detected near you will appear here.
+            </Text>
+          </View>
+        ) : null}
         {nearbyCards.map((item) => (
           <Pressable
             key={item.id}
@@ -504,16 +515,14 @@ function buildNearbyVenueCards(
   venueActivityById: Record<string, VenueActivityEnvelope>,
 ) {
   const alternatives = nearbyVenues.filter((venue) => venue.name !== currentVenueName);
-  const source = (alternatives.length ? alternatives : nearbyVenues).length
-    ? (alternatives.length ? alternatives : nearbyVenues).slice(0, 2)
-    : [{ id: "current", name: currentVenueName, venueType: "other" as const, distanceMeters: null, source: "google_places" as const, latitude: 0, longitude: 0, radiusMeters: 0 }];
+  const source = (alternatives.length ? alternatives : nearbyVenues).slice(0, 2);
 
   return source.map((venue, index) => {
     const venueType = venue.venueType ?? inferVenueTypeFromName(venue.name);
-    const looksLikeMarket = /market|hall/i.test(venue.name);
-    const seed = Math.abs(hashVenueName(venue.name));
-    const placeholderProfile = buildVenuePlaceholderProfile(venueType, looksLikeMarket, seed);
     const activity = venueActivityById[venue.id] ?? null;
+    const signalColor = activity
+      ? getActivitySignalColor(activity.activity.displayText, activity.activity.score, T.textMuted)
+      : T.textMuted;
 
     return {
       id: venue.id,
@@ -522,17 +531,13 @@ function buildNearbyVenueCards(
       venueType,
       illustration: getVenueIllustrationSource(venue.name, venueType),
       featured: index === 0,
-      peopleColor: placeholderProfile.peopleColor,
-      energyLabel: activity ? activity.activity.displayText : placeholderProfile.energyLabel,
+      peopleColor: T.textMuted,
+      energyLabel: activity ? activity.activity.displayText : "Live activity unavailable",
       signalBars: activity?.activity.score != null ? getSignalBarsForScore(activity.activity.score) : null,
-      signalBarColor: getActivitySignalColor(
-        activity?.activity.displayText ?? placeholderProfile.energyLabel,
-        activity?.activity.score,
-        placeholderProfile.statusColor,
-      ),
-      statusColor: placeholderProfile.statusColor,
-      tags: placeholderProfile.tags,
-      distanceLabel: venue.distanceMeters != null ? formatDistanceLabel(venue.distanceMeters) : "Nearby now",
+      signalBarColor: signalColor,
+      statusColor: signalColor,
+      tags: [],
+      distanceLabel: venue.distanceMeters != null ? formatDistanceLabel(venue.distanceMeters) : "Distance unavailable",
     };
   });
 }
@@ -563,10 +568,6 @@ function inferVenueTypeFromName(venueName: string) {
   return "other" as const;
 }
 
-function hashVenueName(value: string) {
-  return value.split("").reduce((total, char) => total * 31 + char.charCodeAt(0), 7);
-}
-
 function getSignalBarsForScore(score: number) {
   const activeCount =
     score <= 20 ? 1 :
@@ -592,117 +593,6 @@ function getCompactSignalBarHeightStyle(index: number) {
   return {
     height: heights[index] ?? heights[heights.length - 1],
   };
-}
-
-function buildVenuePlaceholderProfile(
-  venueType: RuntimeVenueCandidate["venueType"] | undefined,
-  looksLikeMarket: boolean,
-  seed: number,
-) {
-  const tags = buildVenueTags(venueType, looksLikeMarket, seed);
-
-  if (venueType === "cafe") {
-    return {
-      energyLabel: "Warm",
-      statusColor: T.visibilityOff,
-      peopleColor: T.primary,
-      tags,
-    };
-  }
-  if (venueType === "library") {
-    return {
-      energyLabel: "Calm",
-      statusColor: T.secondary,
-      peopleColor: T.primary,
-      tags,
-    };
-  }
-  if (venueType === "coworking_space") {
-    return {
-      energyLabel: "Focused",
-      statusColor: T.primary,
-      peopleColor: T.primary,
-      tags,
-    };
-  }
-  if (venueType === "university") {
-    return {
-      energyLabel: "Active",
-      statusColor: T.danger,
-      peopleColor: T.danger,
-      tags,
-    };
-  }
-  if (looksLikeMarket) {
-    return {
-      energyLabel: "Busy",
-      statusColor: T.danger,
-      peopleColor: T.visibilityOff,
-      tags,
-    };
-  }
-
-  const fallbackProfiles = [
-    { energyLabel: "Warm", statusColor: T.visibilityOff, peopleColor: T.primary },
-    { energyLabel: "Calm", statusColor: T.secondary, peopleColor: T.primary },
-    { energyLabel: "Active", statusColor: T.danger, peopleColor: T.danger },
-  ] as const;
-  const fallbackProfile = fallbackProfiles[seed % fallbackProfiles.length];
-  return {
-    ...fallbackProfile,
-    tags,
-  };
-}
-
-function buildVenueTags(
-  venueType: RuntimeVenueCandidate["venueType"] | undefined,
-  looksLikeMarket: boolean,
-  seed: number,
-) {
-  if (venueType === "cafe") {
-    return [
-      { label: "Networking", tint: T.primarySoft },
-      { label: "Coffee", tint: T.surfaceDim },
-    ];
-  }
-  if (venueType === "library") {
-    return [
-      { label: "Study", tint: T.primarySoft },
-      { label: "Quiet", tint: T.surfaceDim },
-    ];
-  }
-  if (venueType === "coworking_space") {
-    return [
-      { label: "Focus", tint: T.primarySoft },
-      { label: "Builders", tint: T.surfaceDim },
-    ];
-  }
-  if (venueType === "university") {
-    return [
-      { label: "Campus", tint: T.primarySoft },
-      { label: "Conversation", tint: T.surfaceGlassUltra },
-    ];
-  }
-  if (looksLikeMarket) {
-    return [
-      { label: "Browsing", tint: T.primarySoft },
-      { label: "Shopping", tint: T.surfaceDim },
-    ];
-  }
-
-  const variants = [
-    [
-      { label: "Chill", tint: T.primarySoft },
-      { label: "Drinks", tint: T.surfaceDim },
-      { label: "Music", tint: T.surfaceGlassUltra },
-    ],
-    [
-      { label: "Design", tint: T.primarySoft },
-      { label: "Coffee", tint: T.surfaceDim },
-    ],
-  ] as const;
-
-  return variants[seed % variants.length];
 }
 
 function formatDistanceLabel(distanceMeters: number) {

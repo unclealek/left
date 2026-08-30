@@ -176,7 +176,7 @@ export function SessionFooterNav(props: {
                 <LeftIcon
                   name={activeItem.icon}
                   size={16}
-                  color="#C6E385"
+                  color={T.onboardingAccent}
                   active={activeItem.icon !== "home"}
                 />
               </View>
@@ -196,7 +196,7 @@ export function SessionFooterNav(props: {
                 {!active ? (
                   <>
                     <View style={styles.footerNavIconBubble}>
-                      <LeftIcon name={item.icon} size={18} color={"rgba(198,227,133,0.74)"} />
+                      <LeftIcon name={item.icon} size={18} color={T.navActiveMuted} />
                     </View>
                     <Text style={styles.footerNavLabel}>{item.label}</Text>
                   </>

@@ -1,0 +1,3 @@
+- [Expo web preview on Replit](expo-web-replit.md) — native Expo imports need web peers and platform guards; use Expo's `--host lan` on the Replit preview.
+- [Post-merge workflow setup](post-merge-workflow.md) — install both lockfiles non-interactively, then restart Metro after dependency reconciliation.
+- [Supabase OAuth on Expo web](supabase-oauth-expo-web.md) — use a same-tab redirect on web; popup auth sessions can return `dismiss` before the callback.

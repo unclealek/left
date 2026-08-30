@@ -1,0 +1,116 @@
+import { T } from "../../theme";
+
+export const legalStyles = {
+  legalPage: {
+    flex: 1,
+    minHeight: 620,
+    width: "100%",
+    maxWidth: 560,
+    alignSelf: "center",
+    backgroundColor: T.surface,
+  },
+  legalHeader: {
+    minHeight: 54,
+    paddingHorizontal: 18,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  legalBackButton: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  legalHeaderTitle: {
+    flex: 1,
+    color: T.textPrimary,
+    fontSize: 16,
+    fontFamily: T.fontBodyBold,
+    textAlign: "center",
+  },
+  legalHeaderSpacer: {
+    width: 44,
+  },
+  legalScrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 34,
+    gap: 18,
+  },
+  legalEyebrow: {
+    color: T.textMuted,
+    fontSize: 11,
+    letterSpacing: 2.4,
+    fontFamily: T.fontBodyBold,
+  },
+  legalTitle: {
+    color: T.onboardingInk,
+    fontSize: 38,
+    lineHeight: 42,
+    letterSpacing: -1.4,
+    fontFamily: T.fontDisplayBold,
+  },
+  legalMeta: {
+    color: T.textMuted,
+    fontSize: 12,
+    fontFamily: T.fontBodyMedium,
+  },
+  legalDraftNotice: {
+    padding: 14,
+    borderRadius: 18,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: T.warningBorder,
+    backgroundColor: T.visibilityOffSoft,
+  },
+  legalDraftNoticeTitle: {
+    color: T.textPrimary,
+    fontSize: 14,
+    lineHeight: 19,
+    fontFamily: T.fontBodyBold,
+  },
+  legalSection: {
+    gap: 8,
+    paddingTop: 8,
+  },
+  legalSectionTitle: {
+    color: T.textPrimary,
+    fontSize: 18,
+    lineHeight: 23,
+    fontFamily: T.fontBodyBold,
+  },
+  legalBody: {
+    color: T.textSecondary,
+    fontSize: 14,
+    lineHeight: 22,
+    fontFamily: T.fontBody,
+  },
+  legalPendingCard: {
+    marginTop: 10,
+    padding: 18,
+    borderRadius: 24,
+    backgroundColor: T.visibilityOffSoft,
+    borderWidth: 1,
+    borderColor: T.warningBorder,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 13,
+  },
+  legalPendingIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: T.surfaceCard,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  legalPendingCopy: {
+    flex: 1,
+    gap: 7,
+  },
+  legalPendingTitle: {
+    color: T.textPrimary,
+    fontSize: 15,
+    lineHeight: 20,
+    fontFamily: T.fontBodyBold,
+  },
+} as const;

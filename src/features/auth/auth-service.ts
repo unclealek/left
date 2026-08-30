@@ -1,6 +1,7 @@
 import { makeRedirectUri } from "expo-auth-session";
 import * as QueryParams from "expo-auth-session/build/QueryParams";
 import * as WebBrowser from "expo-web-browser";
+import { Platform } from "react-native";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 import type { AuthProvider } from "../../types/left-domain";
@@ -22,18 +23,21 @@ export function getProviderSubject(session: Session, provider: AuthProvider) {
 }
 
 export function getFirstNameFromSession(session: Session) {
-  return (
-    (session.user.user_metadata.first_name as string | undefined) ??
-    (session.user.user_metadata.name as string | undefined)?.split(" ")[0] ??
-    session.user.email?.split("@")[0] ??
-    "Friend"
-  );
+  const explicitFirstName = session.user.user_metadata.first_name;
+  if (typeof explicitFirstName === "string") return explicitFirstName.trim();
+
+  const displayName = session.user.user_metadata.name;
+  if (typeof displayName === "string") return displayName.trim().split(/\s+/)[0] ?? "";
+
+  return "";
 }
 
 export async function getCurrentSession() {
   const {
     data: { session },
+    error,
   } = await supabase.auth.getSession();
+  if (error) throw error;
   return session;
 }
 
@@ -58,6 +62,41 @@ export async function startGoogleAuthSession(
     });
   }
 
+  if (Platform.OS === "web") {
+    const isEmbeddedPreview = window.self !== window.top;
+    const authWindow = isEmbeddedPreview ? window.open("", "_blank") : null;
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo, skipBrowserRedirect: true },
+    });
+
+    if (error) {
+      authWindow?.close();
+      logAuthDebug("web oauth redirect failed", { message: error.message, code: error.code, status: error.status });
+      return { status: "failed", message: "Google sign-in could not start." };
+    }
+
+    if (!data?.url) {
+      authWindow?.close();
+      logAuthDebug("web oauth url missing");
+      return { status: "failed", message: "Google sign-in did not return an auth URL." };
+    }
+
+    if (isEmbeddedPreview) {
+      if (!authWindow) {
+        logAuthDebug("web oauth tab blocked");
+        return { status: "failed", message: "Open the app in a new tab, then try Google sign-in again." };
+      }
+      authWindow.location.replace(data.url);
+      logAuthDebug("web oauth opened in external tab");
+    } else {
+      window.location.assign(data.url);
+      logAuthDebug("web oauth same-tab redirect started");
+    }
+
+    return { status: "completed" };
+  }
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo, skipBrowserRedirect: true },
@@ -73,14 +112,14 @@ export async function startGoogleAuthSession(
     return { status: "failed", message: "Google sign-in did not return an auth URL." };
   }
 
-  logAuthDebug("oauth url generated", { authUrl: data.url });
+  logAuthDebug("oauth url generated");
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-  logAuthDebug("browser auth result", result.type === "success" ? { type: result.type, url: result.url } : { type: result.type });
+  logAuthDebug("browser auth result", { type: result.type });
   if (result.type !== "success" || !result.url) return { status: "cancelled" };
 
   const { params, errorCode } = QueryParams.getQueryParams(result.url);
   if (errorCode) {
-    logAuthDebug("callback query parsing failed", { errorCode, url: result.url });
+    logAuthDebug("callback query parsing failed", { errorCode });
     return { status: "failed", message: "Google sign-in did not complete." };
   }
 
@@ -111,6 +150,6 @@ export async function startGoogleAuthSession(
     return { status: "completed" };
   }
 
-  logAuthDebug("callback missing auth tokens and code", { url: result.url, params });
+  logAuthDebug("callback missing auth tokens and code");
   return { status: "failed", message: "Google sign-in did not complete." };
 }

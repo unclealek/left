@@ -1,0 +1,781 @@
+# LEFT PRIVACY POLICY
+
+**Effective Date:** [DATE]
+**Last Updated:** [DATE]
+
+This Privacy Policy explains how **[FULL LEGAL NAME OF MORE DATA FINLAND ENTITY]**, doing business as More Data and Left (“Left,” “More Data,” “we,” “us,” or “our”), collects, uses, discloses, retains and deletes personal data when you use Left.
+
+Left currently operates in Finland and is intended only for users aged 18 or older.
+
+## 1. Controller
+
+The data controller responsible for Left is:
+
+**[FULL LEGAL NAME OF MORE DATA FINLAND ENTITY]**
+**[REGISTERED ADDRESS]**
+Finland
+
+Privacy contact:
+
+**[PRIVACY EMAIL]**
+
+Where another More Data group entity processes information on behalf of the Finnish controller, appropriate data-protection arrangements will be used as required by applicable law.
+
+## 2. Our Privacy Principles
+
+Left is designed around several core principles:
+
+### Location should serve a visible product purpose
+
+We process location primarily to operate venue presence, nearby discovery, venue identification and related safety/privacy features.
+
+### Precise location is not shown to ordinary users
+
+Left does not ordinarily disclose your raw GPS coordinates to other users.
+
+### Presence should be temporary
+
+Presence-session information is generally retained for no longer than 24 hours unless there is a legitimate need for limited additional retention.
+
+### Social discovery should not become surveillance
+
+Left is not designed to provide users with a permanent history of another person's movements.
+
+### We do not sell precise location data
+
+We do not sell your precise location.
+
+### We do not use precise/background location for third-party advertising
+
+Location information collected for Left's core functionality is not used by us for third-party behavioural advertising.
+
+## 3. Information We Collect
+
+### 3.1 Account Information
+
+When you authenticate with Google, we may receive:
+
+* first name;
+* last name;
+* email address;
+* Google account/authentication identifier; and
+* authentication-related technical information.
+
+We do not currently require users to upload real profile photographs.
+
+If your Google account contains a profile photograph, Left does not intentionally use that photograph as your Left profile photo unless this product behaviour changes and is disclosed to you.
+
+## 3.2 Precise Location
+
+With your permission, Left may access precise device location.
+
+This may include latitude and longitude or equivalent coordinates.
+
+We use precise location to:
+
+* detect nearby venues;
+* associate you with a venue;
+* determine presence;
+* estimate approximate distance;
+* improve venue matching;
+* determine when a presence session should start or end;
+* prevent stale presence information; and
+* support safety and privacy functionality.
+
+Precise coordinates are not ordinarily disclosed to other Left users.
+
+## 3.3 Approximate Location
+
+Left may process approximate geographic information such as:
+
+* approximate area;
+* neighbourhood;
+* nearby venue area;
+* reduced-precision coordinates; or
+* proximity classifications.
+
+Approximate information may be shown to other users where necessary for social-discovery functionality.
+
+## 3.4 Background Location
+
+If you grant background or “Always” location permission, Left may access location while:
+
+* the application is running in the background;
+* the application is not actively visible;
+* your device detects significant location changes; or
+* other permitted background-location mechanisms are active.
+
+Background location is used to support core functionality such as:
+
+* maintaining accurate temporary venue presence;
+* recognizing meaningful venue entry or exit;
+* ending stale presence;
+* keeping venue association accurate;
+* applying safety zones;
+* respecting visibility controls; and
+* preventing your profile from incorrectly appearing at a venue after you leave.
+
+We do not use background location for third-party advertising.
+
+You can revoke background location permission at any time through your device settings.
+
+Some functionality may become unavailable or less accurate after revocation.
+
+## 3.5 Significant Location Changes
+
+Where supported by your operating system and permission settings, Left may use significant-location-change functionality to determine when a meaningful movement may require your venue/presence status to be updated.
+
+This does not mean that Left is intended to create a permanent chronological diary of everywhere you travel.
+
+## 3.6 Bluetooth and Beacon Information
+
+If supported by the product and permission settings, Left may access nearby Bluetooth or beacon signals to improve venue or proximity detection.
+
+We use such signals only where relevant to providing location/proximity functionality, security or reliability.
+
+Left does not disclose raw Bluetooth/beacon identifiers to ordinary users.
+
+## 3.7 Presence Information
+
+When you appear to be at or near a venue, Left may create a presence session.
+
+A presence session may include:
+
+* internal user ID;
+* venue identifier;
+* temporary coordinates;
+* approximate area;
+* presence start time;
+* presence end time;
+* visibility setting;
+* status;
+* technical confidence information; and
+* other data required to maintain the session.
+
+Presence sessions are generally retained for **up to 24 hours**.
+
+## 3.8 Short-Lived Historical Location Records
+
+Technical operation of the Service may result in recent location or presence records existing temporarily.
+
+These records may represent recent movement or venue associations.
+
+Left does **not** intend to offer a permanent user-facing location-history product.
+
+We distinguish between:
+
+* temporary operational location records required to maintain presence; and
+* a long-term profile of a user's movements.
+
+The former may be processed. The latter is not an intended Left feature.
+
+Operational location records will be retained only for as long as reasonably necessary for their stated purpose, generally within the 24-hour presence window unless another lawful reason requires limited retention.
+
+## 3.9 Visibility and Privacy Settings
+
+We collect settings such as:
+
+* visible/hidden status;
+* location preferences;
+* safety-zone configuration;
+* permission state where available;
+* notification preferences; and
+* related privacy choices.
+
+## 3.10 Safety Zones
+
+Where you use safety zones, Left may process information necessary to determine whether you are within a location where your social-discovery visibility should be reduced or disabled.
+
+We design safety zones to minimize unnecessary disclosure of sensitive location information.
+
+Where technically feasible, safety-zone data should be stored or processed in a manner designed to reduce unnecessary exposure of the underlying location.
+
+## 3.11 Saved Venues and Product Preferences
+
+Where enabled, we may collect:
+
+* saved venues;
+* preferred places;
+* venue interactions;
+* feature preferences; and
+* other settings you intentionally select.
+
+## 3.12 Venue Information
+
+Left obtains venue information from third-party services.
+
+This may include:
+
+* venue name;
+* address;
+* category;
+* coordinates;
+* Google Place ID;
+* imagery;
+* activity forecasts;
+* operating information; and
+* related place information.
+
+Venue information is generally not information collected *about you*, although your interaction with or presence at a venue can become personal data associated with your account.
+
+## 3.13 Google Places Information
+
+Left uses Google Places API (New), including Place Details and Place Photos.
+
+We may request venue information from Google to show appropriate places and images.
+
+Google may process technical information in connection with those requests according to Google's terms and privacy policies.
+
+Left does not intentionally permanently store Google Place Photos where storage is prohibited.
+
+Google Place IDs may be retained where allowed.
+
+## 3.14 BestTime
+
+Left uses BestTime to obtain or generate venue-level information such as:
+
+* typical popularity;
+* forecast activity;
+* peak periods;
+* live or predicted venue density where available.
+
+BestTime information generally concerns venues rather than identified Left users.
+
+We may combine this venue-level information with Left's own product logic to generate social-density indicators.
+
+## 3.15 Technical Information
+
+To operate and secure the Service, we may process technical information automatically generated by normal application and server operation, including where applicable:
+
+* IP address;
+* timestamps;
+* application version;
+* operating system;
+* device type;
+* request logs;
+* authentication logs;
+* server logs;
+* error information;
+* security events; and
+* diagnostic information.
+
+We will update this Policy and applicable App Store/Google Play disclosures before introducing materially different analytics, advertising or tracking practices.
+
+## 4. Information We Do Not Currently Intend to Collect as Core Profile Data
+
+Left does not currently require users to provide:
+
+* profile photographs;
+* dating preferences;
+* sexual orientation;
+* romantic preferences;
+* private messages;
+* chat history; or
+* “wave” interactions.
+
+Left currently has no user chat functionality and no wave feature.
+
+Left is designed for general social discovery rather than romantic matchmaking.
+
+## 5. How We Use Personal Data
+
+We use information to:
+
+### Provide Left
+
+Including:
+
+* authentication;
+* venue discovery;
+* social discovery;
+* temporary presence;
+* approximate distance;
+* nearby discovery;
+* venue association;
+* density functionality; and
+* privacy controls.
+
+### Maintain Accurate Presence
+
+We may process background/significant location changes so that you are not incorrectly represented as remaining at a venue after you leave.
+
+### Personal Safety and Privacy
+
+We may process information to:
+
+* apply safety zones;
+* enforce visibility settings;
+* detect misuse;
+* investigate reports;
+* prevent stalking or surveillance abuse; and
+* protect users.
+
+### Security and Fraud Prevention
+
+We may use account, device, technical and activity information to:
+
+* prevent unauthorized access;
+* detect abuse;
+* identify suspicious behaviour;
+* enforce bans;
+* investigate security incidents; and
+* protect our infrastructure.
+
+### Legal Compliance
+
+We may process information where necessary to comply with applicable law, valid legal process, regulatory requirements or lawful governmental requests.
+
+### Maintain and Improve Left
+
+We may use aggregated, de-identified or appropriately protected information to understand:
+
+* reliability;
+* venue-detection accuracy;
+* performance;
+* feature errors; and
+* overall product operation.
+
+## 6. Legal Bases Under GDPR
+
+Where the GDPR applies, we rely on one or more lawful bases.
+
+### Contract
+
+Processing may be necessary to provide features you request under our Terms, such as:
+
+* account authentication;
+* account settings;
+* nearby venue discovery; and
+* requested social-discovery functionality.
+
+### Consent
+
+Where legally required, we rely on consent for processing such as:
+
+* precise device location;
+* background location;
+* Bluetooth permissions;
+* notification permissions; and
+* other operating-system-protected functionality.
+
+Device permission and GDPR consent requirements are related but not necessarily identical.
+
+Where consent is our legal basis, you may withdraw it.
+
+### Legitimate Interests
+
+We may rely on legitimate interests for processing necessary to:
+
+* secure Left;
+* prevent fraud;
+* prevent abuse;
+* investigate misuse;
+* maintain reliability;
+* defend legal claims; and
+* operate certain internal administrative functions,
+
+provided those interests are not overridden by your rights and freedoms.
+
+### Legal Obligation
+
+We process information where required by Finnish or EU law.
+
+### Vital Interests
+
+In rare circumstances involving serious threats to life or physical safety, information may be processed where permitted by law to protect vital interests.
+
+## 7. Who Can See Your Information
+
+Other users do not ordinarily receive your raw precise coordinates.
+
+Depending on your settings and Left's current features, users may see:
+
+* approximate distance;
+* your venue;
+* approximate area;
+* limited identity information;
+* presence status; or
+* visibility-related information.
+
+The purpose is social discovery, not precise individual tracking.
+
+## 8. Service Providers
+
+We may share information with service providers strictly as reasonably necessary to provide their services.
+
+Current or expected service-provider categories include:
+
+### Google
+
+Used for:
+
+* Google Sign-In;
+* Google Maps Platform;
+* Google Places API;
+* Place Details; and
+* Place Photos.
+
+Google processes information under its own applicable terms and policies.
+
+### BestTime
+
+Used to obtain venue popularity and activity information.
+
+### Infrastructure and Database Providers
+
+Our application may rely on hosting, database, security, cloud and networking providers to process data on our behalf.
+
+Before launch, the current production providers should be added to our internal processor register and, where appropriate, identified in this Policy.
+
+### Mobile Platform Providers
+
+Apple and Google may process information associated with downloading, operating, updating or providing permissions to the application.
+
+We require processors acting on our behalf to handle information under appropriate contractual and security obligations where applicable.
+
+## 9. No Sale of Personal Data
+
+Left does not sell your personal information.
+
+Left does not sell precise location data.
+
+We do not disclose precise/background location to third-party advertisers for behavioural advertising.
+
+## 10. International Transfers
+
+Some service providers may process information outside Finland or the European Economic Area.
+
+Where GDPR requires safeguards for an international transfer, we will use a legally recognized transfer mechanism, which may include:
+
+* an adequacy decision;
+* Standard Contractual Clauses;
+* another lawful transfer mechanism; and
+* supplementary safeguards where appropriate.
+
+## 11. Retention
+
+We do not keep personal information indefinitely merely because storage is technically possible.
+
+### Account Information
+
+Account information is generally retained while your account remains active.
+
+### Presence Sessions
+
+Generally: **up to 24 hours**.
+
+### Operational Location Records
+
+Generally for the period reasonably necessary to maintain active/recent presence, normally within the same approximate 24-hour period.
+
+### Precise Raw Location
+
+Precise raw location should be retained only for the minimum period reasonably necessary to perform relevant location functionality.
+
+### Google Place Photos
+
+Left does not intentionally permanently cache Google Place Photos where prohibited by Google Maps Platform requirements.
+
+### Security and Abuse Records
+
+Certain records may be retained longer where reasonably necessary to:
+
+* protect users;
+* prevent repeated abuse;
+* enforce bans;
+* investigate fraud;
+* defend legal claims; or
+* comply with law.
+
+Such retention should be limited to what is proportionate to the purpose.
+
+### Logs
+
+Security, server and technical logs may be retained for a limited period based on operational and security needs.
+
+### Backups
+
+Deleted information may temporarily remain within protected backups until the relevant backup is overwritten or expires according to our backup lifecycle.
+
+Backup information is not intended to be restored for ordinary product use after a valid account-deletion request except where technically necessary for disaster recovery.
+
+## 12. Account and Data Deletion
+
+You may request deletion of your Left account.
+
+Where available, use:
+
+**Settings → Account → Delete Account**
+
+Deleting the Left application from your phone does not itself delete your Left account.
+
+When we receive a valid deletion request, we will delete or irreversibly anonymise account-linked personal data that we no longer need.
+
+This ordinarily includes:
+
+* first name;
+* last name;
+* email address;
+* Left profile;
+* authentication association;
+* Google Sign-In association maintained by Left;
+* privacy preferences;
+* visibility settings;
+* saved venues;
+* active presence;
+* presence sessions still linked to you;
+* temporary location records;
+* account-linked approximate location information;
+* safety-zone configuration where retained;
+* notification tokens;
+* user preferences; and
+* other ordinary account-linked product information.
+
+Deletion will not necessarily remove information that:
+
+* has already been lawfully anonymised;
+* must be retained by law;
+* is needed to establish, exercise or defend legal claims;
+* is required for security or fraud prevention;
+* is necessary to maintain records of serious abuse or bans;
+* is subject to a lawful preservation request; or
+* temporarily remains in protected backups.
+
+Where information is retained after deletion for these reasons, we will restrict its use to the relevant purpose.
+
+## 13. Revoking Google Authentication
+
+Deleting your Left account and revoking Google's authorization are separate actions.
+
+You may also manage applications connected to your Google account through Google's account controls.
+
+Revoking Google authorization may prevent you from signing in but may not itself constitute a Left account-deletion request.
+
+## 14. Location Permission Withdrawal
+
+You can withdraw location access from your device settings.
+
+Depending on the permission you revoke:
+
+* precise location may become approximate;
+* background detection may stop;
+* venue presence may become less accurate;
+* nearby discovery may not function;
+* safety-related location functionality may become limited.
+
+Withdrawing permission stops future access permitted by that operating-system permission. It does not automatically require deletion of information lawfully collected before withdrawal.
+
+You may separately request deletion where applicable.
+
+## 15. Your GDPR Rights
+
+Subject to applicable requirements and exceptions, you may have the right to:
+
+### Access
+
+Ask whether we process your personal data and request a copy.
+
+### Rectification
+
+Ask us to correct inaccurate or incomplete information.
+
+### Erasure
+
+Ask us to delete eligible personal data.
+
+### Restriction
+
+Ask us to limit certain processing.
+
+### Portability
+
+Receive certain information you provided in a structured, commonly used, machine-readable format where the legal requirements are met.
+
+### Objection
+
+Object to processing based on legitimate interests in qualifying circumstances.
+
+### Withdraw Consent
+
+Withdraw consent where consent is our processing basis.
+
+Withdrawal does not make processing that occurred before withdrawal unlawful.
+
+### Complaint
+
+You may lodge a complaint with a competent supervisory authority.
+
+In Finland, the relevant supervisory authority is the **Office of the Data Protection Ombudsman**.
+
+We encourage you to contact us first so we have an opportunity to address your concern.
+
+## 16. Automated Decisions
+
+Left may use automated systems to:
+
+* associate devices with venues;
+* estimate proximity;
+* determine social-density categories;
+* apply safety/visibility logic; or
+* recommend venues.
+
+Unless specifically disclosed otherwise, Left does not intend to make solely automated decisions that produce legal or similarly significant effects on you within the meaning of GDPR Article 22.
+
+## 17. Children
+
+Left is strictly for adults aged **18 or older**.
+
+We do not knowingly permit children under 18 to create Left accounts.
+
+If we learn that a person under 18 has created an account, we may suspend the account and delete associated personal data as appropriate.
+
+If you believe a minor is using Left, contact:
+
+**[SAFETY EMAIL]**
+
+## 18. Security
+
+We implement technical and organisational measures designed to protect personal information.
+
+Measures may include:
+
+* access controls;
+* authentication;
+* restricted database access;
+* secure transport;
+* logging;
+* security monitoring;
+* separation of production access;
+* permission controls; and
+* data-minimisation practices.
+
+No system can guarantee absolute security.
+
+## 19. Data Breaches
+
+If a personal-data breach occurs, we will investigate it and comply with applicable GDPR notification obligations, including notification to the competent supervisory authority and affected individuals where legally required.
+
+## 20. Google Maps Platform Content
+
+Venue information supplied through Google Maps Platform remains subject to applicable Google terms.
+
+When required, Left displays:
+
+* Google Maps attribution;
+* third-party attribution;
+* photo-author attribution; and
+* source links or reporting mechanisms.
+
+Venue photos may originate from Google users, business owners or other contributors.
+
+If you believe Google-provided content is unlawful, inaccurate or infringes your rights, contact us or use Google's applicable content-reporting mechanism.
+
+## 21. Changes to This Privacy Policy
+
+We may update this Privacy Policy when:
+
+* Left functionality changes;
+* data processing changes;
+* service providers change;
+* applicable law changes; or
+* App Store/platform requirements change.
+
+If changes are material, we will provide notice as required by applicable law.
+
+The “Last Updated” date will identify the current version.
+
+## 22. Contact Us
+
+**[FULL LEGAL NAME OF MORE DATA FINLAND ENTITY]**
+**[REGISTERED ADDRESS]**
+Finland
+
+Privacy: **[PRIVACY EMAIL]**
+Support: **[SUPPORT EMAIL]**
+Safety/legal: **[LEGAL EMAIL]**
+
+---
+
+# LEFT PRIVACY NUTRITION LABEL / DATA INVENTORY
+
+This section is intended to assist with App Store privacy disclosures, Google Play Data Safety disclosures and internal privacy compliance.
+
+The final store submissions must be checked against the production binary and every included SDK before submission.
+
+| Data category                | Collected/accessed                          | Linked to account          | Purpose                            | Typical retention                             |
+| ---------------------------- | ------------------------------------------- | -------------------------- | ---------------------------------- | --------------------------------------------- |
+| First name                   | Yes                                         | Yes                        | Account/profile                    | Until deletion                                |
+| Last name                    | Yes                                         | Yes                        | Account/profile                    | Until deletion                                |
+| Email address                | Yes                                         | Yes                        | Authentication/account             | Until deletion                                |
+| Google authentication ID     | Yes                                         | Yes                        | Authentication/security            | Until deletion                                |
+| Real profile photo           | No                                          | —                          | Not used                           | —                                             |
+| Precise location             | Yes, with permission                        | Potentially/temporarily    | Venue/presence/proximity           | Minimum necessary period                      |
+| Approximate location         | Yes                                         | Potentially                | Discovery/venue proximity          | Minimum necessary period                      |
+| Background location          | Yes, with permission                        | Potentially                | Presence/entry-exit/safety/privacy | Minimum necessary period                      |
+| Significant location changes | Yes, where enabled                          | Potentially                | Update presence                    | Minimum necessary period                      |
+| Bluetooth/beacon signals     | May be accessed                             | Potentially                | Venue/proximity accuracy           | Minimum necessary period                      |
+| Venue presence               | Yes                                         | Yes                        | Social discovery                   | Up to 24 hours                                |
+| Venue ID                     | Yes                                         | Yes when part of presence  | Venue association                  | Presence period / saved places                |
+| Approximate distance         | Calculated                                  | Contextually               | Social discovery                   | Temporary                                     |
+| Approximate area             | Yes/calculated                              | Contextually               | Social discovery                   | Temporary                                     |
+| Safety-zone information      | Yes if configured                           | Yes                        | Privacy/safety                     | Until removed/deletion                        |
+| Visibility preference        | Yes                                         | Yes                        | Privacy                            | Until changed/deletion                        |
+| Saved venues                 | Yes where feature enabled                   | Yes                        | User-requested functionality       | Until removed/deletion                        |
+| Google venue content         | Yes, retrieved                              | Not inherently user-linked | Venue discovery                    | Subject to Google restrictions                |
+| Google Place IDs             | Yes                                         | Not inherently             | Venue identification               | As permitted                                  |
+| Google Place Photos          | Retrieved                                   | No                         | Venue display                      | No prohibited permanent caching               |
+| BestTime activity data       | Yes                                         | Normally no                | Venue-density forecasts            | According to operational needs/provider terms |
+| IP address                   | Server processing may occur                 | Potentially                | Security/network operations        | Limited log retention                         |
+| Device/OS information        | May be processed                            | Potentially                | Compatibility/security             | Limited                                       |
+| App version                  | May be processed                            | Potentially                | Diagnostics                        | Limited                                       |
+| Server/security logs         | Yes                                         | Potentially                | Security/reliability               | Limited                                       |
+| Chat messages                | No                                          | —                          | Feature not offered                | —                                             |
+| Waves                        | No                                          | —                          | Feature not offered                | —                                             |
+| Romantic/dating preference   | No                                          | —                          | Left is not a dating service       | —                                             |
+| Advertising ID               | Not intentionally used for Left advertising | —                          | No behavioural ad use planned      | —                                             |
+
+## Apple App Privacy Categories Likely Relevant
+
+Based on current functionality, the production App Store privacy questionnaire should be reviewed for at least:
+
+* **Contact Info → Name**
+* **Contact Info → Email Address**
+* **Location → Precise Location**
+* **Location → Coarse Location**
+* **Identifiers → User ID**, depending on implementation
+* **Diagnostics**, if production SDKs collect crash/performance data
+* **Other Data**, if a production SDK creates data not otherwise classified
+
+Do not declare “Data Not Collected” if an SDK included in the production application collects information covered by Apple's definitions.
+
+## Google Play Data Safety Categories Likely Relevant
+
+At minimum, review:
+
+* **Location → Approximate location**
+* **Location → Precise location**
+* **Personal info → Name**
+* **Personal info → Email address**
+* **App activity**, if analytics are implemented
+* **Device or other identifiers**, if relevant SDKs process them
+* **App info and performance**, if crash/diagnostic services are used
+
+The Google Play Data Safety form must reflect actual production behaviour, including third-party SDKs.
+
+---
+
+# REQUIRED LOCATION DISCLOSURE BEFORE PERMISSION
+
+For Android background-location review, Left should display a dedicated disclosure before the Android permission dialog.
+
+Suggested wording:
+
+**Location keeps your presence accurate**
+
+Left uses your location to identify nearby venues and maintain your temporary presence. If you choose “Allow all the time,” Left may collect location data in the background—even when the app is closed or not in use—to detect meaningful venue entry or departure, end stale presence, and apply your visibility and safety-zone settings.
+
+Your precise coordinates are not shown to other Left users and are not used for third-party advertising.
+
+**Continue**
+
+This disclosure should appear separately from the Terms and Privacy Policy and immediately before requesting the relevant permission.

@@ -1,5 +1,5 @@
 import type { ViewStyle } from "react-native";
-import { leftColors } from "../color";
+import { alpha, leftColors } from "../color";
 
 export type GlassVariant = "soft" | "medium" | "solid";
 export type GlassTone = "light" | "creole";
@@ -7,9 +7,9 @@ export type GlassTone = "light" | "creole";
 export const glassToneTokens = {
   light: null,
   creole: {
-    backgroundColor: "rgba(31,14,6,0.58)",
-    reducedTransparencyColor: "rgba(31,14,6,0.97)",
-    borderColor: "rgba(255,255,255,0.22)",
+    backgroundColor: alpha(leftColors.creoleBrown, 0.58),
+    reducedTransparencyColor: alpha(leftColors.creoleBrown, 0.97),
+    borderColor: alpha(leftColors.white, 0.22),
     blurTint: "dark" as const,
   },
 } as const;
@@ -22,9 +22,9 @@ export const glassTokens: Record<GlassVariant, {
   shadow: ViewStyle;
 }> = {
   soft: {
-    backgroundColor: "rgba(255,255,255,0.56)",
-    reducedTransparencyColor: "rgba(251,247,245,0.98)",
-    borderColor: "rgba(255,255,255,0.58)",
+    backgroundColor: alpha(leftColors.white, 0.56),
+    reducedTransparencyColor: alpha(leftColors.porcelain, 0.98),
+    borderColor: alpha(leftColors.white, 0.58),
     blurIntensity: 28,
     shadow: {
       shadowColor: leftColors.inkBlack,
@@ -35,9 +35,9 @@ export const glassTokens: Record<GlassVariant, {
     },
   },
   medium: {
-    backgroundColor: "rgba(255,255,255,0.68)",
-    reducedTransparencyColor: "rgba(251,247,245,0.98)",
-    borderColor: "rgba(255,255,255,0.65)",
+    backgroundColor: alpha(leftColors.white, 0.68),
+    reducedTransparencyColor: alpha(leftColors.porcelain, 0.98),
+    borderColor: alpha(leftColors.white, 0.65),
     blurIntensity: 34,
     shadow: {
       shadowColor: leftColors.inkBlack,
@@ -48,9 +48,9 @@ export const glassTokens: Record<GlassVariant, {
     },
   },
   solid: {
-    backgroundColor: "rgba(255,255,255,0.96)",
-    reducedTransparencyColor: "rgba(255,255,255,0.98)",
-    borderColor: "#E8E2DC",
+    backgroundColor: alpha(leftColors.white, 0.96),
+    reducedTransparencyColor: alpha(leftColors.white, 0.98),
+    borderColor: leftColors.stone,
     blurIntensity: 0,
     shadow: {
       shadowColor: leftColors.inkBlack,
