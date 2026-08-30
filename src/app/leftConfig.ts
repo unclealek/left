@@ -2,11 +2,14 @@ import type { AppUser, AuthProvider, AvatarStyle } from "../types/left-domain";
 
 export type Screen =
   | "loading"
+  | "legal"
+  | "preauth"
   | "auth"
   | "onboarding-name"
   | "onboarding-avatar"
   | "onboarding-location"
   | "onboarding-complete"
+  | "legal-consent"
   | "venue-select"
   | "venue-add"
   | "home"

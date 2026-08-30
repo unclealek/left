@@ -9,10 +9,12 @@ export default {
 
     return json(
       {
-        ok: false,
-        message: "Phase 2 function placeholder. Live BestTime refresh and refresh-lock behavior are not implemented yet.",
+        ok: true,
+        refreshed: false,
+        available: false,
+        message: "Live venue activity refresh is not enabled for this environment.",
       },
-      501,
+      200,
     );
   }),
 };

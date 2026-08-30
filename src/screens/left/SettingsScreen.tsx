@@ -5,6 +5,7 @@ import { T, styles } from "../../app/leftTheme";
 import { LeftIcon, type LeftIconName } from "../../components/icons";
 import { GhostButton, type ShowAppDialog } from "../../components/left/ui";
 import { ScreenHeader } from "../../components/left/navigation";
+import type { LegalDocumentId } from "../../features/legal/legal-content";
 
 type SettingsMenuRowProps = {
   icon: LeftIconName;
@@ -23,6 +24,7 @@ export function SettingsScreen({
   onRequestDeletion,
   onShowDialog,
   onBack,
+  onOpenLegal,
 }: {
   user: AppUser;
   deletionState: "idle" | "submitting" | "submitted" | "error";
@@ -31,6 +33,7 @@ export function SettingsScreen({
   onRequestDeletion: () => void;
   onShowDialog: ShowAppDialog;
   onBack: () => void;
+  onOpenLegal: (document: LegalDocumentId) => void;
 }) {
   const [settingsActionMessage, setSettingsActionMessage] = useState<string | null>(null);
 
@@ -73,6 +76,9 @@ export function SettingsScreen({
 
       <Text style={styles.settingsGroupTitle}>General</Text>
       <View style={styles.settingsMenuCard}>
+        <SettingsMenuRow icon="file-text" label="Terms of Service" onPress={() => onOpenLegal("terms")} />
+        <SettingsMenuRow icon="lock" label="Privacy Policy" onPress={() => onOpenLegal("privacy")} />
+        <SettingsMenuRow icon="users" label="Community Guidelines" onPress={() => onOpenLegal("community")} />
         <SettingsMenuRow icon="activity" label="About Left" helper="App info and updates." onPress={openAboutLeft} last />
       </View>
       {settingsActionMessage ? <Text style={styles.settingsInfoBody}>{settingsActionMessage}</Text> : null}

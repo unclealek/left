@@ -20,8 +20,8 @@ export const layoutStyles = {
     marginTop: -5,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: "rgba(31,14,6,0.38)",
-    backgroundColor: "rgba(198,227,133,0.24)",
+    borderColor: T.onboardingBorderStrong,
+    backgroundColor: T.onboardingAccentSoft,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -42,7 +42,7 @@ export const layoutStyles = {
   toastText: {
     overflow: "hidden",
     borderRadius: 999,
-    backgroundColor: "rgba(31,28,36,0.94)",
+    backgroundColor: T.toastSurface,
     color: T.white,
     fontSize: 14,
     fontWeight: "700",
@@ -71,7 +71,7 @@ export const layoutStyles = {
     height: 104,
     borderRadius: 52,
     borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.22)",
+    borderColor: T.glassBorderDark,
     backgroundColor: "transparent",
   },
   content: {

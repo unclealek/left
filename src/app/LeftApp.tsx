@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AppState, ScrollView, Text, View } from "react-native";
+import { AppState, BackHandler, Linking, Platform, ScrollView, Text, View } from "react-native";
 import * as Notifications from "expo-notifications";
 import type { Session } from "@supabase/supabase-js";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -30,7 +30,16 @@ import type {
   VenueContextSummary,
 } from "../types/left-domain";
 import { AuthScreen } from "../screens/left/AuthScreen";
-import { NameScreen, AvatarScreen, CompleteScreen, LocationScreen } from "../screens/left/OnboardingScreens";
+import { LegalScreen } from "../screens/left/LegalScreen";
+import { LoadingScreen } from "../screens/left/LoadingScreen";
+import { PreAuthOnboardingScreen } from "../screens/left/PreAuthOnboardingScreen";
+import {
+  NameScreen,
+  AvatarScreen,
+  CompleteScreen,
+  LegalAcknowledgementScreen,
+  LocationScreen,
+} from "../screens/left/OnboardingScreens";
 import { VenueScreen } from "../screens/left/VenueScreen";
 import { HomeScreen } from "../screens/left/HomeScreen";
 import { ActivationScreen } from "../screens/left/ActivationScreen";
@@ -77,6 +86,8 @@ import {
 } from "../features/location/venue-preference-service";
 import {
   fetchUserProfile,
+  hasAcceptedLegalVersions,
+  recordLegalAcceptance,
   submitIdentityRemovalRequest,
   updateUserSettings,
   upsertOnboardingProfile,
@@ -107,6 +118,23 @@ import {
   fetchVenueContextSummary,
   updatePresenceSessionEndState,
 } from "../features/presence/presence-service";
+import {
+  hasSeenPreAuthOnboarding,
+  markPreAuthOnboardingSeen,
+} from "../features/onboarding/pre-auth-storage";
+import {
+  clearOnboardingDraft,
+  loadOnboardingDraft,
+  saveOnboardingDraft,
+  type OnboardingDraftStep,
+} from "../features/onboarding/onboarding-storage";
+import { validateFirstName } from "../features/onboarding/onboarding-validation";
+import { getLocationRecoveryMessage } from "../features/onboarding/onboarding-flow";
+import {
+  CURRENT_LEGAL_VERSIONS,
+  legalContentReady,
+  type LegalDocumentId,
+} from "../features/legal/legal-content";
 import { fetchVenueActivity } from "../features/activity/besttime-activity-service";
 import {
   deriveSocialMomentum,
@@ -195,16 +223,29 @@ const PRIVATE_VENUE_SUMMARY: VenueContextSummary = {
 
 export function LeftApp() {
   const insets = useSafeAreaInsets();
-  const [screen, setScreen] = useState<Screen>("auth");
+  const [screen, setScreen] = useState<Screen>("loading");
   const [activationReturnScreen, setActivationReturnScreen] = useState<Screen>("home");
   const [safetyReturnScreen, setSafetyReturnScreen] = useState<Screen>("home");
   const [user, setUser] = useState<AppUser | null>(null);
   const [feed, setFeed] = useState<NearbyFeedItem[]>(EMPTY_NEARBY_FEED);
   const [selectedProfile, setSelectedProfile] = useState<NearbyFeedItem | null>(null);
   const [venueSummary, setVenueSummary] = useState<VenueContextSummary>(INITIAL_VENUE_SUMMARY);
-  const [firstNameDraft, setFirstNameDraft] = useState("Kelvin");
+  const [firstNameDraft, setFirstNameDraft] = useState("");
   const [avatarStyleDraft, setAvatarStyleDraft] = useState<AvatarStyle>("geometric");
+  const [onboardingUserId, setOnboardingUserId] = useState<string | null>(null);
+  const [legalChecks, setLegalChecks] = useState<Record<LegalDocumentId, boolean>>({
+    terms: false,
+    privacy: false,
+    community: false,
+  });
+  const [activeLegalDocument, setActiveLegalDocument] = useState<LegalDocumentId>("terms");
+  const [legalReturnScreen, setLegalReturnScreen] = useState<Screen>("auth");
+  const [legalConsentBackScreen, setLegalConsentBackScreen] = useState<Screen>("auth");
+  const [bootError, setBootError] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [onboardingSaveBusy, setOnboardingSaveBusy] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
+  const [notificationEnabled, setNotificationEnabled] = useState(false);
   const [locationBusy, setLocationBusy] = useState(false);
   const [selectedIntent, setSelectedIntent] = useState<AppUser["defaultIntent"]>("networking");
   const [selectedVibes, setSelectedVibes] = useState<string[]>(["AI/startups"]);
@@ -235,6 +276,8 @@ export function LeftApp() {
     actions: DialogAction[];
   } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const preAuthSeenRef = useRef(false);
+  const preAuthReadyRef = useRef(false);
   const activationAttemptRef = useRef(false);
   const [nearbyVenueOptions, setNearbyVenueOptions] = useState<RuntimeVenueCandidate[]>([]);
   const [lastKnownCoords, setLastKnownCoords] = useState<RuntimeCoords | null>(null);
@@ -325,6 +368,60 @@ export function LeftApp() {
     setScreen("safety");
   }
 
+  function openLegalDocument(document: LegalDocumentId, origin: Screen) {
+    setActiveLegalDocument(document);
+    setLegalReturnScreen(origin);
+    setScreen("legal");
+  }
+
+  function onboardingScreenForStep(step: OnboardingDraftStep): Screen {
+    if (step === "avatar") return "onboarding-avatar";
+    if (step === "location") return "onboarding-location";
+    if (step === "complete") return "onboarding-complete";
+    return "onboarding-name";
+  }
+
+  function onboardingStepForScreen(value: Screen): OnboardingDraftStep | null {
+    if (value === "onboarding-name") return "name";
+    if (value === "onboarding-avatar") return "avatar";
+    if (value === "onboarding-location") return "location";
+    if (value === "onboarding-complete") return "complete";
+    return null;
+  }
+
+  async function persistOnboardingStep(step: OnboardingDraftStep) {
+    if (!onboardingUserId) return;
+    await saveOnboardingDraft(onboardingUserId, {
+      firstName: firstNameDraft,
+      avatarStyle: avatarStyleDraft,
+      step,
+    });
+  }
+
+  function goBackInOnboarding() {
+    setAuthError(null);
+    setLocationError(null);
+    if (screen === "onboarding-complete") {
+      void persistOnboardingStep("complete");
+      setScreen("onboarding-location");
+      return;
+    }
+    if (screen === "onboarding-location") {
+      void persistOnboardingStep("avatar");
+      setScreen("onboarding-avatar");
+      return;
+    }
+    if (screen === "onboarding-avatar") {
+      void persistOnboardingStep("name");
+      setScreen("onboarding-name");
+      return;
+    }
+    if (screen === "onboarding-name") {
+      void persistOnboardingStep("name");
+      setScreen("auth");
+    }
+  }
+
   function resolveApproachPromptForVenue(venueId: string | null | undefined) {
     if (venueId && venueApproachPrompts[venueId]?.promptText?.trim()) {
       return venueApproachPrompts[venueId].promptText.trim();
@@ -366,7 +463,11 @@ export function LeftApp() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      void syncSession(session, false);
+      void syncSession(session, false).catch((error) => {
+        console.warn("[auth] session synchronization failed", error);
+        setBootError("We could not restore your account state. Your session is still secure.");
+        setScreen("loading");
+      });
     });
     const notificationSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
       void applyNotificationResponse(response);
@@ -377,6 +478,44 @@ export function LeftApp() {
       notificationSubscription.remove();
     };
   }, []);
+
+  useEffect(() => {
+    const step = onboardingStepForScreen(screen);
+    if (!step || !onboardingUserId) return;
+    const timer = setTimeout(() => {
+      void saveOnboardingDraft(onboardingUserId, {
+        firstName: firstNameDraft,
+        avatarStyle: avatarStyleDraft,
+        step,
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [screen, firstNameDraft, avatarStyleDraft, onboardingUserId]);
+
+  useEffect(() => {
+    const isOnboarding = screen.startsWith("onboarding-");
+    if (!isOnboarding && screen !== "legal-consent" && screen !== "legal") return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (isOnboarding) {
+        goBackInOnboarding();
+      } else if (screen === "legal") {
+        setScreen(legalReturnScreen);
+      } else if (legalConsentBackScreen === "onboarding-complete") {
+        setScreen("onboarding-complete");
+      } else {
+        void forceLocalSignOut();
+      }
+      return true;
+    });
+    return () => subscription.remove();
+  }, [
+    screen,
+    firstNameDraft,
+    avatarStyleDraft,
+    onboardingUserId,
+    legalReturnScreen,
+    legalConsentBackScreen,
+  ]);
 
   useEffect(() => {
     const shouldMonitorVenueRuntime =
@@ -504,31 +643,56 @@ export function LeftApp() {
   }, [pendingApproachFeedback]);
 
   async function bootstrapSession() {
-    const session = await getCurrentSession();
-    logAuthDebug("bootstrap session", {
-      hasSession: !!session,
-      userId: session?.user.id ?? null,
-      provider: session?.user.app_metadata.provider ?? null,
-    });
-    await syncSession(session, true);
+    setBootError(null);
+    setScreen("loading");
+    try {
+      preAuthSeenRef.current = await hasSeenPreAuthOnboarding();
+      preAuthReadyRef.current = true;
+      const session = await getCurrentSession();
+      logAuthDebug("bootstrap session", {
+        hasSession: !!session,
+        userId: session?.user.id ?? null,
+        provider: session?.user.app_metadata.provider ?? null,
+      });
+      await syncSession(session, true);
+    } catch (error) {
+      console.warn("[auth] bootstrap failed", error);
+      setBootError("Check your connection, then try again.");
+      setScreen("loading");
+    }
+  }
+
+  async function completePreAuthOnboarding() {
+    try {
+      await markPreAuthOnboardingSeen();
+    } catch (error) {
+      console.warn("[onboarding] could not persist intro completion", error);
+    }
+    preAuthSeenRef.current = true;
+    setScreen("auth");
   }
 
   async function bootstrapDeviceState() {
-    const runtime = await syncLocationRegistrationState();
-    setLocationEnabled(runtime.permissionGranted);
-    if (runtime.permissionGranted) {
-      await primeLocationFix();
+    try {
+      const runtime = await syncLocationRegistrationState();
+      setLocationEnabled(runtime.permissionGranted);
+      if (runtime.permissionGranted) {
+        await primeLocationFix();
+      }
+      await refreshVenueFromRuntime();
+      const defaults = await loadLastActivationDefaults();
+      if (defaults) {
+        setSelectedIntent(defaults.intent);
+        setSelectedVibes(normalizeSingleVibe(defaults.vibes));
+        setSelectedDuration(defaults.durationMinutes);
+        setHintDraft(defaults.hintText);
+      }
+      setVenueApproachPrompts(await getVenueApproachPrompts());
+      await refreshVenuePreferences();
+    } catch (error) {
+      console.warn("[location] device bootstrap failed", error);
+      setLocationEnabled(false);
     }
-    await refreshVenueFromRuntime();
-    const defaults = await loadLastActivationDefaults();
-    if (defaults) {
-      setSelectedIntent(defaults.intent);
-      setSelectedVibes(normalizeSingleVibe(defaults.vibes));
-      setSelectedDuration(defaults.durationMinutes);
-      setHintDraft(defaults.hintText);
-    }
-    setVenueApproachPrompts(await getVenueApproachPrompts());
-    await refreshVenuePreferences();
   }
 
   async function refreshVenueFromRuntime() {
@@ -972,7 +1136,8 @@ export function LeftApp() {
     });
     if (!session) {
       setUser(null);
-      setScreen("auth");
+      setOnboardingUserId(null);
+      setScreen(preAuthReadyRef.current && !preAuthSeenRef.current ? "preauth" : "auth");
       return;
     }
 
@@ -982,8 +1147,8 @@ export function LeftApp() {
     const { profile, error } = await fetchUserProfile(session.user.id);
     if (error) {
       logAuthDebug("profile lookup failed", { message: error.message, code: error.code });
-      setAuthError("Could not load your profile.");
-      setScreen("auth");
+      setBootError("We could not load your profile. Your session is still secure.");
+      setScreen("loading");
       return;
     }
 
@@ -1000,12 +1165,52 @@ export function LeftApp() {
     }
     if (!profile || !profile.onboarding_completed) {
       setUser(null);
-      setScreen("onboarding-name");
+      setOnboardingUserId(session.user.id);
+      const draft = await loadOnboardingDraft(session.user.id);
+      if (draft) {
+        setFirstNameDraft(draft.firstName || inferredFirstName);
+        setAvatarStyleDraft(draft.avatarStyle);
+        setScreen(onboardingScreenForStep(draft.step));
+      } else {
+        setFirstNameDraft(inferredFirstName);
+        setAvatarStyleDraft("geometric");
+        setScreen("onboarding-name");
+      }
       return;
     }
 
     const appUser = mapProfileToAppUser(profile);
+    if (
+      legalContentReady &&
+      CURRENT_LEGAL_VERSIONS.terms &&
+      CURRENT_LEGAL_VERSIONS.privacy &&
+      CURRENT_LEGAL_VERSIONS.community
+    ) {
+      const currentVersions = {
+        terms: CURRENT_LEGAL_VERSIONS.terms,
+        privacy: CURRENT_LEGAL_VERSIONS.privacy,
+        community: CURRENT_LEGAL_VERSIONS.community,
+      };
+      const acceptance = await hasAcceptedLegalVersions(session.user.id, currentVersions);
+      if (acceptance.error) {
+        console.warn("[legal] acceptance lookup failed", acceptance.error);
+        setBootError("We could not verify your policy choices. Your session is still secure.");
+        setScreen("loading");
+        return;
+      }
+      if (!acceptance.accepted) {
+        setUser(appUser);
+        setOnboardingUserId(session.user.id);
+        setFirstNameDraft(appUser.firstName);
+        setAvatarStyleDraft(appUser.avatarStyle);
+        setLegalConsentBackScreen("auth");
+        setScreen("legal-consent");
+        return;
+      }
+    }
     setUser(appUser);
+    setOnboardingUserId(null);
+    void clearOnboardingDraft(session.user.id);
     setFirstNameDraft(profile.first_name);
     const syncedVenuePreferences = await syncVenuePreferencesForUser(appUser.id);
     setVenuePreferences(syncedVenuePreferences);
@@ -1020,60 +1225,158 @@ export function LeftApp() {
     try {
       const result = await startGoogleAuthSession(logAuthDebug);
       if (result.status === "failed") setAuthError(result.message);
+      if (result.status === "cancelled") {
+        setAuthError("Google sign-in was cancelled. Try again when you’re ready.");
+      }
+    } catch (error) {
+      console.warn("[auth] Google sign-in failed", error);
+      setAuthError("Google sign-in could not complete. Check your connection and try again.");
     } finally {
       setAuthBusy(false);
     }
   }
 
-  async function finishOnboarding() {
-    const session = await getCurrentSession();
-    if (!session) {
-      setAuthError("Sign in again to finish onboarding.");
-      setScreen("auth");
-      return;
-    }
-
+  async function finishLocationStep() {
+    setLocationError(null);
     setLocationBusy(true);
-    const locationResult = await requestLocationAccess();
-    setLocationEnabled(locationResult.granted);
-    if (!locationResult.granted) {
+    try {
+      const session = await getCurrentSession();
+      if (!session) {
+        setAuthError("Sign in again to finish onboarding.");
+        setScreen("auth");
+        return;
+      }
+
+      const locationResult = await requestLocationAccess();
+      setLocationEnabled(locationResult.granted);
+      setNotificationEnabled(locationResult.notificationsGranted);
+      if (!locationResult.granted) {
+        setLocationError(getLocationRecoveryMessage(locationResult.reason));
+        return;
+      }
+      await primeLocationFix();
+      await refreshVenueFromRuntime();
+      await persistOnboardingStep("complete");
+      setScreen("onboarding-complete");
+    } catch (error) {
+      console.warn("[onboarding] location step failed", error);
+      setLocationError("Left could not finish the permission check. Try again, or review device settings.");
+    } finally {
       setLocationBusy(false);
-      setAuthError(
-        locationResult.reason === "registration_failed"
-          ? "Background location could not start on this device yet."
-          : "Background location is required to detect social venues.",
+    }
+  }
+
+  async function finishOnboarding() {
+    const validation = validateFirstName(firstNameDraft);
+    if (!validation.valid) {
+      setAuthError(validation.message);
+      setScreen("onboarding-name");
+      return;
+    }
+    if (legalContentReady && !Object.values(legalChecks).every(Boolean)) {
+      setAuthError("Review and accept all published policies to finish.");
+      return;
+    }
+
+    setOnboardingSaveBusy(true);
+    setAuthError(null);
+    try {
+      const session = await getCurrentSession();
+      if (!session) {
+        setAuthError("Sign in again to finish onboarding.");
+        setScreen("auth");
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const nextUser: AppUser = {
+        id: session.user.id,
+        authProvider: getProvider(session),
+        providerSubject: getProviderSubject(session, getProvider(session)),
+        firstName: validation.normalized,
+        avatarStyle: avatarStyleDraft,
+        defaultIntent: "networking",
+        defaultVibes: ["Open"],
+        profilePrompt: defaultProfilePrompt,
+        approachPrompt: defaultApproachPrompt,
+        focusModeEnabled: false,
+        promptsEnabled: true,
+        identityRemoved: false,
+        onboardingCompleted: true,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      const versions =
+        legalContentReady &&
+        CURRENT_LEGAL_VERSIONS.terms &&
+        CURRENT_LEGAL_VERSIONS.privacy &&
+        CURRENT_LEGAL_VERSIONS.community
+          ? {
+              terms: CURRENT_LEGAL_VERSIONS.terms,
+              privacy: CURRENT_LEGAL_VERSIONS.privacy,
+              community: CURRENT_LEGAL_VERSIONS.community,
+            }
+          : null;
+      if (user?.onboardingCompleted) {
+        if (!versions) {
+          setScreen("home");
+          return;
+        }
+        const acceptance = await recordLegalAcceptance(versions);
+        if (!acceptance.ok) {
+          console.warn("[legal] acceptance save failed", acceptance.error);
+          setAuthError("Your acceptance could not be saved. Check your connection and try again.");
+          return;
+        }
+        setAuthError(null);
+        setScreen("home");
+        return;
+      }
+
+      const result = await upsertOnboardingProfile(
+        nextUser,
+        versions ? { versions } : null,
       );
+      if (!result.ok) {
+        console.warn("[onboarding] profile save failed", result.error);
+        setAuthError("Your choices could not be saved. Check your connection and try again.");
+        return;
+      }
+
+      setUser(nextUser);
+      setOnboardingUserId(null);
+      await clearOnboardingDraft(session.user.id);
+      setScreen("home");
+    } catch (error) {
+      console.warn("[onboarding] completion failed", error);
+      setAuthError("Left could not finish setting up your profile. Check your connection and try again.");
+    } finally {
+      setOnboardingSaveBusy(false);
+    }
+  }
+
+  function openDeviceSettings() {
+    void Linking.openSettings().catch(() => {
+      showDialog("Open device settings", "Open your device settings and allow location access for Left.");
+    });
+  }
+
+  async function continueNameStep() {
+    const validation = validateFirstName(firstNameDraft);
+    if (!validation.valid) {
+      setAuthError(validation.message);
       return;
     }
-    const now = new Date().toISOString();
-    const nextUser: AppUser = {
-      id: session.user.id,
-      authProvider: getProvider(session),
-      providerSubject: getProviderSubject(session, getProvider(session)),
-      firstName: firstNameDraft.trim() || getFirstNameFromSession(session),
-      avatarStyle: avatarStyleDraft,
-      defaultIntent: "networking",
-      defaultVibes: ["Open"],
-      profilePrompt: defaultProfilePrompt,
-      approachPrompt: defaultApproachPrompt,
-      focusModeEnabled: false,
-      promptsEnabled: true,
-      identityRemoved: false,
-      onboardingCompleted: true,
-      createdAt: now,
-      updatedAt: now,
-    };
+    setFirstNameDraft(validation.normalized);
+    setAuthError(null);
+    await persistOnboardingStep("avatar");
+    setScreen("onboarding-avatar");
+  }
 
-    const saved = await upsertOnboardingProfile(nextUser);
-    if (!saved) {
-      setLocationBusy(false);
-      setAuthError("We could not save onboarding yet.");
-      return;
-    }
-
-    setUser(nextUser);
-    setLocationBusy(false);
-    setScreen("onboarding-complete");
+  async function continueAvatarStep() {
+    await persistOnboardingStep("location");
+    setScreen("onboarding-location");
   }
 
   function toggleVibe(vibe: string) {
@@ -1105,7 +1408,7 @@ export function LeftApp() {
     let runtime = await getLocationRuntimeState();
     console.info("[activation] starting presence activation", {
       permissionGranted: runtime.permissionGranted,
-      lastKnownCoords: runtime.lastKnownCoords,
+      hasLocationFix: !!runtime.lastKnownCoords,
       currentVenueId: runtime.currentVenueId,
       currentVenueName: runtime.currentVenueName,
       selectedVenueId: runtime.selectedVenueId,
@@ -1136,7 +1439,7 @@ export function LeftApp() {
 
     console.info("[activation] runtime after location refresh", {
       permissionGranted: runtime.permissionGranted,
-      lastKnownCoords: runtime.lastKnownCoords,
+      hasLocationFix: !!runtime.lastKnownCoords,
       currentVenueId: runtime.currentVenueId,
       currentVenueName: runtime.currentVenueName,
       selectedVenueId: runtime.selectedVenueId,
@@ -1177,7 +1480,7 @@ export function LeftApp() {
       const detectedVenue = runtime.nearbyVenues[0] ?? null;
       console.warn("[activation] venue unresolved after refresh", {
         permissionGranted: runtime.permissionGranted,
-        lastKnownCoords: runtime.lastKnownCoords,
+        hasLocationFix: !!runtime.lastKnownCoords,
         currentVenueId: runtime.currentVenueId,
         currentVenueName: runtime.currentVenueName,
         selectedVenueId: runtime.selectedVenueId,
@@ -1896,11 +2199,15 @@ export function LeftApp() {
   const venueConfidenceLabel = getVenueConfidenceLabel(venueConfidence);
   const venueConfidenceCopy = getVenueConfidenceCopy(venueConfidence);
   const locationStatus = locationEnabled
-    ? "Background location is active. Venue matching runs on-device and only venue IDs are used for app state."
+    ? Platform.OS === "web"
+      ? "Foreground location is available while this preview is open."
+      : "Background location is active. Venue matching runs on-device and only venue IDs are used for app state."
     : "Background location is not enabled yet.";
   const isOnboardingScreen = screen.startsWith("onboarding-");
+  const isPreAuthScreen = screen === "preauth";
+  const isFullBleedScreen = screen === "auth" || screen === "legal" || screen === "loading" || isPreAuthScreen;
   const scrollContentPaddingTop =
-    screen === "venue-detail" ? 0 : screen === "auth" ? 0 : Math.max(56, insets.top + 20);
+    screen === "venue-detail" || isFullBleedScreen ? 0 : Math.max(56, insets.top + 20);
   const scrollContentPaddingBottom = isOnboardingScreen
     ? 24 + insets.bottom
     : SESSION_NAV_SCREENS.includes(screen)
@@ -1909,7 +2216,7 @@ export function LeftApp() {
 
   return (
     <View style={styles.shell}>
-      {screen !== "me" && !isOnboardingScreen ? <BackgroundWaveLayer /> : null}
+      {screen !== "me" && screen !== "legal" && !isOnboardingScreen && !isPreAuthScreen ? <BackgroundWaveLayer /> : null}
       <ScrollView
         contentContainerStyle={[
           styles.content,
@@ -1917,29 +2224,82 @@ export function LeftApp() {
             paddingTop: scrollContentPaddingTop,
             paddingBottom: scrollContentPaddingBottom,
           },
-          screen === "auth" && styles.fullContent,
+          isFullBleedScreen && styles.fullContent,
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
+        {screen === "loading" && <LoadingScreen error={bootError} onRetry={() => void bootstrapSession()} />}
+        {screen === "preauth" && <PreAuthOnboardingScreen onComplete={() => void completePreAuthOnboarding()} />}
         {screen === "auth" && (
           <AuthScreen
             authError={authError}
             busy={authBusy}
             onAuth={startGoogleAuth}
             onEmail={() => showDialog("Email sign-in is coming soon", "Google is the working sign-in method in this build.")}
+            onOpenLegal={(document) => openLegalDocument(document, "auth")}
           />
         )}
+        {screen === "legal" && (
+          <LegalScreen documentId={activeLegalDocument} onBack={() => setScreen(legalReturnScreen)} />
+        )}
         {screen === "onboarding-name" && (
-          <NameScreen firstNameDraft={firstNameDraft} onChangeFirstName={setFirstNameDraft} onContinue={() => setScreen("onboarding-avatar")} />
+          <NameScreen
+            firstNameDraft={firstNameDraft}
+            onChangeFirstName={setFirstNameDraft}
+            onContinue={() => void continueNameStep()}
+            onBack={goBackInOnboarding}
+          />
         )}
         {screen === "onboarding-avatar" && (
-          <AvatarScreen firstName={firstNameDraft.trim()} avatarStyle={avatarStyleDraft} onPick={setAvatarStyleDraft} onContinue={() => setScreen("onboarding-location")} />
+          <AvatarScreen
+            firstName={firstNameDraft.trim()}
+            avatarStyle={avatarStyleDraft}
+            onPick={setAvatarStyleDraft}
+            onContinue={() => void continueAvatarStep()}
+            onBack={goBackInOnboarding}
+          />
         )}
         {screen === "onboarding-location" && (
-          <LocationScreen authError={authError} busy={locationBusy} onContinue={() => void finishOnboarding()} />
+          <LocationScreen
+            authError={locationError}
+            notificationsEnabled={notificationEnabled}
+            busy={locationBusy}
+            onContinue={() => void finishLocationStep()}
+            onBack={goBackInOnboarding}
+            onOpenSettings={openDeviceSettings}
+          />
+        )}
+        {screen === "legal-consent" && (
+          <LegalAcknowledgementScreen
+            checks={legalChecks}
+            onToggle={(document) =>
+              setLegalChecks((current) => ({ ...current, [document]: !current[document] }))
+            }
+            onOpenDocument={(document) => openLegalDocument(document, "legal-consent")}
+            onBack={() => {
+              if (legalConsentBackScreen === "onboarding-complete") {
+                setScreen("onboarding-complete");
+              } else {
+                void forceLocalSignOut();
+              }
+            }}
+            onContinue={() => void finishOnboarding()}
+            busy={onboardingSaveBusy}
+            error={authError}
+            standalone
+          />
         )}
         {screen === "onboarding-complete" && (
-          <CompleteScreen firstName={firstNameDraft.trim()} avatarStyle={avatarStyleDraft} onContinue={() => setScreen("home")} />
+          <CompleteScreen
+            firstName={firstNameDraft.trim()}
+            avatarStyle={avatarStyleDraft}
+            onBack={goBackInOnboarding}
+            onContinue={() => {
+              setLegalConsentBackScreen("onboarding-complete");
+              setScreen("legal-consent");
+            }}
+          />
         )}
         {screen === "venue-select" && (
           <VenueSelectionScreen
@@ -2114,6 +2474,7 @@ export function LeftApp() {
             onRequestDeletion={() => void requestAccountDeletion()}
             onShowDialog={showDialog}
             onBack={() => setScreen("me")}
+            onOpenLegal={(document) => openLegalDocument(document, "settings")}
           />
         )}
         {screen === "me" && user && (

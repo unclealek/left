@@ -1,7 +1,6 @@
 import { Image } from "react-native";
 
-const MARK_BLACK = require("../../../assets/brand/left-mark-black.png");
-const MARK_WHITE = require("../../../assets/brand/left-mark-white.png");
+const MARK_SQUARE = require("../../../assets/brand/left-app-icon-foreground.png");
 
 export function LeftLogoMark({
   size = 24,
@@ -12,9 +11,13 @@ export function LeftLogoMark({
 }) {
   return (
     <Image
-      source={tone === "light" ? MARK_WHITE : MARK_BLACK}
+      source={MARK_SQUARE}
       resizeMode="contain"
-      style={{ width: size, height: size }}
+      tintColor={tone === "light" ? "#FFFFFF" : "#161616"}
+      style={{
+        width: size * 2.25,
+        height: size * 2.25,
+      }}
     />
   );
 }

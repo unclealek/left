@@ -2,6 +2,7 @@ import { Image, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
 import type { NearbyFeedItem, VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
+import { resolveVenueActivityDisplay } from "../../features/activity/venue-activity-display";
 import { T } from "../../app/leftTheme";
 import { PrimaryButton } from "../../components/buttons";
 import { LeftIcon } from "../../components/icons";
@@ -47,7 +48,9 @@ export function VenueDetailScreen({
     ? currentFeed.filter((item) => item.intent === "networking" || item.intent === "open_to_conversation").length
     : null);
   const forecastCount = venueActivity?.activity.forecastScore ?? null;
-  const activityState = getActivityState(venueActivity, isCurrentVenue ? venueSummary.energyLevel : null);
+  const activityDisplay = resolveVenueActivityDisplay(venueActivity);
+  const activityTone = getActivityTone(activityDisplay.tone);
+  const activityState = { ...activityDisplay, ...activityTone };
   const pulseBars = activityState.score == null
     ? Array.from({ length: 5 }, () => false)
     : getPulseBarsForScore(activityState.score);
@@ -164,53 +167,11 @@ export function VenueDetailScreen({
   );
 }
 
-function getActivityState(
-  venueActivity: VenueActivityEnvelope | null,
-  fallbackEnergy: VenueContextSummary["energyLevel"] | null,
-) {
-  if (venueActivity?.activity) {
-    const score = venueActivity.activity.score ?? venueActivity.activity.forecastScore;
-    const tone = score == null
-      ? { color: T.textSecondary, softColor: T.surfaceMid }
-      : getActivityTone(score);
-    return {
-      title: venueActivity.activity.displayText,
-      subtitle: venueActivity.activity.liveAvailable
-        ? venueActivity.activity.comparisonText
-        : venueActivity.activity.forecastScore != null
-          ? "Based on typical activity"
-          : "Live activity is unavailable",
-      score,
-      ...tone,
-    };
-  }
-
-  if (fallbackEnergy) {
-    const fallback = getFallbackActivity(fallbackEnergy);
-    return fallback;
-  }
-
-  return {
-    title: "No live activity yet",
-    subtitle: "Activity will appear when verified signals are available.",
-    score: null,
-    color: T.textSecondary,
-    softColor: T.surfaceMid,
-  };
-}
-
-function getFallbackActivity(level: VenueContextSummary["energyLevel"]) {
-  if (level === "busy") return { title: "Busy now", subtitle: "Higher activity than usual", score: 84, color: T.visibilityOff, softColor: T.visibilityOffSoft };
-  if (level === "active") return { title: "Active now", subtitle: "A good moment to connect", score: 68, color: T.visibilityOn, softColor: T.visibilityOnSoft };
-  if (level === "warm") return { title: "Warm now", subtitle: "Steady and social", score: 56, color: T.visibilityOn, softColor: T.visibilityOnSoft };
-  if (level === "focused") return { title: "Focused now", subtitle: "Quiet, intentional energy", score: 42, color: T.venueAccent, softColor: T.venueAccentSoft };
-  return { title: "Calm now", subtitle: "A quieter moment here", score: 28, color: T.textSecondary, softColor: T.surfaceMid };
-}
-
-function getActivityTone(score: number) {
-  if (score >= 75) return { color: T.visibilityOff, softColor: T.visibilityOffSoft };
-  if (score >= 45) return { color: T.visibilityOn, softColor: T.visibilityOnSoft };
-  return { color: T.venueAccent, softColor: T.venueAccentSoft };
+function getActivityTone(tone: "muted" | "calm" | "active" | "busy") {
+  if (tone === "busy") return { color: T.visibilityOff, softColor: T.visibilityOffSoft };
+  if (tone === "active") return { color: T.visibilityOn, softColor: T.visibilityOnSoft };
+  if (tone === "calm") return { color: T.venueAccent, softColor: T.venueAccentSoft };
+  return { color: T.textSecondary, softColor: T.surfaceMid };
 }
 
 function formatVenueSubline(

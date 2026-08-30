@@ -38,12 +38,17 @@ export function GlassSurface({
   const backgroundColor = toneToken?.backgroundColor ?? token.backgroundColor;
   const reducedTransparencyColor = toneToken?.reducedTransparencyColor ?? token.reducedTransparencyColor;
   const borderColor = toneToken?.borderColor ?? token.borderColor;
+  const supportsReduceTransparency =
+    Platform.OS !== "web" &&
+    typeof AccessibilityInfo.isReduceTransparencyEnabled === "function";
 
   useEffect(() => {
+    if (!supportsReduceTransparency) return;
+
     void AccessibilityInfo.isReduceTransparencyEnabled().then(setReduceTransparency);
     const subscription = AccessibilityInfo.addEventListener("reduceTransparencyChanged", setReduceTransparency);
     return () => subscription.remove();
-  }, []);
+  }, [supportsReduceTransparency]);
 
   return (
     <View

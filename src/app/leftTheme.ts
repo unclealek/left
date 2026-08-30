@@ -5,6 +5,8 @@ import { cardStyles } from "../components/styles/cards";
 import { dialogStyles } from "../components/styles/dialog";
 import { activationStyles } from "../components/styles/features/activation";
 import { authStyles } from "../components/styles/features/auth";
+import { preAuthStyles } from "../components/styles/features/preAuth";
+import { legalStyles } from "../components/styles/features/legal";
 import { feedbackStyles } from "../components/styles/features/feedback";
 import { feedStyles } from "../components/styles/features/feed";
 import { homeStyles } from "../components/styles/features/home";
@@ -29,6 +31,8 @@ export const styles = StyleSheet.create({
   ...dialogStyles,
   ...loadingStyles,
   ...authStyles,
+  ...preAuthStyles,
+  ...legalStyles,
   ...cardStyles,
   ...onboardingStyles,
   ...formStyles,
