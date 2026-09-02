@@ -20,26 +20,26 @@ type IntroSlide = {
 const SLIDES: IntroSlide[] = [
   {
     eyebrow: "REAL-WORLD CONNECTION",
-    title: "Find the people already in the room.",
-    body: "Left makes it easier to notice a good conversation without turning the moment into another feed.",
+    title: "Notice the people already around you.",
+    body: "Discover meaningful people, places, and experiences without turning the moment into another feed.",
     icon: "users",
-    accent: "#D5EE91",
+    accent: "#C8D5B5",
     detail: "Same place · Same time",
   },
   {
     eyebrow: "MUTUAL OPENNESS",
-    title: "Only show up when you mean it.",
+    title: "Show up only when it feels right.",
     body: "Choose when you are open to being found. See nearby people only when the signal is mutual and the timing feels right.",
     icon: "eye",
-    accent: "#E4C89B",
+    accent: "#E2D2BD",
     detail: "Consent before contact",
   },
   {
     eyebrow: "PRIVATE BY DEFAULT",
-    title: "Your location stays yours.",
+    title: "Private by default, always.",
     body: "Left uses your location to understand the venue, never to draw your exact position for other people.",
     icon: "lock",
-    accent: "#C7DCD7",
+    accent: "#CDDAD1",
     detail: "Venue context, not a pin",
   },
 ];
@@ -109,7 +109,7 @@ export function PreAuthOnboardingScreen({ onComplete }: { onComplete: () => void
       </View>
 
       <LinearGradient
-        colors={["rgba(198,227,133,0.25)", "rgba(228,200,155,0.12)", "rgba(255,255,255,0)"]}
+        colors={["rgba(95,115,63,0.25)", "rgba(226,210,189,0.12)", "rgba(255,255,255,0)"]}
         start={{ x: 0.12, y: 0 }}
         end={{ x: 0.88, y: 0.9 }}
         style={styles.preAuthGlow}
@@ -166,12 +166,12 @@ export function PreAuthOnboardingScreen({ onComplete }: { onComplete: () => void
           ))}
         </View>
         <PrimaryButton
-          label={isLastSlide ? "Enter Left" : "Keep going"}
+          label={isLastSlide ? "Start discovering" : "Keep going"}
           onPress={advance}
           trailingIcon={isLastSlide ? "arrow-up-right" : "chevron-right"}
           tone="onboarding"
         />
-        <Text style={styles.preAuthFootnote}>A quieter way to meet the room.</Text>
+        <Text style={styles.preAuthFootnote}>A quieter way to find what feels meaningful.</Text>
       </View>
     </View>
   );
