@@ -141,7 +141,7 @@ export function SessionFooterNav(props: {
             contentStyle={styles.footerPrivateBadge}
           >
             <View style={styles.footerPrivateDot} />
-            <Text style={styles.footerPrivateText}>Your venue stays private until visible</Text>
+            <Text style={styles.footerPrivateText}>Private until you choose to be seen</Text>
           </GlassSurface>
         </View>
       ) : null}
@@ -157,7 +157,7 @@ export function SessionFooterNav(props: {
         >
           <LinearGradient
             pointerEvents="none"
-            colors={["rgba(255,255,255,0.09)", "rgba(255,255,255,0.02)", "rgba(23,10,4,0.10)"]}
+            colors={["rgba(255,255,255,0.09)", "rgba(255,255,255,0.02)", "rgba(66,79,45,0.10)"]}
             locations={[0, 0.42, 1]}
             style={styles.footerNavSpecular}
           />
