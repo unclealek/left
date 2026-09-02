@@ -80,9 +80,9 @@ export function HomeScreen({
         : "Venue confirmation may be needed";
   const hiddenCardHasError = activationError || venueConfidence === "needs_confirmation";
   const hiddenMessage = hiddenCardHasError
-    ? "We couldn't confirm this venue yet. Check your current venue before going visible."
-    : "You're currently not visible to others here.";
-  const presenceMessage = isVisible ? "You’re checked in here" : hiddenMessage;
+    ? "We couldn't confirm this place yet. Check your current place before becoming visible."
+    : "You're private until you choose to be discovered.";
+  const presenceMessage = isVisible ? "You’re sharing this moment here." : hiddenMessage;
   const primaryLabel = isVisible ? "Manage visibility" : activationSubmitting ? "Going visible..." : "Go visible";
   const reportedVisibleCount =
     venueActivityById[venue.venueId]?.leftPresence.visible ??
@@ -181,8 +181,8 @@ export function HomeScreen({
             <LeftIcon name="activity" size={18} color={isVisible ? T.visibilityOn : T.venueAccent} />
           </Animated.View>
         </View>
-        <Text style={styles.homeHeroTitleAccent}>{"Ready to\nconnect nearby?"}</Text>
-        <Text style={styles.homeHeroSupportText}>Real people. Real places. Right now.</Text>
+        <Text style={styles.homeHeroTitleAccent}>{"Find what feels\nmeaningful."}</Text>
+        <Text style={styles.homeHeroSupportText}>Discover meaningful people, places, and experiences nearby.</Text>
       </View>
 
       <View
@@ -315,7 +315,7 @@ export function HomeScreen({
             <View style={styles.homeHeroPrivacyCopyVisible}>
               <Text style={styles.homeHeroPrivacyLabelVisible}>{isVisible ? "Visibility controls" : "Private mode"}</Text>
               <Text style={styles.homeHeroPrivacyTextVisible}>
-                {isVisible ? "Manage how people discover you here." : "Only you control your presence."}
+                {isVisible ? "Manage how people discover you here." : "You choose when and how you’re discovered."}
               </Text>
             </View>
             <LeftIcon name="chevron-right" size={18} color={T.textPrimary} />
@@ -325,7 +325,7 @@ export function HomeScreen({
 
       <View style={styles.homeExploreHeader}>
         <View style={styles.homeExploreHeaderCopy}>
-          <Text style={styles.homeExploreTitle}>Places around you</Text>
+          <Text style={styles.homeExploreTitle}>Worth exploring nearby</Text>
           <Text style={styles.homeExploreMeta}>{placesContext}</Text>
         </View>
         <Pressable
@@ -421,7 +421,7 @@ export function HomeScreen({
           </View>
           <View style={styles.homeSafetyCardCopy}>
             <Text style={styles.homeSafetyCardTitle}>Safety controls</Text>
-            <Text style={styles.homeSafetyCardSubtitle}>Control how you are discovered.</Text>
+            <Text style={styles.homeSafetyCardSubtitle}>You decide when and how you’re discovered.</Text>
           </View>
         </View>
         <LeftIcon name="chevron-right" size={22} color={T.textSecondary} />
