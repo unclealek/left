@@ -220,9 +220,9 @@ export const homeStyles = {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "rgba(255,251,245,0.92)",
+    backgroundColor: "rgba(244,242,238,0.92)",
     borderWidth: 1.5,
-    borderColor: "rgba(255,251,245,0.96)",
+    borderColor: "rgba(244,242,238,0.96)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -230,7 +230,7 @@ export const homeStyles = {
     marginLeft: -5,
   },
   homeHeroAvatarCountBubble: {
-    backgroundColor: "rgba(255,251,245,0.88)",
+    backgroundColor: "rgba(244,242,238,0.88)",
   },
   homeHeroAvatarLabel: {
     color: T.textPrimary,
