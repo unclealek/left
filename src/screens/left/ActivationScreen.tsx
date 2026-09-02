@@ -106,8 +106,8 @@ export function ActivationScreen(props: {
     return (
       <View style={[styles.activationPage, styles.activationLivePage]}>
         <ScreenHeader
-          title="Presence live"
-          subtitle="You are visible to people at this venue."
+          title="You’re visible"
+          subtitle="People here can discover you for this moment."
           onBack={props.onBack}
           variant="utility"
         />
@@ -173,7 +173,7 @@ export function ActivationScreen(props: {
         ) : null}
 
         <BrandPrimaryButton
-          label="Open nearby feed"
+          label="See who’s here"
           subtitle="See who is visible here"
           onPress={props.onOpenFeed}
           size="compact"
@@ -201,8 +201,8 @@ export function ActivationScreen(props: {
   return (
     <View style={styles.activationPage}>
       <ScreenHeader
-        title="Your presence"
-        subtitle="Set how you want to show up nearby."
+        title="Share this moment"
+        subtitle="Choose how you want to be discovered nearby."
         onBack={props.onBack}
         variant="utility"
       />
