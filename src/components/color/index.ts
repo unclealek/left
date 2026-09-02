@@ -38,4 +38,3 @@ export const leftColors = {
 
     return `rgba(${red},${green},${blue},${opacity})`;
     }
-    
