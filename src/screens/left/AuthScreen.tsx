@@ -122,8 +122,8 @@ export function AuthScreen({
         contentStyle={styles.authCard}
       >
         <Text style={styles.authEyebrow}>WELCOME TO LEFT</Text>
-        <Text style={styles.authHeadline}>People. Places.{"\n"}Presence.</Text>
-        <Text style={styles.authSub}>Connection starts with being there.{"\n"}See where the energy is.</Text>
+        <Text style={styles.authHeadline}>Find what feels{"\n"}meaningful.</Text>
+        <Text style={styles.authSub}>Discover meaningful people, places,{"\n"}and experiences nearby.</Text>
 
         <Pressable
           onPress={onAuth}
@@ -188,8 +188,8 @@ export function AuthScreen({
           <LeftIcon name="lock" size={23} color={T.onboardingInk} />
         </View>
         <View style={styles.authPrivacyCopy}>
-          <Text style={styles.authPrivacyTitle}>Your presence. Your choice.</Text>
-          <Text style={styles.authPrivacyBody}>Your exact location is not shown to other people. You choose when your presence becomes visible.</Text>
+          <Text style={styles.authPrivacyTitle}>Private until you choose otherwise.</Text>
+          <Text style={styles.authPrivacyBody}>You choose when and where you can be discovered. Your precise location is never shared.</Text>
         </View>
       </View>
     </View>
