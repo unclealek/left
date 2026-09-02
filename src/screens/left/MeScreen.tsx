@@ -242,7 +242,7 @@ export function MeScreen({
                 <View style={styles.profilePresencePrivacyNote}>
                   <LeftIcon name="map-pin" size={15} color={T.textMuted} />
                   <Text style={styles.profilePresencePrivacyText}>
-                    {sessionVisible ? "Your venue is visible during this session" : "Your location stays private until visible"}
+                    {sessionVisible ? "Your venue is visible during this session" : "Private until you choose to be seen"}
                   </Text>
                 </View>
               </View>
@@ -252,7 +252,7 @@ export function MeScreen({
           <View style={styles.profileActivitySection}>
             <View style={styles.profileSectionHeaderRow}>
               <View style={styles.profileSectionHeaderLeft}>
-                <Text style={styles.profileSectionTitle}>My activity</Text>
+                <Text style={styles.profileSectionTitle}>Your recent moments</Text>
               </View>
             </View>
             <View style={styles.profileActivityCard}>
