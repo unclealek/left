@@ -4,7 +4,7 @@ import { T } from "../../theme";
 export const feedbackStyles = {
   feedbackPromptOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(31,14,6,0.18)",
+    backgroundColor: "rgba(26,24,21,0.18)",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
