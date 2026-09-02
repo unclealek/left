@@ -94,7 +94,7 @@ function AvatarShape({ avatarStyle, size = "tile" }: { avatarStyle: AvatarStyle;
           avatarStyle === "minimal"
             ? [T.onboardingAccent, T.onboardingAccent, T.onboardingInk]
             : avatarStyle === "abstract"
-              ? [T.onboardingInk, "#6D4A2B", T.onboardingAccent]
+              ? [T.onboardingInk, T.venueAccent, T.onboardingAccent]
               : avatarStyle === "soft"
                 ? [T.onboardingAccent, T.onboardingAccent, T.onboardingAccent]
                 : [T.onboardingAccent, T.onboardingAccent, T.onboardingInk]
@@ -151,7 +151,7 @@ export function NameScreen({
       }
     >
       <View style={styles.onboardingIntroBlock}>
-        <Text accessibilityRole="header" style={styles.onboardingTitle}>What should people call you?</Text>
+        <Text accessibilityRole="header" style={styles.onboardingTitle}>How should people know you?</Text>
         <Text style={styles.onboardingBody}>Just your first name. Keep it simple.</Text>
       </View>
 
@@ -214,7 +214,7 @@ export function AvatarScreen({
       footer={<PrimaryButton label="Continue" onPress={onContinue} trailingIcon="chevron-right" tone="onboarding" />}
     >
       <View style={styles.onboardingIntroBlock}>
-        <Text accessibilityRole="header" style={styles.onboardingTitle}>Pick your social shape</Text>
+        <Text accessibilityRole="header" style={styles.onboardingTitle}>Choose how you’ll appear</Text>
         <Text style={styles.onboardingBody}>This is how you’ll appear to people nearby.</Text>
       </View>
 
@@ -270,7 +270,7 @@ export function AvatarScreen({
               <Text style={styles.onboardingPreviewStatus}>Open to chat</Text>
             </View>
           </View>
-          <LeftIcon name="chevron-right" size={20} color="rgba(31,14,6,0.36)" />
+          <LeftIcon name="chevron-right" size={20} color="rgba(26,24,21,0.36)" />
         </View>
       </View>
     </OnboardingShell>
@@ -321,7 +321,7 @@ export function LocationScreen({
       }
     >
       <View style={styles.onboardingIntroBlock}>
-        <Text accessibilityRole="header" style={styles.onboardingTitle}>Give Left the right access</Text>
+        <Text accessibilityRole="header" style={styles.onboardingTitle}>Discover what’s nearby</Text>
         <Text style={styles.onboardingBody}>
           Location helps Left understand which venue you’re in. Notifications let Left tell you when something relevant happens.
         </Text>
