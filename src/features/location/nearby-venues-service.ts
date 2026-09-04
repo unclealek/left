@@ -13,6 +13,7 @@ type NearbyVenueResponse = {
     radiusMeters: number;
     source: RuntimeVenueCandidate["source"];
     distanceMetres: number | null;
+    formattedAddress?: string | null;
   }>;
 };
 
@@ -43,5 +44,6 @@ export async function fetchNearbyVenuesFromServer(
     source: venue.source,
     distanceMeters: venue.distanceMetres,
     photoUrl: null,
+    formattedAddress: venue.formattedAddress ?? null,
   }));
 }

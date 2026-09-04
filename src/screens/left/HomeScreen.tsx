@@ -6,12 +6,14 @@ import {
   getVenueConfidenceLabel,
   resolveVenueConfidence,
 } from "../../features/location/venue-confidence";
+import { formatIntent, formatRemaining } from "../../app/leftConfig";
 import { styles, T } from "../../app/leftTheme";
 import { LeftIcon } from "../../components/icons";
 import { GlassSurface, glassRadii } from "../../components/glass";
+import { LeftAvatar } from "../../components/left/LeftAvatar";
 import { LeftLogoMark } from "../../components/left/LeftLogoMark";
 import { VenueIdentityBlock } from "../../components/left/ui";
-import type { VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
+import type { AppUser, NearbyFeedItem, VenueActivityEnvelope, VenueContextSummary, VenueExperience } from "../../types/left-domain";
 import { getNearbyPeopleCount } from "./home-presence";
 
 const VENUE_ILLUSTRATIONS = {
@@ -30,6 +32,10 @@ export function HomeScreen({
   venue,
   nearbyVenues,
   venueActivityById,
+  experiences,
+  feed,
+  intent,
+  vibes,
   sessionVisible,
   venueHidden,
   activationSubmitting = false,
@@ -37,12 +43,19 @@ export function HomeScreen({
   onBecomeVisible,
   onOpenAllVenues,
   onOpenVenueDetail,
+  onOpenProfile,
+  onOpenExperience,
+  onCreateExperience,
   onOpenSafety,
 }: {
   firstName: string;
   venue: VenueContextSummary;
   nearbyVenues: RuntimeVenueCandidate[];
   venueActivityById: Record<string, VenueActivityEnvelope>;
+  experiences: VenueExperience[];
+  feed: NearbyFeedItem[];
+  intent: AppUser["defaultIntent"];
+  vibes: string[];
   sessionVisible: boolean;
   venueHidden: boolean;
   activationSubmitting?: boolean;
@@ -50,6 +63,9 @@ export function HomeScreen({
   onBecomeVisible: () => void;
   onOpenAllVenues: () => void;
   onOpenVenueDetail: (venue: RuntimeVenueCandidate) => void;
+  onOpenProfile: (item: NearbyFeedItem) => void;
+  onOpenExperience: (experience: VenueExperience) => void;
+  onCreateExperience: () => void;
   onOpenSafety: () => void;
 }) {
   const venueName = resolveVenueName(venue.venueName, nearbyVenues);
@@ -62,8 +78,9 @@ export function HomeScreen({
   const greetingHeartbeat = useRef(new Animated.Value(0)).current;
   const venueConfidence = resolveVenueConfidence(venue, nearbyVenues);
   const nearbyCards = buildNearbyVenueCards(nearbyVenues, venueName, venueActivityById);
-  const heroVenueType = nearbyVenues[0]?.venueType ?? inferVenueTypeFromName(venueName);
-  const heroIllustration = getVenueIllustrationSource(venueName, heroVenueType);
+  const featuredPlace = nearbyCards[0] ?? null;
+  const morePlaces = nearbyCards.slice(1);
+  const featuredPerson = isVisible ? feed[0] ?? null : null;
   const confidenceLabel = getVenueConfidenceLabel(venueConfidence);
   const venueDistanceLabel = currentVenueCandidate?.distanceMeters != null
     ? formatDistanceLabel(currentVenueCandidate.distanceMeters)
@@ -89,6 +106,7 @@ export function HomeScreen({
     venueActivityById[currentVenueCandidate?.id ?? ""]?.leftPresence.visible ??
     0;
   const peopleNearbyCount = getNearbyPeopleCount(reportedVisibleCount, isVisible);
+  const discoveryContext = buildDiscoveryContext(venueName, intent, vibes);
 
   useEffect(() => {
     void AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
@@ -170,9 +188,10 @@ export function HomeScreen({
         </View>
       </View>
 
-      <View style={styles.homeHeroHeading}>
+      <View style={styles.homeEditorialIntro}>
+        <Text style={styles.homeEditorialEyebrow}>{`FOR ${firstName.toUpperCase()} · RIGHT NOW`}</Text>
         <View style={styles.homeGreetingInline}>
-          <Text style={styles.homeGreetingInlineName}>{`Hey ${firstName}!`}</Text>
+          <Text style={styles.homeEditorialTitle}>{"See what’s worth\nstepping into."}</Text>
           <Animated.View
             accessible
             accessibilityLabel={isVisible ? "Presence live" : "Presence hidden"}
@@ -181,247 +200,317 @@ export function HomeScreen({
             <LeftIcon name="activity" size={18} color={isVisible ? T.visibilityOn : T.venueAccent} />
           </Animated.View>
         </View>
-        <Text style={styles.homeHeroTitleAccent}>{"Find what feels\nmeaningful."}</Text>
-        <Text style={styles.homeHeroSupportText}>Discover meaningful people, places, and experiences nearby.</Text>
+        <Text style={styles.homeEditorialSupport}>{discoveryContext}</Text>
       </View>
 
       <View
         style={[
-          styles.homeHeroCardV2,
-          styles.homeHeroCardV2Unified,
-          isVisible ? styles.homeHeroCardV2Visible : styles.homeHeroCardV2Hidden,
-          hiddenCardHasError && styles.homeHeroCardV2Error,
+          styles.homePresenceCard,
+          hiddenCardHasError && styles.homePresenceCardError,
         ]}
       >
-        <View style={styles.homeHeroVisibleShell}>
-          <LinearGradient
-            colors={[T.surfaceDim, T.surface, T.primarySoft]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.homeHeroVenueArtStacked}
-          >
-            <Image source={heroIllustration} style={styles.homeVenueIllustrationImage} resizeMode="cover" />
-            <LinearGradient
-              colors={["rgba(255,247,235,0.34)", "rgba(255,247,235,0.08)", "transparent"]}
-              start={{ x: 0.5, y: 0 }}
-              end={{ x: 0.5, y: 1 }}
-              style={styles.homeHeroVenueArtShade}
-            />
-            <GlassSurface
-              variant="soft"
-              radius={glassRadii.pill}
-              style={styles.homeHeroImageStatusGlass}
-              contentStyle={styles.homeHeroImageStatusPill}
-            >
-              <LeftIcon
-                name={isVisible ? "eye" : "eye-off"}
-                size={12}
-                color={hiddenCardHasError ? T.danger : isVisible ? T.visibilityOn : T.visibilityOff}
-                active={isVisible}
-              />
-              <Text style={styles.homeHeroImageStatusText}>{isVisible ? "VISIBLE" : "HIDDEN"}</Text>
-            </GlassSurface>
-            {isVisible && peopleNearbyCount > 0 ? (
-              <GlassSurface
-                variant="soft"
-                radius={glassRadii.pill}
-                style={styles.homeHeroPeopleGlass}
-                contentStyle={styles.homeHeroPeopleOverlay}
-              >
-                  <View style={styles.homeHeroAvatarStack}>
-                    <View style={[styles.homeHeroAvatarBubble, styles.homeHeroAvatarCountBubble]}>
-                      <Text style={styles.homeHeroAvatarCountText}>{peopleNearbyCount}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.homeHeroPeopleOverlayText}>
-                    {peopleNearbyCount === 1 ? "Person nearby" : "People nearby"}
-                  </Text>
-              </GlassSurface>
-            ) : null}
-          </LinearGradient>
-          <View style={styles.homeHeroVisibleInfoRow}>
-            <View style={styles.homeHeroVisibleInfoCopy}>
-              <Text style={styles.homeHeroVenueNameVisible} numberOfLines={2} ellipsizeMode="tail">
-                {venueName}
-              </Text>
-              <View style={styles.homeHeroStatusLine}>
-                <View
-                  style={[
-                    styles.homeHeroPresenceEyebrowDot,
-                    !isVisible && styles.homeHeroPresenceEyebrowDotHidden,
-                    hiddenCardHasError && styles.homeHeroPresenceEyebrowDotError,
-                  ]}
-                />
-                <Text
-                  style={[
-                    styles.homeHeroStatusLineText,
-                    hiddenCardHasError && styles.homeHeroPresenceEyebrowError,
-                  ]}
-                >
-                  {isVisible ? "Visible to people here" : "Hidden from others"}
-                </Text>
-              </View>
-              <Text style={styles.homeHeroCardCopyVisible}>{presenceMessage}</Text>
-            </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={primaryLabel}
-              accessibilityHint={hiddenCardHasError ? "Resolve the venue issue before becoming visible." : "Open venue visibility controls."}
-              accessibilityState={{ disabled: (!isVisible && hiddenCardHasError) || activationSubmitting, busy: activationSubmitting }}
-              disabled={(!isVisible && hiddenCardHasError) || activationSubmitting}
-              onPress={onBecomeVisible}
-              style={({ pressed }) => [
-                styles.homeVisibleHeroButtonInline,
-                !isVisible && styles.homeVisibleHeroButtonInlineHidden,
-                hiddenCardHasError && styles.homeVisibleHeroButtonInlineError,
-                pressed && !activationSubmitting && !(!isVisible && hiddenCardHasError) && styles.iconButtonPressed,
-              ]}
-            >
-              {activationSubmitting ? (
-                <ActivityIndicator size="small" color={hiddenCardHasError ? T.textPrimary : T.actionContent} />
-              ) : (
-                <View style={styles.homeVisibleHeroButtonMark}>
-                  <LeftIcon
-                    name={isVisible ? "eye-off" : "eye"}
-                    size={17}
-                    color={hiddenCardHasError ? T.textPrimary : T.actionContent}
-                  />
-                </View>
-              )}
-              <Text
+        <View style={styles.homePresencePrimaryRow}>
+          <View style={styles.homePresenceCopy}>
+            <View style={styles.homePresenceStateRow}>
+              <View
                 style={[
-                  styles.homeVisibleHeroButtonTextInline,
-                  hiddenCardHasError && styles.homeVisibleHeroButtonTextInlineError,
+                  styles.homePresenceStateDot,
+                  !isVisible && styles.homePresenceStateDotHidden,
+                  hiddenCardHasError && styles.homePresenceStateDotError,
                 ]}
-              >
-                {primaryLabel}
+              />
+              <Text style={styles.homePresenceStateLabel}>
+                {isVisible ? "VISIBLE HERE" : "PRIVATE HERE"}
               </Text>
-            </Pressable>
+            </View>
+            <Text numberOfLines={1} style={styles.homePresenceVenue}>{venueName}</Text>
+            <Text style={styles.homePresenceMessage}>{presenceMessage}</Text>
           </View>
-          <View style={styles.homeHeroVisibleDivider} />
           <Pressable
-            onPress={onOpenSafety}
             accessibilityRole="button"
-            accessibilityLabel={isVisible ? "Visibility controls" : "Private mode"}
-            accessibilityHint="Open privacy and visibility controls."
+            accessibilityLabel={primaryLabel}
+            accessibilityHint={hiddenCardHasError ? "Resolve the venue issue before becoming visible." : "Open venue visibility controls."}
+            accessibilityState={{ disabled: (!isVisible && hiddenCardHasError) || activationSubmitting, busy: activationSubmitting }}
+            disabled={(!isVisible && hiddenCardHasError) || activationSubmitting}
+            onPress={onBecomeVisible}
             style={({ pressed }) => [
-              styles.homeHeroPrivacyRowVisible,
-              pressed && styles.iconButtonPressed,
+              styles.homePresenceAction,
+              hiddenCardHasError && styles.homePresenceActionError,
+              pressed && !activationSubmitting && !hiddenCardHasError && styles.iconButtonPressed,
             ]}
           >
-            <View style={styles.homeHeroPrivacyIconWrapVisible}>
-              <LeftIcon name={isVisible ? "eye" : "lock"} size={18} color={T.textSecondary} active={isVisible} />
-            </View>
-            <View style={styles.homeHeroPrivacyCopyVisible}>
-              <Text style={styles.homeHeroPrivacyLabelVisible}>{isVisible ? "Visibility controls" : "Private mode"}</Text>
-              <Text style={styles.homeHeroPrivacyTextVisible}>
-                {isVisible ? "Manage how people discover you here." : "You choose when and how you’re discovered."}
-              </Text>
-            </View>
-            <LeftIcon name="chevron-right" size={18} color={T.textPrimary} />
+            {activationSubmitting ? (
+              <ActivityIndicator size="small" color={hiddenCardHasError ? T.danger : T.actionContent} />
+            ) : (
+              <LeftIcon
+                name={isVisible ? "eye-off" : "eye"}
+                size={18}
+                color={hiddenCardHasError ? T.danger : T.actionContent}
+              />
+            )}
+            <Text style={[styles.homePresenceActionText, hiddenCardHasError && styles.homePresenceActionTextError]}>
+              {isVisible ? "Manage" : "Go visible"}
+            </Text>
           </Pressable>
         </View>
-      </View>
-
-      <View style={styles.homeExploreHeader}>
-        <View style={styles.homeExploreHeaderCopy}>
-          <Text style={styles.homeExploreTitle}>Worth exploring nearby</Text>
-          <Text style={styles.homeExploreMeta}>{placesContext}</Text>
-        </View>
         <Pressable
+          onPress={onOpenSafety}
           accessibilityRole="button"
-          accessibilityLabel="See all nearby venues"
-          onPress={onOpenAllVenues}
-          hitSlop={10}
-          style={({ pressed }) => pressed && styles.iconButtonPressed}
+          accessibilityLabel="Open privacy and safety controls"
+          style={({ pressed }) => [styles.homePresencePrivacyRow, pressed && styles.iconButtonPressed]}
         >
-          <Text style={styles.homeExploreSideNote}>See all →</Text>
+          <LeftIcon name="shield" size={15} color={T.primary} />
+          <Text style={styles.homePresencePrivacyText}>Privacy and safety controls</Text>
+          <LeftIcon name="chevron-right" size={16} color={T.textSecondary} />
         </Pressable>
       </View>
 
-      <View style={[styles.homeVenueGrid, nearbyCards.length === 1 && styles.homeVenueGridSingle]}>
-        {nearbyCards.length === 0 ? (
-          <View accessibilityRole="text" style={styles.homeVenueEmptyState}>
-            <LeftIcon name="map-pin" size={21} color={T.textMuted} />
-            <Text style={styles.homeVenueEmptyTitle}>No live venue data yet</Text>
-            <Text style={styles.homeVenueEmptyBody}>
-              Keep location access on. Places detected near you will appear here.
-            </Text>
+      <View style={styles.homeEditorialSection}>
+        <View style={styles.homeEditorialSectionHeader}>
+          <View style={styles.homeEditorialSectionCopy}>
+            <Text style={styles.homeEditorialSectionEyebrow}>ONE PLACE TO NOTICE</Text>
+            <Text style={styles.homeEditorialSectionTitle}>Around you now</Text>
           </View>
-        ) : null}
-        {nearbyCards.map((item) => (
           <Pressable
-            key={item.id}
-            onPress={() => onOpenVenueDetail(item.venue)}
-            style={({ pressed }) => [
-              styles.homeVenueCard,
-              nearbyCards.length === 1 && styles.homeVenueCardSingle,
-              pressed && styles.iconButtonPressed,
-            ]}
+            accessibilityRole="button"
+            accessibilityLabel="See all nearby venues"
+            onPress={onOpenAllVenues}
+            hitSlop={10}
+            style={({ pressed }) => pressed && styles.iconButtonPressed}
           >
-            <View style={styles.homeVenueCardRow}>
+            <Text style={styles.homeExploreSideNote}>See all →</Text>
+          </Pressable>
+        </View>
+
+        {featuredPlace ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Open ${featuredPlace.name}`}
+            onPress={() => onOpenVenueDetail(featuredPlace.venue)}
+            style={({ pressed }) => [styles.homeFeaturedPlaceCard, pressed && styles.homeFeaturedPlaceCardPressed]}
+          >
+            <View style={styles.homeFeaturedPlaceImageWrap}>
+              <Image source={featuredPlace.illustration} style={styles.homeVenueIllustrationImage} resizeMode="cover" />
               <LinearGradient
-                colors={item.featured ? [T.primarySoft, T.surface, T.surfaceDim] : [T.surfaceDim, T.surface, T.primarySoft]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.homeVenueThumb, item.featured && styles.homeVenueThumbFeatured]}
+                colors={["transparent", "rgba(26,24,21,0.28)"]}
+                start={{ x: 0.5, y: 0.45 }}
+                end={{ x: 0.5, y: 1 }}
+                style={styles.homeFeaturedPlaceShade}
+              />
+              <GlassSurface
+                variant="soft"
+                radius={glassRadii.pill}
+                style={styles.homeFeaturedPlaceSignal}
+                contentStyle={styles.homeFeaturedPlaceSignalContent}
               >
-                <Image source={item.illustration} style={styles.homeVenueIllustrationImage} resizeMode="cover" />
-              </LinearGradient>
-              <View style={styles.homeVenueCardBody}>
-                <View style={styles.homeVenueCardTopGroup}>
-                  <Text style={[styles.homeVenueCardName, item.featured && styles.homeVenueCardNameFeatured]}>{item.name}</Text>
-                  <View style={styles.homeVenueStatusRow}>
-                    <Text style={[styles.homeVenueStatusText, { color: item.signalBarColor }]}>{item.energyLabel}</Text>
-                  </View>
-                </View>
-                {item.signalBars ? (
-                  <View
-                    style={[
-                      styles.homeVenuePeopleRow,
-                      { backgroundColor: `${item.signalBarColor}12`, borderColor: `${item.signalBarColor}26` },
-                    ]}
-                  >
-                    <View style={styles.homeVenueSignalIconWrap}>
-                      <LeftIcon name="users" size={15} color={item.signalBarColor} />
-                    </View>
-                    <View style={styles.homeVenueSignalBars}>
-                      {item.signalBars.map((active, index) => (
-                        <View
-                          key={`${item.id}-signal-${index}`}
-                          style={[
-                            styles.homeVenueSignalBar,
-                            getCompactSignalBarHeightStyle(index),
-                            active
-                              ? [styles.homeVenueSignalBarActive, { backgroundColor: item.signalBarColor, borderColor: item.signalBarColor }]
-                              : [styles.homeVenueSignalBarInactive, { borderColor: `${item.signalBarColor}44` }],
-                          ]}
-                        />
-                      ))}
-                    </View>
-                  </View>
-                ) : null}
-                <View style={styles.homeVenueDistanceRow}>
-                  <LeftIcon name="map-pin" size={15} color={T.textMuted} />
-                  <Text style={styles.homeVenueDistanceText}>{item.distanceLabel}</Text>
+                <View style={[styles.homeFeaturedPlaceSignalDot, { backgroundColor: featuredPlace.signalBarColor }]} />
+                <Text style={styles.homeFeaturedPlaceSignalText}>{featuredPlace.energyLabel}</Text>
+              </GlassSurface>
+            </View>
+            <View style={styles.homeFeaturedPlaceBody}>
+              <View style={styles.homeFeaturedPlaceCopy}>
+                <Text style={styles.homeFeaturedPlaceName}>{featuredPlace.name}</Text>
+                <View style={styles.homeFeaturedPlaceMetaRow}>
+                  <LeftIcon name="map-pin" size={14} color={T.primary} />
+                  <Text style={styles.homeFeaturedPlaceMeta}>{featuredPlace.distanceLabel}</Text>
                 </View>
               </View>
-              <View style={styles.homeVenueChevronBubble}>
-                <LeftIcon name="chevron-right" size={22} color={T.secondary} />
+              <View style={styles.homeFeaturedPlaceArrow}>
+                <LeftIcon name="arrow-up-right" size={19} color={T.actionContent} />
               </View>
             </View>
           </Pressable>
-        ))}
+        ) : (
+          <View accessibilityRole="text" style={styles.homeVenueEmptyState}>
+            <LeftIcon name="map-pin" size={21} color={T.textMuted} />
+            <Text style={styles.homeVenueEmptyTitle}>No live venue data yet</Text>
+            <Text style={styles.homeVenueEmptyBody}>Keep location access on. Places detected near you will appear here.</Text>
+          </View>
+        )}
       </View>
 
-      <Pressable onPress={onOpenSafety} style={({ pressed }) => [styles.homeSafetyCard, pressed && styles.iconButtonPressed]}>
+      <View style={styles.homeEditorialSection}>
+        <View style={styles.homeEditorialSectionHeader}>
+          <View style={styles.homeEditorialSectionCopy}>
+            <Text style={styles.homeEditorialSectionEyebrow}>PEOPLE, WITH PERMISSION</Text>
+            <Text style={styles.homeEditorialSectionTitle}>
+              {featuredPerson ? "Someone worth meeting" : isVisible ? "The room is still quiet" : "Meet when you’re ready"}
+            </Text>
+          </View>
+          {isVisible && peopleNearbyCount > 0 ? (
+            <Text style={styles.homePeopleCount}>{`${peopleNearbyCount} nearby`}</Text>
+          ) : null}
+        </View>
+
+        {featuredPerson ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`View ${featuredPerson.firstName}'s profile`}
+            onPress={() => onOpenProfile(featuredPerson)}
+            style={({ pressed }) => [styles.homePersonCard, pressed && styles.iconButtonPressed]}
+          >
+            <LeftAvatar name={featuredPerson.firstName} avatarStyle={featuredPerson.avatarStyle} />
+            <View style={styles.homePersonCardCopy}>
+              <View style={styles.homePersonNameRow}>
+                <Text style={styles.homePersonName}>{featuredPerson.firstName}</Text>
+                <Text style={styles.homePersonTime}>{formatRemaining(featuredPerson.sessionDurationRemaining)}</Text>
+              </View>
+              <Text style={styles.homePersonIntent}>{formatIntent(featuredPerson.intent)}</Text>
+              <Text numberOfLines={2} style={styles.homePersonHint}>
+                {featuredPerson.hintText ?? `Open to ${featuredPerson.primaryVibe?.toLowerCase() ?? "a meaningful conversation"}.`}
+              </Text>
+            </View>
+            <View style={styles.homePersonArrow}>
+              <LeftIcon name="chevron-right" size={18} color={T.textPrimary} />
+            </View>
+          </Pressable>
+        ) : isVisible ? (
+          <View style={styles.homePeopleEmptyCard}>
+            <View style={styles.homePeopleEmptyIcon}>
+              <LeftIcon name="users" size={20} color={T.primary} />
+            </View>
+            <View style={styles.homePeopleEmptyCopy}>
+              <Text style={styles.homePeopleEmptyTitle}>You’re the first one here</Text>
+              <Text style={styles.homePeopleEmptyText}>We’ll show someone only when they choose to be visible too.</Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.homePeoplePrivateCard}>
+            <View style={styles.homePeoplePrivateIcon}>
+              <LeftIcon name="lock" size={20} color={T.primary} />
+            </View>
+            <View style={styles.homePeoplePrivateCopy}>
+              <Text style={styles.homePeoplePrivateTitle}>No profiles are shown while you’re private</Text>
+              <Text style={styles.homePeoplePrivateText}>Become visible when you want to see people who are open to meeting here.</Text>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Go visible"
+              onPress={onBecomeVisible}
+              style={({ pressed }) => [styles.homePeoplePrivateAction, pressed && styles.iconButtonPressed]}
+            >
+              <Text style={styles.homePeoplePrivateActionText}>Go visible</Text>
+              <LeftIcon name="arrow-right" size={15} color={T.primary} />
+            </Pressable>
+          </View>
+        )}
+      </View>
+
+      <View style={styles.homeEditorialSection}>
+        <View style={styles.homeEditorialSectionHeader}>
+          <View style={styles.homeEditorialSectionCopy}>
+            <Text style={styles.homeEditorialSectionEyebrow}>SMALL, LOCAL, REVIEWED</Text>
+            <Text style={styles.homeEditorialSectionTitle}>{experiences[0] ? "Something to join" : "Make a simple plan"}</Text>
+          </View>
+        </View>
+        {experiences[0] ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Open ${experiences[0].title}`}
+            onPress={() => onOpenExperience(experiences[0])}
+            style={({ pressed }) => [styles.homeExperienceCard, pressed && styles.iconButtonPressed]}
+          >
+            <View style={styles.homeExperienceDateBlock}>
+              <Text style={styles.homeExperienceMonth}>{formatExperienceMonth(experiences[0].startsAt)}</Text>
+              <Text style={styles.homeExperienceDay}>{formatExperienceDay(experiences[0].startsAt)}</Text>
+            </View>
+            <View style={styles.homeExperienceCopy}>
+              <Text style={styles.homeExperienceTitle}>{experiences[0].title}</Text>
+              <Text style={styles.homeExperienceMeta}>{`${formatExperienceTime(experiences[0].startsAt)} · ${experiences[0].venueName}`}</Text>
+              <Text style={styles.homeExperienceSeats}>{`${experiences[0].attendeeCount}/${experiences[0].capacity} going`}</Text>
+            </View>
+            <View style={styles.homePersonArrow}>
+              <LeftIcon name="arrow-up-right" size={17} color={T.textPrimary} />
+            </View>
+          </Pressable>
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Propose a small gathering"
+            onPress={onCreateExperience}
+            style={({ pressed }) => [styles.homeExperienceEmptyCard, pressed && styles.iconButtonPressed]}
+          >
+            <View style={styles.homeExperienceEmptyIcon}>
+              <LeftIcon name="calendar" size={20} color={T.primary} />
+            </View>
+            <View style={styles.homeExperienceCopy}>
+              <Text style={styles.homeExperienceTitle}>Host something small</Text>
+              <Text style={styles.homeExperienceMeta}>Suggest a place and plan. Left reviews it before it appears nearby.</Text>
+            </View>
+            <View style={styles.homePersonArrow}>
+              <LeftIcon name="arrow-up-right" size={17} color={T.textPrimary} />
+            </View>
+          </Pressable>
+        )}
+        {experiences[0] ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Propose a gathering"
+            onPress={onCreateExperience}
+            style={({ pressed }) => [styles.homeExperienceHostLink, pressed && styles.iconButtonPressed]}
+          >
+            <Text style={styles.homeExperienceHostLinkText}>Have an idea? Propose a gathering</Text>
+            <LeftIcon name="arrow-right" size={15} color={T.primary} />
+          </Pressable>
+        ) : null}
+      </View>
+
+      {morePlaces.length > 0 ? (
+        <View style={styles.homeEditorialSection}>
+          <View style={styles.homeEditorialSectionHeader}>
+            <View style={styles.homeEditorialSectionCopy}>
+              <Text style={styles.homeEditorialSectionEyebrow}>KEEP EXPLORING</Text>
+              <Text style={styles.homeEditorialSectionTitle}>More around you</Text>
+              <Text style={styles.homeEditorialSectionMeta}>{placesContext}</Text>
+            </View>
+          </View>
+          <View style={styles.homeVenueGrid}>
+            {morePlaces.map((item) => (
+              <Pressable
+                key={item.id}
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${item.name}`}
+                accessibilityHint="Shows venue details"
+                onPress={() => onOpenVenueDetail(item.venue)}
+                style={({ pressed }) => [styles.homeVenueCard, pressed && styles.iconButtonPressed]}
+              >
+                <View style={styles.homeVenueCardRow}>
+                  <View style={styles.homeVenueThumb}>
+                    <Image source={item.illustration} style={styles.homeVenueIllustrationImage} resizeMode="cover" />
+                  </View>
+                  <View style={styles.homeVenueCardBody}>
+                    <View style={styles.homeVenueCardTopGroup}>
+                      <Text style={styles.homeVenueCardName}>{item.name}</Text>
+                      <Text style={[styles.homeVenueStatusText, { color: item.signalBarColor }]}>{item.energyLabel}</Text>
+                    </View>
+                    <View style={styles.homeVenueDistanceRow}>
+                      <LeftIcon name="map-pin" size={15} color={T.textMuted} />
+                      <Text style={styles.homeVenueDistanceText}>{item.distanceLabel}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.homeVenueChevronBubble}>
+                    <LeftIcon name="chevron-right" size={20} color={T.secondary} />
+                  </View>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ) : null}
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Open privacy and safety controls"
+        onPress={onOpenSafety}
+        style={({ pressed }) => [styles.homeSafetyCard, pressed && styles.iconButtonPressed]}
+      >
         <View style={styles.homeSafetyCardLeft}>
           <View style={styles.homeSafetyCardIconWrap}>
             <LeftIcon name="shield" size={20} color={T.primary} />
           </View>
           <View style={styles.homeSafetyCardCopy}>
-            <Text style={styles.homeSafetyCardTitle}>Safety controls</Text>
-            <Text style={styles.homeSafetyCardSubtitle}>You decide when and how you’re discovered.</Text>
+            <Text style={styles.homeSafetyCardTitle}>You stay in control</Text>
+            <Text style={styles.homeSafetyCardSubtitle}>Review visibility, hiding, blocking, and reporting.</Text>
           </View>
         </View>
         <LeftIcon name="chevron-right" size={22} color={T.textSecondary} />
@@ -509,13 +598,33 @@ function resolveVenueName(value: string, nearbyVenues: RuntimeVenueCandidate[]) 
   return fallbackVenue?.name.trim() || "nearby venue";
 }
 
+function buildDiscoveryContext(
+  venueName: string,
+  intent: AppUser["defaultIntent"],
+  vibes: string[],
+) {
+  const intentCopy = intent ? formatIntent(intent) : null;
+  const vibeCopy = vibes.find((vibe) => vibe.trim())?.trim() ?? null;
+
+  if (intentCopy && vibeCopy) {
+    return `Selected around ${venueName} for ${intentCopy}, with a ${vibeCopy} mood.`;
+  }
+  if (intentCopy) {
+    return `Selected around ${venueName} with your interest in ${intentCopy} in mind.`;
+  }
+  if (vibeCopy) {
+    return `Places and people around ${venueName} that fit a ${vibeCopy} mood.`;
+  }
+  return `A small, live edit of meaningful places and people around ${venueName}.`;
+}
+
 function buildNearbyVenueCards(
   nearbyVenues: RuntimeVenueCandidate[],
   currentVenueName: string,
   venueActivityById: Record<string, VenueActivityEnvelope>,
 ) {
   const alternatives = nearbyVenues.filter((venue) => venue.name !== currentVenueName);
-  const source = (alternatives.length ? alternatives : nearbyVenues).slice(0, 2);
+  const source = (alternatives.length ? alternatives : nearbyVenues).slice(0, 3);
 
   return source.map((venue, index) => {
     const venueType = venue.venueType ?? inferVenueTypeFromName(venue.name);
@@ -599,4 +708,16 @@ function formatDistanceLabel(distanceMeters: number) {
   if (distanceMeters < 1000) return `${Math.round(distanceMeters)} m away`;
   const minutes = Math.max(1, Math.round(distanceMeters / 80));
   return `${minutes} min walk`;
+}
+
+function formatExperienceMonth(value: string) {
+  return new Intl.DateTimeFormat(undefined, { month: "short" }).format(new Date(value)).toUpperCase();
+}
+
+function formatExperienceDay(value: string) {
+  return new Intl.DateTimeFormat(undefined, { day: "numeric" }).format(new Date(value));
+}
+
+function formatExperienceTime(value: string) {
+  return new Intl.DateTimeFormat(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" }).format(new Date(value));
 }

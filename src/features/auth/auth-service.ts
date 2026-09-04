@@ -4,8 +4,12 @@ import * as WebBrowser from "expo-web-browser";
 import { Platform } from "react-native";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
-import type { AuthProvider } from "../../types/left-domain";
 import { AUTH_CALLBACK_PATH, NATIVE_AUTH_REDIRECT } from "../../app/leftConfig";
+export {
+  getProvider,
+  getProviderSubject,
+  UnsupportedAuthProviderError,
+} from "./auth-identity";
 
 export type GoogleAuthResult =
   | { status: "completed" }
@@ -13,14 +17,6 @@ export type GoogleAuthResult =
   | { status: "failed"; message: string };
 
 WebBrowser.maybeCompleteAuthSession();
-
-export function getProvider(session: Session): AuthProvider {
-  return (session.user.app_metadata.provider as AuthProvider | undefined) ?? "google";
-}
-
-export function getProviderSubject(session: Session, provider: AuthProvider) {
-  return session.user.identities?.find((identity) => identity.provider === provider)?.id ?? session.user.id;
-}
 
 export function getFirstNameFromSession(session: Session) {
   const explicitFirstName = session.user.user_metadata.first_name;

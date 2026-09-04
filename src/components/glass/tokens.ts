@@ -7,7 +7,7 @@ export type GlassTone = "light" | "creole";
 export const glassToneTokens = {
   light: null,
   creole: {
-    backgroundColor: alpha(leftColors.creoleBrown, 0.58),
+    backgroundColor: alpha(leftColors.creoleBrown, 0.92),
     reducedTransparencyColor: alpha(leftColors.creoleBrown, 0.97),
     borderColor: alpha(leftColors.white, 0.22),
     blurTint: "dark" as const,

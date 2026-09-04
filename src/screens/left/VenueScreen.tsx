@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Easing,
@@ -22,8 +22,14 @@ import {
 } from "../../features/location/venue-confidence";
 import type {
   NearbyFeedItem,
+  VenueActivityEnvelope,
   VenueContextSummary,
 } from "../../types/left-domain";
+import {
+  filterMapVenues,
+  filterShowsPeople,
+  type DiscoveryMapFilter,
+} from "../../features/discovery/map-filter";
 import { formatIntent } from "../../app/leftConfig";
 import { T } from "../../app/leftTheme";
 import { venueRadarStyles as screenStyles } from "../../components/styles/features/venue";
@@ -39,6 +45,12 @@ const PERSON_RING_RADII = [72, 106, 136] as const;
 const PERSON_ANGLES = [18, 58, 102, 138, 198, 236, 286, 332] as const;
 const VENUE_SLOT_ANGLES = [315, 225, 160, 20] as const;
 const VENUE_SLOT_RADII = [106, 106, 92, 92] as const;
+const MAP_FILTERS: Array<{ id: DiscoveryMapFilter; label: string }> = [
+  { id: "all", label: "All" },
+  { id: "places", label: "Places" },
+  { id: "people", label: "People" },
+  { id: "active", label: "Active now" },
+];
 
 function toRadians(value: number) {
   return (value * Math.PI) / 180;
@@ -168,6 +180,7 @@ export function VenueScreen({
   onAddVenue,
   onOpenSafety,
   nearbyVenues,
+  venueActivityById,
   lastKnownCoords,
 }: {
   venue: VenueContextSummary;
@@ -192,10 +205,14 @@ export function VenueScreen({
   onAddVenue: () => void;
   onOpenSafety: () => void;
   nearbyVenues: RuntimeVenueCandidate[];
+  venueActivityById: Record<string, VenueActivityEnvelope>;
   lastKnownCoords: RuntimeCoords | null;
 }) {
   const insets = useSafeAreaInsets();
   const pingPulse = useRef(new Animated.Value(0)).current;
+  const [mapFilter, setMapFilter] = useState<DiscoveryMapFilter>("all");
+  const [selectedMapVenue, setSelectedMapVenue] = useState<RuntimeVenueCandidate | null>(null);
+  const [selectedMapPerson, setSelectedMapPerson] = useState<NearbyFeedItem | null>(null);
 
   useEffect(() => {
     const animation = Animated.loop(
@@ -232,7 +249,11 @@ export function VenueScreen({
     () => resolveMapCenter(venue, nearbyVenues, lastKnownCoords),
     [lastKnownCoords, nearbyVenues, venue],
   );
-  const personPlacements = useMemo(() => buildPersonPlacements(feed), [feed]);
+  const showPeopleOnMap = isPubliclyVisible && filterShowsPeople(mapFilter);
+  const personPlacements = useMemo(
+    () => buildPersonPlacements(showPeopleOnMap ? feed : []),
+    [feed, showPeopleOnMap],
+  );
   const activeVenueCandidate = useMemo(
     () =>
       nearbyVenues.find((candidate) => candidate.id === venue.venueId) ??
@@ -241,9 +262,13 @@ export function VenueScreen({
       null,
     [displayVenueName, nearbyVenues, venue.venueId],
   );
+  const filteredVenues = useMemo(
+    () => filterMapVenues(nearbyVenues, mapFilter, venueActivityById),
+    [mapFilter, nearbyVenues, venueActivityById],
+  );
   const venuePlacements = useMemo(
-    () => buildVenuePlacements(nearbyVenues, displayVenueName),
-    [displayVenueName, nearbyVenues],
+    () => buildVenuePlacements(filteredVenues, displayVenueName),
+    [displayVenueName, filteredVenues],
   );
   const pulseScale = pingPulse.interpolate({
     inputRange: [0, 1],
@@ -293,6 +318,17 @@ export function VenueScreen({
   }, [venue.popularIntents]);
   const intentSubtext = isPubliclyVisible ? "Most common here" : "Likely nearby";
   const currentVenueSummary = `${energyTitle} · ${getCompactIntentLabel(intentTitle)}`;
+  const selectedPreviewTitle = selectedMapPerson
+    ? selectedMapPerson.firstName
+    : selectedMapVenue?.name ?? "You are here";
+  const selectedPreviewMeta = selectedMapPerson
+    ? `${formatIntent(selectedMapPerson.intent)} · ${selectedMapPerson.primaryVibe ?? "Open"}`
+    : selectedMapVenue
+      ? selectedMapVenue.distanceMeters != null
+        ? `${Math.max(1, Math.round(selectedMapVenue.distanceMeters))} m away · Tap to view`
+        : "Tap to view place"
+      : currentVenueSummary;
+  const previewCandidate = selectedMapVenue ?? activeVenueCandidate;
   const primaryAction = isPubliclyVisible ? onOpenFeed : onActivate;
   const pulseIconStyle = {
     transform: [{ scale: pulseScale }],
@@ -407,6 +443,38 @@ export function VenueScreen({
       </View>
 
       <View style={screenStyles.mapCard}>
+        <View style={screenStyles.mapFilterRow} accessibilityRole="tablist">
+          {MAP_FILTERS.map((filter) => {
+            const active = mapFilter === filter.id;
+            return (
+              <Pressable
+                key={filter.id}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active }}
+                onPress={() => {
+                  setMapFilter(filter.id);
+                  setSelectedMapVenue(null);
+                  setSelectedMapPerson(null);
+                }}
+                style={({ pressed }) => [
+                  screenStyles.mapFilterChip,
+                  active && screenStyles.mapFilterChipActive,
+                  pressed && screenStyles.pressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    screenStyles.mapFilterLabel,
+                    active && screenStyles.mapFilterLabelActive,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {filter.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
         <View style={screenStyles.mapFrame}>
           {MAPBOX_ENABLED ? (
             <MapView
@@ -461,10 +529,16 @@ export function VenueScreen({
           {venuePlacements.map(({ candidate, left, top }) => (
             <Pressable
               key={candidate.id}
-              onPress={() => onOpenVenueDetail(candidate)}
+              accessibilityRole="button"
+              accessibilityLabel={`Select ${candidate.name}`}
+              onPress={() => {
+                setSelectedMapVenue(candidate);
+                setSelectedMapPerson(null);
+              }}
               style={[
                 screenStyles.venueMarker,
                 !isPubliclyVisible && screenStyles.venueMarkerHidden,
+                selectedMapVenue?.id === candidate.id && screenStyles.venueMarkerSelected,
                 { left, top },
             ]}
               hitSlop={8}
@@ -484,14 +558,20 @@ export function VenueScreen({
             </Pressable>
           ))}
 
-          {isPubliclyVisible
+          {showPeopleOnMap
             ? personPlacements.map(({ item, size, left, top, featured }) => (
                 <Pressable
                   key={item.profileUserId}
-                  onPress={() => onOpenProfile(item)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select ${item.firstName}`}
+                  onPress={() => {
+                    setSelectedMapPerson(item);
+                    setSelectedMapVenue(null);
+                  }}
                   style={({ pressed }) => [
                     screenStyles.personPulse,
                     featured && screenStyles.personPulseFeatured,
+                    selectedMapPerson?.profileUserId === item.profileUserId && screenStyles.personPulseSelected,
                     {
                       width: size,
                       height: size,
@@ -523,6 +603,24 @@ export function VenueScreen({
               ))
             : null}
 
+          {mapFilter === "people" && !isPubliclyVisible ? (
+            <View style={screenStyles.mapPrivacyHint} pointerEvents="none">
+              <LeftIcon name="eye-off" size={16} color={T.visibilityOff} />
+              <Text style={screenStyles.mapPrivacyHintText}>
+                Go visible to see people nearby.
+              </Text>
+            </View>
+          ) : null}
+
+          {mapFilter === "active" && venuePlacements.length === 0 && personPlacements.length === 0 ? (
+            <View style={screenStyles.mapPrivacyHint} pointerEvents="none">
+              <LeftIcon name="activity" size={16} color={T.textSecondary} />
+              <Text style={screenStyles.mapPrivacyHintText}>
+                No live activity signal yet.
+              </Text>
+            </View>
+          ) : null}
+
           <GlassSurface
             pointerEvents="none"
             variant="soft"
@@ -543,7 +641,11 @@ export function VenueScreen({
           >
             <Pressable
               onPress={() => {
-                if (activeVenueCandidate) onOpenVenueDetail(activeVenueCandidate);
+                if (selectedMapPerson) {
+                  onOpenProfile(selectedMapPerson);
+                } else if (previewCandidate) {
+                  onOpenVenueDetail(previewCandidate);
+                }
               }}
               style={({ pressed }) => [
                 screenStyles.currentVenueChip,
@@ -551,14 +653,18 @@ export function VenueScreen({
               ]}
             >
               <View style={screenStyles.currentVenuePin}>
-                <LeftIcon name="map-pin" size={18} color={T.venueAccent} />
+                <LeftIcon
+                  name={selectedMapPerson ? "user" : "map-pin"}
+                  size={18}
+                  color={selectedMapPerson ? T.primary : T.venueAccent}
+                />
               </View>
               <View style={screenStyles.currentVenueCopy}>
                 <Text style={screenStyles.currentVenueChipText} numberOfLines={1}>
-                  You are here
+                  {selectedPreviewTitle}
                 </Text>
                 <Text style={screenStyles.currentVenueChipMeta} numberOfLines={1}>
-                  {currentVenueSummary}
+                  {selectedPreviewMeta}
                 </Text>
               </View>
               <View style={screenStyles.currentVenueArrowBubble}>

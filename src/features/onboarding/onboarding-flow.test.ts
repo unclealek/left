@@ -8,7 +8,9 @@ import {
 describe("onboarding recovery", () => {
   it("walks back without discarding earlier steps", () => {
     expect(getPreviousOnboardingStep("complete")).toBe("location");
-    expect(getPreviousOnboardingStep("location")).toBe("avatar");
+    expect(getPreviousOnboardingStep("location")).toBe("notifications");
+    expect(getPreviousOnboardingStep("notifications")).toBe("legal");
+    expect(getPreviousOnboardingStep("legal")).toBe("name");
     expect(getPreviousOnboardingStep("avatar")).toBe("name");
     expect(getPreviousOnboardingStep("name")).toBeNull();
   });

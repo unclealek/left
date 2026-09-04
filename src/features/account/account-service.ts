@@ -1,4 +1,3 @@
-import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 import type { AppUser, AvatarStyle } from "../../types/left-domain";
 import type { UserProfileRow } from "../../app/leftConfig";
@@ -31,6 +30,10 @@ export async function upsertOnboardingProfile(
       avatar_style: user.avatarStyle,
       default_intent: user.defaultIntent,
       default_vibes: user.defaultVibes,
+      interests: user.interests,
+      offering: user.offering,
+      social_rhythm: user.socialRhythm,
+      conversation_style: user.conversationStyle,
       profile_prompt: user.profilePrompt,
       approach_prompt: user.approachPrompt,
       focus_mode_enabled: user.focusModeEnabled,
@@ -79,6 +82,10 @@ export async function updateUserSettings(input: {
   avatarStyle: AvatarStyle;
   defaultIntent: AppUser["defaultIntent"];
   defaultVibes: string[];
+  interests: string[];
+  offering: string;
+  socialRhythm: string;
+  conversationStyle: string;
   profilePrompt: string;
   approachPrompt: string;
 }) {
@@ -89,6 +96,10 @@ export async function updateUserSettings(input: {
       avatar_style: input.avatarStyle,
       default_intent: input.defaultIntent,
       default_vibes: input.defaultVibes,
+      interests: input.interests,
+      offering: input.offering,
+      social_rhythm: input.socialRhythm,
+      conversation_style: input.conversationStyle,
       profile_prompt: input.profilePrompt,
       approach_prompt: input.approachPrompt,
     })
@@ -117,6 +128,12 @@ export async function submitIdentityRemovalRequest(user: AppUser): Promise<Accou
         "provider_subject",
         "auth_provider_metadata",
         "direct_auth_credentials",
+        "profile_interests",
+        "profile_offering",
+        "social_rhythm",
+        "conversation_style",
+        "saved_venues",
+        "experience_attendance",
       ],
       retained_record_classes: ["hints", "venue_history", "safety_zones"],
       payload: {
@@ -140,8 +157,4 @@ export async function submitIdentityRemovalRequest(user: AppUser): Promise<Accou
   });
 
   return processingError ? "queued" : "processed";
-}
-
-export function getProvider(session: Session) {
-  return session.user.app_metadata.provider ?? "google";
 }

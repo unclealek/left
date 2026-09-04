@@ -166,6 +166,40 @@ export const venueRadarStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 2,
   },
+  mapFilterRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 2,
+    paddingTop: 2,
+    paddingBottom: 9,
+  },
+  mapFilterChip: {
+    flex: 1,
+    minHeight: 34,
+    paddingHorizontal: 7,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: T.surface,
+    borderWidth: 1,
+    borderColor: T.border,
+  },
+  mapFilterChipActive: {
+    backgroundColor: T.primary,
+    borderColor: T.primary,
+  },
+  mapFilterLabel: {
+    color: T.textSecondary,
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: T.fontBodyMedium,
+  },
+  mapFilterLabelActive: {
+    color: T.white,
+    fontFamily: T.fontBodyBold,
+  },
   mapFrame: {
     width: "100%",
     height: 438,
@@ -310,6 +344,9 @@ export const venueRadarStyles = StyleSheet.create({
   venueMarkerHidden: {
     opacity: 0.78,
   },
+  venueMarkerSelected: {
+    transform: [{ scale: 1.08 }],
+  },
   venueMarkerPin: {
     width: 38,
     height: 38,
@@ -348,6 +385,10 @@ export const venueRadarStyles = StyleSheet.create({
   personPulseFeatured: {
     backgroundColor: T.primarySoft,
   },
+  personPulseSelected: {
+    borderColor: T.primary,
+    borderWidth: 3,
+  },
   personPulseHalo: {
     position: "absolute",
     width: "100%",
@@ -374,6 +415,28 @@ export const venueRadarStyles = StyleSheet.create({
     lineHeight: 12,
     fontFamily: T.fontBody,
     textAlign: "center",
+  },
+  mapPrivacyHint: {
+    position: "absolute",
+    top: 24,
+    left: 54,
+    right: 54,
+    minHeight: 38,
+    borderRadius: 19,
+    paddingHorizontal: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    backgroundColor: T.surfaceGlassStrong,
+    borderWidth: 1,
+    borderColor: T.border,
+  },
+  mapPrivacyHintText: {
+    color: T.textSecondary,
+    fontSize: 12,
+    lineHeight: 16,
+    fontFamily: T.fontBodyMedium,
   },
   currentVenueGlass: {
     position: "absolute",

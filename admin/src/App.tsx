@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
-import type { Venue, VenueSubmission } from "./types";
+import type { ExperienceReview, Venue, VenueSubmission } from "./types";
 
 function getGeofenceCenter(geofence: Record<string, unknown>) {
   const center = geofence.center as { latitude?: unknown; longitude?: unknown } | undefined;
@@ -40,6 +40,9 @@ export function App() {
   const [submissions, setSubmissions] = useState<VenueSubmission[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
+  const [experiences, setExperiences] = useState<ExperienceReview[]>([]);
+  const [selectedExperienceId, setSelectedExperienceId] = useState<string | null>(null);
+  const [experienceNotes, setExperienceNotes] = useState("");
 
   const configSummary = `${import.meta.env.VITE_SUPABASE_URL ? "URL set" : "URL missing"} · ${import.meta.env.VITE_SUPABASE_ANON_KEY ? "Anon key set" : "Anon key missing"}`;
 
@@ -56,7 +59,9 @@ export function App() {
         setIsReviewer(false);
         setSubmissions([]);
         setVenues([]);
+        setExperiences([]);
         setSelectedSubmissionId(null);
+        setSelectedExperienceId(null);
         setLoading(false);
       }
     });
@@ -68,6 +73,8 @@ export function App() {
 
   const selectedSubmission =
     submissions.find((submission) => submission.id === selectedSubmissionId) ?? submissions[0] ?? null;
+  const selectedExperience =
+    experiences.find((experience) => experience.id === selectedExperienceId) ?? experiences[0] ?? null;
 
   const nearbyCanonicalVenues = useMemo(() => {
     if (!selectedSubmission) return [];
@@ -131,7 +138,11 @@ export function App() {
       return;
     }
 
-    const [{ data: submissionRows, error: submissionError }, { data: venueRows, error: venueError }] =
+    const [
+      { data: submissionRows, error: submissionError },
+      { data: venueRows, error: venueError },
+      { data: experienceRows, error: experienceError },
+    ] =
       await Promise.all([
         supabase
           .from("venue_submissions")
@@ -146,21 +157,33 @@ export function App() {
           .eq("is_active", true)
           .order("created_at", { ascending: false })
           .limit(300),
+        supabase
+          .from("experiences")
+          .select("id, host_user_id, venue_id, title, description, starts_at, ends_at, capacity, accessibility_notes, cost_notes, status, created_at, venues(name)")
+          .eq("status", "pending_review")
+          .order("created_at", { ascending: true }),
       ]);
 
-    if (submissionError || venueError) {
+    if (submissionError || venueError || experienceError) {
       setLoading(false);
-      setError("Could not load venue moderation data.");
+      setError("Could not load moderation data.");
       return;
     }
 
     const nextSubmissions = (submissionRows ?? []) as VenueSubmission[];
     setSubmissions(nextSubmissions);
     setVenues((venueRows ?? []) as Venue[]);
+    const nextExperiences = (experienceRows ?? []) as unknown as ExperienceReview[];
+    setExperiences(nextExperiences);
     setSelectedSubmissionId((current) =>
       current && nextSubmissions.some((submission) => submission.id === current)
         ? current
         : (nextSubmissions[0]?.id ?? null),
+    );
+    setSelectedExperienceId((current) =>
+      current && nextExperiences.some((experience) => experience.id === current)
+        ? current
+        : (nextExperiences[0]?.id ?? null),
     );
     setLoading(false);
   }
@@ -228,14 +251,32 @@ export function App() {
     await refresh();
   }
 
+  async function moderateExperience(experienceId: string, status: "published" | "rejected") {
+    setSaving(true);
+    setError(null);
+    const { error: reviewError } = await supabase.rpc("review_experience", {
+      p_experience_id: experienceId,
+      p_status: status,
+      p_notes: experienceNotes.trim() || null,
+    });
+    if (reviewError) {
+      setSaving(false);
+      setError(reviewError.message);
+      return;
+    }
+    setExperienceNotes("");
+    setSaving(false);
+    await refresh();
+  }
+
   return (
     <div className="shell">
       <div className="hero">
         <div>
           <p className="eyebrow">Left Admin</p>
-          <h1>Venue moderation console</h1>
+          <h1>Moderation console</h1>
           <p className="lede">
-            Review pending venue submissions, merge duplicates, and promote approved venues into the canonical shared map.
+            Review venue submissions and small gathering proposals before they appear in Left.
           </p>
         </div>
         {session ? (
@@ -391,6 +432,66 @@ export function App() {
                   ) : null}
                 </div>
               ))}
+            </div>
+          </section>
+
+          <section className="panel experience-review-panel">
+            <div className="section-header">
+              <div>
+                <p className="section-label">Small gatherings</p>
+                <h2>{experiences.length} awaiting review</h2>
+              </div>
+            </div>
+            <div className="experience-review-grid">
+              <div className="submission-list">
+                {experiences.length === 0 ? <p>No gathering proposals are waiting.</p> : null}
+                {experiences.map((experience) => (
+                  <button
+                    key={experience.id}
+                    className={`submission-card ${selectedExperience?.id === experience.id ? "selected" : ""}`}
+                    onClick={() => {
+                      setSelectedExperienceId(experience.id);
+                      setExperienceNotes("");
+                    }}
+                  >
+                    <span className="submission-name">{experience.title}</span>
+                    <span className="submission-meta">{experience.venues?.name ?? "Unknown venue"}</span>
+                    <span className="submission-meta">{new Date(experience.starts_at).toLocaleString()}</span>
+                  </button>
+                ))}
+              </div>
+              {selectedExperience ? (
+                <div>
+                  <p className="section-label">Proposal detail</p>
+                  <h2>{selectedExperience.title}</h2>
+                  <div className="detail-grid">
+                    <div><span className="detail-label">Description</span><span>{selectedExperience.description}</span></div>
+                    <div><span className="detail-label">Venue</span><span>{selectedExperience.venues?.name ?? selectedExperience.venue_id}</span></div>
+                    <div><span className="detail-label">Starts</span><span>{new Date(selectedExperience.starts_at).toLocaleString()}</span></div>
+                    <div><span className="detail-label">Capacity</span><span>{selectedExperience.capacity}</span></div>
+                    <div><span className="detail-label">Accessibility</span><span>{selectedExperience.accessibility_notes || "Not provided"}</span></div>
+                    <div><span className="detail-label">Cost</span><span>{selectedExperience.cost_notes || "Not provided"}</span></div>
+                    <div><span className="detail-label">Host ID</span><span>{selectedExperience.host_user_id}</span></div>
+                  </div>
+                  <label className="field">
+                    <span className="detail-label">Reviewer notes</span>
+                    <textarea
+                      className="text-input review-notes"
+                      value={experienceNotes}
+                      onChange={(event) => setExperienceNotes(event.target.value.slice(0, 500))}
+                      placeholder="Optional internal reason or guidance"
+                    />
+                  </label>
+                  <div className="button-row">
+                    <button className="primary-button" onClick={() => void moderateExperience(selectedExperience.id, "published")} disabled={saving}>
+                      Publish gathering
+                    </button>
+                    <button className="ghost-button danger" onClick={() => void moderateExperience(selectedExperience.id, "rejected")} disabled={saving}>
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              ) : <p>Select a gathering proposal to review.</p>}
             </div>
           </section>
         </div>

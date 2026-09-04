@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { AvatarStyle } from "../../types/left-domain";
 
-export type OnboardingDraftStep = "name" | "avatar" | "location" | "complete";
+export type OnboardingDraftStep = "name" | "avatar" | "legal" | "notifications" | "location" | "complete";
 
 export type OnboardingDraft = {
   firstName: string;
@@ -22,7 +22,7 @@ export async function loadOnboardingDraft(userId: string): Promise<OnboardingDra
     if (
       typeof parsed.firstName !== "string" ||
       !["geometric", "abstract", "minimal", "soft"].includes(parsed.avatarStyle ?? "") ||
-      !["name", "avatar", "location", "complete"].includes(parsed.step ?? "")
+      !["name", "avatar", "legal", "notifications", "location", "complete"].includes(parsed.step ?? "")
     ) {
       return null;
     }

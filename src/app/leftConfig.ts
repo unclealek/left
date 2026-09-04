@@ -7,14 +7,18 @@ export type Screen =
   | "auth"
   | "onboarding-name"
   | "onboarding-avatar"
+  | "onboarding-legal"
+  | "onboarding-notifications"
   | "onboarding-location"
-  | "onboarding-complete"
   | "legal-consent"
   | "venue-select"
   | "venue-add"
   | "home"
   | "venue"
   | "venue-detail"
+  | "experience-detail"
+  | "experience-create"
+  | "saved"
   | "activate"
   | "feed"
   | "me"
@@ -25,6 +29,11 @@ export type Screen =
 
 export type FooterDestination = "home" | "nearby" | "session" | "account";
 
+export type FooterNavigationContext = {
+  safetyReturnScreen?: Screen;
+  venueDestination?: Extract<FooterDestination, "nearby" | "session">;
+};
+
 export type UserProfileRow = {
   id: string;
   auth_provider: AuthProvider;
@@ -33,6 +42,10 @@ export type UserProfileRow = {
   avatar_style: AvatarStyle;
   default_intent: AppUser["defaultIntent"];
   default_vibes: string[];
+  interests?: string[] | null;
+  offering?: string | null;
+  social_rhythm?: string | null;
+  conversation_style?: string | null;
   profile_prompt: string;
   approach_prompt: string;
   focus_mode_enabled: boolean;
@@ -60,13 +73,16 @@ export const intents = [
 ] as const;
 
 export const vibeOptions = ["AI/startups", "Design", "Travel", "Language exchange", "Creativity"];
+export const interestOptions = ["Building things", "Arts & culture", "Local life", "Learning", "Wellbeing", "Food & coffee"];
+export const socialRhythmOptions = ["Weekday mornings", "Weekday afternoons", "Weekday evenings", "Weekend days", "Weekend evenings"];
+export const conversationStyleOptions = ["Easygoing and spontaneous", "Thoughtful one-to-one", "Small group energy", "Purposeful and practical"];
 export const durationOptions = [30, 60, 120];
 export const defaultProfilePrompt = "Ask what they're building right now, not what they do generally.";
 export const defaultApproachPrompt = "What are you working on that feels genuinely exciting?";
 
 export const AUTH_CALLBACK_PATH = "auth/callback";
 export const NATIVE_AUTH_REDIRECT = "left://auth/callback";
-export const SESSION_NAV_SCREENS: Screen[] = ["home", "venue", "activate", "feed", "me", "profile", "approach", "safety", "settings"];
+export const SESSION_NAV_SCREENS: Screen[] = ["home", "venue", "saved", "activate", "feed", "me", "profile", "approach", "safety", "settings"];
 
 export function formatIntent(intent: string) {
   return intent.replaceAll("_", " ");
@@ -89,9 +105,23 @@ export function formatElapsedDuration(totalSeconds: number) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-export function getFooterDestination(screen: Screen): FooterDestination {
+export function getFooterDestination(
+  screen: Screen,
+  context: FooterNavigationContext = {},
+): FooterDestination {
+  if (
+    screen === "safety" &&
+    context.safetyReturnScreen &&
+    context.safetyReturnScreen !== "safety"
+  ) {
+    return getFooterDestination(context.safetyReturnScreen, {
+      venueDestination: context.venueDestination,
+    });
+  }
   if (screen === "home") return "home";
   if (screen === "feed" || screen === "profile" || screen === "approach") return "nearby";
-  if (screen === "venue" || screen === "venue-detail" || screen === "activate") return "session";
+  if (screen === "venue") return context.venueDestination ?? "session";
+  if (screen === "venue-detail" || screen === "activate") return "session";
+  if (screen === "experience-detail") return "home";
   return "account";
 }

@@ -1,4 +1,4 @@
-import { Image, Text, View } from "react-native";
+import { ActivityIndicator, Image, Linking, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
 import type { NearbyFeedItem, VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
@@ -27,16 +27,24 @@ export function VenueDetailScreen({
   venueActivity,
   feed,
   sessionVisible,
+  detailsLoading,
+  saved,
+  saving,
   onBack,
   onPrimaryAction,
+  onToggleSaved,
 }: {
   venue: RuntimeVenueCandidate;
   venueSummary: VenueContextSummary;
   venueActivity: VenueActivityEnvelope | null;
   feed: NearbyFeedItem[];
   sessionVisible: boolean;
+  detailsLoading: boolean;
+  saved: boolean;
+  saving: boolean;
   onBack: () => void;
   onPrimaryAction: () => void;
+  onToggleSaved: () => void;
 }) {
   const insets = useSafeAreaInsets();
   const isCurrentVenue = venue.id === venueSummary.venueId || venue.name === venueSummary.venueName;
@@ -61,6 +69,22 @@ export function VenueDetailScreen({
     : !sessionVisible
       ? "Go visible here"
       : "Use this venue";
+  const todayHours = getTodayHours(venue.openingHours?.weekdayDescriptions ?? []);
+  const accessibilitySummary = formatAccessibility(venue.accessibilityOptions);
+  const practicalFacts = [
+    venue.formattedAddress ? { icon: "map-pin" as const, title: "Address", text: venue.formattedAddress } : null,
+    venue.openingHours ? {
+      icon: "clock" as const,
+      title: venue.openingHours.openNow === true ? "Open now" : venue.openingHours.openNow === false ? "Closed now" : "Opening hours",
+      text: todayHours ?? "Hours are available from the venue.",
+    } : null,
+    venue.rating != null ? {
+      icon: "star" as const,
+      title: `${venue.rating.toFixed(1)} rating`,
+      text: venue.userRatingCount ? `Based on ${venue.userRatingCount.toLocaleString()} Google ratings` : "Google rating",
+    } : null,
+    accessibilitySummary ? { icon: "heart" as const, title: "Accessibility", text: accessibilitySummary } : null,
+  ].filter((fact): fact is NonNullable<typeof fact> => !!fact);
 
   return (
     <View style={[styles.page, { paddingTop: Math.max(insets.top, 12) }]}>
@@ -69,6 +93,16 @@ export function VenueDetailScreen({
         <View style={styles.heroBackButton}>
           <BackNavButton label="" onPress={onBack} />
         </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={saved ? "Remove from saved places" : "Save this place"}
+          accessibilityState={{ selected: saved, busy: saving }}
+          disabled={saving}
+          onPress={onToggleSaved}
+          style={({ pressed }) => [styles.heroSaveButton, saved && styles.heroSaveButtonActive, pressed && styles.detailPressed]}
+        >
+          {saving ? <ActivityIndicator size="small" color={T.primary} /> : <LeftIcon name={saved ? "check" : "bookmark"} size={19} color={saved ? T.actionContent : T.textPrimary} />}
+        </Pressable>
         <GlassSurface
           variant="soft"
           radius={glassRadii.pill}
@@ -84,6 +118,46 @@ export function VenueDetailScreen({
         <View style={styles.identityBlock}>
           <Text style={styles.title}>{venue.name}</Text>
           <Text style={styles.subtitle}>{subline}</Text>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.venuePracticalHeading}>
+            <Text style={styles.sectionTitle}>Good to know</Text>
+            {detailsLoading ? <ActivityIndicator size="small" color={T.primary} /> : null}
+          </View>
+          {practicalFacts.length > 0 ? (
+            <View style={styles.venuePracticalCard}>
+              {practicalFacts.map((fact, index) => (
+                <View key={`${fact.title}-${index}`} style={[styles.venuePracticalRow, index === practicalFacts.length - 1 && styles.venuePracticalRowLast]}>
+                  <View style={styles.venuePracticalIcon}>
+                    <LeftIcon name={fact.icon} size={16} color={T.primary} />
+                  </View>
+                  <View style={styles.venuePracticalCopy}>
+                    <Text style={styles.venuePracticalTitle}>{fact.title}</Text>
+                    <Text style={styles.venuePracticalText}>{fact.text}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : detailsLoading ? null : (
+            <Text style={styles.venuePracticalUnavailable}>Practical details have not been published for this venue yet.</Text>
+          )}
+          {venue.websiteUri || venue.phoneNumber ? (
+            <View style={styles.venuePracticalActions}>
+              {venue.websiteUri ? (
+                <Pressable onPress={() => void Linking.openURL(venue.websiteUri!)} style={({ pressed }) => [styles.venuePracticalAction, pressed && styles.detailPressed]}>
+                  <LeftIcon name="external-link" size={15} color={T.primary} />
+                  <Text style={styles.venuePracticalActionText}>Website</Text>
+                </Pressable>
+              ) : null}
+              {venue.phoneNumber ? (
+                <Pressable onPress={() => void Linking.openURL(`tel:${venue.phoneNumber}`)} style={({ pressed }) => [styles.venuePracticalAction, pressed && styles.detailPressed]}>
+                  <LeftIcon name="phone" size={15} color={T.primary} />
+                  <Text style={styles.venuePracticalActionText}>Call</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.section}>
@@ -214,6 +288,29 @@ function formatDistanceLabel(distanceMeters: number | null) {
   if (distanceMeters == null || distanceMeters <= 0) return null;
   if (distanceMeters < 1000) return `${Math.round(distanceMeters)} m away`;
   return `${Math.max(1, Math.round(distanceMeters / 80))} min walk`;
+}
+
+function getTodayHours(descriptions: string[]) {
+  if (!descriptions.length) return null;
+  const dayIndex = new Date().getDay();
+  const mondayFirstIndex = dayIndex === 0 ? 6 : dayIndex - 1;
+  return descriptions[mondayFirstIndex] ?? descriptions[0] ?? null;
+}
+
+function formatAccessibility(options: RuntimeVenueCandidate["accessibilityOptions"]) {
+  if (!options) return null;
+  const labels: Record<string, string> = {
+    wheelchairAccessibleEntrance: "wheelchair-accessible entrance",
+    wheelchairAccessibleParking: "wheelchair-accessible parking",
+    wheelchairAccessibleRestroom: "wheelchair-accessible restroom",
+    wheelchairAccessibleSeating: "wheelchair-accessible seating",
+  };
+  const available = Object.entries(options)
+    .filter(([, enabled]) => enabled === true)
+    .map(([key]) => labels[key])
+    .filter((label): label is string => !!label);
+  if (!available.length) return null;
+  return `${available.slice(0, 3).join(", ")}.`;
 }
 
 function formatVenueTypeLabel(venueType: RuntimeVenueCandidate["venueType"]) {

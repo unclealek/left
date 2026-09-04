@@ -4,9 +4,9 @@ Use this checklist before calling the mobile app production-ready. Test on a rea
 
 ## 1. Migrations And Backend
 
-- [x] Apply migrations through `0023` to staging and confirm local/remote history matches. Verified August 10, 2026.
+- [x] Apply migrations through `0025` to the linked project and confirm local/remote history matches. Verified September 4, 2026.
 - [x] Run linked schema lint at error level. `No schema errors found` on August 10, 2026.
-- [ ] Configure the staging Edge Function secret `GOOGLE_PLACES_API_KEY`.
+- [x] Confirm the linked project has the Edge Function secret `GOOGLE_PLACES_API_KEY`. Verified September 4, 2026.
 - [ ] Confirm `venue_preferences` exists.
 - [ ] Confirm `get_nearby_feed` returns `avatar_style`.
 - [ ] Confirm hiding a venue ends active visibility for that venue.

@@ -2,6 +2,8 @@
 
 This app uses Expo/EAS for distributable mobile builds.
 
+The native `ios/` project is intentionally checked in because it contains a CocoaPods build-script fix for the workspace path. Expo Doctor's app-config sync check is disabled for that reason. When changing app icons, URL schemes, orientations, native permissions, plugins, or version metadata in `app.json`, verify and update the matching native iOS project values as part of the same change.
+
 ## Build Profiles
 
 - `development`: internal development-client build for local debugging.

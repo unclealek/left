@@ -37,6 +37,18 @@ export type RuntimeVenueCandidate = {
   source: "google_places" | "local_catalog" | "user_submission";
   distanceMeters: number | null;
   photoUrl?: string | null;
+  formattedAddress?: string | null;
+  websiteUri?: string | null;
+  phoneNumber?: string | null;
+  rating?: number | null;
+  userRatingCount?: number | null;
+  priceLevel?: string | null;
+  businessStatus?: string | null;
+  openingHours?: {
+    openNow?: boolean | null;
+    weekdayDescriptions?: string[];
+  } | null;
+  accessibilityOptions?: Record<string, boolean | null> | null;
 };
 
 export type RuntimeCoords = {

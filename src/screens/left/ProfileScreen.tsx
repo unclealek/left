@@ -20,6 +20,7 @@ export function ProfileScreen({
   reportNotes,
   reportSubmitting,
   profileAction,
+  viewerInterests,
   onBack,
   onApproach,
   onHide,
@@ -35,6 +36,7 @@ export function ProfileScreen({
   reportNotes: string;
   reportSubmitting: boolean;
   profileAction: "hide" | "block" | null;
+  viewerInterests: string[];
   onBack: () => void;
   onApproach: () => void;
   onHide: () => void;
@@ -45,6 +47,8 @@ export function ProfileScreen({
   onOpenSafety: () => void;
   onShowDialog: ShowAppDialog;
 }) {
+  const sharedInterests = item.interests.filter((interest) => viewerInterests.includes(interest));
+
   function confirmHide() {
     onShowDialog(
       "Hide this person?",
@@ -79,16 +83,28 @@ export function ProfileScreen({
         <Text style={styles.profileIntent}>{formatIntent(item.intent)}</Text>
         <View style={styles.chipWrapCenter}>
           <Chip label={item.primaryVibe ?? "Open"} />
-          <Chip label="Design" subtle />
+          {item.interests.slice(0, 2).map((interest) => <Chip key={interest} label={interest} subtle />)}
         </View>
       </View>
       <View style={styles.profileSections}>
         <InfoBlock label="Hint">
           <Text style={styles.infoText}>{item.hintText ?? "No hint set."}</Text>
         </InfoBlock>
-        <InfoBlock label="Shared alignment">
-          <Text style={styles.infoText}>You both selected AI/startups.</Text>
-        </InfoBlock>
+        {item.offering ? (
+          <InfoBlock label="What I bring">
+            <Text style={styles.infoText}>{item.offering}</Text>
+          </InfoBlock>
+        ) : null}
+        {item.conversationStyle ? (
+          <InfoBlock label="Conversation style">
+            <Text style={styles.infoText}>{item.conversationStyle}</Text>
+          </InfoBlock>
+        ) : null}
+        {sharedInterests.length > 0 ? (
+          <InfoBlock label="Shared alignment">
+            <Text style={styles.infoText}>{`You’re both drawn to ${sharedInterests.join(" and ")}.`}</Text>
+          </InfoBlock>
+        ) : null}
       </View>
       <View style={styles.profileActions}>
         <PrimaryButton label="I'm going over" onPress={onApproach} trailingIcon="arrow-up-right" />

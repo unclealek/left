@@ -83,5 +83,6 @@ export const layoutStyles = {
   fullContent: {
     flex: 1,
     padding: 0,
+    paddingHorizontal: 0,
   },
 } as const;

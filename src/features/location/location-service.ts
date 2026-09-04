@@ -86,6 +86,23 @@ export async function registerVenuePromptCategory() {
   ]);
 }
 
+export async function requestNotificationAccess() {
+  if (Platform.OS === "web") return false;
+
+  try {
+    const current = await Notifications.getPermissionsAsync();
+    const permission = current.status === "granted"
+      ? current
+      : await Notifications.requestPermissionsAsync();
+    const granted = permission.status === "granted";
+    if (granted) await registerVenuePromptCategory();
+    return granted;
+  } catch (error) {
+    console.warn("[notifications] permission request failed", error);
+    return false;
+  }
+}
+
 export async function requestLocationAccess() {
   try {
     console.info("[location] requesting foreground permission");
@@ -121,9 +138,7 @@ export async function requestLocationAccess() {
       return { granted: false, notificationsGranted: false, reason: "background_denied" as const };
     }
 
-    const notificationPermission = await Notifications.requestPermissionsAsync();
-    const notificationsGranted = notificationPermission.status === "granted";
-    await registerVenuePromptCategory();
+    const notificationsGranted = await requestNotificationAccess();
     const alreadyStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
     console.info("[location] background registration state", { alreadyStarted });
     if (!alreadyStarted) {

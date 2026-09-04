@@ -8,6 +8,7 @@ import { authStyles } from "../components/styles/features/auth";
 import { preAuthStyles } from "../components/styles/features/preAuth";
 import { legalStyles } from "../components/styles/features/legal";
 import { feedbackStyles } from "../components/styles/features/feedback";
+import { discoveryStyles } from "../components/styles/features/discovery";
 import { feedStyles } from "../components/styles/features/feed";
 import { homeStyles } from "../components/styles/features/home";
 import { loadingStyles } from "../components/styles/features/loading";
@@ -47,6 +48,7 @@ export const styles = StyleSheet.create({
   ...settingsStyles,
   ...activationStyles,
   ...feedbackStyles,
+  ...discoveryStyles,
   ...uiStyles,
   primaryBtnPressed: {
     opacity: 0.85,

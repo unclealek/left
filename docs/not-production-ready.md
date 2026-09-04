@@ -63,8 +63,8 @@ Status:
 
 ## 8. Supabase Migrations
 
-- Latest migration is `0023_fix_safety_review_parameter_binding.sql`.
-- Migrations through `0023` were confirmed synchronized with staging and linked schema lint returned no errors on August 10, 2026.
+- Latest migration is `0025_discovery_profiles_saved_experiences.sql`.
+- Migrations through `0025` were confirmed synchronized with the linked project on September 4, 2026.
 - Verify Social Momentum writes, lifecycle cleanup, venue preferences, feed avatar styles, Google venue mapping, and activity caching before production use.
 - Validate with a clean local Supabase reset or hosted staging project before production use.
 

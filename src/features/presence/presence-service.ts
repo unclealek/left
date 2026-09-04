@@ -47,6 +47,9 @@ type NearbyFeedRow = {
   presence_session_id: string;
   first_name: string;
   avatar_style?: AvatarStyle | null;
+  interests?: string[] | null;
+  offering?: string | null;
+  conversation_style?: string | null;
   intent: IntentType;
   hint_text: string | null;
   primary_vibe: string | null;
@@ -244,6 +247,9 @@ function mapNearbyFeedRow(row: NearbyFeedRow): NearbyFeedItem {
     presenceSessionId: row.presence_session_id,
     firstName: row.first_name,
     avatarStyle: row.avatar_style ?? null,
+    interests: row.interests ?? [],
+    offering: row.offering?.trim() ?? "",
+    conversationStyle: row.conversation_style?.trim() ?? "",
     intent: row.intent,
     hintText: row.hint_text,
     primaryVibe: row.primary_vibe,

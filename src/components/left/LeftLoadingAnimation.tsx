@@ -6,11 +6,13 @@ import { styles } from "../../app/leftTheme";
 type LeftLoadingAnimationProps = {
   label?: string;
   size?: "large" | "small";
+  accessible?: boolean;
 };
 
 export function LeftLoadingAnimation({
   label = "Loading",
   size = "large",
+  accessible = true,
 }: LeftLoadingAnimationProps) {
   const [reduceMotion, setReduceMotion] = useState(false);
   const wave = useRef(new Animated.Value(0)).current;
@@ -159,9 +161,9 @@ export function LeftLoadingAnimation({
 
   return (
     <View
-      accessible
-      accessibilityRole="progressbar"
-      accessibilityLabel={label}
+      accessible={accessible}
+      accessibilityRole={accessible ? "progressbar" : undefined}
+      accessibilityLabel={accessible ? label : undefined}
       style={[styles.loadingAnimation, compact && styles.loadingAnimationSmall]}
     >
       <Animated.View

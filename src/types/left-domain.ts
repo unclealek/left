@@ -80,6 +80,10 @@ export interface AppUser {
   avatarStyle: AvatarStyle;
   defaultIntent: IntentType | null;
   defaultVibes: string[];
+  interests: string[];
+  offering: string;
+  socialRhythm: string;
+  conversationStyle: string;
   profilePrompt: string;
   approachPrompt: string;
   focusModeEnabled: boolean;
@@ -235,6 +239,9 @@ export interface NearbyFeedItem {
   presenceSessionId: string;
   firstName: string;
   avatarStyle?: AvatarStyle | null;
+  interests: string[];
+  offering: string;
+  conversationStyle: string;
   intent: IntentType;
   hintText: string | null;
   primaryVibe: string | null;
@@ -281,6 +288,23 @@ export interface VenueActivityEnvelope {
   name: string;
   activity: VenueActivity;
   leftPresence: VenuePresenceCounts;
+}
+
+export interface VenueExperience {
+  id: string;
+  hostUserId: string;
+  hostFirstName: string;
+  venueId: string;
+  venueName: string;
+  title: string;
+  description: string;
+  startsAt: string;
+  endsAt: string | null;
+  capacity: number;
+  attendeeCount: number;
+  viewerAttending: boolean;
+  accessibilityNotes: string;
+  costNotes: string;
 }
 
 export interface AuthBootstrapResult {

@@ -243,8 +243,8 @@ export function createNavigationStyles(contentRailWidth: "92%", contentRailMax: 
       backgroundColor: T.navActiveSurface,
       borderWidth: 1,
       borderColor: T.navActiveBorder,
-      shadowColor: T.onboardingAccent,
-      shadowOpacity: 0.06,
+      shadowColor: T.textPrimary,
+      shadowOpacity: 0.14,
       shadowRadius: 5,
       shadowOffset: { width: 0, height: 2 },
       elevation: 3,
@@ -261,7 +261,7 @@ export function createNavigationStyles(contentRailWidth: "92%", contentRailMax: 
       color: T.onboardingAccent,
     },
     footerNavLabel: {
-      color: T.navActiveMuted,
+      color: T.navInactiveContent,
       fontSize: 9,
       fontWeight: "700",
       letterSpacing: 0.1,
@@ -269,7 +269,7 @@ export function createNavigationStyles(contentRailWidth: "92%", contentRailMax: 
       textAlign: "center",
     },
     footerNavLabelActive: {
-      color: T.onboardingAccent,
+      color: T.navActiveContent,
       fontWeight: "800",
     },
   } as const;

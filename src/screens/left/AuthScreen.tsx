@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, Animated, Easing, Pressable, Text, useWindowDimensions, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import { AccessibilityInfo, Animated, Easing, Pressable, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { styles, T } from "../../app/leftTheme";
 import { LeftLogoMark } from "../../components/left/LeftLogoMark";
+import { LeftLoadingAnimation } from "../../components/left/LeftLoadingAnimation";
 import { LeftIcon } from "../../components/icons";
 import { GlassSurface, glassRadii } from "../../components/glass";
 
@@ -35,18 +35,19 @@ export function AuthScreen({
   authError,
   busy = false,
   onAuth,
-  onEmail,
+  onBack,
   onOpenLegal,
 }: {
   authError: string | null;
   busy?: boolean;
   onAuth: () => void;
-  onEmail: () => void;
+  onBack: () => void;
   onOpenLegal: (document: "terms" | "privacy" | "community") => void;
 }) {
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const logoPulse = useRef(new Animated.Value(0)).current;
+  const entrance = useRef(new Animated.Value(0)).current;
+  const ambient = useRef(new Animated.Value(0)).current;
   const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
@@ -56,38 +57,61 @@ export function AuthScreen({
   }, []);
 
   useEffect(() => {
-    logoPulse.stopAnimation();
+    entrance.stopAnimation();
+    ambient.stopAnimation();
 
     if (reduceMotion) {
-      logoPulse.setValue(0);
+      entrance.setValue(1);
+      ambient.setValue(0);
       return;
     }
 
-    logoPulse.setValue(0);
-    const animation = Animated.loop(
+    entrance.setValue(0);
+    ambient.setValue(0);
+
+    Animated.timing(entrance, {
+      toValue: 1,
+      duration: 620,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+
+    const ambientAnimation = Animated.loop(
       Animated.sequence([
-        Animated.timing(logoPulse, {
+        Animated.timing(ambient, {
           toValue: 1,
-          duration: 1500,
+          duration: 3600,
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
-        Animated.timing(logoPulse, {
+        Animated.timing(ambient, {
           toValue: 0,
-          duration: 1500,
+          duration: 3600,
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
       ]),
     );
 
-    animation.start();
-    return () => animation.stop();
-  }, [logoPulse, reduceMotion]);
+    ambientAnimation.start();
+    return () => ambientAnimation.stop();
+  }, [ambient, entrance, reduceMotion]);
 
-  const logoScale = logoPulse.interpolate({
+  const contentTranslateY = entrance.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, 1.055],
+    outputRange: [18, 0],
+  });
+  const ambientScale = ambient.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.96, 1.06],
+  });
+  const ambientTranslateY = ambient.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 12],
+  });
+  const ambientOpacity = ambient.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.42, 0.68],
   });
 
   return (
@@ -101,97 +125,132 @@ export function AuthScreen({
         },
       ]}
     >
-      <LinearGradient
-        colors={[T.onboardingAccentMedium, T.onboardingAccentFaint, "transparent"]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={styles.authHeroArc}
-      />
-
-      <View style={styles.authBrand}>
-        <Animated.View style={[styles.authMarkRing, { transform: [{ scale: logoScale }] }]}>
-          <LeftLogoMark size={58} />
-        </Animated.View>
-        <Text style={styles.authWordmark}>LEFT</Text>
-      </View>
-
-      <GlassSurface
-        variant="medium"
-        radius={glassRadii.largeCard}
-        style={styles.authCardGlass}
-        contentStyle={styles.authCard}
-      >
-        <Text style={styles.authEyebrow}>WELCOME TO LEFT</Text>
-        <Text style={styles.authHeadline}>People. Places.{"\n"}Presence.</Text>
-        <Text style={styles.authSub}>Connection starts with being there.{"\n"}See where the energy is.</Text>
-
-        <Pressable
-          onPress={onAuth}
-          disabled={busy}
-          accessibilityRole="button"
-          accessibilityLabel="Continue with Google"
-          accessibilityState={{ disabled: busy, busy }}
-          style={({ pressed }) => [
-            styles.authGoogleButton,
-            busy && styles.authButtonDisabled,
-            pressed && !busy && styles.authBtnPressed,
+      <View pointerEvents="none" style={styles.authAmbientLayer}>
+        <Animated.View
+          style={[
+            styles.authAmbientOrb,
+            styles.authAmbientOrbOne,
+            {
+              opacity: ambientOpacity,
+              transform: [{ translateY: ambientTranslateY }, { scale: ambientScale }],
+            },
           ]}
-        >
-          <View style={styles.authGoogleIcon}>
-            {busy ? (
-              <ActivityIndicator size="small" color={T.onboardingInk} />
-            ) : (
-              <GoogleLogo />
-            )}
-          </View>
-          <Text style={styles.authGoogleLabel}>{busy ? "Opening Google..." : "Continue with Google"}</Text>
-        </Pressable>
-
-        <View style={styles.authDividerRow}>
-          <View style={styles.authDivider} />
-          <Text style={styles.authDividerLabel}>or</Text>
-          <View style={styles.authDivider} />
-        </View>
-
-        <Pressable
-          onPress={onEmail}
-          accessibilityRole="button"
-          accessibilityLabel="Email sign-in coming soon"
-          style={({ pressed }) => [styles.authEmailButton, pressed && styles.authBtnPressed]}
-        >
-          <View>
-            <Text style={styles.authEmailLabel}>Continue with email</Text>
-            <Text style={styles.authEmailComingSoon}>Coming soon</Text>
-          </View>
-          <LeftIcon name="chevron-right" size={19} color={T.onboardingInkMuted} />
-        </Pressable>
-
-        {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
-
-        <View style={styles.authLegalRow}>
-          <Pressable accessibilityRole="link" onPress={() => onOpenLegal("terms")}>
-            <Text style={styles.authLegalLink}>Terms</Text>
-          </Pressable>
-          <Text style={styles.authLegalSeparator}>·</Text>
-          <Pressable accessibilityRole="link" onPress={() => onOpenLegal("privacy")}>
-            <Text style={styles.authLegalLink}>Privacy</Text>
-          </Pressable>
-          <Text style={styles.authLegalSeparator}>·</Text>
-          <Pressable accessibilityRole="link" onPress={() => onOpenLegal("community")}>
-            <Text style={styles.authLegalLink}>Guidelines</Text>
-          </Pressable>
-        </View>
-      </GlassSurface>
-
-      <View style={styles.authPrivacyRow}>
-        <View style={styles.authPrivacyIcon}>
-          <LeftIcon name="lock" size={23} color={T.onboardingInk} />
-        </View>
-        <View style={styles.authPrivacyCopy}>
-          <Text style={styles.authPrivacyTitle}>Your presence. Your choice.</Text>
-          <Text style={styles.authPrivacyBody}>Your exact location is not shown to other people. You choose when your presence becomes visible.</Text>
-        </View>
+        />
+        <Animated.View
+          style={[
+            styles.authAmbientOrb,
+            styles.authAmbientOrbTwo,
+            {
+              opacity: ambientOpacity,
+              transform: [{ translateY: Animated.multiply(ambientTranslateY, -0.7) }],
+            },
+          ]}
+        />
       </View>
+
+      <Animated.View
+        style={[
+          styles.authStage,
+          {
+            opacity: entrance,
+            transform: [{ translateY: contentTranslateY }],
+          },
+        ]}
+      >
+        <View style={styles.authFlowHeader}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Back to welcome"
+            onPress={onBack}
+            style={({ pressed }) => [styles.authBackButton, pressed && styles.authBtnPressed]}
+          >
+            <LeftIcon name="arrow-left" size={21} color={T.onboardingInk} />
+          </Pressable>
+          <View style={styles.authStepBadge}>
+            <View style={styles.authStepDot} />
+            <Text style={styles.authStepBadgeText}>SECURE SIGN IN</Text>
+          </View>
+          <View style={styles.authHeaderSpacer} />
+        </View>
+
+        <View style={styles.authBrand}>
+          <View style={styles.authMarkRing}>
+            <LeftLogoMark size={47} />
+          </View>
+          <Text style={styles.authWordmark}>LEFT</Text>
+        </View>
+
+        <GlassSurface
+          variant="medium"
+          radius={glassRadii.largeCard}
+          style={styles.authCardGlass}
+          contentStyle={styles.authCard}
+        >
+          <Text style={styles.authEyebrow}>FAST & SECURE</Text>
+          <Text style={styles.authHeadline}>Let’s get you in.</Text>
+          <Text style={styles.authSub}>Create your account or continue where you left off with one effortless sign-in.</Text>
+
+          <View style={styles.authBenefitList}>
+            {[
+              { icon: "key" as const, title: "No passwords to remember", body: "Instant one-tap access without credential fatigue." },
+              { icon: "shield" as const, title: "Zero spam or auto-posts", body: "We never share or post without your consent." },
+              { icon: "users" as const, title: "Real human connections", body: "One account for genuine, place-based connection." },
+            ].map((benefit, index, benefits) => (
+              <View key={benefit.title} style={[styles.authBenefitRow, index < benefits.length - 1 && styles.authBenefitDivider]}>
+                <View style={styles.authBenefitIcon}>
+                  <LeftIcon name={benefit.icon} size={18} color={T.onboardingAccent} />
+                </View>
+                <View style={styles.authBenefitCopy}>
+                  <Text style={styles.authBenefitTitle}>{benefit.title}</Text>
+                  <Text style={styles.authBenefitBody}>{benefit.body}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <Pressable
+            onPress={onAuth}
+            disabled={busy}
+            accessibilityRole="button"
+            accessibilityLabel="Continue with Google"
+            accessibilityState={{ disabled: busy, busy }}
+            style={({ pressed }) => [
+              styles.authGoogleButton,
+              busy && styles.authButtonDisabled,
+              pressed && !busy && styles.authBtnPressed,
+            ]}
+          >
+            {busy ? (
+              <View style={styles.authGoogleLoading}>
+                <LeftLoadingAnimation size="small" label="Connecting securely with Google" />
+              </View>
+            ) : (
+              <View style={styles.authGoogleIcon}>
+                <GoogleLogo />
+              </View>
+            )}
+            <Text style={styles.authGoogleLabel}>{busy ? "Connecting securely" : "Continue with Google"}</Text>
+          </Pressable>
+
+          {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
+
+          <View style={styles.authLegalRow}>
+            <Pressable accessibilityRole="link" onPress={() => onOpenLegal("terms")}>
+              <Text style={styles.authLegalLink}>Terms</Text>
+            </Pressable>
+            <Text style={styles.authLegalSeparator}>·</Text>
+            <Pressable accessibilityRole="link" onPress={() => onOpenLegal("privacy")}>
+              <Text style={styles.authLegalLink}>Privacy</Text>
+            </Pressable>
+            <Text style={styles.authLegalSeparator}>·</Text>
+            <Pressable accessibilityRole="link" onPress={() => onOpenLegal("community")}>
+              <Text style={styles.authLegalLink}>Guidelines</Text>
+            </Pressable>
+          </View>
+        </GlassSurface>
+
+        <Text style={styles.authMemberNote}>Existing and new members sign in together.</Text>
+      </Animated.View>
     </View>
   );
 }

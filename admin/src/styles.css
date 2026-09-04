@@ -154,6 +154,21 @@ button {
   padding: 16px;
 }
 
+.experience-review-panel {
+  grid-column: 1 / -1;
+}
+
+.experience-review-grid {
+  display: grid;
+  grid-template-columns: minmax(250px, 340px) minmax(0, 1fr);
+  gap: 28px;
+}
+
+.review-notes {
+  min-height: 92px;
+  resize: vertical;
+}
+
 .submission-card {
   text-align: left;
   display: grid;
@@ -258,5 +273,9 @@ code {
   .candidate-card {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .experience-review-grid {
+    grid-template-columns: 1fr;
   }
 }

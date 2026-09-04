@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontBodyBold,
   },
   primaryBtnLabelOnboarding: {
-    color: T.onboardingAccent,
+    color: T.actionContent,
   },
   primaryBtnLabelDisabled: {
     color: "rgba(198,227,133,0.7)",

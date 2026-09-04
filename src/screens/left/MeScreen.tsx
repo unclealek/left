@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import type { AppUser, AvatarStyle } from "../../types/left-domain";
-import { avatarStyles, intents, vibeOptions } from "../../app/leftConfig";
+import {
+  avatarStyles,
+  conversationStyleOptions,
+  intents,
+  interestOptions,
+  socialRhythmOptions,
+  vibeOptions,
+} from "../../app/leftConfig";
 import { T, styles } from "../../app/leftTheme";
 import { LeftIcon, type LeftIconName } from "../../components/icons";
 import { LeftLogoMark } from "../../components/left/LeftLogoMark";
@@ -19,6 +26,8 @@ export function MeScreen({
   currentVibes,
   nearbyVenueCount,
   approachCount,
+  savedVenueCount,
+  onOpenSaved,
   onBecomeVisible,
 }: {
   user: AppUser;
@@ -28,6 +37,10 @@ export function MeScreen({
     avatarStyle: AvatarStyle;
     defaultIntent: AppUser["defaultIntent"];
     defaultVibes: string[];
+    interests: string[];
+    offering: string;
+    socialRhythm: string;
+    conversationStyle: string;
     profilePrompt: string;
   }) => void;
   onOpenSettings: () => void;
@@ -37,6 +50,8 @@ export function MeScreen({
   currentVibes: string[];
   nearbyVenueCount: number;
   approachCount: number;
+  savedVenueCount: number;
+  onOpenSaved: () => void;
   onBecomeVisible: () => void;
 }) {
   function normalizeSingleVibe(vibes: string[] | null | undefined, fallback = "Open") {
@@ -49,6 +64,10 @@ export function MeScreen({
   const [avatarStyle, setAvatarStyle] = useState<AvatarStyle>(user.avatarStyle);
   const [defaultIntent, setDefaultIntent] = useState<AppUser["defaultIntent"]>(user.defaultIntent);
   const [defaultVibes, setDefaultVibes] = useState<string[]>(normalizeSingleVibe(user.defaultVibes));
+  const [interests, setInterests] = useState<string[]>(user.interests);
+  const [offering, setOffering] = useState(user.offering);
+  const [socialRhythm, setSocialRhythm] = useState(user.socialRhythm);
+  const [conversationStyle, setConversationStyle] = useState(user.conversationStyle);
   const [profilePrompt, setProfilePrompt] = useState(user.profilePrompt);
 
   useEffect(() => {
@@ -56,6 +75,10 @@ export function MeScreen({
     setAvatarStyle(user.avatarStyle);
     setDefaultIntent(user.defaultIntent);
     setDefaultVibes(normalizeSingleVibe(user.defaultVibes));
+    setInterests(user.interests);
+    setOffering(user.offering);
+    setSocialRhythm(user.socialRhythm);
+    setConversationStyle(user.conversationStyle);
     setProfilePrompt(user.profilePrompt);
   }, [user]);
 
@@ -68,7 +91,27 @@ export function MeScreen({
   }
 
   function saveProfileDefaults() {
-    onSave({ firstName, avatarStyle, defaultIntent, defaultVibes, profilePrompt });
+    onSave({
+      firstName,
+      avatarStyle,
+      defaultIntent,
+      defaultVibes,
+      interests,
+      offering,
+      socialRhythm,
+      conversationStyle,
+      profilePrompt,
+    });
+  }
+
+  function toggleInterest(interest: string) {
+    setInterests((current) =>
+      current.includes(interest)
+        ? current.filter((item) => item !== interest)
+        : current.length < 4
+          ? [...current, interest]
+          : current,
+    );
   }
 
   const intent = (user.defaultIntent ?? "networking").replaceAll("_", " ");
@@ -148,6 +191,23 @@ export function MeScreen({
               </View>
             ))}
           </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Open ${savedVenueCount} saved ${savedVenueCount === 1 ? "place" : "places"}`}
+            onPress={onOpenSaved}
+            style={({ pressed }) => [styles.profileSavedCard, pressed && styles.iconButtonPressed]}
+          >
+            <View style={styles.profileSavedIcon}>
+              <LeftIcon name="bookmark" size={19} color={T.primary} />
+            </View>
+            <View style={styles.profileSavedCopy}>
+              <Text style={styles.profileSavedTitle}>Saved places</Text>
+              <Text style={styles.profileSavedText}>
+                {savedVenueCount > 0 ? `${savedVenueCount} ${savedVenueCount === 1 ? "place" : "places"} waiting for later` : "Build a private list for later"}
+              </Text>
+            </View>
+            <LeftIcon name="chevron-right" size={18} color={T.textSecondary} />
+          </Pressable>
         </>
       ) : null}
 
@@ -201,6 +261,60 @@ export function MeScreen({
             ))}
           </View>
 
+          <View style={styles.profileRefinementHeader}>
+            <Text style={styles.profileRefinementTitle}>Your social compass</Text>
+            <Text style={styles.profileRefinementSubtitle}>Optional details that help Left make better, more human introductions.</Text>
+          </View>
+
+          <Text style={styles.settingsEditLabel}>What draws you out?</Text>
+          <View style={styles.chipWrap}>
+            {interestOptions.map((interest) => (
+              <SelectChip
+                key={interest}
+                label={interest}
+                active={interests.includes(interest)}
+                onPress={() => toggleInterest(interest)}
+              />
+            ))}
+          </View>
+
+          <Text style={styles.settingsEditLabel}>When are you usually open to meeting?</Text>
+          <View style={styles.chipWrap}>
+            {socialRhythmOptions.map((rhythm) => (
+              <SelectChip
+                key={rhythm}
+                label={rhythm}
+                active={socialRhythm === rhythm}
+                onPress={() => setSocialRhythm(rhythm)}
+              />
+            ))}
+          </View>
+
+          <Text style={styles.settingsEditLabel}>Conversation style</Text>
+          <View style={styles.chipWrap}>
+            {conversationStyleOptions.map((style) => (
+              <SelectChip
+                key={style}
+                label={style}
+                active={conversationStyle === style}
+                onPress={() => setConversationStyle(style)}
+              />
+            ))}
+          </View>
+
+          <View style={styles.settingsInputRow}>
+            <Text style={styles.settingsEditLabel}>What might you bring to a conversation?</Text>
+            <TextInput
+              value={offering}
+              onChangeText={(value) => setOffering(value.slice(0, 220))}
+              placeholder="A perspective, a skill, or simply a listening ear…"
+              placeholderTextColor={T.textMuted}
+              style={[styles.settingsInlineInput, styles.profileOfferingInput]}
+              multiline
+            />
+            <Text style={styles.profileInputCount}>{`${offering.length}/220`}</Text>
+          </View>
+
           <View style={styles.profileEditActions}>
             <PrimaryButton
               label={saveState === "saving" ? "Saving..." : saveState === "saved" ? "Saved" : "Save Changes"}
@@ -248,6 +362,56 @@ export function MeScreen({
               </View>
             </View>
           </View>
+
+          {(user.offering || user.socialRhythm || user.conversationStyle || user.interests.length > 0) ? (
+            <View style={styles.profileCompassCard}>
+              <View style={styles.profileSectionHeaderLeft}>
+                <View style={styles.profileCompassIconWrap}>
+                  <LeftIcon name="compass" size={18} color={T.primary} />
+                </View>
+                <Text style={styles.profileSectionTitle}>My social compass</Text>
+              </View>
+              {user.offering ? (
+                <View style={styles.profileCompassRow}>
+                  <Text style={styles.profileCompassLabel}>What I bring</Text>
+                  <Text style={styles.profileCompassValue}>{user.offering}</Text>
+                </View>
+              ) : null}
+              {user.interests.length > 0 ? (
+                <View style={styles.profileCompassRow}>
+                  <Text style={styles.profileCompassLabel}>Drawn to</Text>
+                  <Text style={styles.profileCompassValue}>{user.interests.join(" · ")}</Text>
+                </View>
+              ) : null}
+              {user.socialRhythm ? (
+                <View style={styles.profileCompassRow}>
+                  <Text style={styles.profileCompassLabel}>Usually around</Text>
+                  <Text style={styles.profileCompassValue}>{user.socialRhythm}</Text>
+                </View>
+              ) : null}
+              {user.conversationStyle ? (
+                <View style={[styles.profileCompassRow, styles.profileCompassRowLast]}>
+                  <Text style={styles.profileCompassLabel}>Conversation style</Text>
+                  <Text style={styles.profileCompassValue}>{user.conversationStyle}</Text>
+                </View>
+              ) : null}
+            </View>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setEditing(true)}
+              style={({ pressed }) => [styles.profileCompassEmpty, pressed && styles.iconButtonPressed]}
+            >
+              <View style={styles.profileCompassIconWrap}>
+                <LeftIcon name="compass" size={18} color={T.primary} />
+              </View>
+              <View style={styles.profileCompassEmptyCopy}>
+                <Text style={styles.profileCompassEmptyTitle}>Shape better introductions</Text>
+                <Text style={styles.profileCompassEmptyText}>Add what interests you, what you bring, and when you’re usually open.</Text>
+              </View>
+              <LeftIcon name="chevron-right" size={18} color={T.textSecondary} />
+            </Pressable>
+          )}
 
           <View style={styles.profileActivitySection}>
             <View style={styles.profileSectionHeaderRow}>

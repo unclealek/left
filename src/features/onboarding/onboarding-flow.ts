@@ -3,7 +3,9 @@ import type { OnboardingDraftStep } from "./onboarding-storage";
 
 export function getPreviousOnboardingStep(step: OnboardingDraftStep): OnboardingDraftStep | null {
   if (step === "complete") return "location";
-  if (step === "location") return "avatar";
+  if (step === "location") return "notifications";
+  if (step === "notifications") return "legal";
+  if (step === "legal") return "name";
   if (step === "avatar") return "name";
   return null;
 }

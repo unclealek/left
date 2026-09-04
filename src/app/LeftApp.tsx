@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AppState, BackHandler, Linking, Platform, ScrollView, Text, View } from "react-native";
+import { AppState, BackHandler, Linking, Platform, RefreshControl, ScrollView, Text, View } from "react-native";
 import * as Notifications from "expo-notifications";
 import type { Session } from "@supabase/supabase-js";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BackgroundWaveLayer } from "../components/left/BackgroundWaveLayer";
+import { LeftRefreshIndicator } from "../components/left/LeftRefreshIndicator";
 import { SessionFooterNav } from "../components/left/navigation";
 import { AppDialog } from "../components/left/ui";
 import {
@@ -26,6 +27,7 @@ import type {
   ReportCategory,
   SocialInteractionEventType,
   VenueActivityEnvelope,
+  VenueExperience,
   VenueType,
   VenueContextSummary,
 } from "../types/left-domain";
@@ -35,10 +37,9 @@ import { LoadingScreen } from "../screens/left/LoadingScreen";
 import { PreAuthOnboardingScreen } from "../screens/left/PreAuthOnboardingScreen";
 import {
   NameScreen,
-  AvatarScreen,
-  CompleteScreen,
   LegalAcknowledgementScreen,
   LocationScreen,
+  NotificationScreen,
 } from "../screens/left/OnboardingScreens";
 import { VenueScreen } from "../screens/left/VenueScreen";
 import { HomeScreen } from "../screens/left/HomeScreen";
@@ -52,11 +53,15 @@ import { SettingsScreen } from "../screens/left/SettingsScreen";
 import { MeScreen } from "../screens/left/MeScreen";
 import { VenueAddScreen, VenueSelectionScreen } from "../screens/left/VenueSelectionScreen";
 import { VenueDetailScreen } from "../screens/left/VenueDetailScreen";
+import { ExperienceDetailScreen } from "../screens/left/ExperienceDetailScreen";
+import { ExperienceCreateScreen } from "../screens/left/ExperienceCreateScreen";
+import { SavedPlacesScreen } from "../screens/left/SavedPlacesScreen";
 import {
   consumePendingActivationLaunch,
   handleVenuePromptResponse,
   loadLastActivationDefaults,
   primeLocationFix,
+  requestNotificationAccess,
   requestLocationAccess,
   saveLastActivationDefaults,
   selectNearbyVenue,
@@ -92,6 +97,16 @@ import {
   updateUserSettings,
   upsertOnboardingProfile,
 } from "../features/account/account-service";
+import {
+  fetchPublishedExperiences,
+  fetchSavedVenues,
+  setExperienceAttendance,
+  setVenueSaved,
+  submitExperienceProposal,
+  type ExperienceProposalInput,
+  type SavedVenueEntry,
+} from "../features/discovery/discovery-service";
+import { fetchVenuePracticalDetails } from "../features/venues/venue-details-service";
 import {
   blockUserForActor,
   createApproachAttempt,
@@ -148,6 +163,7 @@ import {
   getProvider,
   getProviderSubject,
   startGoogleAuthSession,
+  UnsupportedAuthProviderError,
 } from "../features/auth/auth-service";
 import { getRemainingSeconds, hasExpired } from "../features/lifecycle/session-lifecycle";
 
@@ -211,6 +227,8 @@ type VenuePreferenceMessage = {
   text: string;
 };
 
+const REFRESHABLE_SCREENS: Screen[] = ["home", "venue", "venue-detail", "feed", "saved"];
+
 const PRIVATE_VENUE_SUMMARY: VenueContextSummary = {
   venueId: "private",
   venueName: "Visibility off",
@@ -226,9 +244,11 @@ export function LeftApp() {
   const [screen, setScreen] = useState<Screen>("loading");
   const [activationReturnScreen, setActivationReturnScreen] = useState<Screen>("home");
   const [safetyReturnScreen, setSafetyReturnScreen] = useState<Screen>("home");
+  const [venueFooterDestination, setVenueFooterDestination] = useState<"nearby" | "session">("session");
   const [user, setUser] = useState<AppUser | null>(null);
   const [feed, setFeed] = useState<NearbyFeedItem[]>(EMPTY_NEARBY_FEED);
   const [selectedProfile, setSelectedProfile] = useState<NearbyFeedItem | null>(null);
+  const [profileReturnScreen, setProfileReturnScreen] = useState<Screen>("feed");
   const [venueSummary, setVenueSummary] = useState<VenueContextSummary>(INITIAL_VENUE_SUMMARY);
   const [firstNameDraft, setFirstNameDraft] = useState("");
   const [avatarStyleDraft, setAvatarStyleDraft] = useState<AvatarStyle>("geometric");
@@ -240,12 +260,12 @@ export function LeftApp() {
   });
   const [activeLegalDocument, setActiveLegalDocument] = useState<LegalDocumentId>("terms");
   const [legalReturnScreen, setLegalReturnScreen] = useState<Screen>("auth");
-  const [legalConsentBackScreen, setLegalConsentBackScreen] = useState<Screen>("auth");
   const [bootError, setBootError] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [onboardingSaveBusy, setOnboardingSaveBusy] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [notificationEnabled, setNotificationEnabled] = useState(false);
+  const [notificationBusy, setNotificationBusy] = useState(false);
   const [locationBusy, setLocationBusy] = useState(false);
   const [selectedIntent, setSelectedIntent] = useState<AppUser["defaultIntent"]>("networking");
   const [selectedVibes, setSelectedVibes] = useState<string[]>(["AI/startups"]);
@@ -276,6 +296,7 @@ export function LeftApp() {
     actions: DialogAction[];
   } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mainScrollRef = useRef<ScrollView>(null);
   const preAuthSeenRef = useRef(false);
   const preAuthReadyRef = useRef(false);
   const activationAttemptRef = useRef(false);
@@ -288,7 +309,18 @@ export function LeftApp() {
   const [venueDraftType, setVenueDraftType] = useState<VenueType>("other");
   const [venueDraftSubmitting, setVenueDraftSubmitting] = useState(false);
   const [selectedVenueDetail, setSelectedVenueDetail] = useState<RuntimeVenueCandidate | null>(null);
+  const [venueDetailsLoading, setVenueDetailsLoading] = useState(false);
+  const [savedVenues, setSavedVenues] = useState<SavedVenueEntry[]>([]);
+  const [savingVenueId, setSavingVenueId] = useState<string | null>(null);
+  const [experiences, setExperiences] = useState<VenueExperience[]>([]);
+  const [selectedExperience, setSelectedExperience] = useState<VenueExperience | null>(null);
+  const [experienceReturnScreen, setExperienceReturnScreen] = useState<Screen>("home");
+  const [attendanceBusy, setAttendanceBusy] = useState(false);
+  const [experienceProposalBusy, setExperienceProposalBusy] = useState(false);
+  const [experienceProposalError, setExperienceProposalError] = useState<string | null>(null);
   const [venueActivityById, setVenueActivityById] = useState<Record<string, VenueActivityEnvelope>>({});
+  const [discoveryRefreshing, setDiscoveryRefreshing] = useState(false);
+  const [refreshPullDistance, setRefreshPullDistance] = useState(0);
   const [venueDetailReturnScreen, setVenueDetailReturnScreen] = useState<Screen>("home");
   const [venueApproachPrompts, setVenueApproachPrompts] = useState<Record<string, VenueApproachPrompt>>({});
   const [reportCategory, setReportCategory] = useState<ReportCategory>("unsafe_behavior");
@@ -297,6 +329,14 @@ export function LeftApp() {
   const [activationSubmitting, setActivationSubmitting] = useState(false);
   const [profileAction, setProfileAction] = useState<"hide" | "block" | null>(null);
   const [visibilityAction, setVisibilityAction] = useState<"pause" | "end" | null>(null);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      mainScrollRef.current?.scrollTo({ y: 0, animated: false });
+    });
+    setRefreshPullDistance(0);
+    return () => cancelAnimationFrame(frame);
+  }, [screen]);
   const [socialMomentumEvents, setSocialMomentumEvents] = useState<SocialInteractionEventType[]>([]);
   const [pendingApproachFeedback, setPendingApproachFeedback] = useState<PendingApproachFeedback | null>(null);
   const [feedbackWentOver, setFeedbackWentOver] = useState<boolean | null>(null);
@@ -306,6 +346,34 @@ export function LeftApp() {
     if (!sessionVisible || venueHidden) return [];
     return feed.map((item) => ({ ...item, venueName: venueSummary.venueName }));
   }, [feed, sessionVisible, venueHidden, venueSummary.venueName]);
+  const discoveryVenueIdsKey = useMemo(
+    () => nearbyVenueOptions.map((venue) => venue.id).filter(isUuid).sort().join(","),
+    [nearbyVenueOptions],
+  );
+
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId) {
+      setSavedVenues([]);
+      setExperiences([]);
+      return;
+    }
+
+    let current = true;
+    const venueIds = discoveryVenueIdsKey ? discoveryVenueIdsKey.split(",") : [];
+    void Promise.all([
+      fetchSavedVenues(userId),
+      fetchPublishedExperiences(venueIds),
+    ]).then(([nextSavedVenues, nextExperiences]) => {
+      if (!current) return;
+      setSavedVenues(nextSavedVenues);
+      setExperiences(nextExperiences);
+    });
+
+    return () => {
+      current = false;
+    };
+  }, [discoveryVenueIdsKey, user?.id]);
   const displayVenueSummary = useMemo(() => {
     if (!sessionVisible) return PRIVATE_VENUE_SUMMARY;
     if (venueHidden) {
@@ -375,17 +443,20 @@ export function LeftApp() {
   }
 
   function onboardingScreenForStep(step: OnboardingDraftStep): Screen {
-    if (step === "avatar") return "onboarding-avatar";
+    if (step === "avatar") return "onboarding-name";
+    if (step === "legal") return "onboarding-legal";
+    if (step === "notifications") return "onboarding-notifications";
     if (step === "location") return "onboarding-location";
-    if (step === "complete") return "onboarding-complete";
+    if (step === "complete") return "legal-consent";
     return "onboarding-name";
   }
 
   function onboardingStepForScreen(value: Screen): OnboardingDraftStep | null {
     if (value === "onboarding-name") return "name";
-    if (value === "onboarding-avatar") return "avatar";
+    if (value === "onboarding-legal") return "legal";
+    if (value === "onboarding-notifications") return "notifications";
     if (value === "onboarding-location") return "location";
-    if (value === "onboarding-complete") return "complete";
+    if (value === "legal-consent") return "complete";
     return null;
   }
 
@@ -401,17 +472,22 @@ export function LeftApp() {
   function goBackInOnboarding() {
     setAuthError(null);
     setLocationError(null);
-    if (screen === "onboarding-complete") {
-      void persistOnboardingStep("complete");
+    if (screen === "legal-consent") {
+      void persistOnboardingStep("location");
       setScreen("onboarding-location");
       return;
     }
     if (screen === "onboarding-location") {
-      void persistOnboardingStep("avatar");
-      setScreen("onboarding-avatar");
+      void persistOnboardingStep("notifications");
+      setScreen("onboarding-notifications");
       return;
     }
-    if (screen === "onboarding-avatar") {
+    if (screen === "onboarding-notifications") {
+      void persistOnboardingStep("legal");
+      setScreen("onboarding-legal");
+      return;
+    }
+    if (screen === "onboarding-legal") {
       void persistOnboardingStep("name");
       setScreen("onboarding-name");
       return;
@@ -455,6 +531,104 @@ export function LeftApp() {
     setSelectedVenueDetail(resolvedCandidate);
     setVenueDetailReturnScreen(origin);
     setScreen("venue-detail");
+    if (isUuid(resolvedCandidate.id)) {
+      setVenueDetailsLoading(true);
+      void fetchVenuePracticalDetails(resolvedCandidate.id)
+        .then((details) => {
+          if (!details) return;
+          setSelectedVenueDetail((current) =>
+            current?.id === resolvedCandidate.id ? { ...current, ...details } : current,
+          );
+        })
+        .finally(() => setVenueDetailsLoading(false));
+    } else {
+      setVenueDetailsLoading(false);
+    }
+  }
+
+  function openSavedVenue(entry: SavedVenueEntry) {
+    const nearbyCandidate = nearbyVenueOptions.find((candidate) => candidate.id === entry.venueId);
+    openVenueDetail(
+      nearbyCandidate ?? {
+        id: entry.venueId,
+        name: entry.venueName,
+        venueType: entry.venueType,
+        latitude: 0,
+        longitude: 0,
+        radiusMeters: 60,
+        source: "local_catalog",
+        distanceMeters: null,
+        formattedAddress: entry.formattedAddress,
+      },
+      "saved",
+    );
+  }
+
+  async function toggleSavedVenue(candidate: RuntimeVenueCandidate) {
+    if (!user || savingVenueId) return;
+    if (!isUuid(candidate.id)) {
+      showDialog("Could not save this place", "Left can save a place after it has been confirmed in the venue directory.");
+      return;
+    }
+    const isSaved = savedVenues.some((entry) => entry.venueId === candidate.id);
+    setSavingVenueId(candidate.id);
+    try {
+      const saved = await setVenueSaved(user.id, candidate.id, !isSaved);
+      if (!saved) {
+        showDialog("Could not update saved places", "Check your connection and try again.");
+        return;
+      }
+      setSavedVenues(await fetchSavedVenues(user.id));
+      showToast(isSaved ? "Removed from saved places" : "Place saved");
+    } finally {
+      setSavingVenueId(null);
+    }
+  }
+
+  function openExperience(experience: VenueExperience, origin: Screen = screen) {
+    setSelectedExperience(experience);
+    setExperienceReturnScreen(origin);
+    setScreen("experience-detail");
+  }
+
+  function openSelectedExperienceVenue() {
+    if (!selectedExperience) return;
+    const candidate = nearbyVenueOptions.find((venue) => venue.id === selectedExperience.venueId) ?? {
+      id: selectedExperience.venueId,
+      name: selectedExperience.venueName,
+      venueType: "other" as const,
+      latitude: 0,
+      longitude: 0,
+      radiusMeters: 60,
+      source: "local_catalog" as const,
+      distanceMeters: null,
+    };
+    openVenueDetail(candidate, "experience-detail");
+  }
+
+  async function toggleSelectedExperienceAttendance() {
+    if (!selectedExperience || attendanceBusy) return;
+    setAttendanceBusy(true);
+    try {
+      const nextAttending = await setExperienceAttendance(selectedExperience.id, !selectedExperience.viewerAttending);
+      if (nextAttending == null) {
+        showDialog("Could not update attendance", "This gathering may be full or unavailable. Try again shortly.");
+        return;
+      }
+      const delta = nextAttending ? 1 : -1;
+      const updateExperience = (experience: VenueExperience) => experience.id === selectedExperience.id
+        ? {
+            ...experience,
+            viewerAttending: nextAttending,
+            attendeeCount: Math.max(0, experience.attendeeCount + delta),
+          }
+        : experience;
+      setExperiences((current) => current.map(updateExperience));
+      setSelectedExperience((current) => current ? updateExperience(current) : null);
+      showToast(nextAttending ? "You’re going" : "Plans updated");
+    } finally {
+      setAttendanceBusy(false);
+    }
   }
 
   useEffect(() => {
@@ -500,8 +674,6 @@ export function LeftApp() {
         goBackInOnboarding();
       } else if (screen === "legal") {
         setScreen(legalReturnScreen);
-      } else if (legalConsentBackScreen === "onboarding-complete") {
-        setScreen("onboarding-complete");
       } else {
         void forceLocalSignOut();
       }
@@ -514,7 +686,37 @@ export function LeftApp() {
     avatarStyleDraft,
     onboardingUserId,
     legalReturnScreen,
-    legalConsentBackScreen,
+  ]);
+
+  useEffect(() => {
+    const destinations: Partial<Record<Screen, Screen>> = {
+      "venue-detail": venueDetailReturnScreen,
+      "experience-detail": experienceReturnScreen,
+      "experience-create": "home",
+      saved: "me",
+      settings: "me",
+      profile: profileReturnScreen,
+      "venue-select": sessionVisible ? "venue" : "home",
+      "venue-add": "venue-select",
+      activate: activationReturnScreen,
+      safety: safetyReturnScreen,
+    };
+    const destination = destinations[screen];
+    if (!destination) return;
+
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      setScreen(destination);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [
+    activationReturnScreen,
+    experienceReturnScreen,
+    profileReturnScreen,
+    safetyReturnScreen,
+    screen,
+    sessionVisible,
+    venueDetailReturnScreen,
   ]);
 
   useEffect(() => {
@@ -676,6 +878,8 @@ export function LeftApp() {
     try {
       const runtime = await syncLocationRegistrationState();
       setLocationEnabled(runtime.permissionGranted);
+      const notificationPermission = await Notifications.getPermissionsAsync();
+      setNotificationEnabled(notificationPermission.status === "granted");
       if (runtime.permissionGranted) {
         await primeLocationFix();
       }
@@ -742,6 +946,63 @@ export function LeftApp() {
       }
       return next;
     });
+  }
+
+  async function refreshDiscoverySurface() {
+    if (discoveryRefreshing) return;
+    const refreshStartedAt = Date.now();
+    setDiscoveryRefreshing(true);
+    try {
+      if (locationEnabled) {
+        await primeLocationFix();
+      }
+      await refreshVenueFromRuntime();
+      const runtime = await getLocationRuntimeState();
+      const venueIds = runtime.nearbyVenues.map((venue) => venue.id).filter(isUuid);
+      const tasks: Promise<unknown>[] = [refreshVenueActivityForIds(venueIds)];
+
+      if (user) {
+        tasks.push(
+          Promise.all([
+            fetchSavedVenues(user.id),
+            fetchPublishedExperiences(venueIds),
+          ]).then(([nextSavedVenues, nextExperiences]) => {
+            setSavedVenues(nextSavedVenues);
+            setExperiences(nextExperiences);
+          }),
+        );
+      }
+
+      if (user && sessionVisible && !venueHidden && isUuid(venueSummary.venueId)) {
+        tasks.push(
+          refreshVenueContext(venueSummary.venueId),
+          refreshNearbyFeed(user.id, venueSummary.venueId),
+          refreshSocialMomentumEvents(activePresenceSessionId, user.id),
+        );
+      }
+
+      if (screen === "venue-detail" && selectedVenueDetail && isUuid(selectedVenueDetail.id)) {
+        tasks.push(
+          fetchVenuePracticalDetails(selectedVenueDetail.id).then((details) => {
+            if (!details) return;
+            setSelectedVenueDetail((current) =>
+              current?.id === selectedVenueDetail.id ? { ...current, ...details } : current,
+            );
+          }),
+        );
+      }
+
+      await Promise.all(tasks);
+    } catch (error) {
+      console.warn("[discovery] pull to refresh failed", error);
+      showToast("Couldn’t refresh right now");
+    } finally {
+      const remainingLoaderTime = 650 - (Date.now() - refreshStartedAt);
+      if (remainingLoaderTime > 0) {
+        await new Promise((resolve) => setTimeout(resolve, remainingLoaderTime));
+      }
+      setDiscoveryRefreshing(false);
+    }
   }
 
   async function recoverActivePresenceSession(appUser: AppUser) {
@@ -1203,7 +1464,6 @@ export function LeftApp() {
         setOnboardingUserId(session.user.id);
         setFirstNameDraft(appUser.firstName);
         setAvatarStyleDraft(appUser.avatarStyle);
-        setLegalConsentBackScreen("auth");
         setScreen("legal-consent");
         return;
       }
@@ -1257,7 +1517,7 @@ export function LeftApp() {
       await primeLocationFix();
       await refreshVenueFromRuntime();
       await persistOnboardingStep("complete");
-      setScreen("onboarding-complete");
+      setScreen("legal-consent");
     } catch (error) {
       console.warn("[onboarding] location step failed", error);
       setLocationError("Left could not finish the permission check. Try again, or review device settings.");
@@ -1289,14 +1549,19 @@ export function LeftApp() {
       }
 
       const now = new Date().toISOString();
+      const authProvider = getProvider(session);
       const nextUser: AppUser = {
         id: session.user.id,
-        authProvider: getProvider(session),
-        providerSubject: getProviderSubject(session, getProvider(session)),
+        authProvider,
+        providerSubject: getProviderSubject(session, authProvider),
         firstName: validation.normalized,
         avatarStyle: avatarStyleDraft,
         defaultIntent: "networking",
         defaultVibes: ["Open"],
+        interests: [],
+        offering: "",
+        socialRhythm: "",
+        conversationStyle: "",
         profilePrompt: defaultProfilePrompt,
         approachPrompt: defaultApproachPrompt,
         focusModeEnabled: false,
@@ -1350,7 +1615,11 @@ export function LeftApp() {
       setScreen("home");
     } catch (error) {
       console.warn("[onboarding] completion failed", error);
-      setAuthError("Left could not finish setting up your profile. Check your connection and try again.");
+      setAuthError(
+        error instanceof UnsupportedAuthProviderError
+          ? "This session is not linked to Google or Apple. Sign out, then continue with Google."
+          : "Left could not finish setting up your profile. Check your connection and try again.",
+      );
     } finally {
       setOnboardingSaveBusy(false);
     }
@@ -1370,13 +1639,32 @@ export function LeftApp() {
     }
     setFirstNameDraft(validation.normalized);
     setAuthError(null);
-    await persistOnboardingStep("avatar");
-    setScreen("onboarding-avatar");
+    await persistOnboardingStep("legal");
+    setScreen("onboarding-legal");
   }
 
-  async function continueAvatarStep() {
-    await persistOnboardingStep("location");
-    setScreen("onboarding-location");
+  async function continueLegalStep() {
+    if (!legalChecks.community) {
+      setAuthError("Agree to the community pledge to continue.");
+      return;
+    }
+    setAuthError(null);
+    await persistOnboardingStep("notifications");
+    setScreen("onboarding-notifications");
+  }
+
+  async function finishNotificationStep(requestPermission: boolean) {
+    setNotificationBusy(true);
+    try {
+      const enabled = requestPermission
+        ? await requestNotificationAccess()
+        : notificationEnabled;
+      setNotificationEnabled(enabled);
+      await persistOnboardingStep("location");
+      setScreen("onboarding-location");
+    } finally {
+      setNotificationBusy(false);
+    }
   }
 
   function toggleVibe(vibe: string) {
@@ -1577,6 +1865,7 @@ export function LeftApp() {
         pulseCopy: "You are now visible at this venue.",
       }));
       showToast("You are visible");
+      setVenueFooterDestination("session");
       setScreen("venue");
     } catch {
       showDialog("Could not start visibility", "Please try again.");
@@ -1584,12 +1873,30 @@ export function LeftApp() {
   }
 
   function openProfile(item: NearbyFeedItem) {
+    setProfileReturnScreen(screen === "profile" ? "feed" : screen);
     setSelectedProfile(item);
     void recordSocialInteractionEvent("profile_viewed", {
       targetUserId: item.profileUserId,
       visibilitySessionId: activePresenceSessionId ?? item.presenceSessionId,
     });
     setScreen("profile");
+  }
+
+  async function submitExperienceDraft(draft: Omit<ExperienceProposalInput, "hostUserId">) {
+    if (!user) return;
+    setExperienceProposalBusy(true);
+    setExperienceProposalError(null);
+    try {
+      const submitted = await submitExperienceProposal({ ...draft, hostUserId: user.id });
+      if (!submitted) {
+        setExperienceProposalError("We couldn’t submit this plan. Check your connection and try again.");
+        return;
+      }
+      showToast("Sent for review");
+      setScreen("home");
+    } finally {
+      setExperienceProposalBusy(false);
+    }
   }
 
   function handleSocialMomentumPrimary() {
@@ -1986,6 +2293,10 @@ export function LeftApp() {
     avatarStyle: AvatarStyle;
     defaultIntent: AppUser["defaultIntent"];
     defaultVibes: string[];
+    interests: string[];
+    offering: string;
+    socialRhythm: string;
+    conversationStyle: string;
     profilePrompt: string;
   }) {
     if (!user) return;
@@ -1996,6 +2307,10 @@ export function LeftApp() {
       avatarStyle: input.avatarStyle,
       defaultIntent: input.defaultIntent,
       defaultVibes: input.defaultVibes,
+      interests: input.interests,
+      offering: input.offering.trim(),
+      socialRhythm: input.socialRhythm.trim(),
+      conversationStyle: input.conversationStyle.trim(),
       profilePrompt: input.profilePrompt.trim() || defaultProfilePrompt,
       approachPrompt: user.approachPrompt.trim() || defaultApproachPrompt,
       updatedAt: new Date().toISOString(),
@@ -2006,6 +2321,10 @@ export function LeftApp() {
       avatarStyle: nextUser.avatarStyle,
       defaultIntent: nextUser.defaultIntent,
       defaultVibes: normalizeSingleVibe(nextUser.defaultVibes),
+      interests: nextUser.interests,
+      offering: nextUser.offering,
+      socialRhythm: nextUser.socialRhythm,
+      conversationStyle: nextUser.conversationStyle,
       profilePrompt: nextUser.profilePrompt,
       approachPrompt: nextUser.approachPrompt,
     });
@@ -2036,6 +2355,9 @@ export function LeftApp() {
   function clearLocalSessionState() {
     setUser(null);
     setSelectedProfile(null);
+    setSelectedExperience(null);
+    setSavedVenues([]);
+    setExperiences([]);
     void endSessionState("session_ended", { toast: false });
     setApproach(null);
     setActiveApproachPrompt(defaultApproachPrompt);
@@ -2163,12 +2485,18 @@ export function LeftApp() {
     if (destination === "nearby") {
       setSelectedProfile(null);
       setSelectedVenueDetail(null);
-      setScreen(sessionVisible ? "feed" : "venue");
+      if (sessionVisible) {
+        setScreen("feed");
+      } else {
+        setVenueFooterDestination("nearby");
+        setScreen("venue");
+      }
       return;
     }
     if (destination === "session") {
       setSelectedProfile(null);
       setSelectedVenueDetail(null);
+      setVenueFooterDestination("session");
       setScreen("venue");
       return;
     }
@@ -2182,7 +2510,10 @@ export function LeftApp() {
     intent: selectedIntent,
     vibe: selectedVibes[0] ?? "Open",
     sessionVisible,
-    activeDestination: getFooterDestination(screen),
+    activeDestination: getFooterDestination(screen, {
+      safetyReturnScreen,
+      venueDestination: venueFooterDestination,
+    }),
   };
   const currentVenuePreference = venuePreferences[venueSummary.venueId];
   const currentVenuePreferenceAction =
@@ -2203,21 +2534,49 @@ export function LeftApp() {
       ? "Foreground location is available while this preview is open."
       : "Background location is active. Venue matching runs on-device and only venue IDs are used for app state."
     : "Background location is not enabled yet.";
-  const isOnboardingScreen = screen.startsWith("onboarding-");
+  const isOnboardingScreen = screen.startsWith("onboarding-") || screen === "legal-consent";
   const isPreAuthScreen = screen === "preauth";
   const isFullBleedScreen = screen === "auth" || screen === "legal" || screen === "loading" || isPreAuthScreen;
+  const isSessionNavScreen = SESSION_NAV_SCREENS.includes(screen);
+  const isRefreshableScreen = REFRESHABLE_SCREENS.includes(screen);
   const scrollContentPaddingTop =
-    screen === "venue-detail" || isFullBleedScreen ? 0 : Math.max(56, insets.top + 20);
-  const scrollContentPaddingBottom = isOnboardingScreen
+    isSessionNavScreen ? 20 : screen === "venue-detail" || isFullBleedScreen ? 0 : Math.max(56, insets.top + 20);
+  const scrollContentPaddingBottom = isSessionNavScreen
+    ? 36
+    : isOnboardingScreen
     ? 24 + insets.bottom
-    : SESSION_NAV_SCREENS.includes(screen)
-      ? 176 + insets.bottom
-      : 72 + insets.bottom;
+    : 72 + insets.bottom;
 
   return (
     <View style={styles.shell}>
-      {screen !== "me" && screen !== "legal" && !isOnboardingScreen && !isPreAuthScreen ? <BackgroundWaveLayer /> : null}
+      {screen !== "me" && !isOnboardingScreen && !isFullBleedScreen ? <BackgroundWaveLayer /> : null}
+      {isRefreshableScreen ? (
+        <LeftRefreshIndicator
+          pullDistance={refreshPullDistance}
+          refreshing={discoveryRefreshing}
+          topInset={insets.top}
+        />
+      ) : null}
       <ScrollView
+        ref={mainScrollRef}
+        contentInsetAdjustmentBehavior={isFullBleedScreen || isSessionNavScreen ? "never" : "automatic"}
+        style={isSessionNavScreen ? { marginTop: insets.top, marginBottom: 62 + insets.bottom } : undefined}
+        bounces={isRefreshableScreen}
+        alwaysBounceVertical={isRefreshableScreen}
+        refreshControl={isRefreshableScreen ? (
+          <RefreshControl
+            refreshing={discoveryRefreshing}
+            onRefresh={() => void refreshDiscoverySurface()}
+            tintColor="transparent"
+            colors={["transparent"]}
+            progressBackgroundColor="transparent"
+          />
+        ) : undefined}
+        onScroll={isRefreshableScreen ? (event) => {
+          const nextDistance = Math.max(0, Math.round(-event.nativeEvent.contentOffset.y));
+          setRefreshPullDistance((current) => current === nextDistance ? current : nextDistance);
+        } : undefined}
+        scrollEventThrottle={16}
         contentContainerStyle={[
           styles.content,
           {
@@ -2236,7 +2595,7 @@ export function LeftApp() {
             authError={authError}
             busy={authBusy}
             onAuth={startGoogleAuth}
-            onEmail={() => showDialog("Email sign-in is coming soon", "Google is the working sign-in method in this build.")}
+            onBack={() => setScreen("preauth")}
             onOpenLegal={(document) => openLegalDocument(document, "auth")}
           />
         )}
@@ -2247,24 +2606,37 @@ export function LeftApp() {
           <NameScreen
             firstNameDraft={firstNameDraft}
             onChangeFirstName={setFirstNameDraft}
+            avatarStyle={avatarStyleDraft}
+            onPickAvatar={setAvatarStyleDraft}
             onContinue={() => void continueNameStep()}
             onBack={goBackInOnboarding}
           />
         )}
-        {screen === "onboarding-avatar" && (
-          <AvatarScreen
-            firstName={firstNameDraft.trim()}
-            avatarStyle={avatarStyleDraft}
-            onPick={setAvatarStyleDraft}
-            onContinue={() => void continueAvatarStep()}
+        {screen === "onboarding-legal" && (
+          <LegalAcknowledgementScreen
+            checks={legalChecks}
+            onToggle={(document) =>
+              setLegalChecks((current) => ({ ...current, [document]: !current[document] }))
+            }
+            onOpenDocument={(document) => openLegalDocument(document, "onboarding-legal")}
+            onBack={goBackInOnboarding}
+            onContinue={() => void continueLegalStep()}
+            error={authError}
+          />
+        )}
+        {screen === "onboarding-notifications" && (
+          <NotificationScreen
+            enabled={notificationEnabled}
+            busy={notificationBusy}
+            onContinue={() => void finishNotificationStep(true)}
+            onSkip={() => void finishNotificationStep(false)}
             onBack={goBackInOnboarding}
           />
         )}
         {screen === "onboarding-location" && (
           <LocationScreen
-            authError={locationError}
-            notificationsEnabled={notificationEnabled}
-            busy={locationBusy}
+            authError={locationError || authError}
+            busy={locationBusy || onboardingSaveBusy}
             onContinue={() => void finishLocationStep()}
             onBack={goBackInOnboarding}
             onOpenSettings={openDeviceSettings}
@@ -2277,28 +2649,11 @@ export function LeftApp() {
               setLegalChecks((current) => ({ ...current, [document]: !current[document] }))
             }
             onOpenDocument={(document) => openLegalDocument(document, "legal-consent")}
-            onBack={() => {
-              if (legalConsentBackScreen === "onboarding-complete") {
-                setScreen("onboarding-complete");
-              } else {
-                void forceLocalSignOut();
-              }
-            }}
+            onBack={user?.onboardingCompleted ? () => void forceLocalSignOut() : goBackInOnboarding}
             onContinue={() => void finishOnboarding()}
             busy={onboardingSaveBusy}
             error={authError}
             standalone
-          />
-        )}
-        {screen === "onboarding-complete" && (
-          <CompleteScreen
-            firstName={firstNameDraft.trim()}
-            avatarStyle={avatarStyleDraft}
-            onBack={goBackInOnboarding}
-            onContinue={() => {
-              setLegalConsentBackScreen("onboarding-complete");
-              setScreen("legal-consent");
-            }}
           />
         )}
         {screen === "venue-select" && (
@@ -2331,12 +2686,25 @@ export function LeftApp() {
             venue={venueSummary}
             nearbyVenues={nearbyVenueOptions}
             venueActivityById={venueActivityById}
+            experiences={experiences}
+            feed={visibleFeed}
+            intent={selectedIntent}
+            vibes={selectedVibes}
             sessionVisible={sessionVisible}
             venueHidden={venueHidden}
             activationSubmitting={activationSubmitting}
             onBecomeVisible={() => openActivationFrom("home")}
-            onOpenAllVenues={() => setScreen("venue")}
+            onOpenAllVenues={() => {
+              setVenueFooterDestination("session");
+              setScreen("venue");
+            }}
             onOpenVenueDetail={(venueCandidate) => openVenueDetail(venueCandidate, "home")}
+            onOpenProfile={openProfile}
+            onOpenExperience={(experience) => openExperience(experience, "home")}
+            onCreateExperience={() => {
+              setExperienceProposalError(null);
+              setScreen("experience-create");
+            }}
             onOpenSafety={() => openSafetyFrom("home")}
           />
         )}
@@ -2359,6 +2727,7 @@ export function LeftApp() {
             onAddVenue={() => setScreen("venue-add")}
             onOpenSafety={() => openSafetyFrom("venue")}
             nearbyVenues={nearbyVenueOptions}
+            venueActivityById={venueActivityById}
             lastKnownCoords={lastKnownCoords}
           />
         )}
@@ -2369,8 +2738,31 @@ export function LeftApp() {
             venueActivity={isUuid(selectedVenueDetail.id) ? venueActivityById[selectedVenueDetail.id] ?? null : null}
             feed={visibleFeed}
             sessionVisible={sessionVisible}
+            detailsLoading={venueDetailsLoading}
+            saved={savedVenues.some((entry) => entry.venueId === selectedVenueDetail.id)}
+            saving={savingVenueId === selectedVenueDetail.id}
             onBack={() => setScreen(venueDetailReturnScreen)}
             onPrimaryAction={() => void handleVenueDetailPrimaryAction()}
+            onToggleSaved={() => void toggleSavedVenue(selectedVenueDetail)}
+          />
+        )}
+        {screen === "experience-detail" && selectedExperience && (
+          <ExperienceDetailScreen
+            experience={selectedExperience}
+            attendanceBusy={attendanceBusy}
+            onBack={() => setScreen(experienceReturnScreen)}
+            onToggleAttendance={() => void toggleSelectedExperienceAttendance()}
+            onOpenVenue={openSelectedExperienceVenue}
+          />
+        )}
+        {screen === "experience-create" && (
+          <ExperienceCreateScreen
+            venues={nearbyVenueOptions}
+            defaultVenueId={isUuid(venueSummary.venueId) ? venueSummary.venueId : null}
+            submitting={experienceProposalBusy}
+            submitError={experienceProposalError}
+            onBack={() => setScreen("home")}
+            onSubmit={(draft) => void submitExperienceDraft(draft)}
           />
         )}
         {screen === "activate" && (
@@ -2417,7 +2809,8 @@ export function LeftApp() {
             reportNotes={reportNotes}
             reportSubmitting={reportSubmitting}
             profileAction={profileAction}
-            onBack={() => setScreen("feed")}
+            viewerInterests={user?.interests ?? []}
+            onBack={() => setScreen(profileReturnScreen)}
             onApproach={() => void startApproach()}
             onHide={() => void hideUser()}
             onBlock={() => void blockUser()}
@@ -2477,6 +2870,17 @@ export function LeftApp() {
             onOpenLegal={(document) => openLegalDocument(document, "settings")}
           />
         )}
+        {screen === "saved" && (
+          <SavedPlacesScreen
+            venues={savedVenues}
+            onBack={() => setScreen("me")}
+            onOpenVenue={openSavedVenue}
+            onExplore={() => {
+              setVenueFooterDestination("session");
+              setScreen("venue");
+            }}
+          />
+        )}
         {screen === "me" && user && (
           <MeScreen
             user={user}
@@ -2489,6 +2893,8 @@ export function LeftApp() {
             currentVibes={selectedVibes}
             nearbyVenueCount={nearbyVenueOptions.length}
             approachCount={socialMomentumEvents.filter((eventType) => eventType === "approach_started").length}
+            savedVenueCount={savedVenues.length}
+            onOpenSaved={() => setScreen("saved")}
             onBecomeVisible={() => openActivationFrom("me")}
           />
         )}
@@ -2500,7 +2906,7 @@ export function LeftApp() {
           intent={footerSummary.intent}
           sessionVisible={footerSummary.sessionVisible}
           activeDestination={footerSummary.activeDestination}
-          showContextSummary={screen !== "activate"}
+          showContextSummary={false}
           bottomInset={insets.bottom}
           onNavigate={goToFooterDestination}
         />
@@ -2550,6 +2956,10 @@ function mapProfileToAppUser(profile: UserProfileRow): AppUser {
     avatarStyle: profile.avatar_style,
     defaultIntent: profile.default_intent,
     defaultVibes: profile.default_vibes,
+    interests: profile.interests ?? [],
+    offering: profile.offering?.trim() ?? "",
+    socialRhythm: profile.social_rhythm?.trim() ?? "",
+    conversationStyle: profile.conversation_style?.trim() ?? "",
     profilePrompt: profile.profile_prompt,
     approachPrompt: profile.approach_prompt,
     focusModeEnabled: profile.focus_mode_enabled,
