@@ -3,7 +3,7 @@ import { Text, TextInput, View } from "react-native";
 import { styles, T } from "../../app/leftTheme";
 import { FieldBlock, PrimaryButton, SelectChip } from "../../components/left/ui";
 import { ScreenHeader } from "../../components/left/navigation";
-import type { ExperienceProposalInput } from "../../features/discovery/discovery-service";
+import { fetchHostedExperiences, type HostedExperience, type ExperienceProposalInput } from "../../features/discovery/discovery-service";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
 
 type ProposalDraft = Omit<ExperienceProposalInput, "hostUserId">;
@@ -23,6 +23,21 @@ export function ExperienceCreateScreen({
   onBack: () => void;
   onSubmit: (draft: ProposalDraft) => void;
 }) {
+  const [hostedPlans, setHostedPlans] = useState<HostedExperience[]>([]);
+  const [plansError, setPlansError] = useState<string | null>(null);
+  const [plansLoading, setPlansLoading] = useState(true);
+  const [reloadPlans, setReloadPlans] = useState(0);
+  useEffect(() => {
+    let active = true;
+    setPlansLoading(true);
+    setPlansError(null);
+    void fetchHostedExperiences().then((plans) => {
+      if (active) setHostedPlans(plans);
+    }).catch((error) => {
+      if (active) setPlansError(error instanceof Error ? error.message : "Couldn’t load your plans.");
+    }).finally(() => { if (active) setPlansLoading(false); });
+    return () => { active = false; };
+  }, [reloadPlans]);
   const eligibleVenues = useMemo(() => venues.filter((venue) => isUuid(venue.id)), [venues]);
   const schedules = useMemo(buildScheduleOptions, []);
   const [venueId, setVenueId] = useState(
@@ -62,6 +77,20 @@ export function ExperienceCreateScreen({
         onBack={onBack}
         variant="utility"
       />
+
+      <FieldBlock label="Your plans" hint="Submitted plans stay private until a reviewer approves them.">
+        {plansLoading ? <Text style={styles.experienceValidationHint}>Loading your plans…</Text> : null}
+        {plansError ? <Text style={styles.experienceFieldError}>{plansError}</Text> : null}
+        {!plansLoading && !plansError && !hostedPlans.length ? <Text style={styles.experienceValidationHint}>You haven’t submitted a plan yet.</Text> : null}
+        {hostedPlans.map((plan) => (
+          <View key={plan.id} style={styles.experienceReviewNotice}>
+            <Text style={styles.experienceReviewEyebrow}>{plan.status === "pending_review" ? "Awaiting review" : plan.status}</Text>
+            <Text style={styles.experienceReviewText}>{plan.title}</Text>
+            <Text style={styles.experienceValidationHint}>{new Date(plan.starts_at).toLocaleString()}</Text>
+          </View>
+        ))}
+        <SelectChip label="Refresh plans" active={false} onPress={() => setReloadPlans((value) => value + 1)} />
+      </FieldBlock>
 
       <View style={styles.experienceReviewNotice}>
         <Text style={styles.experienceReviewEyebrow}>REVIEWED, NOT INSTANT</Text>

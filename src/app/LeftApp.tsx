@@ -1883,17 +1883,23 @@ export function LeftApp() {
   }
 
   async function submitExperienceDraft(draft: Omit<ExperienceProposalInput, "hostUserId">) {
-    if (!user) return;
+    if (experienceProposalBusy) return;
+    if (!user) {
+      setExperienceProposalError("Sign in before hosting a gathering.");
+      return;
+    }
     setExperienceProposalBusy(true);
     setExperienceProposalError(null);
     try {
-      const submitted = await submitExperienceProposal({ ...draft, hostUserId: user.id });
+      const submitted = await submitExperienceProposal(draft);
       if (!submitted) {
         setExperienceProposalError("We couldn’t submit this plan. Check your connection and try again.");
         return;
       }
-      showToast("Sent for review");
+      showToast("Sent for review. You can track it under Your plans.");
       setScreen("home");
+    } catch (error) {
+      setExperienceProposalError(error instanceof Error ? error.message : "Couldn’t submit your plan. Please try again.");
     } finally {
       setExperienceProposalBusy(false);
     }

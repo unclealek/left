@@ -10,7 +10,6 @@ export type SavedVenueEntry = {
 };
 
 export type ExperienceProposalInput = {
-  hostUserId: string;
   venueId: string;
   title: string;
   description: string;
@@ -131,24 +130,49 @@ export async function setExperienceAttendance(experienceId: string, attending: b
   return data === true;
 }
 
+export type HostedExperience = {
+  id: string;
+  title: string;
+  starts_at: string;
+  status: "draft" | "pending_review" | "published" | "rejected" | "cancelled" | "completed";
+};
+
+export async function fetchHostedExperiences(): Promise<HostedExperience[]> {
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) throw new Error("Sign in again to see your plans.");
+  const { data, error } = await supabase.from("experiences")
+    .select("id,title,starts_at,status").eq("host_user_id", user.id)
+    .order("created_at", { ascending: false }).limit(30);
+  if (error) throw new Error("Couldn’t load your plans. Try again.");
+  return (data ?? []) as HostedExperience[];
+}
+
 export async function submitExperienceProposal(input: ExperienceProposalInput) {
-  if (!isUuid(input.hostUserId) || !isUuid(input.venueId)) return false;
-
-  const { error } = await supabase.from("experiences").insert({
-    host_user_id: input.hostUserId,
-    venue_id: input.venueId,
-    title: input.title.trim(),
-    description: input.description.trim(),
-    starts_at: input.startsAt,
-    capacity: input.capacity,
-    accessibility_notes: input.accessibilityNotes.trim(),
-    cost_notes: input.costNotes.trim(),
-    status: "pending_review",
-  });
-
-  if (error) {
-    console.warn("[discovery] experience proposal failed", error.message);
-    return false;
+  if (!isUuid(input.venueId)) throw new Error("Choose a verified nearby venue.");
+  if (!Number.isFinite(Date.parse(input.startsAt)) || Date.parse(input.startsAt) <= Date.now()) {
+    throw new Error("Choose a future start time.");
   }
-  return true;
+  const { data, error } = await supabase.rpc("submit_experience_proposal", {
+    p_venue_id: input.venueId,
+    p_title: input.title.trim(),
+    p_description: input.description.trim(),
+    p_starts_at: input.startsAt,
+    p_capacity: input.capacity,
+    p_accessibility_notes: input.accessibilityNotes.trim(),
+    p_cost_notes: input.costNotes.trim(),
+  });
+  if (error) {
+    const messages: Record<string, string> = {
+      "authentication required": "Sign in again before submitting your plan.",
+      "complete your profile before hosting": "Complete your profile before hosting a gathering.",
+      "choose an active venue": "This venue is no longer available. Choose another place.",
+      "choose a future start time": "Choose a future start time.",
+    };
+    if (messages[error.message]) throw new Error(messages[error.message]);
+    if (error.code === "42501" || error.code === "PGRST301") throw new Error("Your session can’t submit this plan. Sign in again and retry.");
+    if (error.code === "23514" || error.code === "23502") throw new Error("Check the title, description, time, and group size before submitting.");
+    throw new Error("Couldn’t submit your plan. Please try again.");
+  }
+  if (!data) throw new Error("The server did not confirm submission. Please check your plans before retrying.");
+  return data as string;
 }
