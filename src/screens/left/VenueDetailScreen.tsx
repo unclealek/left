@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ActivityIndicator, Image, Linking, Pressable, Text, View } from "react-native";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
 import type { NearbyFeedItem, VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
@@ -48,6 +49,11 @@ export function VenueDetailScreen({
   const isCurrentVenue = venue.id === venueSummary.venueId || venue.name === venueSummary.venueName;
   const venueType = venue.venueType ?? inferVenueTypeFromName(venue.name);
   const imageSource = getVenueIllustrationSource(venue.name, venueType);
+  const photoUri = venue.photo?.uri ?? null;
+  const [loadedPhotoUri, setLoadedPhotoUri] = useState<string | null>(null);
+  const [failedPhotoUri, setFailedPhotoUri] = useState<string | null>(null);
+  const showPhoto = !!photoUri && failedPhotoUri !== photoUri;
+  const photoLoaded = showPhoto && loadedPhotoUri === photoUri;
   const currentFeed = isCurrentVenue ? feed : [];
   const visibleCount = venueActivity?.leftPresence.visible ?? (isCurrentVenue ? currentFeed.length : null);
   const openToMeetCount = venueActivity?.leftPresence.openToMeet ?? (isCurrentVenue
@@ -87,7 +93,23 @@ export function VenueDetailScreen({
   return (
     <View style={styles.page}>
       <View style={styles.hero}>
-        <Image source={imageSource} style={styles.heroImage} resizeMode="cover" />
+        <Image source={imageSource} style={styles.heroImage} resizeMode="cover" accessible={false} />
+        {showPhoto ? (
+          <Image
+            key={`${venue.id}-${photoUri}`}
+            source={{ uri: photoUri! }}
+            style={styles.googlePhoto}
+            resizeMode="cover"
+            accessibilityLabel={`Photo of ${venue.name}`}
+            onLoad={() => setLoadedPhotoUri(photoUri)}
+            onError={() => setFailedPhotoUri(photoUri)}
+          />
+        ) : null}
+        {showPhoto && !photoLoaded ? (
+          <View style={styles.photoLoading} accessibilityLabel="Loading venue photo">
+            <ActivityIndicator size="small" color={T.primary} />
+          </View>
+        ) : null}
         <View style={styles.heroBackButton}>
           <BackNavButton label="" onPress={onBack} />
         </View>
@@ -111,6 +133,25 @@ export function VenueDetailScreen({
           <Text style={styles.heroStatusText}>{statusLabel}</Text>
         </GlassSurface>
       </View>
+
+      {photoLoaded ? (
+        <View style={styles.photoAttribution}>
+          <Text numberOfLines={1} style={styles.photoAttributionText}>Google Maps</Text>
+          {venue.photo?.attributions.map((author, index) => (
+            author.uri ? (
+              <Pressable
+                key={`${author.displayName}-${index}`}
+                accessibilityRole="link"
+                accessibilityLabel={`Photo by ${author.displayName}`}
+                onPress={() => void Linking.openURL(author.uri!).catch(() => {})}
+                style={styles.photoAttributionLink}
+              >
+                <Text style={styles.photoAttributionText}>· {author.displayName}</Text>
+              </Pressable>
+            ) : <Text key={`${author.displayName}-${index}`} style={styles.photoAttributionText}>· {author.displayName}</Text>
+          ))}
+        </View>
+      ) : null}
 
       <View style={styles.content}>
         <View style={styles.identityBlock}>

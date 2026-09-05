@@ -23,6 +23,17 @@ export const venueDetailStyles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  googlePhoto: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
+  photoLoading: {
+    position: "absolute", right: 16, bottom: 16, width: 36, height: 36,
+    borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: T.surfaceGlassStrong,
+  },
+  photoAttribution: {
+    paddingHorizontal: spacing[5], paddingTop: 8, flexDirection: "row", flexWrap: "wrap",
+    alignItems: "center", columnGap: 4,
+  },
+  photoAttributionText: { color: T.textSecondary, fontFamily: T.fontBody, fontSize: 12, lineHeight: 17 },
+  photoAttributionLink: { minHeight: 44, justifyContent: "center" },
   heroBackButton: {
     position: "absolute",
     top: 12,

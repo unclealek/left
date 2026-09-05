@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { withSupabase } from "npm:@supabase/server";
 import { handleCors, json, parseJson } from "../_shared/http.ts";
+import { fetchGooglePlaceWithPhoto, type VenuePhoto } from "../_shared/google-photo.ts";
 
 const PLACE_DETAIL_FIELDS = [
   "id",
@@ -53,58 +54,58 @@ export default {
       : 0;
     const shouldRefresh = !lastSyncMs || Date.now() - lastSyncMs >= DETAILS_TTL_MS;
 
-    if (apiKey && storedVenue.google_place_id && shouldRefresh) {
+    let photo: VenuePhoto | null = null;
+    if (apiKey && storedVenue.google_place_id) {
       try {
-        const response = await fetch(
-          `https://places.googleapis.com/v1/places/${encodeURIComponent(storedVenue.google_place_id)}`,
-          {
-            headers: {
-              "X-Goog-Api-Key": apiKey,
-              "X-Goog-FieldMask": PLACE_DETAIL_FIELDS,
-            },
-          },
-        );
-        if (!response.ok) throw new Error(`Google Place Details failed (${response.status})`);
-        const place = await response.json();
-        const openingHours = place.currentOpeningHours ?? place.regularOpeningHours ?? null;
-        const { data: refreshedVenue, error: updateError } = await ctx.supabaseAdmin
-          .from("venues")
-          .update({
-            formatted_address: place.formattedAddress ?? storedVenue.formatted_address,
-            website_uri: place.websiteUri ?? null,
-            phone_number: place.nationalPhoneNumber ?? null,
-            rating: place.rating ?? null,
-            user_rating_count: place.userRatingCount ?? null,
-            price_level: place.priceLevel ?? null,
-            business_status: place.businessStatus ?? null,
-            opening_hours: openingHours,
-            accessibility_options: place.accessibilityOptions ?? null,
-            last_google_sync_at: new Date().toISOString(),
-          })
-          .eq("id", venueId)
-          .select(`
-            id,
-            google_place_id,
-            formatted_address,
-            website_uri,
-            phone_number,
-            rating,
-            user_rating_count,
-            price_level,
-            business_status,
-            opening_hours,
-            accessibility_options,
-            last_google_sync_at
-          `)
-          .single();
-        if (updateError) throw updateError;
-        venue = refreshedVenue;
+        const result = await fetchGooglePlaceWithPhoto({
+          apiKey,
+          placeId: storedVenue.google_place_id,
+          fields: shouldRefresh ? PLACE_DETAIL_FIELDS : "photos",
+        });
+        photo = result.photo;
+        const place = result.place;
+        if (shouldRefresh) {
+          const openingHours = place.currentOpeningHours ?? place.regularOpeningHours ?? null;
+          const { data: refreshedVenue, error: updateError } = await ctx.supabaseAdmin
+            .from("venues")
+            .update({
+              formatted_address: place.formattedAddress ?? storedVenue.formatted_address,
+              website_uri: place.websiteUri ?? null,
+              phone_number: place.nationalPhoneNumber ?? null,
+              rating: place.rating ?? null,
+              user_rating_count: place.userRatingCount ?? null,
+              price_level: place.priceLevel ?? null,
+              business_status: place.businessStatus ?? null,
+              opening_hours: openingHours,
+              accessibility_options: place.accessibilityOptions ?? null,
+              last_google_sync_at: new Date().toISOString(),
+            })
+            .eq("id", venueId)
+            .select(`
+              id,
+              google_place_id,
+              formatted_address,
+              website_uri,
+              phone_number,
+              rating,
+              user_rating_count,
+              price_level,
+              business_status,
+              opening_hours,
+              accessibility_options,
+              last_google_sync_at
+            `)
+            .single();
+          if (updateError) throw updateError;
+          venue = refreshedVenue;
+        }
       } catch (detailsError) {
         console.warn("[venue-details] refresh failed", detailsError?.message ?? detailsError);
       }
     }
 
-    return json({
+    const response = json({
+      photo,
       venueId: venue.id,
       formattedAddress: venue.formatted_address ?? null,
       websiteUri: venue.website_uri ?? null,
@@ -121,5 +122,7 @@ export default {
         : null,
       accessibilityOptions: venue.accessibility_options ?? null,
     });
+    response.headers.set("Cache-Control", "private, no-store");
+    return response;
   }),
 };

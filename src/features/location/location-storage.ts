@@ -37,6 +37,11 @@ export type RuntimeVenueCandidate = {
   source: "google_places" | "local_catalog" | "user_submission";
   distanceMeters: number | null;
   photoUrl?: string | null;
+  // Returned only for the open details screen; never persist these expiring URLs.
+  photo?: {
+    uri: string;
+    attributions: Array<{ displayName: string; uri: string | null }>;
+  } | null;
   formattedAddress?: string | null;
   websiteUri?: string | null;
   phoneNumber?: string | null;
@@ -146,7 +151,11 @@ export async function getLocationRuntimeState() {
 }
 
 export async function saveLocationRuntimeState(next: LocationRuntimeState) {
-  await writeJson(STORAGE_KEYS.runtime, normalizeLocationRuntimeState(next));
+  const normalized = normalizeLocationRuntimeState(next);
+  await writeJson(STORAGE_KEYS.runtime, {
+    ...normalized,
+    nearbyVenues: normalized.nearbyVenues.map(({ photo: _photo, ...venue }) => ({ ...venue, photoUrl: null })),
+  });
 }
 
 export async function updateLocationRuntimeState(
