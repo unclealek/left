@@ -37,7 +37,11 @@ the illustration.
   rate-limited media requests, timeouts, unsafe URLs, and key containment.
 - A live lookup of Albina Restaurant & Wine Bar returned a photo and attribution
   using the existing local Google key, with no secret in the returned data.
-- Hosted deployment and simulator verification require Supabase account access.
+- Deployed to the app’s staging project on 2026-09-05. An unauthenticated
+  request returned HTTP 401. The signed-in simulator loaded KOKORO Sushi
+  Vallila photo attribution and Google Maps credit (shown only after image load).
+- Production deployment is separate; this verification targets the local app’s
+  staging configuration.
 
 References:
 - https://developers.google.com/maps/documentation/places/web-service/place-photos
