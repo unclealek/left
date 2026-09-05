@@ -19,7 +19,8 @@
     "admin:build": "npm --prefix admin run build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "ios:simulator": "node scripts/ios-simulator.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/dm-sans": "^0.4.2",

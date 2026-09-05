@@ -71,9 +71,11 @@ npm run start
 Native targets:
 
 ```bash
-npm run ios
+npm run ios:simulator
 npm run android
 ```
+
+For Xcode 27 / Device Hub and native lifecycle details, see [iOS scene lifecycle](ios-scene-lifecycle.md).
 
 Admin app:
 

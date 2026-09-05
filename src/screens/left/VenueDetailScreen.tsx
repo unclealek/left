@@ -1,5 +1,4 @@
 import { ActivityIndicator, Image, Linking, Pressable, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
 import type { NearbyFeedItem, VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
 import { resolveVenueActivityDisplay } from "../../features/activity/venue-activity-display";
@@ -46,7 +45,6 @@ export function VenueDetailScreen({
   onPrimaryAction: () => void;
   onToggleSaved: () => void;
 }) {
-  const insets = useSafeAreaInsets();
   const isCurrentVenue = venue.id === venueSummary.venueId || venue.name === venueSummary.venueName;
   const venueType = venue.venueType ?? inferVenueTypeFromName(venue.name);
   const imageSource = getVenueIllustrationSource(venue.name, venueType);
@@ -87,7 +85,7 @@ export function VenueDetailScreen({
   ].filter((fact): fact is NonNullable<typeof fact> => !!fact);
 
   return (
-    <View style={[styles.page, { paddingTop: Math.max(insets.top, 12) }]}>
+    <View style={styles.page}>
       <View style={styles.hero}>
         <Image source={imageSource} style={styles.heroImage} resizeMode="cover" />
         <View style={styles.heroBackButton}>
@@ -96,12 +94,12 @@ export function VenueDetailScreen({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={saved ? "Remove from saved places" : "Save this place"}
-          accessibilityState={{ selected: saved, busy: saving }}
+          accessibilityState={{ selected: saved, busy: saving, disabled: saving }}
           disabled={saving}
           onPress={onToggleSaved}
           style={({ pressed }) => [styles.heroSaveButton, saved && styles.heroSaveButtonActive, pressed && styles.detailPressed]}
         >
-          {saving ? <ActivityIndicator size="small" color={T.primary} /> : <LeftIcon name={saved ? "check" : "bookmark"} size={19} color={saved ? T.actionContent : T.textPrimary} />}
+          {saving ? <ActivityIndicator size="small" color={saved ? T.actionContent : T.primary} /> : <LeftIcon name={saved ? "check" : "bookmark"} size={19} color={saved ? T.actionContent : T.textPrimary} />}
         </Pressable>
         <GlassSurface
           variant="soft"
@@ -145,13 +143,13 @@ export function VenueDetailScreen({
           {venue.websiteUri || venue.phoneNumber ? (
             <View style={styles.venuePracticalActions}>
               {venue.websiteUri ? (
-                <Pressable onPress={() => void Linking.openURL(venue.websiteUri!)} style={({ pressed }) => [styles.venuePracticalAction, pressed && styles.detailPressed]}>
+                <Pressable accessibilityRole="link" accessibilityLabel="Open venue website" onPress={() => void Linking.openURL(venue.websiteUri!)} style={({ pressed }) => [styles.venuePracticalAction, pressed && styles.detailPressed]}>
                   <LeftIcon name="external-link" size={15} color={T.primary} />
                   <Text style={styles.venuePracticalActionText}>Website</Text>
                 </Pressable>
               ) : null}
               {venue.phoneNumber ? (
-                <Pressable onPress={() => void Linking.openURL(`tel:${venue.phoneNumber}`)} style={({ pressed }) => [styles.venuePracticalAction, pressed && styles.detailPressed]}>
+                <Pressable accessibilityRole="button" accessibilityLabel="Call venue" onPress={() => void Linking.openURL(`tel:${venue.phoneNumber}`)} style={({ pressed }) => [styles.venuePracticalAction, pressed && styles.detailPressed]}>
                   <LeftIcon name="phone" size={15} color={T.primary} />
                   <Text style={styles.venuePracticalActionText}>Call</Text>
                 </Pressable>
@@ -253,10 +251,8 @@ function formatVenueSubline(
   isCurrentVenue: boolean,
   venueType: RuntimeVenueCandidate["venueType"],
 ) {
-  const venueLabel = formatVenueTypeLabel(venueType);
-  const distance = formatDistanceLabel(venue.distanceMeters);
-  if (distance) return `${venueLabel} · ${distance}`;
-  return isCurrentVenue ? `${venueLabel} · current venue` : `${venueLabel} nearby`;
+  const venueLabel = formatVenueTypeLabel(venueType, venue.name);
+  return isCurrentVenue ? `${venueLabel} · current venue` : venueLabel;
 }
 
 function getVenueIllustrationSource(
@@ -313,11 +309,15 @@ function formatAccessibility(options: RuntimeVenueCandidate["accessibilityOption
   return `${available.slice(0, 3).join(", ")}.`;
 }
 
-function formatVenueTypeLabel(venueType: RuntimeVenueCandidate["venueType"]) {
+function formatVenueTypeLabel(venueType: RuntimeVenueCandidate["venueType"], venueName: string) {
   if (venueType === "library") return "Library";
   if (venueType === "coworking_space") return "Coworking";
   if (venueType === "university") return "Campus";
   if (venueType === "cafe") return "Cafe";
+  if (/restaurant|bistro|grill|kitchen|pizza|sushi/i.test(venueName)) return "Restaurant";
+  if (/bar|pub|cocktail|brewery/i.test(venueName)) return "Bar";
+  if (/market|bazaar/i.test(venueName)) return "Market";
+  if (/park|garden/i.test(venueName)) return "Park";
   return "Venue";
 }
 

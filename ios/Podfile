@@ -64,6 +64,16 @@ target 'Left' do
     # preserving spaces in the project path. Run the script directly and pass
     # an explicitly quoted project root instead.
     installer.pods_project.targets.each do |target|
+      # Older resource bundles declare targets below the app's minimum, which
+      # Xcode 27 rejects. Never lower a dependency's higher deployment target.
+      minimum_ios = podfile_properties['ios.deploymentTarget'] || '15.1'
+      target.build_configurations.each do |build_config|
+        current = build_config.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+        if current && Gem::Version.new(current) < Gem::Version.new(minimum_ios)
+          build_config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = minimum_ios
+        end
+      end
+
       next unless target.name == 'EXConstants'
 
       target.shell_script_build_phases.each do |phase|

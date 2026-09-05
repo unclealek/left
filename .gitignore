@@ -11,3 +11,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .DS_Store
+
+# Environment credentials stay local; only templates may be committed.
+.env*
+**/.env*
+!.env.example
+!**/.env.example

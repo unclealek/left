@@ -6,7 +6,8 @@ import { radii, screenTypography, spacing } from "../../token";
 export const venueDetailStyles = StyleSheet.create({
   page: {
     marginHorizontal: -20,
-    paddingBottom: 32,
+    paddingTop: 12,
+    paddingBottom: 8,
     backgroundColor: T.ink,
   },
   hero: {
@@ -128,11 +129,11 @@ export const venueDetailStyles = StyleSheet.create({
   },
   venuePracticalCopy: { flex: 1, minWidth: 0, gap: 2 },
   venuePracticalTitle: { color: T.textPrimary, fontSize: 13, lineHeight: 17, fontFamily: T.fontBodyBold },
-  venuePracticalText: { color: T.textSecondary, fontSize: 11, lineHeight: 16, fontFamily: T.fontBody },
-  venuePracticalUnavailable: { color: T.textMuted, fontSize: 12, lineHeight: 18, fontFamily: T.fontBody },
-  venuePracticalActions: { flexDirection: "row", gap: 9 },
+  venuePracticalText: { color: T.textSecondary, fontSize: 13, lineHeight: 19, fontFamily: T.fontBody },
+  venuePracticalUnavailable: { color: T.textMuted, fontSize: 13, lineHeight: 19, fontFamily: T.fontBody },
+  venuePracticalActions: { flexDirection: "row", flexWrap: "wrap", gap: 9 },
   venuePracticalAction: {
-    minHeight: 40,
+    minHeight: 44,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: T.border,
@@ -142,7 +143,7 @@ export const venueDetailStyles = StyleSheet.create({
     alignItems: "center",
     gap: 7,
   },
-  venuePracticalActionText: { color: T.primary, fontSize: 12, lineHeight: 16, fontFamily: T.fontBodyBold },
+  venuePracticalActionText: { color: T.primary, fontSize: 13, lineHeight: 18, fontFamily: T.fontBodyBold },
   pulseCard: {
     minHeight: 84,
     borderRadius: radii.xl,
@@ -231,8 +232,8 @@ export const venueDetailStyles = StyleSheet.create({
   },
   peopleMetricLabel: {
     color: T.textSecondary,
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 12,
+    lineHeight: 17,
     fontFamily: T.fontBodyMedium,
     textAlign: "center",
   },
