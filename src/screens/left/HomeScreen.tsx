@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
-import { AccessibilityInfo, ActivityIndicator, Animated, Easing, Image, Pressable, Text, View } from "react-native";
+import { AccessibilityInfo, ActivityIndicator, Animated, Easing, Image, Linking, Pressable, Text, View } from "react-native";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
 import {
   getVenueConfidenceLabel,
@@ -14,6 +14,7 @@ import { LeftAvatar } from "../../components/left/LeftAvatar";
 import { LeftLogoMark } from "../../components/left/LeftLogoMark";
 import { VenueIdentityBlock } from "../../components/left/ui";
 import type { AppUser, NearbyFeedItem, VenueActivityEnvelope, VenueContextSummary, VenueExperience } from "../../types/left-domain";
+import { fetchVenuePracticalDetails } from "../../features/venues/venue-details-service";
 import { getNearbyPeopleCount } from "./home-presence";
 
 const VENUE_ILLUSTRATIONS = {
@@ -78,6 +79,54 @@ export function HomeScreen({
   const greetingHeartbeat = useRef(new Animated.Value(0)).current;
   const venueConfidence = resolveVenueConfidence(venue, nearbyVenues);
   const nearbyCards = buildNearbyVenueCards(nearbyVenues, venueName, venueActivityById);
+  const photoVenueIds = JSON.stringify(nearbyCards.map((card) => card.id));
+  const [photos, setPhotos] = useState<Record<string, NonNullable<RuntimeVenueCandidate["photo"]>>>({});
+  const [loadedPhotos, setLoadedPhotos] = useState<Record<string, string>>({});
+  const [failedPhotos, setFailedPhotos] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let cancelled = false;
+    setPhotos({});
+    setLoadedPhotos({});
+    setFailedPhotos({});
+    void Promise.all((JSON.parse(photoVenueIds) as string[]).map(async (id) => {
+      try {
+        const details = await fetchVenuePracticalDetails(id);
+        if (!cancelled && details?.photo) {
+          const photo = details.photo;
+          setPhotos((current) => ({ ...current, [id]: photo }));
+        }
+      } catch { /* Keep the illustration when photos are unavailable. */ }
+    }));
+    return () => { cancelled = true; };
+  }, [photoVenueIds]);
+  const photoImage = (id: string) => {
+    const photo = photos[id];
+    return photo && failedPhotos[id] !== photo.uri ? (
+      <Image source={{ uri: photo.uri }} resizeMode="cover"
+        style={{ position: "absolute", inset: 0 }}
+        onLoad={() => setLoadedPhotos((current) => ({ ...current, [id]: photo.uri }))}
+        onError={() => {
+          setFailedPhotos((current) => ({ ...current, [id]: photo.uri }));
+          setLoadedPhotos((current) => ({ ...current, [id]: "" }));
+        }} />
+    ) : null;
+  };
+  const photoCredit = (id: string) => {
+    const photo = photos[id];
+    if (!photo || loadedPhotos[id] !== photo.uri) return null;
+    return (
+      <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", paddingHorizontal: 16, paddingVertical: 8, gap: 6 }}>
+        <Text numberOfLines={1} style={{ fontSize: 12, color: "#5E5E5E" }}>Google Maps</Text>
+        {photo.attributions.map((author, index) => author.uri ? (
+          <Pressable key={index} accessibilityRole="link" accessibilityLabel={`Photo by ${author.displayName}`}
+            style={{ minHeight: 44, justifyContent: "center", flexShrink: 1 }}
+            onPress={(event) => { event.stopPropagation(); void Linking.openURL(author.uri!).catch(() => {}); }}>
+            <Text style={{ fontSize: 12, color: "#5E5E5E" }}>· {author.displayName}</Text>
+          </Pressable>
+        ) : <Text key={index} style={{ fontSize: 12, color: "#5E5E5E" }}>· {author.displayName}</Text>)}
+      </View>
+    );
+  };
   const featuredPlace = nearbyCards[0] ?? null;
   const morePlaces = nearbyCards.slice(1);
   const featuredPerson = isVisible ? feed[0] ?? null : null;
@@ -291,6 +340,7 @@ export function HomeScreen({
           >
             <View style={styles.homeFeaturedPlaceImageWrap}>
               <Image source={featuredPlace.illustration} style={styles.homeVenueIllustrationImage} resizeMode="cover" />
+              {photoImage(featuredPlace.id)}
               <LinearGradient
                 colors={["transparent", "rgba(26,24,21,0.28)"]}
                 start={{ x: 0.5, y: 0.45 }}
@@ -307,6 +357,7 @@ export function HomeScreen({
                 <Text style={styles.homeFeaturedPlaceSignalText}>{featuredPlace.energyLabel}</Text>
               </GlassSurface>
             </View>
+            {photoCredit(featuredPlace.id)}
             <View style={styles.homeFeaturedPlaceBody}>
               <View style={styles.homeFeaturedPlaceCopy}>
                 <Text style={styles.homeFeaturedPlaceName}>{featuredPlace.name}</Text>
@@ -477,6 +528,7 @@ export function HomeScreen({
                 <View style={styles.homeVenueCardRow}>
                   <View style={styles.homeVenueThumb}>
                     <Image source={item.illustration} style={styles.homeVenueIllustrationImage} resizeMode="cover" />
+                    {photoImage(item.id)}
                   </View>
                   <View style={styles.homeVenueCardBody}>
                     <View style={styles.homeVenueCardTopGroup}>
@@ -492,6 +544,7 @@ export function HomeScreen({
                     <LeftIcon name="chevron-right" size={20} color={T.secondary} />
                   </View>
                 </View>
+                {photoCredit(item.id)}
               </Pressable>
             ))}
           </View>
