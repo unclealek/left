@@ -12,7 +12,7 @@ export function LoadingScreen({
   return (
     <View style={styles.loadingWrap} accessibilityRole={error ? "alert" : undefined}>
       <View style={styles.loadingCenter}>
-        <LeftLoadingAnimation label="Restoring your private session" />
+        <LeftLoadingAnimation label="Bringing nearby moments into focus" />
         <Text style={styles.loadingWordmark}>LEFT</Text>
       </View>
       {error ? (

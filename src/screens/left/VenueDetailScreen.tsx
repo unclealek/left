@@ -200,7 +200,7 @@ export function VenueDetailScreen({
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Live pulse</Text>
+          <Text style={styles.sectionTitle}>Right now</Text>
           <View style={styles.pulseCard}>
             <View style={[styles.pulseIconWrap, { backgroundColor: activityState.softColor }]}>
               <LeftIcon name="activity" size={21} color={activityState.color} />
@@ -234,7 +234,7 @@ export function VenueDetailScreen({
 
         <View style={styles.section}>
           <View style={styles.peopleHeading}>
-            <Text style={styles.sectionTitle}>People on Left</Text>
+            <Text style={styles.sectionTitle}>People here now</Text>
             <Text style={styles.peopleSubtitle}>
               {visibleCount == null ? "Live presence is not available yet" : "Visible at this venue now"}
             </Text>
@@ -266,7 +266,7 @@ export function VenueDetailScreen({
             <LeftIcon name="lock" size={17} color={T.primary} />
           </View>
           <View style={styles.privacyCopy}>
-            <Text style={styles.privacyTitle}>Your precise location stays private</Text>
+            <Text style={styles.privacyTitle}>Your location stays private</Text>
             <Text style={styles.privacyText}>Only your first name, venue, intent, and vibe are shown while visible.</Text>
           </View>
         </View>

@@ -152,7 +152,7 @@ function AvatarShape({ avatarStyle, size = "tile" }: { avatarStyle: AvatarStyle;
           avatarStyle === "minimal"
             ? [T.onboardingAccent, T.onboardingAccent, T.onboardingInk]
             : avatarStyle === "abstract"
-              ? [T.onboardingInk, "#6D4A2B", T.onboardingAccent]
+              ? [T.onboardingInk, T.venueAccent, T.onboardingAccent]
               : avatarStyle === "soft"
                 ? [T.onboardingAccent, T.onboardingAccent, T.onboardingAccent]
                 : [T.onboardingAccent, T.onboardingAccent, T.onboardingInk]
@@ -380,7 +380,7 @@ export function AvatarScreen({
               <Text style={styles.onboardingPreviewStatus}>Open to chat</Text>
             </View>
           </View>
-          <LeftIcon name="chevron-right" size={20} color="rgba(31,14,6,0.36)" />
+          <LeftIcon name="chevron-right" size={20} color="rgba(26,24,21,0.36)" />
         </View>
       </View>
     </OnboardingShell>

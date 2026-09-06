@@ -4,7 +4,7 @@ import { leftShadows } from "../shadow";
 export const dialogStyles = {
   dialogOverlay: {
     flex: 1,
-    backgroundColor: "rgba(31,14,6,0.6)",
+    backgroundColor: "rgba(26,24,21,0.6)",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 22,
@@ -14,7 +14,7 @@ export const dialogStyles = {
     backgroundColor: T.onboardingInk,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "rgba(198,227,133,0.26)",
+    borderColor: "rgba(95,115,63,0.26)",
     paddingTop: 24,
     paddingHorizontal: 24,
     paddingBottom: 28,
@@ -68,7 +68,7 @@ export const dialogStyles = {
   },
   dialogActionGhost: {
     backgroundColor: "transparent",
-    borderColor: "rgba(198,227,133,0.48)",
+    borderColor: "rgba(95,115,63,0.48)",
   },
   dialogActionDestructive: {
     backgroundColor: T.danger,

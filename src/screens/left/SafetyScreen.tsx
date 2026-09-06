@@ -70,7 +70,7 @@ export function SafetyScreen({
     >
       <ScreenHeader
         title="Privacy and safety"
-        subtitle="Control visibility, venue privacy, and alerts from one place."
+        subtitle="Choose when, where, and how you can be discovered."
         onBack={onBack}
         variant="utility"
       />
@@ -90,8 +90,8 @@ export function SafetyScreen({
         </View>
         <Text style={screenStyles.bodyText}>
           {sessionVisible
-            ? "You are discoverable to others nearby until you pause or end this session."
-            : "You are hidden from others and alerts are paused."}
+            ? "You’re discoverable nearby only for the moment you chose."
+            : "You’re private until you choose to be discovered."}
         </Text>
 
         <View style={screenStyles.divider} />
