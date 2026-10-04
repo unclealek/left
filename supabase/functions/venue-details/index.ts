@@ -2,6 +2,7 @@
 import { withSupabase } from "npm:@supabase/server";
 import { handleCors, json, parseJson } from "../_shared/http.ts";
 import { fetchGooglePlaceWithPhoto, type VenuePhoto } from "../_shared/google-photo.ts";
+import { enforceRateLimit } from "../_shared/rate-limit.ts";
 
 const PLACE_DETAIL_FIELDS = [
   "id",
@@ -26,6 +27,9 @@ export default {
     const { venueId } = await parseJson<{ venueId?: string }>(req);
     if (!venueId) return json({ error: "Missing venueId" }, 400);
 
+    const rateLimitResponse = await enforceRateLimit(ctx.supabase, "venue-details");
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { data: storedVenue, error } = await ctx.supabaseAdmin
       .from("venues")
       .select(`
@@ -40,6 +44,7 @@ export default {
         business_status,
         opening_hours,
         accessibility_options,
+        community_photo_path,
         last_google_sync_at
       `)
       .eq("id", venueId)
@@ -93,6 +98,7 @@ export default {
               business_status,
               opening_hours,
               accessibility_options,
+              community_photo_path,
               last_google_sync_at
             `)
             .single();
@@ -104,6 +110,10 @@ export default {
       }
     }
 
+    const communityPhotoUrl = venue.community_photo_path
+      ? (await ctx.supabaseAdmin.storage.from("community-venue-photos")
+          .createSignedUrl(venue.community_photo_path, 3600)).data?.signedUrl ?? null
+      : null;
     const response = json({
       photo,
       venueId: venue.id,
@@ -121,6 +131,7 @@ export default {
           }
         : null,
       accessibilityOptions: venue.accessibility_options ?? null,
+      photoUrl: communityPhotoUrl,
     });
     response.headers.set("Cache-Control", "private, no-store");
     return response;

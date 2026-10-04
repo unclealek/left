@@ -14,6 +14,9 @@ type NearbyVenueResponse = {
     source: RuntimeVenueCandidate["source"];
     distanceMetres: number | null;
     formattedAddress?: string | null;
+    communityAddedByName?: string | null;
+    communityNotes?: string | null;
+    communityPhotoUrl?: string | null;
   }>;
 };
 
@@ -43,7 +46,9 @@ export async function fetchNearbyVenuesFromServer(
     radiusMeters: venue.radiusMeters,
     source: venue.source,
     distanceMeters: venue.distanceMetres,
-    photoUrl: null,
+    photoUrl: venue.communityPhotoUrl ?? null,
     formattedAddress: venue.formattedAddress ?? null,
+    communityAddedByName: venue.communityAddedByName ?? null,
+    communityNotes: venue.communityNotes ?? null,
   }));
 }

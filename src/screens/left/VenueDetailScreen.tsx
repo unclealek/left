@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ActivityIndicator, Image, Linking, Pressable, Text, View } from "react-native";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
-import type { NearbyFeedItem, VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
+import type { VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
 import { resolveVenueActivityDisplay } from "../../features/activity/venue-activity-display";
 import { T } from "../../app/leftTheme";
 import { PrimaryButton } from "../../components/buttons";
@@ -25,7 +25,6 @@ export function VenueDetailScreen({
   venue,
   venueSummary,
   venueActivity,
-  feed,
   sessionVisible,
   detailsLoading,
   saved,
@@ -37,7 +36,6 @@ export function VenueDetailScreen({
   venue: RuntimeVenueCandidate;
   venueSummary: VenueContextSummary;
   venueActivity: VenueActivityEnvelope | null;
-  feed: NearbyFeedItem[];
   sessionVisible: boolean;
   detailsLoading: boolean;
   saved: boolean;
@@ -49,17 +47,13 @@ export function VenueDetailScreen({
   const isCurrentVenue = venue.id === venueSummary.venueId || venue.name === venueSummary.venueName;
   const venueType = venue.venueType ?? inferVenueTypeFromName(venue.name);
   const imageSource = getVenueIllustrationSource(venue.name, venueType);
-  const photoUri = venue.photo?.uri ?? null;
+  const photoUri = venue.photo?.uri ?? venue.photoUrl ?? null;
+  const isGooglePhoto = !!venue.photo?.uri;
   const [loadedPhotoUri, setLoadedPhotoUri] = useState<string | null>(null);
   const [failedPhotoUri, setFailedPhotoUri] = useState<string | null>(null);
   const showPhoto = !!photoUri && failedPhotoUri !== photoUri;
   const photoLoaded = showPhoto && loadedPhotoUri === photoUri;
-  const currentFeed = isCurrentVenue ? feed : [];
-  const visibleCount = venueActivity?.leftPresence.visible ?? (isCurrentVenue ? currentFeed.length : null);
-  const openToMeetCount = venueActivity?.leftPresence.openToMeet ?? (isCurrentVenue
-    ? currentFeed.filter((item) => item.intent === "networking" || item.intent === "open_to_conversation").length
-    : null);
-  const forecastCount = venueActivity?.activity.forecastScore ?? null;
+  const roomVibes = isCurrentVenue ? venueSummary.activeVibes.slice(0, 4) : [];
   const activityDisplay = resolveVenueActivityDisplay(venueActivity);
   const activityTone = getActivityTone(activityDisplay.tone);
   const activityState = { ...activityDisplay, ...activityTone };
@@ -134,7 +128,7 @@ export function VenueDetailScreen({
         </GlassSurface>
       </View>
 
-      {photoLoaded ? (
+      {photoLoaded && isGooglePhoto ? (
         <View style={styles.photoAttribution}>
           <Text numberOfLines={1} style={styles.photoAttributionText}>Google Maps</Text>
           {venue.photo?.attributions.map((author, index) => (
@@ -157,6 +151,9 @@ export function VenueDetailScreen({
         <View style={styles.identityBlock}>
           <Text style={styles.title}>{venue.name}</Text>
           <Text style={styles.subtitle}>{subline}</Text>
+          {venue.communityAddedByName ? (
+            <Text style={styles.subtitle}>Added by: {venue.communityAddedByName}</Text>
+          ) : null}
         </View>
 
         <View style={styles.section}>
@@ -197,6 +194,9 @@ export function VenueDetailScreen({
               ) : null}
             </View>
           ) : null}
+          {venue.communityNotes ? (
+            <Text style={styles.venuePracticalUnavailable}>{venue.communityNotes}</Text>
+          ) : null}
         </View>
 
         <View style={styles.section}>
@@ -234,30 +234,17 @@ export function VenueDetailScreen({
 
         <View style={styles.section}>
           <View style={styles.peopleHeading}>
-            <Text style={styles.sectionTitle}>People here now</Text>
-            <Text style={styles.peopleSubtitle}>
-              {visibleCount == null ? "Live presence is not available yet" : "Visible at this venue now"}
-            </Text>
+            <Text style={styles.sectionTitle}>Social signals</Text>
+            <Text style={styles.peopleSubtitle}>Aggregated from people who are visible here</Text>
           </View>
           <View style={styles.peopleCard}>
-            <View style={styles.peopleMetric}>
-              <Text style={styles.peopleMetricValue}>{visibleCount ?? "—"}</Text>
-              <Text style={styles.peopleMetricLabel}>Visible now</Text>
-            </View>
-            <View style={styles.peopleMetricDivider} />
-            <View style={styles.peopleMetric}>
-              <Text style={styles.peopleMetricValue}>{openToMeetCount ?? "—"}</Text>
-              <Text style={styles.peopleMetricLabel}>Open to meet</Text>
-            </View>
-            {forecastCount != null ? (
-              <>
-                <View style={styles.peopleMetricDivider} />
-                <View style={styles.peopleMetric}>
-                  <Text style={styles.peopleMetricValue}>{forecastCount}</Text>
-                  <Text style={styles.peopleMetricLabel}>Typical score</Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {(roomVibes.length ? roomVibes : ["No shared vibes yet"]).map((vibe) => (
+                <View key={vibe} style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, backgroundColor: T.venueAccentSoft }}>
+                  <Text style={{ color: T.primary, fontWeight: "600" }}>{vibe}</Text>
                 </View>
-              </>
-            ) : null}
+              ))}
+            </View>
           </View>
         </View>
 

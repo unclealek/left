@@ -6,7 +6,6 @@ import { formatIntent, type FooterDestination } from "../../app/leftConfig";
 import { styles, T } from "../../app/leftTheme";
 import { LeftIcon, type LeftIconName } from "../icons";
 import { GlassSurface, glassRadii } from "../glass";
-import { LeftLogoMark } from "./LeftLogoMark";
 
 export function BackNavButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (

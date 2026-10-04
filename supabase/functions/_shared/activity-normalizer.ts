@@ -70,14 +70,18 @@ export function displayText(label: ActivityLabel, liveAvailable: boolean) {
   }
 }
 
-export function pickForecastScore(rawForecast: unknown, timezone?: string | null) {
+export function pickForecastScore(rawForecast: unknown, timezone?: string | null, date = new Date()) {
   if (!rawForecast || typeof rawForecast !== "object") return null;
-  const { dayOfWeek, hour } = getVenueLocalSlot(timezone);
+  const { dayOfWeek, hour } = getVenueLocalSlot(timezone, date);
   const record = findForecastRecord(rawForecast, dayOfWeek, hour);
-  return typeof record?.score === "number" ? clampScore(record.score) : null;
+  return typeof record?.score === "number" && Number.isFinite(record.score) ? clampScore(record.score) : null;
 }
 
 function findForecastRecord(rawForecast: any, dayOfWeek: number, hour: number) {
+  if (Array.isArray(rawForecast?.analysis)) {
+    const day = rawForecast.analysis.find((entry: any) => entry?.day_info?.day_int === (dayOfWeek + 6) % 7);
+    return { score: day?.day_raw?.[hour - 6] };
+  }
   const candidates = [
     rawForecast?.forecast,
     rawForecast?.weekly_forecast,
@@ -134,15 +138,16 @@ export function normalizeActivityEnvelope(input: {
     openToMeet: number;
   };
 }) {
-  const liveScore = input.cache?.live_available ? input.cache?.live_score ?? null : null;
-  const forecastScore =
-    input.cache?.forecast_score ??
-    pickForecastScore(input.cache?.raw_forecast, input.timezone);
-  const liveAvailable = !!input.cache?.live_available && typeof liveScore === "number";
+  const liveFresh = !!input.cache?.live_expires_at && Date.parse(input.cache.live_expires_at) > Date.now();
+  const liveScore = liveFresh && input.cache?.live_available ? input.cache?.live_score ?? null : null;
+  // Recompute from the week on every read; a cached scalar belongs to an earlier hour.
+  const forecastScore = pickForecastScore(input.cache?.raw_forecast, input.timezone);
+  const liveAvailable = typeof liveScore === "number" && Number.isFinite(liveScore);
   const score = liveAvailable ? liveScore : forecastScore;
-  const comparison =
-    input.cache?.comparison ?? compareActivity(liveScore, forecastScore);
-  const label = activityLabel(score);
+  const rawLiveScore = input.cache?.raw_live?.analysis?.venue_live_busyness;
+  const comparison = compareActivity(liveAvailable && typeof rawLiveScore === "number" && Number.isFinite(rawLiveScore) ? rawLiveScore : liveScore, forecastScore);
+  const closed = liveFresh && input.cache?.raw_live?.venue_info?.venue_open === "Closed";
+  const label = closed && !liveAvailable ? "closed" : activityLabel(score);
   const source = input.besttimeStatus === "available" ? "besttime" : "left";
 
   return {
@@ -155,9 +160,9 @@ export function normalizeActivityEnvelope(input: {
       liveAvailable,
       comparison,
       comparisonText: comparisonText(comparison),
-      updatedAt: input.cache?.live_fetched_at ?? input.cache?.forecast_fetched_at ?? null,
+      updatedAt: (liveAvailable ? input.cache?.live_fetched_at : input.cache?.forecast_fetched_at) ?? null,
       isStale:
-        !!input.cache?.forecast_expires_at &&
+        !liveAvailable && !!input.cache?.forecast_expires_at &&
         new Date(input.cache.forecast_expires_at).getTime() <= Date.now(),
       refreshing: input.cache?.refresh_status === "refreshing",
       source,

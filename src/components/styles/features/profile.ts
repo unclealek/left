@@ -180,6 +180,42 @@ export const profileStyles = {
     fontFamily: T.fontBodyMedium,
     textTransform: "capitalize",
   },
+  profileInterestsCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: T.border,
+    backgroundColor: T.surfaceCard,
+    padding: 14,
+    gap: 10,
+  },
+  profileInterestsLabel: {
+    color: T.textMuted,
+    fontSize: 10,
+    fontFamily: T.fontBodyBold,
+    letterSpacing: 1,
+  },
+  profileInterestsWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 7,
+  },
+  profileInterestPill: {
+    borderRadius: 999,
+    backgroundColor: T.venueSurface,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+  },
+  profileInterestText: {
+    color: T.primary,
+    fontSize: 12,
+    fontFamily: T.fontBodyBold,
+  },
+  profileInterestsEmpty: {
+    color: T.textSecondary,
+    fontSize: 12,
+    lineHeight: 17,
+    fontFamily: T.fontBodyMedium,
+  },
   profileSectionTitle: {
     color: T.primary,
     fontSize: 17,

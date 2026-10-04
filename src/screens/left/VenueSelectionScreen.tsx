@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, StyleSheet, Text, TextInput, View } from "react-native";
 import { styles, T } from "../../app/leftTheme";
 import { Card, GhostButton, PrimaryButton, SelectChip } from "../../components/left/ui";
 import type { VenueType } from "../../types/left-domain";
@@ -103,11 +103,17 @@ export function VenueAddScreen({
   address,
   notes,
   venueType,
+  photoUri,
+  showContributor,
+  contributorName,
   submitting,
   onChangeName,
   onChangeAddress,
   onChangeNotes,
   onChangeVenueType,
+  onPickPhoto,
+  onClearPhoto,
+  onToggleShowContributor,
   onSubmit,
   onBack,
 }: {
@@ -115,11 +121,17 @@ export function VenueAddScreen({
   address: string;
   notes: string;
   venueType: VenueType;
+  photoUri: string | null;
+  showContributor: boolean;
+  contributorName: string;
   submitting: boolean;
   onChangeName: (value: string) => void;
   onChangeAddress: (value: string) => void;
   onChangeNotes: (value: string) => void;
   onChangeVenueType: (value: VenueType) => void;
+  onPickPhoto: () => void;
+  onClearPhoto: () => void;
+  onToggleShowContributor: () => void;
   onSubmit: () => void;
   onBack: () => void;
 }) {
@@ -141,6 +153,26 @@ export function VenueAddScreen({
           placeholder="e.g. Workshop Cafe"
           placeholderTextColor={T.textMuted}
           style={styles.input}
+        />
+      </VenueFieldBlock>
+      <VenueFieldBlock
+        label="Venue photo"
+        tone="required"
+        helper="Add a clear photo of the venue, sign, or entrance. It will be public with this community venue."
+      >
+        {photoUri ? <Image source={{ uri: photoUri }} style={localStyles.photoPreview} /> : null}
+        <GhostButton label={photoUri ? "Replace photo" : "Add photo"} onPress={onPickPhoto} />
+        {photoUri ? <GhostButton label="Remove photo" onPress={onClearPhoto} /> : null}
+      </VenueFieldBlock>
+      <VenueFieldBlock
+        label="Contributor credit"
+        tone="optional"
+        helper={showContributor ? `People will see “Added by: ${contributorName}”.` : "Your name will not be shown on this venue."}
+      >
+        <GhostButton
+          label={showContributor ? "Show my name" : "Add anonymously"}
+          selected={showContributor}
+          onPress={onToggleShowContributor}
         />
       </VenueFieldBlock>
       <VenueFieldBlock
@@ -230,5 +262,11 @@ const localStyles = StyleSheet.create({
   },
   fieldBadgeTextOptional: {
     color: T.textSecondary,
+  },
+  photoPreview: {
+    width: "100%",
+    height: 180,
+    borderRadius: 14,
+    marginBottom: 10,
   },
 });

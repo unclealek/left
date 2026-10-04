@@ -94,35 +94,6 @@ export interface AppUser {
   updatedAt: string;
 }
 
-export interface Venue {
-  id: string;
-  name: string;
-  type: VenueType;
-  city: string | null;
-  geofenceJson: Record<string, unknown>;
-  isActive: boolean;
-  googlePlaceId?: string | null;
-  besttimeStatus?: string | null;
-  timezone?: string | null;
-  formattedAddress?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface VenueSubmission {
-  id: string;
-  submittedBy: string;
-  name: string;
-  type: VenueType;
-  addressText: string;
-  notes: string | null;
-  proposedGeofenceJson: Record<string, unknown>;
-  status: "pending" | "approved" | "rejected" | "duplicate";
-  matchedVenueId: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface PresenceSession {
   id: string;
   userId: string;

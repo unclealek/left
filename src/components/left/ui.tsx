@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Modal, Pressable, Text, View } from "react-native";
 import { styles, T } from "../../app/leftTheme";
-import { GhostButton, PrimaryButton } from "../buttons";
 import { LeftIcon, type LeftIconName } from "../icons";
 import { GlassSurface, glassRadii } from "../glass";
 export { BrandPrimaryButton, GhostButton, PrimaryButton, SlideToConfirmButton } from "../buttons";

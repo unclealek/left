@@ -1,7 +1,10 @@
 import { supabase } from "../../lib/supabase";
 import type { VenueType } from "../../types/left-domain";
+import * as ImageManipulator from "expo-image-manipulator";
 
-export async function submitVenueForReview(input: {
+const COMMUNITY_PHOTO_BUCKET = "community-venue-photos";
+
+export async function createCommunityVenue(input: {
   submittedBy: string;
   name: string;
   type: VenueType;
@@ -9,56 +12,56 @@ export async function submitVenueForReview(input: {
   notes: string | null;
   latitude: number;
   longitude: number;
+  showContributor: boolean;
+  photoUri?: string | null;
 }) {
-  const proposedGeofenceJson = {
-    center: {
-      latitude: input.latitude,
-      longitude: input.longitude,
-    },
-    radius_meters: 60,
-    source: "user_submission",
-  };
+  let photoPath: string | null = null;
+  let completed = false;
+  try {
+    if (input.photoUri) {
+      // Re-encoding also removes original camera metadata before this public upload.
+      const preparedPhoto = await ImageManipulator.manipulateAsync(input.photoUri, [], {
+        compress: 0.8,
+        format: ImageManipulator.SaveFormat.JPEG,
+      });
+      photoPath = `${input.submittedBy}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+      const photoResponse = await fetch(preparedPhoto.uri);
+      const photoData = await photoResponse.arrayBuffer();
+      const { error: uploadError } = await supabase.storage
+        .from(COMMUNITY_PHOTO_BUCKET)
+        .upload(photoPath, photoData, {
+          contentType: "image/jpeg",
+          upsert: false,
+        });
+      if (uploadError) return null;
+    }
 
-  const { data: submission, error: submissionError } = await supabase
-    .from("venue_submissions")
-    .insert({
-      submitted_by: input.submittedBy,
-      name: input.name,
-      type: input.type,
-      address_text: input.addressText,
-      notes: input.notes,
-      proposed_geofence_json: proposedGeofenceJson,
-      status: "pending",
-    })
-    .select("id")
-    .single();
+    const { data, error } = await supabase.rpc("create_community_venue", {
+      p_name: input.name,
+      p_type: input.type,
+      p_address_text: input.addressText,
+      p_notes: input.notes,
+      p_latitude: input.latitude,
+      p_longitude: input.longitude,
+      p_show_contributor: input.showContributor,
+      p_photo_path: photoPath,
+    });
+    const venue = Array.isArray(data) ? data[0] : data;
+    if (error || !venue) return null;
 
-  if (submissionError || !submission) return null;
+    completed = Boolean(venue.created) || !photoPath;
 
-  const { data: canonicalVenue, error: canonicalVenueError } = await supabase
-    .from("venues")
-    .insert({
-      name: input.name,
-      type: input.type,
-      city: null,
-      geofence_json: proposedGeofenceJson,
-      is_active: true,
-      source: "manual",
-      source_payload: {
-        addressText: input.addressText,
-        notes: input.notes,
-        submittedBy: input.submittedBy,
-        submissionId: submission.id,
-      },
-      last_verified_at: new Date().toISOString(),
-    })
-    .select("id, name")
-    .single();
-
-  if (canonicalVenueError || !canonicalVenue) return null;
-
-  return {
-    id: canonicalVenue.id as string,
-    name: canonicalVenue.name as string,
-  };
+    return {
+      id: venue.venue_id as string,
+      name: venue.venue_name as string,
+      created: Boolean(venue.created),
+      photoPath,
+    };
+  } catch {
+    return null;
+  } finally {
+    if (photoPath && !completed) {
+      await supabase.storage.from(COMMUNITY_PHOTO_BUCKET).remove([photoPath]);
+    }
+  }
 }

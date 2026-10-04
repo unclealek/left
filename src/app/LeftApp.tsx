@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppState, BackHandler, Linking, Platform, RefreshControl, ScrollView, Text, View } from "react-native";
 import * as Notifications from "expo-notifications";
+import * as ImagePicker from "expo-image-picker";
 import type { Session } from "@supabase/supabase-js";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BackgroundWaveLayer } from "../components/left/BackgroundWaveLayer";
@@ -67,7 +68,6 @@ import {
   selectNearbyVenue,
   setVenueHidden as persistVenueHidden,
   setVenueMuted,
-  storeUserSubmittedVenue,
   syncLocationRegistrationState,
 } from "../features/location/location-service";
 import {
@@ -127,7 +127,6 @@ import {
 } from "../features/interactions/approach-feedback-storage";
 import {
   createPresenceSession,
-  endOpenPresenceSessionsForUser,
   fetchActivePresenceSession,
   fetchNearbyFeed,
   fetchVenueContextSummary,
@@ -156,12 +155,13 @@ import {
   fetchSocialMomentumEvents,
   recordSocialInteractionEvent as persistSocialInteractionEvent,
 } from "../features/social-momentum/social-momentum-service";
-import { submitVenueForReview } from "../features/venues/venue-submission-service";
+import { createCommunityVenue } from "../features/venues/venue-submission-service";
 import {
   getCurrentSession,
   getFirstNameFromSession,
   getProvider,
   getProviderSubject,
+  startAppleAuthSession,
   startGoogleAuthSession,
   UnsupportedAuthProviderError,
 } from "../features/auth/auth-service";
@@ -183,9 +183,22 @@ function isUuid(value: string | null | undefined): value is string {
   return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
-function normalizeSingleVibe(vibes: string[] | null | undefined, fallback = "Open") {
-  const first = Array.isArray(vibes) ? vibes.find((value) => value.trim().length > 0) : null;
-  return first ? [first] : [fallback];
+function describeSaveError(error: unknown, fallback: string) {
+  const record = error && typeof error === "object" ? error as { message?: string; code?: string } : null;
+  const detail = record?.message?.toLowerCase() ?? "";
+  if (detail.includes("row-level security") || record?.code === "42501") return "You don’t have permission to save this profile. Please sign in again and try once more.";
+  if (detail.includes("network") || detail.includes("fetch") || detail.includes("timed out")) return "We couldn’t reach the service. Check your connection, then try again.";
+  if (detail.includes("duplicate") || record?.code === "23505") return "This profile already exists. Refresh the app and try again.";
+  if (detail.includes("violates") || detail.includes("constraint")) return "One of the profile details is not accepted. Review your name and selected interests, then try again.";
+  if (record?.message?.trim()) return `${fallback} Reason: ${record.message.trim()}`;
+  return fallback;
+}
+
+function normalizeVibes(vibes: string[] | null | undefined, fallback = "Open") {
+  const values = Array.isArray(vibes)
+    ? [...new Set(vibes.map((value) => value.trim()).filter(Boolean))]
+    : [];
+  return values.length ? values : [fallback];
 }
 
 function pickBestNearbyVenueMatch(
@@ -252,6 +265,7 @@ export function LeftApp() {
   const [venueSummary, setVenueSummary] = useState<VenueContextSummary>(INITIAL_VENUE_SUMMARY);
   const [firstNameDraft, setFirstNameDraft] = useState("");
   const [avatarStyleDraft, setAvatarStyleDraft] = useState<AvatarStyle>("geometric");
+  const [onboardingInterests, setOnboardingInterests] = useState<string[]>([]);
   const [onboardingUserId, setOnboardingUserId] = useState<string | null>(null);
   const [legalChecks, setLegalChecks] = useState<Record<LegalDocumentId, boolean>>({
     terms: false,
@@ -307,6 +321,8 @@ export function LeftApp() {
   const [venueDraftAddress, setVenueDraftAddress] = useState("");
   const [venueDraftNotes, setVenueDraftNotes] = useState("");
   const [venueDraftType, setVenueDraftType] = useState<VenueType>("other");
+  const [venueDraftPhotoUri, setVenueDraftPhotoUri] = useState<string | null>(null);
+  const [venueDraftShowContributor, setVenueDraftShowContributor] = useState(true);
   const [venueDraftSubmitting, setVenueDraftSubmitting] = useState(false);
   const [selectedVenueDetail, setSelectedVenueDetail] = useState<RuntimeVenueCandidate | null>(null);
   const [venueDetailsLoading, setVenueDetailsLoading] = useState(false);
@@ -465,6 +481,7 @@ export function LeftApp() {
     await saveOnboardingDraft(onboardingUserId, {
       firstName: firstNameDraft,
       avatarStyle: avatarStyleDraft,
+      interests: onboardingInterests,
       step,
     });
   }
@@ -528,6 +545,17 @@ export function LeftApp() {
   function openVenueDetail(candidate?: RuntimeVenueCandidate | null, origin: Screen = screen) {
     const resolvedCandidate = resolveVenueDetailCandidate(candidate);
     if (!resolvedCandidate) return;
+    if (!sessionVisible) {
+      showDialog(
+        "Go visible to unlock venue details",
+        "Venue details and live signals are shared only while you are visible at a venue.",
+        [
+          { label: "Not now" },
+          { label: "Go visible", variant: "primary", onPress: () => openActivationFrom(origin) },
+        ],
+      );
+      return;
+    }
     setSelectedVenueDetail(resolvedCandidate);
     setVenueDetailReturnScreen(origin);
     setScreen("venue-detail");
@@ -660,11 +688,12 @@ export function LeftApp() {
       void saveOnboardingDraft(onboardingUserId, {
         firstName: firstNameDraft,
         avatarStyle: avatarStyleDraft,
+        interests: onboardingInterests,
         step,
       });
     }, 300);
     return () => clearTimeout(timer);
-  }, [screen, firstNameDraft, avatarStyleDraft, onboardingUserId]);
+  }, [screen, firstNameDraft, avatarStyleDraft, onboardingInterests, onboardingUserId]);
 
   useEffect(() => {
     const isOnboarding = screen.startsWith("onboarding-");
@@ -803,9 +832,7 @@ export function LeftApp() {
   }, [user?.id, venueSummary.venueId, activePresenceSessionId, sessionVisible]);
 
   useEffect(() => {
-    if (
-      screen !== "feed" ||
-      !user ||
+    if (!user ||
       !sessionVisible ||
       !isUuid(user.id) ||
       !isUuid(venueSummary.venueId)
@@ -813,24 +840,65 @@ export function LeftApp() {
       return;
     }
 
-    void refreshNearbyFeed(user.id, venueSummary.venueId);
-    const interval = setInterval(() => {
-      void refreshNearbyFeed(user.id, venueSummary.venueId);
-    }, 30_000);
-    return () => clearInterval(interval);
-  }, [screen, user?.id, venueSummary.venueId, sessionVisible]);
+    let disposed = false;
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+    const channel = supabase
+      .channel(`venue:${venueSummary.venueId}`, { config: { private: true } })
+      .on("broadcast", { event: "presence-changed" }, () => {
+        if (refreshTimer) return;
+        // Several people can change state in one transaction window; one secured
+        // refresh is enough and avoids a request storm.
+        refreshTimer = setTimeout(() => {
+          refreshTimer = null;
+          if (!disposed) {
+            void refreshVenueContext(venueSummary.venueId);
+            void refreshNearbyFeed(user.id, venueSummary.venueId);
+          }
+        }, 350);
+      });
+
+    void supabase.auth.getSession().then(async ({ data }) => {
+      if (disposed || !data.session) return;
+      await supabase.realtime.setAuth(data.session.access_token);
+      if (!disposed) channel.subscribe();
+    });
+
+    return () => {
+      disposed = true;
+      if (refreshTimer) clearTimeout(refreshTimer);
+      void supabase.removeChannel(channel);
+    };
+  }, [user?.id, venueSummary.venueId, sessionVisible]);
 
   useEffect(() => {
+    if (!user) return;
     const venueIds = nearbyVenueOptions
       .map((venue) => venue.id)
       .filter((venueId): venueId is string => isUuid(venueId));
     if (isUuid(venueSummary.venueId)) {
       venueIds.unshift(venueSummary.venueId);
     }
+    if (selectedVenueDetail && isUuid(selectedVenueDetail.id)) {
+      venueIds.unshift(selectedVenueDetail.id);
+    }
     const uniqueVenueIds = Array.from(new Set(venueIds));
     if (!uniqueVenueIds.length) return;
     void refreshVenueActivityForIds(uniqueVenueIds);
-  }, [nearbyVenueOptions, venueSummary.venueId]);
+    const refresh = () => {
+      if (AppState.currentState === "active") void refreshVenueActivityForIds(uniqueVenueIds);
+    };
+    const interval = setInterval(refresh, 60_000);
+    const subscription = AppState.addEventListener("change", state => { if (state === "active") refresh(); });
+    return () => { clearInterval(interval); subscription.remove(); };
+  }, [nearbyVenueOptions, venueSummary.venueId, selectedVenueDetail?.id, user?.id]);
+
+  useEffect(() => {
+    if (!user || AppState.currentState !== "active") return;
+    const pending = Object.values(venueActivityById).filter(value => value.activity.refreshing).map(value => value.venueId);
+    if (!pending.length) return;
+    const timer = setTimeout(() => { void refreshVenueActivityForIds(pending); }, 3_000);
+    return () => clearTimeout(timer);
+  }, [venueActivityById, user?.id]);
 
   useEffect(() => {
     if (!approach || approach.status !== "started" || approachRemainingSeconds > 0) return;
@@ -887,7 +955,7 @@ export function LeftApp() {
       const defaults = await loadLastActivationDefaults();
       if (defaults) {
         setSelectedIntent(defaults.intent);
-        setSelectedVibes(normalizeSingleVibe(defaults.vibes));
+        setSelectedVibes(normalizeVibes(defaults.vibes));
         setSelectedDuration(defaults.durationMinutes);
         setHintDraft(defaults.hintText);
       }
@@ -959,6 +1027,7 @@ export function LeftApp() {
       await refreshVenueFromRuntime();
       const runtime = await getLocationRuntimeState();
       const venueIds = runtime.nearbyVenues.map((venue) => venue.id).filter(isUuid);
+      if (selectedVenueDetail && isUuid(selectedVenueDetail.id)) venueIds.unshift(selectedVenueDetail.id);
       const tasks: Promise<unknown>[] = [refreshVenueActivityForIds(venueIds)];
 
       if (user) {
@@ -1035,7 +1104,7 @@ export function LeftApp() {
     setSessionNowMs(Date.now());
     setSessionVisible(true);
     setSelectedIntent(activeSession.intent);
-    setSelectedVibes(normalizeSingleVibe(activeSession.vibes));
+    setSelectedVibes(normalizeVibes(activeSession.vibes));
     setSelectedDuration(activeSession.durationMinutes);
     setHintDraft(activeSession.hintText ?? "");
     setVenueSummary((current) => ({
@@ -1088,7 +1157,6 @@ export function LeftApp() {
     setSocialMomentumEvents((current) => [...current, eventType]);
 
     await persistSocialInteractionEvent({
-      actorUserId: user.id,
       eventType,
       targetUserId,
       venueId,
@@ -1325,8 +1393,8 @@ export function LeftApp() {
       showDialog("Venue location missing", "Move around the venue once so Left has a recent device location.");
       return;
     }
-    if (!venueDraftName.trim() || !venueDraftAddress.trim()) {
-      showDialog("Missing venue details", "Add both a venue name and an address or landmark.");
+    if (!venueDraftName.trim() || !venueDraftAddress.trim() || !venueDraftPhotoUri) {
+      showDialog("Missing venue details", "Add a venue name, address or landmark, and a clear venue photo.");
       return;
     }
 
@@ -1340,7 +1408,7 @@ export function LeftApp() {
     }
 
     setVenueDraftSubmitting(true);
-    const submittedVenue = await submitVenueForReview({
+    const submittedVenue = await createCommunityVenue({
       submittedBy: user.id,
       name: submittedName,
       type: venueDraftType,
@@ -1348,6 +1416,8 @@ export function LeftApp() {
       notes: venueDraftNotes.trim() || null,
       latitude: lastKnownCoords.latitude,
       longitude: lastKnownCoords.longitude,
+      showContributor: venueDraftShowContributor,
+      photoUri: venueDraftPhotoUri,
     });
 
     if (!submittedVenue) {
@@ -1356,35 +1426,38 @@ export function LeftApp() {
       return;
     }
 
-    await storeUserSubmittedVenue({
-      id: submittedVenue.id,
-      name: submittedVenue.name,
-      venueType: venueDraftType,
-      latitude: lastKnownCoords.latitude,
-      longitude: lastKnownCoords.longitude,
-      radiusMeters: 60,
-      source: "user_submission",
-      distanceMeters: 0,
-    });
-
     setVenueDraftSubmitting(false);
     setVenueDraftName("");
     setVenueDraftAddress("");
     setVenueDraftNotes("");
     setVenueDraftType("other");
+    setVenueDraftPhotoUri(null);
+    setVenueDraftShowContributor(true);
     await refreshVenueFromRuntime();
     showDialog(
-      "Venue saved",
-      `Use ${submittedVenue.name} as your current venue now?`,
+      submittedVenue.created ? "Venue added" : "Venue already exists",
+      submittedVenue.created
+        ? `${submittedVenue.name} is now available to people nearby.`
+        : `${submittedVenue.name} was already in the community venue list, so Left reused it instead of creating a duplicate.`,
       [
-        { label: "Not now", onPress: () => setScreen("home") },
-        {
-          label: "Use this venue",
-          variant: "primary",
-          onPress: () => setScreen(sessionVisible ? "venue" : "activate"),
-        },
+        { label: "Done", variant: "primary", onPress: () => setScreen("home") },
       ],
     );
+  }
+
+  async function pickVenueDraftPhoto() {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      showDialog("Photo permission needed", "Allow photo access to attach a venue photo.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]?.uri) setVenueDraftPhotoUri(result.assets[0].uri);
   }
 
   async function syncSession(session: Session | null, isInitialLoad: boolean) {
@@ -1431,10 +1504,12 @@ export function LeftApp() {
       if (draft) {
         setFirstNameDraft(draft.firstName || inferredFirstName);
         setAvatarStyleDraft(draft.avatarStyle);
+        setOnboardingInterests(draft.interests);
         setScreen(onboardingScreenForStep(draft.step));
       } else {
         setFirstNameDraft(inferredFirstName);
         setAvatarStyleDraft("geometric");
+        setOnboardingInterests([]);
         setScreen("onboarding-name");
       }
       return;
@@ -1469,6 +1544,7 @@ export function LeftApp() {
       }
     }
     setUser(appUser);
+    setSelectedVibes(appUser.interests.length ? appUser.interests : normalizeVibes(appUser.defaultVibes));
     setOnboardingUserId(null);
     void clearOnboardingDraft(session.user.id);
     setFirstNameDraft(profile.first_name);
@@ -1491,6 +1567,23 @@ export function LeftApp() {
     } catch (error) {
       console.warn("[auth] Google sign-in failed", error);
       setAuthError("Google sign-in could not complete. Check your connection and try again.");
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  async function startAppleAuth() {
+    setAuthError(null);
+    setAuthBusy(true);
+    try {
+      const result = await startAppleAuthSession();
+      if (result.status === "failed") setAuthError(result.message);
+      if (result.status === "cancelled") {
+        setAuthError("Apple sign-in was cancelled. Try again when you’re ready.");
+      }
+    } catch (error) {
+      console.warn("[auth] Apple sign-in failed", error);
+      setAuthError("Apple sign-in could not complete. Check your connection and try again.");
     } finally {
       setAuthBusy(false);
     }
@@ -1533,6 +1626,11 @@ export function LeftApp() {
       setScreen("onboarding-name");
       return;
     }
+    if (onboardingInterests.length < 3) {
+      setAuthError("Choose at least three interests so you have a meaningful set of vibes to share.");
+      setScreen("onboarding-name");
+      return;
+    }
     if (legalContentReady && !Object.values(legalChecks).every(Boolean)) {
       setAuthError("Review and accept all published policies to finish.");
       return;
@@ -1557,8 +1655,8 @@ export function LeftApp() {
         firstName: validation.normalized,
         avatarStyle: avatarStyleDraft,
         defaultIntent: "networking",
-        defaultVibes: ["Open"],
-        interests: [],
+        defaultVibes: onboardingInterests,
+        interests: onboardingInterests,
         offering: "",
         socialRhythm: "",
         conversationStyle: "",
@@ -1591,7 +1689,7 @@ export function LeftApp() {
         const acceptance = await recordLegalAcceptance(versions);
         if (!acceptance.ok) {
           console.warn("[legal] acceptance save failed", acceptance.error);
-          setAuthError("Your acceptance could not be saved. Check your connection and try again.");
+        setAuthError(describeSaveError(acceptance.error, "Your policy acceptance could not be saved. Please try again."));
           return;
         }
         setAuthError(null);
@@ -1605,11 +1703,12 @@ export function LeftApp() {
       );
       if (!result.ok) {
         console.warn("[onboarding] profile save failed", result.error);
-        setAuthError("Your choices could not be saved. Check your connection and try again.");
+        setAuthError(describeSaveError(result.error, "Your profile could not be saved. Please try again."));
         return;
       }
 
       setUser(nextUser);
+      setSelectedVibes(onboardingInterests);
       setOnboardingUserId(null);
       await clearOnboardingDraft(session.user.id);
       setScreen("home");
@@ -1618,7 +1717,7 @@ export function LeftApp() {
       setAuthError(
         error instanceof UnsupportedAuthProviderError
           ? "This session is not linked to Google or Apple. Sign out, then continue with Google."
-          : "Left could not finish setting up your profile. Check your connection and try again.",
+          : describeSaveError(error, "We couldn’t finish setting up your profile. Please try again."),
       );
     } finally {
       setOnboardingSaveBusy(false);
@@ -1670,13 +1769,17 @@ export function LeftApp() {
   function toggleVibe(vibe: string) {
     setSelectedVibes((current) => {
       const exists = current.includes(vibe);
-      if (exists) return current;
-      return [vibe];
+      if (exists) return current.filter((value) => value !== vibe);
+      return [...current, vibe];
     });
   }
 
   async function activatePresence() {
     if (!user) return;
+    if (selectedVibes.length === 0 || !hintDraft.trim()) {
+      showDialog("Finish your visibility details", "Choose at least one vibe and add a short hint so people can identify you in the venue.");
+      return;
+    }
     if (activationAttemptRef.current) return;
     activationAttemptRef.current = true;
     setActivationSubmitting(true);
@@ -1818,7 +1921,7 @@ export function LeftApp() {
     const startedAt = startedAtDate.toISOString();
     const expiresAt = new Date(startedAtDate.getTime() + selectedDuration * 60_000).toISOString();
     const intent = selectedIntent ?? "networking";
-    const vibes = normalizeSingleVibe(selectedVibes);
+    const vibes = normalizeVibes(selectedVibes);
     const hintText = hintDraft.trim() || null;
     try {
       void saveLastActivationDefaults({
@@ -1829,15 +1932,14 @@ export function LeftApp() {
       });
 
       if (isUuid(user.id) && isUuid(resolvedVenueId)) {
-        await endOpenPresenceSessionsForUser(user.id);
         const presenceSessionId = await createPresenceSession({
-          userId: user.id,
           venueId: resolvedVenueId,
           intent,
           vibes,
           hintText,
-          startedAt,
-          expiresAt,
+          latitude: runtime.lastKnownCoords!.latitude,
+          longitude: runtime.lastKnownCoords!.longitude,
+          durationMinutes: selectedDuration,
         });
 
         if (!presenceSessionId) {
@@ -1922,11 +2024,7 @@ export function LeftApp() {
 
     if (isUuid(user.id) && isUuid(selectedProfile.profileUserId) && isUuid(selectedProfile.presenceSessionId)) {
       const persistedApproachId = await createApproachAttempt({
-        fromUserId: user.id,
-        toUserId: selectedProfile.profileUserId,
         presenceSessionId: selectedProfile.presenceSessionId,
-        startedAt: startedAt.toISOString(),
-        expiresAt: expiresAt.toISOString(),
       });
 
       if (!persistedApproachId) {
@@ -2326,7 +2424,7 @@ export function LeftApp() {
       firstName: nextUser.firstName,
       avatarStyle: nextUser.avatarStyle,
       defaultIntent: nextUser.defaultIntent,
-      defaultVibes: normalizeSingleVibe(nextUser.defaultVibes),
+      defaultVibes: normalizeVibes(nextUser.defaultVibes),
       interests: nextUser.interests,
       offering: nextUser.offering,
       socialRhythm: nextUser.socialRhythm,
@@ -2342,7 +2440,7 @@ export function LeftApp() {
     setFirstNameDraft(nextUser.firstName);
     setAvatarStyleDraft(nextUser.avatarStyle);
     setSelectedIntent(nextUser.defaultIntent);
-    setSelectedVibes(normalizeSingleVibe(nextUser.defaultVibes));
+    setSelectedVibes(nextUser.interests.length ? nextUser.interests : normalizeVibes(nextUser.defaultVibes));
     setSettingsSaveState("saved");
     showToast("Profile saved");
     setTimeout(() => setSettingsSaveState("idle"), 1500);
@@ -2535,6 +2633,9 @@ export function LeftApp() {
   const venueConfidence = resolveVenueConfidence(venueSummary, nearbyVenueOptions);
   const venueConfidenceLabel = getVenueConfidenceLabel(venueConfidence);
   const venueConfidenceCopy = getVenueConfidenceCopy(venueConfidence);
+  const profileCompletion = user
+    ? Math.round(([user.interests.length >= 3, Boolean(user.offering), Boolean(user.socialRhythm), Boolean(user.conversationStyle)].filter(Boolean).length / 4) * 100)
+    : 0;
   const locationStatus = locationEnabled
     ? Platform.OS === "web"
       ? "Foreground location is available while this preview is open."
@@ -2603,6 +2704,7 @@ export function LeftApp() {
             authError={authError}
             busy={authBusy}
             onAuth={startGoogleAuth}
+            onAppleAuth={startAppleAuth}
             onBack={() => setScreen("preauth")}
             onOpenLegal={(document) => openLegalDocument(document, "auth")}
           />
@@ -2616,8 +2718,11 @@ export function LeftApp() {
             onChangeFirstName={setFirstNameDraft}
             avatarStyle={avatarStyleDraft}
             onPickAvatar={setAvatarStyleDraft}
+            interests={onboardingInterests}
+            onToggleInterest={(interest) => setOnboardingInterests((current) => current.includes(interest) ? current.filter((item) => item !== interest) : [...current, interest])}
             onContinue={() => void continueNameStep()}
             onBack={goBackInOnboarding}
+            error={authError}
           />
         )}
         {screen === "onboarding-legal" && (
@@ -2679,11 +2784,17 @@ export function LeftApp() {
             address={venueDraftAddress}
             notes={venueDraftNotes}
             venueType={venueDraftType}
+            photoUri={venueDraftPhotoUri}
+            showContributor={venueDraftShowContributor}
+            contributorName={user?.firstName ?? "You"}
             submitting={venueDraftSubmitting}
             onChangeName={setVenueDraftName}
             onChangeAddress={setVenueDraftAddress}
             onChangeNotes={setVenueDraftNotes}
             onChangeVenueType={setVenueDraftType}
+            onPickPhoto={() => void pickVenueDraftPhoto()}
+            onClearPhoto={() => setVenueDraftPhotoUri(null)}
+            onToggleShowContributor={() => setVenueDraftShowContributor((visible) => !visible)}
             onSubmit={() => void submitVenueSuggestion()}
             onBack={() => setScreen("venue-select")}
           />
@@ -2714,6 +2825,8 @@ export function LeftApp() {
               setScreen("experience-create");
             }}
             onOpenSafety={() => openSafetyFrom("home")}
+            profileCompletion={profileCompletion}
+            onCompleteProfile={() => setScreen("me")}
           />
         )}
         {screen === "venue" && (
@@ -2744,7 +2857,6 @@ export function LeftApp() {
             venue={selectedVenueDetail}
             venueSummary={venueSummary}
             venueActivity={isUuid(selectedVenueDetail.id) ? venueActivityById[selectedVenueDetail.id] ?? null : null}
-            feed={visibleFeed}
             sessionVisible={sessionVisible}
             detailsLoading={venueDetailsLoading}
             saved={savedVenues.some((entry) => entry.venueId === selectedVenueDetail.id)}
@@ -2782,6 +2894,7 @@ export function LeftApp() {
             venueConfidenceCopy={venueConfidenceCopy}
             selectedIntent={selectedIntent}
             selectedVibes={selectedVibes}
+            availableVibes={user?.interests.length ? user.interests : selectedVibes}
             selectedDuration={selectedDuration}
             hintDraft={hintDraft}
             elapsedSeconds={elapsedSessionSeconds}
@@ -2897,7 +3010,6 @@ export function LeftApp() {
             onOpenSettings={() => setScreen("settings")}
             sessionVisible={sessionVisible}
             currentVenueName={displayVenueSummary.venueName}
-            currentIntent={selectedIntent}
             currentVibes={selectedVibes}
             nearbyVenueCount={nearbyVenueOptions.length}
             approachCount={socialMomentumEvents.filter((eventType) => eventType === "approach_started").length}

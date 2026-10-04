@@ -34,6 +34,9 @@ export async function findNearbyVenueRows(
       timezone,
       primary_type,
       google_photo_name,
+      community_added_by_name,
+      community_notes,
+      community_photo_path,
       geofence_json
     `)
     .eq("is_active", true)

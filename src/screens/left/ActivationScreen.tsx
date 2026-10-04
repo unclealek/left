@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 import type { AppUser } from "../../types/left-domain";
-import { durationOptions, formatElapsedDuration, intents, vibeOptions } from "../../app/leftConfig";
+import { durationOptions, formatElapsedDuration } from "../../app/leftConfig";
 import { T, styles } from "../../app/leftTheme";
 import { LeftIcon, type LeftIconName } from "../../components/icons";
 import { ScreenHeader } from "../../components/left/navigation";
@@ -80,6 +80,7 @@ export function ActivationScreen(props: {
   venueConfidenceCopy: string;
   selectedIntent: AppUser["defaultIntent"];
   selectedVibes: string[];
+  availableVibes: string[];
   selectedDuration: number;
   hintDraft: string;
   elapsedSeconds: number;
@@ -94,13 +95,12 @@ export function ActivationScreen(props: {
   onOpenFeed: () => void;
   onEndSession: () => void;
 }) {
-  const [hintExpanded, setHintExpanded] = useState(Boolean(props.hintDraft.trim()));
+  const [hintExpanded, setHintExpanded] = useState(true);
 
   if (props.sessionVisible) {
     const elapsedLabel = formatElapsedDuration(props.elapsedSeconds);
     const remainingSeconds = Math.max(props.selectedDuration * 60 - props.elapsedSeconds, 0);
     const remainingLabel = formatElapsedDuration(remainingSeconds);
-    const intentLabel = formatSelectionLabel(props.selectedIntent ?? "networking");
     const vibeLabel = props.selectedVibes[0] ?? "Open";
 
     return (
@@ -139,16 +139,6 @@ export function ActivationScreen(props: {
         </View>
 
         <View style={styles.activationLiveSummary}>
-          <View style={styles.activationLiveSummaryItem}>
-            <View style={styles.activationLiveSummaryIconWrap}>
-              <LeftIcon name={getIntentIcon(props.selectedIntent)} size={18} color={T.primary} />
-            </View>
-            <View style={styles.activationLiveSummaryCopy}>
-              <Text style={styles.activationLiveSummaryLabel}>Intent</Text>
-              <Text style={styles.activationLiveSummaryValue}>{intentLabel}</Text>
-            </View>
-          </View>
-          <View style={styles.activationLiveSummaryDivider} />
           <View style={styles.activationLiveSummaryItem}>
             <View style={styles.activationLiveSummaryIconWrap}>
               <LeftIcon name={getVibeIcon(vibeLabel)} size={18} color={T.primary} />
@@ -250,35 +240,13 @@ export function ActivationScreen(props: {
       <View style={styles.activationSectionCard}>
         <Text style={styles.activationSectionTitle}>How you show up</Text>
         <FieldBlock
-          label="Why are you here?"
-          hint="Pick the main reason people should see your signal."
+          label="What's your vibe?"
+          hint="Choose one or more of the interests you added to your profile."
           step={1}
           variant="section"
         >
           <View style={styles.activationChoiceGrid}>
-            {intents.map((i) => (
-              <IconSelectChip
-                key={i.id}
-                label={i.label}
-                icon={getIntentIcon(i.id)}
-                active={props.selectedIntent === i.id}
-                halfWidth
-                onPress={() => props.onPickIntent(i.id)}
-              />
-            ))}
-          </View>
-        </FieldBlock>
-
-        <View style={styles.activationSectionDivider} />
-
-        <FieldBlock
-          label="What's your vibe?"
-          hint="Pick one cue so the room knows your energy."
-          step={2}
-          variant="section"
-        >
-          <View style={styles.activationChoiceGrid}>
-            {vibeOptions.map((v) => (
+            {props.availableVibes.map((v) => (
               <IconSelectChip
                 key={v}
                 label={v}
@@ -297,7 +265,7 @@ export function ActivationScreen(props: {
         <FieldBlock
           label="How long will your signal stay active?"
           hint="You can change this anytime."
-          step={3}
+          step={2}
           variant="section"
         >
           <View style={styles.activationDurationRow}>
@@ -327,9 +295,9 @@ export function ActivationScreen(props: {
           </View>
           <View style={styles.activationHintContent}>
             <Text style={styles.activationHintTitle}>
-              Add a hint <Text style={styles.activationHintOptional}>(optional)</Text>
+              Add a hint <Text style={styles.activationHintOptional}>(required)</Text>
             </Text>
-            <Text style={styles.activationHintMeta}>Help others spot you in the room.</Text>
+            <Text style={styles.activationHintMeta}>Help others spot you in the room. This is how people can identify you without a photo.</Text>
           </View>
           <LeftIcon
             name={hintExpanded ? "chevron-down" : "chevron-right"}
@@ -366,7 +334,7 @@ export function ActivationScreen(props: {
         </View>
         <View style={styles.activationPrivacyCopy}>
           <Text style={styles.activationPrivacyTitle}>Your location and details remain private</Text>
-          <Text style={styles.activationPrivacyText}>People only see your intent and vibe.</Text>
+          <Text style={styles.activationPrivacyText}>People only see your vibes and identifying hint.</Text>
         </View>
       </View>
 
@@ -374,7 +342,7 @@ export function ActivationScreen(props: {
         label="Slide to go visible"
         subtitle={`Start a ${durationLabel} presence`}
         onConfirm={props.onActivate}
-        disabled={props.venueHidden || props.activationSubmitting}
+        disabled={props.venueHidden || props.activationSubmitting || props.selectedVibes.length === 0 || !props.hintDraft.trim()}
         loading={props.activationSubmitting}
       />
     </View>
@@ -385,27 +353,6 @@ function formatDurationOption(duration: number) {
   if (duration === 60) return "1 hour";
   if (duration === 120) return "2 hours";
   return `${duration} min`;
-}
-
-function formatSelectionLabel(value: string) {
-  return value
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-function getIntentIcon(intent: AppUser["defaultIntent"]): LeftIconName {
-  switch (intent) {
-    case "open_to_conversation":
-      return "radio";
-    case "group_discussion":
-      return "users" as const;
-    case "casual_chat":
-      return "user";
-    case "networking":
-    default:
-      return "user";
-  }
 }
 
 function getVibeIcon(vibe: string): LeftIconName {

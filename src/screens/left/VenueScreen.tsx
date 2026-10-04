@@ -136,16 +136,6 @@ function getVenueMarkerIcon(name: string): LeftIconName {
   return "map-pin";
 }
 
-function getCompactIntentLabel(intent: string) {
-  const value = intent.toLowerCase();
-  if (value.includes("open to conversation") || value.includes("conversation")) return "Open";
-  if (value.includes("group discussion") || value.includes("discussion")) return "Discussion";
-  if (value.includes("network")) return "Networking";
-  if (value.includes("study")) return "Study";
-  if (value.includes("coffee")) return "Coffee";
-  return intent;
-}
-
 function resolveDisplayVenueName(
   venue: VenueContextSummary,
   nearbyVenues: RuntimeVenueCandidate[],
@@ -312,12 +302,10 @@ export function VenueScreen({
         ? T.visibilityOn
         : T.venueAccent;
   const energyIsBusy = venue.energyLevel === "busy";
-  const intentTitle = useMemo(() => {
-    const raw = formatIntent(venue.popularIntents[0] ?? "open_to_conversation");
-    return raw.charAt(0).toUpperCase() + raw.slice(1);
-  }, [venue.popularIntents]);
-  const intentSubtext = isPubliclyVisible ? "Most common here" : "Likely nearby";
-  const currentVenueSummary = `${energyTitle} · ${getCompactIntentLabel(intentTitle)}`;
+  const activeVibes = venue.activeVibes.slice(0, 3);
+  const vibesTitle = activeVibes[0] ?? "Quiet room";
+  const vibesSubtext = activeVibes.length > 1 ? activeVibes.slice(1).join(" · ") : "Live social signal";
+  const currentVenueSummary = `${energyTitle} · ${vibesTitle}`;
   const selectedPreviewTitle = selectedMapPerson
     ? selectedMapPerson.firstName
     : selectedMapVenue?.name ?? "You are here";
@@ -337,6 +325,27 @@ export function VenueScreen({
       outputRange: [0.62, 1],
     }),
   };
+
+  if (!isPubliclyVisible) {
+    return (
+      <View style={[screenStyles.page, { paddingTop: Math.max(insets.top - 52, 10) }]}>
+        <View style={screenStyles.titleBlock}>
+          <Text style={screenStyles.heroTitle}>Venue radar</Text>
+          <Text style={screenStyles.heroSubtitle}>Go visible to unlock venue details, room energy, and the social vibes around you.</Text>
+        </View>
+        <View style={screenStyles.momentumCard}>
+          <View style={screenStyles.insightIconBubble}>
+            <LeftIcon name="eye-off" size={22} color={T.visibilityOff} />
+          </View>
+          <Text style={screenStyles.momentumTitle}>Your venue is private</Text>
+          <Text style={screenStyles.momentumBody}>When you are visible, you can see the venue’s live energy and vibes without exposing anyone’s headcount.</Text>
+          <Pressable onPress={onActivate} style={({ pressed }) => [screenStyles.momentumButton, pressed && screenStyles.pressed]}>
+            <Text style={screenStyles.momentumButtonLabel}>Choose vibes and go visible</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[screenStyles.page, { paddingTop: Math.max(insets.top - 52, 10) }]}>
@@ -421,7 +430,7 @@ export function VenueScreen({
           </View>
           <View style={screenStyles.insightCard}>
             <Text style={screenStyles.insightLabel} maxFontSizeMultiplier={1.1}>
-              Top intent
+              Room vibes
             </Text>
             <View style={screenStyles.insightValueRow}>
               <View style={[screenStyles.insightIconBubble, screenStyles.insightIconBubbleIntent]}>
@@ -432,11 +441,11 @@ export function VenueScreen({
                 maxFontSizeMultiplier={1.2}
                 numberOfLines={2}
               >
-                {intentTitle}
+                {vibesTitle}
               </Text>
             </View>
             <Text style={screenStyles.insightSubtext} maxFontSizeMultiplier={1.2}>
-              {intentSubtext}
+              {vibesSubtext}
             </Text>
           </View>
         </View>

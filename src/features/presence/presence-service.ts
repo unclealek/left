@@ -123,87 +123,57 @@ export async function fetchActivePresenceSession(userId: string): Promise<Active
   };
 }
 
-export async function endOpenPresenceSessionsForUser(userId: string) {
-  if (!isUuid(userId)) return false;
-
-  const { error } = await supabase
-    .from("presence_sessions")
-    .update({ status: "session_ended", ended_at: new Date().toISOString() })
-    .eq("user_id", userId)
-    .is("ended_at", null)
-    .in("status", ["activating", "visible", "discoverable", "expiring", "paused"]);
-
-  if (error) {
-    console.warn("[presence] open session cleanup failed", error.message);
-    return false;
-  }
-
-  return true;
-}
-
 export async function createPresenceSession(input: {
-  userId: string;
   venueId: string;
   intent: IntentType;
   vibes: string[];
   hintText: string | null;
-  startedAt: string;
-  expiresAt: string;
+  latitude: number;
+  longitude: number;
+  durationMinutes: number;
 }) {
-  if (!isUuid(input.userId) || !isUuid(input.venueId)) return null;
+  if (!isUuid(input.venueId)) return null;
 
   const { data, error } = await supabase
-    .from("presence_sessions")
-    .insert({
-      user_id: input.userId,
-      venue_id: input.venueId,
-      intent: input.intent,
-      vibes: input.vibes,
-      hint_text: input.hintText,
-      status: "visible",
-      prompt_state: "none",
-      started_at: input.startedAt,
-      expires_at: input.expiresAt,
-    })
-    .select("id")
-    .single();
+    .rpc("start_presence_session", {
+      p_venue_id: input.venueId,
+      p_intent: input.intent,
+      p_vibes: input.vibes,
+      p_hint_text: input.hintText,
+      p_latitude: input.latitude,
+      p_longitude: input.longitude,
+      p_duration_minutes: input.durationMinutes,
+    });
 
   if (error) {
     console.warn("[presence] session create failed", error.message);
     return null;
   }
 
-  return data.id as string;
+  return data as string;
 }
 
 export async function updatePresenceSessionEndState(sessionId: string, status: "paused" | "session_ended") {
   if (!isUuid(sessionId)) return false;
 
-  const endedAt = new Date().toISOString();
-  const { error } = await supabase
-    .from("presence_sessions")
-    .update({
-      status,
-      paused_at: status === "paused" ? endedAt : null,
-      ended_at: status === "session_ended" ? endedAt : null,
-    })
-    .eq("id", sessionId);
+  const { data, error } = await supabase.rpc("end_presence_session", {
+    p_session_id: sessionId,
+    p_status: status,
+  });
 
   if (error) {
     console.warn("[presence] session end update failed", error.message);
     return false;
   }
 
-  return true;
+  return Boolean(data);
 }
 
 export async function fetchVenueContextSummary(venueId: string): Promise<VenueContextSummary | null> {
   if (!isUuid(venueId)) return null;
 
   const { data, error } = await supabase
-    .from("venue_context_summary")
-    .select("venue_id, venue_name, visible_count, energy_level, active_vibes, popular_intents, pulse_copy")
-    .eq("venue_id", venueId)
+    .rpc("get_current_venue_context", { p_venue_id: venueId })
     .maybeSingle();
 
   if (error) {

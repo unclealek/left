@@ -4,10 +4,8 @@ import type { AppUser, AvatarStyle } from "../../types/left-domain";
 import {
   avatarStyles,
   conversationStyleOptions,
-  intents,
   interestOptions,
   socialRhythmOptions,
-  vibeOptions,
 } from "../../app/leftConfig";
 import { T, styles } from "../../app/leftTheme";
 import { LeftIcon, type LeftIconName } from "../../components/icons";
@@ -22,7 +20,6 @@ export function MeScreen({
   onOpenSettings,
   sessionVisible,
   currentVenueName,
-  currentIntent,
   currentVibes,
   nearbyVenueCount,
   approachCount,
@@ -46,7 +43,6 @@ export function MeScreen({
   onOpenSettings: () => void;
   sessionVisible: boolean;
   currentVenueName: string;
-  currentIntent: AppUser["defaultIntent"];
   currentVibes: string[];
   nearbyVenueCount: number;
   approachCount: number;
@@ -54,27 +50,19 @@ export function MeScreen({
   onOpenSaved: () => void;
   onBecomeVisible: () => void;
 }) {
-  function normalizeSingleVibe(vibes: string[] | null | undefined, fallback = "Open") {
-    const first = Array.isArray(vibes) ? vibes.find((value) => value.trim().length > 0) : null;
-    return first ? [first] : [fallback];
-  }
-
   const [editing, setEditing] = useState(false);
   const [firstName, setFirstName] = useState(user.firstName);
   const [avatarStyle, setAvatarStyle] = useState<AvatarStyle>(user.avatarStyle);
-  const [defaultIntent, setDefaultIntent] = useState<AppUser["defaultIntent"]>(user.defaultIntent);
-  const [defaultVibes, setDefaultVibes] = useState<string[]>(normalizeSingleVibe(user.defaultVibes));
   const [interests, setInterests] = useState<string[]>(user.interests);
   const [offering, setOffering] = useState(user.offering);
   const [socialRhythm, setSocialRhythm] = useState(user.socialRhythm);
   const [conversationStyle, setConversationStyle] = useState(user.conversationStyle);
   const [profilePrompt, setProfilePrompt] = useState(user.profilePrompt);
+  const [profileValidationError, setProfileValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     setFirstName(user.firstName);
     setAvatarStyle(user.avatarStyle);
-    setDefaultIntent(user.defaultIntent);
-    setDefaultVibes(normalizeSingleVibe(user.defaultVibes));
     setInterests(user.interests);
     setOffering(user.offering);
     setSocialRhythm(user.socialRhythm);
@@ -82,20 +70,17 @@ export function MeScreen({
     setProfilePrompt(user.profilePrompt);
   }, [user]);
 
-  function toggleVibe(vibe: string) {
-    setDefaultVibes((current) => {
-      const exists = current.includes(vibe);
-      if (exists) return current;
-      return [vibe];
-    });
-  }
-
   function saveProfileDefaults() {
+    if (interests.length < 3) {
+      setProfileValidationError(`Choose ${3 - interests.length} more ${3 - interests.length === 1 ? "interest" : "interests"} before saving your profile.`);
+      return;
+    }
+    setProfileValidationError(null);
     onSave({
       firstName,
       avatarStyle,
-      defaultIntent,
-      defaultVibes,
+      defaultIntent: user.defaultIntent,
+      defaultVibes: interests,
       interests,
       offering,
       socialRhythm,
@@ -108,35 +93,24 @@ export function MeScreen({
     setInterests((current) =>
       current.includes(interest)
         ? current.filter((item) => item !== interest)
-        : current.length < 4
-          ? [...current, interest]
-          : current,
+        : [...current, interest],
     );
   }
 
-  const intent = (user.defaultIntent ?? "networking").replaceAll("_", " ");
-  const intentLabel = intents.find((item) => item.id === user.defaultIntent)?.label ?? intent;
-  const liveIntent = (currentIntent ?? user.defaultIntent ?? "networking").replaceAll("_", " ");
-  const liveVibes = currentVibes.length ? normalizeSingleVibe(currentVibes) : normalizeSingleVibe(user.defaultVibes);
-  const vibePreview = liveVibes[0] || "Open";
-  const vibeLabel = (normalizeSingleVibe(user.defaultVibes)[0] || "Open")
-    .replace("/", " / ")
-    .replace(/startups/i, "Startups");
+  const vibePreview = currentVibes[0] ?? user.interests[0] ?? "Open";
   const styleLabel = `${user.avatarStyle.charAt(0).toUpperCase()}${user.avatarStyle.slice(1)}`;
   const venueLabel = sessionVisible ? `At ${currentVenueName}` : "Hidden right now";
   const venueMeta = sessionVisible
-    ? `${vibePreview || "Open"} · ${liveIntent}`
-    : "People see your intent and vibe after you go visible.";
+    ? `${vibePreview || "Open"} vibe active`
+    : "People see your vibes and identifying hint after you go visible.";
   const stats = [
     { icon: "radio", value: sessionVisible ? "1" : "0", label: "Live now" },
     { icon: "activity", value: String(approachCount), label: "Approaches started" },
     { icon: "map-pin", value: String(nearbyVenueCount), label: "Venues nearby" },
   ] as const;
-  const signalCards = [
-    { icon: "radio", label: "Intent", value: intentLabel },
-    { icon: "activity", label: "Vibe", value: vibeLabel },
-    { icon: "edit", label: "Style", value: styleLabel },
-  ] as const;
+  const signalCards = [{ icon: "edit", label: "Style", value: styleLabel }] as const;
+  const profileFields = [user.interests.length >= 3, Boolean(user.offering), Boolean(user.socialRhythm), Boolean(user.conversationStyle)];
+  const profileCompletion = Math.round((profileFields.filter(Boolean).length / profileFields.length) * 100);
 
   return (
     <View style={styles.profilePage}>
@@ -175,10 +149,16 @@ export function MeScreen({
             </View>
           </View>
           <Text style={styles.profileDisplayName}>{user.firstName}</Text>
-          <View style={styles.profileRolePill}>
-            <Text style={styles.profileRoleText}>{intent}</Text>
-          </View>
         </View>
+
+          <View style={styles.profileInterestsCard}>
+            <Text style={styles.profileInterestsLabel}>YOUR INTERESTS</Text>
+            <View style={styles.profileInterestsWrap}>
+              {user.interests.length ? user.interests.map((interest) => (
+                <View key={interest} style={styles.profileInterestPill}><Text style={styles.profileInterestText}>{interest}</Text></View>
+              )) : <Text style={styles.profileInterestsEmpty}>Add at least three interests to shape the vibes you share.</Text>}
+            </View>
+          </View>
 
           <View style={styles.profileSignalGrid}>
             {signalCards.map((card) => (
@@ -191,6 +171,21 @@ export function MeScreen({
               </View>
             ))}
           </View>
+          {profileCompletion < 100 ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Complete your profile, ${profileCompletion}% complete`}
+              onPress={() => setEditing(true)}
+              style={({ pressed }) => [styles.profileCompassEmpty, pressed && styles.iconButtonPressed]}
+            >
+              <View style={styles.profileCompassIconWrap}><Text style={styles.profileCompassValue}>{profileCompletion}%</Text></View>
+              <View style={styles.profileCompassEmptyCopy}>
+                <Text style={styles.profileCompassEmptyTitle}>Complete your profile</Text>
+                <Text style={styles.profileCompassEmptyText}>Add a few details to make your vibe and introductions more useful.</Text>
+              </View>
+              <LeftIcon name="chevron-right" size={18} color={T.textSecondary} />
+            </Pressable>
+          ) : null}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Open ${savedVenueCount} saved ${savedVenueCount === 1 ? "place" : "places"}`}
@@ -237,33 +232,9 @@ export function MeScreen({
             ))}
           </View>
 
-          <Text style={styles.settingsEditLabel}>Default intent</Text>
-          <View style={styles.chipWrap}>
-            {intents.map((intentOption) => (
-              <SelectChip
-                key={intentOption.id}
-                label={intentOption.label}
-                active={defaultIntent === intentOption.id}
-                onPress={() => setDefaultIntent(intentOption.id)}
-              />
-            ))}
-          </View>
-
-          <Text style={styles.settingsEditLabel}>Default vibe</Text>
-          <View style={styles.chipWrap}>
-            {vibeOptions.map((vibe) => (
-              <SelectChip
-                key={vibe}
-                label={vibe}
-                active={defaultVibes.includes(vibe)}
-                onPress={() => toggleVibe(vibe)}
-              />
-            ))}
-          </View>
-
           <View style={styles.profileRefinementHeader}>
-            <Text style={styles.profileRefinementTitle}>Your social compass</Text>
-            <Text style={styles.profileRefinementSubtitle}>Optional details that help Left make better, more human introductions.</Text>
+            <Text style={styles.profileRefinementTitle}>Your interests</Text>
+            <Text style={styles.profileRefinementSubtitle}>Choose at least three. These become the vibes you can select when you go visible.</Text>
           </View>
 
           <Text style={styles.settingsEditLabel}>What draws you out?</Text>
@@ -277,6 +248,7 @@ export function MeScreen({
               />
             ))}
           </View>
+          {interests.length < 3 ? <Text style={styles.errorText}>{`Choose ${3 - interests.length} more ${3 - interests.length === 1 ? "interest" : "interests"} to finish this section.`}</Text> : null}
 
           <Text style={styles.settingsEditLabel}>When are you usually open to meeting?</Text>
           <View style={styles.chipWrap}>
@@ -325,7 +297,8 @@ export function MeScreen({
               <Text style={styles.profileEditCancelText}>Cancel</Text>
             </Pressable>
           </View>
-          {saveState === "error" ? <Text style={styles.errorText}>We could not save your profile settings yet.</Text> : null}
+          {profileValidationError ? <Text style={styles.errorText}>{profileValidationError}</Text> : null}
+          {saveState === "error" ? <Text style={styles.errorText}>We couldn’t save your profile settings. Check your connection and try again.</Text> : null}
         </View>
       ) : (
         <>

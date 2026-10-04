@@ -4,6 +4,7 @@ import type { RuntimeVenueCandidate } from "../location/location-storage";
 type VenueDetailsResponse = Pick<
   RuntimeVenueCandidate,
   | "photo"
+  | "photoUrl"
   | "formattedAddress"
   | "websiteUri"
   | "phoneNumber"

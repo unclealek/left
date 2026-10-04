@@ -6,7 +6,6 @@ import {
   getActivationDefaults,
   getDefaultRuntimeState,
   getLocationRuntimeState,
-  type RuntimeVenueCandidate,
   getVenuePreferences,
   saveActivationDefaults,
   saveLocationRuntimeState,
@@ -245,31 +244,6 @@ export async function selectNearbyVenue(venueId: string) {
     prompt: null,
   });
   return true;
-}
-
-export async function storeUserSubmittedVenue(candidate: RuntimeVenueCandidate) {
-  const runtime = await getLocationRuntimeState();
-  const nextNearbyVenues = [
-    candidate,
-    ...runtime.nearbyVenues.filter((venue) => venue.id !== candidate.id),
-  ];
-
-  console.info("[location] storing user submitted venue", {
-    venueId: candidate.id,
-    venueName: candidate.name,
-  });
-
-  await saveLocationRuntimeState({
-    ...runtime,
-    nearbyVenues: nextNearbyVenues,
-    currentVenueId: candidate.id,
-    currentVenueName: candidate.name,
-    selectedVenueId: candidate.id,
-    selectedVenueName: candidate.name,
-    dwellEnteredAt: nowIso(),
-    dwellLastSeenAt: nowIso(),
-    prompt: null,
-  });
 }
 
 export async function processLocationFix(coords: Location.LocationObjectCoords) {

@@ -1,6 +1,8 @@
 import { makeRedirectUri } from "expo-auth-session";
 import * as QueryParams from "expo-auth-session/build/QueryParams";
 import * as WebBrowser from "expo-web-browser";
+import * as AppleAuthentication from "expo-apple-authentication";
+import { randomUUID } from "expo-crypto";
 import { Platform } from "react-native";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
@@ -15,6 +17,8 @@ export type GoogleAuthResult =
   | { status: "completed" }
   | { status: "cancelled" }
   | { status: "failed"; message: string };
+
+export type AppleAuthResult = GoogleAuthResult;
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -148,4 +152,52 @@ export async function startGoogleAuthSession(
 
   logAuthDebug("callback missing auth tokens and code");
   return { status: "failed", message: "Google sign-in did not complete." };
+}
+
+export async function startAppleAuthSession(): Promise<AppleAuthResult> {
+  const nonce = randomUUID();
+
+  try {
+    const credential = await AppleAuthentication.signInAsync({
+      nonce,
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+    });
+
+    if (!credential.identityToken) {
+      return { status: "failed", message: "Apple sign-in did not return an identity token." };
+    }
+
+    const { error } = await supabase.auth.signInWithIdToken({
+      provider: "apple",
+      token: credential.identityToken,
+      nonce,
+    });
+    if (error) return { status: "failed", message: "Apple sign-in could not complete." };
+
+    // Apple only supplies a name on the first authorization. Persist it immediately
+    // when available, but keep sign-in successful if the optional profile update fails.
+    const firstName = credential.fullName?.givenName?.trim();
+    const lastName = credential.fullName?.familyName?.trim();
+    const name = [firstName, lastName].filter(Boolean).join(" ");
+    if (firstName || name) {
+      await supabase.auth.updateUser({
+        data: {
+          ...(firstName ? { first_name: firstName } : {}),
+          ...(name ? { name } : {}),
+        },
+      });
+    }
+
+    return { status: "completed" };
+  } catch (error) {
+    if (isAppleSignInCancelled(error)) return { status: "cancelled" };
+    return { status: "failed", message: "Apple sign-in could not complete." };
+  }
+}
+
+function isAppleSignInCancelled(error: unknown) {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "ERR_REQUEST_CANCELED";
 }

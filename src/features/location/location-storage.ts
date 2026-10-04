@@ -34,7 +34,7 @@ export type RuntimeVenueCandidate = {
   latitude: number;
   longitude: number;
   radiusMeters: number;
-  source: "google_places" | "local_catalog" | "user_submission";
+  source: "google_places" | "local_catalog" | "community_added";
   distanceMeters: number | null;
   photoUrl?: string | null;
   // Returned only for the open details screen; never persist these expiring URLs.
@@ -43,6 +43,8 @@ export type RuntimeVenueCandidate = {
     attributions: Array<{ displayName: string; uri: string | null }>;
   } | null;
   formattedAddress?: string | null;
+  communityAddedByName?: string | null;
+  communityNotes?: string | null;
   websiteUri?: string | null;
   phoneNumber?: string | null;
   rating?: number | null;

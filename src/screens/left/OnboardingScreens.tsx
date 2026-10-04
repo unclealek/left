@@ -2,9 +2,9 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AccessibilityInfo, Animated, Easing, Platform, Pressable, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import type { AvatarStyle } from "../../types/left-domain";
-import { avatarStyles } from "../../app/leftConfig";
+import { avatarStyles, interestOptions } from "../../app/leftConfig";
 import { T, styles } from "../../app/leftTheme";
-import { PrimaryButton } from "../../components/left/ui";
+import { PrimaryButton, SelectChip } from "../../components/left/ui";
 import { LeftIcon } from "../../components/icons";
 import { LeftLogoMark } from "../../components/left/LeftLogoMark";
 import { OnboardingAmbientScribbles } from "../../components/left/OnboardingAmbientScribbles";
@@ -186,15 +186,21 @@ export function NameScreen({
   onChangeFirstName,
   avatarStyle,
   onPickAvatar,
+  interests,
+  onToggleInterest,
   onContinue,
   onBack,
+  error,
 }: {
   firstNameDraft: string;
   onChangeFirstName: (value: string) => void;
   avatarStyle: AvatarStyle;
   onPickAvatar: (style: AvatarStyle) => void;
+  interests: string[];
+  onToggleInterest: (interest: string) => void;
   onContinue: () => void;
   onBack: () => void;
+  error?: string | null;
 }) {
   const validation = validateFirstName(firstNameDraft);
 
@@ -206,7 +212,7 @@ export function NameScreen({
         <PrimaryButton
           label="Continue"
           onPress={onContinue}
-          disabled={!validation.valid}
+          disabled={!validation.valid || interests.length < 3}
           trailingIcon="chevron-right"
           tone="onboarding"
         />
@@ -284,6 +290,30 @@ export function NameScreen({
             );
           })}
         </View>
+      </View>
+
+      <View style={styles.onboardingShapeSection}>
+        <View style={styles.onboardingShapeSectionHeader}>
+          <Text style={styles.onboardingSectionTitle}>What are you into?</Text>
+          <Text style={styles.onboardingShapeSelection}>{interests.length ? `${interests.length} selected` : "Choose at least 3"}</Text>
+        </View>
+        <Text style={styles.onboardingBody}>Choose at least three communities and conversations. These become the vibes you can share when you go visible.</Text>
+        <View style={[styles.chipWrap, { marginTop: 12 }]}>
+          {interestOptions.map((interest) => (
+            <SelectChip
+              key={interest}
+              label={interest}
+              active={interests.includes(interest)}
+              onPress={() => onToggleInterest(interest)}
+            />
+          ))}
+        </View>
+        {interests.length < 3 ? (
+          <Text accessibilityRole="alert" style={styles.onboardingError}>
+            {`Choose ${3 - interests.length} more ${3 - interests.length === 1 ? "interest" : "interests"} to continue.`}
+          </Text>
+        ) : null}
+        {error ? <Text accessibilityRole="alert" style={styles.onboardingError}>{error}</Text> : null}
       </View>
 
       <View style={styles.onboardingProfileTrustCard}>
@@ -384,20 +414,6 @@ export function AvatarScreen({
         </View>
       </View>
     </OnboardingShell>
-  );
-}
-
-function VenueDetectionStep({ number, icon, label }: { number: number; icon: "log-in" | "map-pin" | "users"; label: string }) {
-  return (
-    <View style={styles.onboardingDetectionStep}>
-      <View style={styles.onboardingDetectionNumber}>
-        <Text style={styles.onboardingDetectionNumberText}>{number}</Text>
-      </View>
-      <View style={styles.onboardingDetectionIcon}>
-        <LeftIcon name={icon} size={26} color={T.onboardingInk} />
-      </View>
-      <Text style={styles.onboardingDetectionLabel}>{label}</Text>
-    </View>
   );
 }
 

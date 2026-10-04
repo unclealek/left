@@ -72,8 +72,14 @@ export const intents = [
   { id: "casual_chat", label: "Casual chat" },
 ] as const;
 
-export const vibeOptions = ["AI/startups", "Design", "Travel", "Language exchange", "Creativity"];
-export const interestOptions = ["Building things", "Arts & culture", "Local life", "Learning", "Wellbeing", "Food & coffee"];
+// Interests are chosen once for a profile, then become the user's available
+// "vibes" whenever they start a visibility session.
+export const interestOptions = [
+  "Building things", "Arts & culture", "Local life", "Learning", "Wellbeing", "Food & coffee",
+  "LGBTQ+ community", "Politics & civic life", "Faith & spirituality", "Music & nightlife",
+  "Outdoors & movement", "Gaming & pop culture",
+];
+export const vibeOptions = interestOptions;
 export const socialRhythmOptions = ["Weekday mornings", "Weekday afternoons", "Weekday evenings", "Weekend days", "Weekend evenings"];
 export const conversationStyleOptions = ["Easygoing and spontaneous", "Thoughtful one-to-one", "Small group energy", "Purposeful and practical"];
 export const durationOptions = [30, 60, 120];

@@ -6,6 +6,7 @@ export type OnboardingDraftStep = "name" | "avatar" | "legal" | "notifications" 
 export type OnboardingDraft = {
   firstName: string;
   avatarStyle: AvatarStyle;
+  interests: string[];
   step: OnboardingDraftStep;
   updatedAt: string;
 };
@@ -26,7 +27,12 @@ export async function loadOnboardingDraft(userId: string): Promise<OnboardingDra
     ) {
       return null;
     }
-    return parsed as OnboardingDraft;
+    return {
+      ...parsed,
+      interests: Array.isArray(parsed.interests)
+        ? parsed.interests.filter((value) => typeof value === "string")
+        : [],
+    } as OnboardingDraft;
   } catch (error) {
     console.warn("[onboarding] could not load draft", error);
     return null;

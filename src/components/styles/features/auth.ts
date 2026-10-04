@@ -228,6 +228,11 @@ export const authStyles = {
     lineHeight: 21,
     fontFamily: T.fontBodyBold,
   },
+  authAppleButton: {
+    width: "100%",
+    height: 54,
+    marginTop: 12,
+  },
   authDividerRow: {
     width: "100%",
     marginVertical: 14,

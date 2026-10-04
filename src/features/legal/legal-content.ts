@@ -48,7 +48,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocument> = {
       {
         heading: "Account and product data",
         body:
-          "Left may receive account information from Google, including name, email address, authentication identifiers, and technical authentication information. Left may also process venue associations, visibility settings, notification preferences, saved venues, safety-zone configuration, venue interactions, and other settings you intentionally select.",
+          "Left may receive account information from Google or Apple, including name, email address, authentication identifiers, and technical authentication information. Left may also process venue associations, visibility settings, notification preferences, saved venues, safety-zone configuration, venue interactions, and other settings you intentionally select.",
       },
       {
         heading: "How Left uses data",
@@ -63,7 +63,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocument> = {
       {
         heading: "Who may receive information",
         body:
-          "Depending on settings and current features, other users may see limited identity information, a venue, approximate area or distance, presence status, or visibility-related information. Left may use Google for sign-in and venue content, BestTime for venue activity information, and infrastructure, database, networking, and mobile-platform providers as needed to operate the service.",
+          "Depending on settings and current features, other users may see limited identity information, a venue, approximate area or distance, presence status, or visibility-related information. Left may use Google and Apple for sign-in, Google for venue content, BestTime for venue activity information, and infrastructure, database, networking, and mobile-platform providers as needed to operate the service.",
       },
       {
         heading: "Retention and deletion",

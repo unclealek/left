@@ -6,15 +6,6 @@ export default {
   fetch: withSupabase({ auth: "user" }, async (req) => {
     const corsResponse = handleCors(req);
     if (corsResponse) return corsResponse;
-
-    return json(
-      {
-        ok: true,
-        refreshed: false,
-        available: false,
-        message: "Live venue activity refresh is not enabled for this environment.",
-      },
-      200,
-    );
+    return json({ error: "This endpoint is not available to app users." }, 403);
   }),
 };

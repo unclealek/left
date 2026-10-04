@@ -15,6 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.left.mobile",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We use your location to detect when you are in a social venue. We never share it.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "We use your location in the background to detect when you are in a social venue. We never share it.",
@@ -45,6 +46,13 @@
       "@rnmapbox/maps",
       "expo-notifications",
       "expo-web-browser",
+      "expo-apple-authentication",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Left to attach a photo to a community venue."
+        }
+      ],
       "expo-font"
     ],
     "extra": {

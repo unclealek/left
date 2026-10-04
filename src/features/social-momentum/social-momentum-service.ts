@@ -91,22 +91,17 @@ export async function fetchSocialMomentumEvents(actorUserId: string, visibilityS
 }
 
 export async function recordSocialInteractionEvent(input: {
-  actorUserId: string;
   eventType: SocialInteractionEventType;
   targetUserId?: string | null;
   visibilitySessionId?: string | null;
   venueId?: string | null;
   metadata?: Record<string, unknown>;
 }) {
-  if (!isUuid(input.actorUserId)) return false;
-
-  const { error } = await supabase.from("social_interaction_events").insert({
-    actor_user_id: input.actorUserId,
-    target_user_id: isUuid(input.targetUserId) ? input.targetUserId : null,
-    venue_id: isUuid(input.venueId) ? input.venueId : null,
-    visibility_session_id: isUuid(input.visibilitySessionId) ? input.visibilitySessionId : null,
-    event_type: input.eventType,
-    metadata: input.metadata ?? {},
+  const { data, error } = await supabase.rpc("record_social_interaction_event", {
+    p_event_type: input.eventType,
+    p_target_user_id: isUuid(input.targetUserId) ? input.targetUserId : null,
+    p_visibility_session_id: isUuid(input.visibilitySessionId) ? input.visibilitySessionId : null,
+    p_metadata: input.metadata ?? {},
   });
 
   if (error) {
@@ -114,5 +109,5 @@ export async function recordSocialInteractionEvent(input: {
     return false;
   }
 
-  return true;
+  return Boolean(data);
 }

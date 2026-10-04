@@ -15,7 +15,6 @@ import { LeftLogoMark } from "../../components/left/LeftLogoMark";
 import { VenueIdentityBlock } from "../../components/left/ui";
 import type { AppUser, NearbyFeedItem, VenueActivityEnvelope, VenueContextSummary, VenueExperience } from "../../types/left-domain";
 import { fetchVenuePracticalDetails } from "../../features/venues/venue-details-service";
-import { getNearbyPeopleCount } from "./home-presence";
 
 const VENUE_ILLUSTRATIONS = {
   cafe: require("../../../output/illustrations/venues/cafe.png"),
@@ -48,6 +47,8 @@ export function HomeScreen({
   onOpenExperience,
   onCreateExperience,
   onOpenSafety,
+  profileCompletion,
+  onCompleteProfile,
 }: {
   firstName: string;
   venue: VenueContextSummary;
@@ -68,6 +69,8 @@ export function HomeScreen({
   onOpenExperience: (experience: VenueExperience) => void;
   onCreateExperience: () => void;
   onOpenSafety: () => void;
+  profileCompletion: number;
+  onCompleteProfile: () => void;
 }) {
   const venueName = resolveVenueName(venue.venueName, nearbyVenues);
   const currentVenueCandidate =
@@ -150,11 +153,6 @@ export function HomeScreen({
     : "You're private until you choose to be discovered.";
   const presenceMessage = isVisible ? "You’re sharing this moment here." : hiddenMessage;
   const primaryLabel = isVisible ? "Manage visibility" : activationSubmitting ? "Going visible..." : "Go visible";
-  const reportedVisibleCount =
-    venueActivityById[venue.venueId]?.leftPresence.visible ??
-    venueActivityById[currentVenueCandidate?.id ?? ""]?.leftPresence.visible ??
-    0;
-  const peopleNearbyCount = getNearbyPeopleCount(reportedVisibleCount, isVisible);
   const discoveryContext = buildDiscoveryContext(venueName, intent, vibes);
 
   useEffect(() => {
@@ -250,6 +248,18 @@ export function HomeScreen({
           </Animated.View>
         </View>
         <Text style={styles.homeEditorialSupport}>{discoveryContext}</Text>
+        {profileCompletion < 100 ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Complete your profile, ${profileCompletion}% complete`}
+            onPress={onCompleteProfile}
+            style={({ pressed }) => [styles.homeProfileNudge, pressed && styles.iconButtonPressed]}
+          >
+            <Text style={styles.homeProfileNudgeProgress}>{profileCompletion}%</Text>
+            <Text style={styles.homeProfileNudgeCopy}>Complete your profile to make your shared vibes more meaningful.</Text>
+            <LeftIcon name="chevron-right" size={16} color={T.textSecondary} />
+          </Pressable>
+        ) : null}
       </View>
 
       <View
@@ -388,9 +398,6 @@ export function HomeScreen({
               {featuredPerson ? "Someone worth meeting" : isVisible ? "The room is still quiet" : "Meet when you’re ready"}
             </Text>
           </View>
-          {isVisible && peopleNearbyCount > 0 ? (
-            <Text style={styles.homePeopleCount}>{`${peopleNearbyCount} nearby`}</Text>
-          ) : null}
         </View>
 
         {featuredPerson ? (
@@ -748,13 +755,6 @@ function getActivitySignalColor(label: string, score: number | null | undefined,
   if (score > 70) return T.visibilityOff;
   if (score > 30) return T.visibilityOn;
   return T.textMuted;
-}
-
-function getCompactSignalBarHeightStyle(index: number) {
-  const heights = [8, 11, 14, 17, 20];
-  return {
-    height: heights[index] ?? heights[heights.length - 1],
-  };
 }
 
 function formatDistanceLabel(distanceMeters: number) {

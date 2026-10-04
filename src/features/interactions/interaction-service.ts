@@ -6,52 +6,36 @@ function isUuid(value: string | null | undefined): value is string {
 }
 
 export async function createApproachAttempt(input: {
-  fromUserId: string;
-  toUserId: string;
   presenceSessionId: string;
-  startedAt: string;
-  expiresAt: string;
 }) {
-  if (!isUuid(input.fromUserId) || !isUuid(input.toUserId) || !isUuid(input.presenceSessionId)) return null;
+  if (!isUuid(input.presenceSessionId)) return null;
 
   const { data, error } = await supabase
-    .from("approach_attempts")
-    .insert({
-      from_user_id: input.fromUserId,
-      to_user_id: input.toUserId,
-      presence_session_id: input.presenceSessionId,
-      status: "started",
-      started_at: input.startedAt,
-      expires_at: input.expiresAt,
-    })
-    .select("id")
-    .single();
+    .rpc("start_approach_attempt", { p_presence_session_id: input.presenceSessionId });
 
   if (error) {
     console.warn("[interactions] approach create failed", error.message);
     return null;
   }
 
-  return data.id as string;
+  const attempt = Array.isArray(data) ? data[0] : data;
+  return attempt?.approach_id as string | null;
 }
 
-export async function markApproachConnected(input: {
-  approachId: string;
-  completedAt: string;
-}) {
+export async function markApproachConnected(input: { approachId: string; completedAt: string }) {
   if (!isUuid(input.approachId)) return false;
 
-  const { error } = await supabase
-    .from("approach_attempts")
-    .update({ status: "connected", completed_at: input.completedAt })
-    .eq("id", input.approachId);
+  const { data, error } = await supabase.rpc("finish_approach_attempt", {
+    p_approach_id: input.approachId,
+    p_status: "connected",
+  });
 
   if (error) {
     console.warn("[interactions] approach connected update failed", error.message);
     return false;
   }
 
-  return true;
+  return Boolean(data);
 }
 
 async function markApproachFinished(input: {
@@ -61,21 +45,17 @@ async function markApproachFinished(input: {
 }) {
   if (!isUuid(input.approachId)) return false;
 
-  const updates = input.status === "cancelled"
-    ? { status: input.status, cancelled_at: input.finishedAt }
-    : { status: input.status };
-  const { error } = await supabase
-    .from("approach_attempts")
-    .update(updates)
-    .eq("id", input.approachId)
-    .eq("status", "started");
+  const { data, error } = await supabase.rpc("finish_approach_attempt", {
+    p_approach_id: input.approachId,
+    p_status: input.status,
+  });
 
   if (error) {
     console.warn(`[interactions] approach ${input.status} update failed`, error.message);
     return false;
   }
 
-  return true;
+  return Boolean(data);
 }
 
 export function markApproachCancelled(input: { approachId: string; cancelledAt: string }) {

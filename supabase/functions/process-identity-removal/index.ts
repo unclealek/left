@@ -31,7 +31,7 @@ export default {
 
     if (error) {
       return Response.json(
-        { error: "Identity removal processing failed", details: error.message },
+        { error: "Identity removal processing failed" },
         { status: 500 },
       );
     }

@@ -22,11 +22,9 @@ export type ExperienceProposalInput = {
 type SavedVenueRow = {
   venue_id: string;
   created_at: string;
-  venues: {
-    name?: string | null;
-    type?: VenueType | null;
-    formatted_address?: string | null;
-  } | null;
+  venue_name: string | null;
+  venue_type: VenueType | null;
+  formatted_address: string | null;
 };
 
 type ExperienceRow = {
@@ -53,11 +51,7 @@ function isUuid(value: string | null | undefined) {
 export async function fetchSavedVenues(userId: string): Promise<SavedVenueEntry[]> {
   if (!isUuid(userId)) return [];
 
-  const { data, error } = await supabase
-    .from("saved_venues")
-    .select("venue_id, created_at, venues(name, type, formatted_address)")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
+  const { data, error } = await supabase.rpc("get_saved_venues");
 
   if (error) {
     console.warn("[discovery] saved venues unavailable", error.message);
@@ -66,9 +60,9 @@ export async function fetchSavedVenues(userId: string): Promise<SavedVenueEntry[
 
   return ((data ?? []) as unknown as SavedVenueRow[]).map((row) => ({
     venueId: row.venue_id,
-    venueName: row.venues?.name?.trim() || "Saved venue",
-    venueType: row.venues?.type ?? "other",
-    formattedAddress: row.venues?.formatted_address ?? null,
+    venueName: row.venue_name?.trim() || "Saved venue",
+    venueType: row.venue_type ?? "other",
+    formattedAddress: row.formatted_address ?? null,
     savedAt: row.created_at,
   }));
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, Animated, Easing, Pressable, Text, useWindowDimensions, View } from "react-native";
+import { AccessibilityInfo, Animated, Easing, Platform, Pressable, Text, useWindowDimensions, View } from "react-native";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import { styles, T } from "../../app/leftTheme";
@@ -35,12 +36,14 @@ export function AuthScreen({
   authError,
   busy = false,
   onAuth,
+  onAppleAuth,
   onBack,
   onOpenLegal,
 }: {
   authError: string | null;
   busy?: boolean;
   onAuth: () => void;
+  onAppleAuth: () => void;
   onBack: () => void;
   onOpenLegal: (document: "terms" | "privacy" | "community") => void;
 }) {
@@ -49,11 +52,17 @@ export function AuthScreen({
   const entrance = useRef(new Animated.Value(0)).current;
   const ambient = useRef(new Animated.Value(0)).current;
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [appleAvailable, setAppleAvailable] = useState(false);
 
   useEffect(() => {
     void AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
     const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduceMotion);
     return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    void AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => setAppleAvailable(false));
   }, []);
 
   useEffect(() => {
@@ -231,6 +240,19 @@ export function AuthScreen({
             )}
             <Text style={styles.authGoogleLabel}>{busy ? "Connecting securely" : "Continue with Google"}</Text>
           </Pressable>
+
+          {appleAvailable ? (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+              cornerRadius={17}
+              accessibilityState={{ disabled: busy, busy }}
+              onPress={() => {
+                if (!busy) onAppleAuth();
+              }}
+              style={[styles.authAppleButton, busy && styles.authButtonDisabled]}
+            />
+          ) : null}
 
           {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
 

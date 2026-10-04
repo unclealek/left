@@ -21,8 +21,6 @@ export function FeedScreen({
   onOpenVenueDetail: () => void;
   onOpenSafety: () => void;
 }) {
-  const peopleLabel = `${feed.length} ${feed.length === 1 ? "person" : "people"} visible`;
-
   return (
     <View style={styles.feedPage}>
       <View style={styles.feedHead}>
@@ -49,7 +47,7 @@ export function FeedScreen({
           <View style={styles.feedCountRow}>
             <View style={[styles.feedCountDot, sessionVisible && styles.feedCountDotVisible]} />
             <Text style={styles.feedHeadCount}>
-              {sessionVisible ? peopleLabel : "Your venue stays private until visible"}
+              {sessionVisible ? "Live social signals are private and aggregated" : "Your venue stays private until visible"}
             </Text>
           </View>
         </View>
@@ -64,7 +62,7 @@ export function FeedScreen({
           <Text style={styles.emptyTitle}>{sessionVisible ? "No one else is visible yet" : "Your nearby feed is private"}</Text>
           <Text style={styles.emptyText}>
             {sessionVisible
-              ? "You are the first person showing up here. New people will appear automatically."
+              ? "No shared profiles are available yet. Venue energy and vibes update as people go visible."
               : "Start a presence when you are ready to see and be seen by people at your venue."}
           </Text>
         </View>

@@ -233,3 +233,7 @@ If rebuilding or extending the app:
 3. Follow [left-engineering-build-spec.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/left-engineering-build-spec.md) for screen behavior.
 4. Follow [location-venue-logic.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/location-venue-logic.md) and [venues-google.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/venues-google.md) for venue matching.
 5. Treat [left-mvp-wireframes.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/left-mvp-wireframes.md) as inspiration only, not implementation truth.
+
+## BestTime venue activity
+
+Forecast and live provider calls, cache refresh ownership, venue-local hour selection, retries, and forecast fallback are implemented. See [BestTime integration](besttime-integration.md) for configuration, deployment scope, and verification details. Development is enabled; production remains paused.

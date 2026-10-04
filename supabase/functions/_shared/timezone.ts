@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 function resolveParts(timezone: string, date: Date) {
   const formatter = new Intl.DateTimeFormat("en-GB", {
     timeZone: timezone,
@@ -45,10 +43,19 @@ export function getVenueLocalSlot(timezone?: string | null, date = new Date()) {
       hour: normalizedHour,
     };
   } catch {
-    return {
-      timezone: "UTC",
-      dayOfWeek: date.getUTCDay(),
-      hour: date.getUTCHours(),
-    };
+    return getVenueLocalSlot("UTC", date);
   }
+}
+
+// Account for zones whose UTC offset includes 30 or 45 minutes, and DST changes.
+export function nextVenueHour(timezone?: string | null, date = new Date()): Date {
+  let formatter: Intl.DateTimeFormat;
+  try { formatter = new Intl.DateTimeFormat("en-GB", { timeZone: timezone || "UTC", minute: "2-digit" }); }
+  catch { formatter = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", minute: "2-digit" }); }
+  const start = Math.floor(date.getTime() / 60_000) * 60_000;
+  for (let minutes = 1; minutes <= 60; minutes++) {
+    const candidate = new Date(start + minutes * 60_000);
+    if (formatter.formatToParts(candidate).some(part => part.type === "minute" && Number(part.value) === 0)) return candidate;
+  }
+  return new Date(start + 3_600_000);
 }

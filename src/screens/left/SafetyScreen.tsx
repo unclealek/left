@@ -1,5 +1,5 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { T, styles } from "../../app/leftTheme";
+import { T } from "../../app/leftTheme";
 import { ScreenHeader } from "../../components/left/navigation";
 import { LeftIcon, type LeftIconName } from "../../components/icons";
 import type { ShowAppDialog } from "../../components/left/ui";
