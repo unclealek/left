@@ -22,7 +22,13 @@ export function resolveVenueActivityDisplay(
   const score = venueActivity.activity.score ?? venueActivity.activity.forecastScore;
   return {
     title: venueActivity.activity.displayText,
-    subtitle: venueActivity.activity.liveAvailable
+    subtitle: venueActivity.activity.refreshing
+      ? "Fetching venue activity…"
+      : venueActivity.activity.source === "google_scrape" && score == null
+        ? venueActivity.activity.displayText === "Popular times available"
+          ? "See the weekly activity pattern below."
+          : "Popular-times data is not available for this venue yet."
+      : venueActivity.activity.liveAvailable
       ? venueActivity.activity.comparisonText
       : venueActivity.activity.forecastScore != null
         ? "Based on typical activity"

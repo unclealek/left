@@ -28,7 +28,7 @@ describe("resolveVenueActivityDisplay", () => {
         updatedAt: null,
         isStale: false,
         refreshing: false,
-        source: "besttime",
+        source: "google_scrape",
       },
       leftPresence: { total: 0, visible: 0, openToMeet: 0 },
     } satisfies VenueActivityEnvelope;

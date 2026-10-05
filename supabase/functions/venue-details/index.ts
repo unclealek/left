@@ -35,6 +35,7 @@ export default {
       .select(`
         id,
         google_place_id,
+        timezone,
         formatted_address,
         website_uri,
         phone_number,
@@ -89,6 +90,7 @@ export default {
             .select(`
               id,
               google_place_id,
+              timezone,
               formatted_address,
               website_uri,
               phone_number,
@@ -117,6 +119,8 @@ export default {
     const response = json({
       photo,
       venueId: venue.id,
+      placeId: venue.google_place_id ?? null,
+      timezone: venue.timezone ?? null,
       formattedAddress: venue.formatted_address ?? null,
       websiteUri: venue.website_uri ?? null,
       phoneNumber: venue.phone_number ?? null,

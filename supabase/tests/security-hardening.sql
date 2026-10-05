@@ -10,8 +10,10 @@ begin
   if has_table_privilege('authenticated', 'public.venue_context_summary', 'select') then
     raise exception 'authenticated users must not read venue_context_summary directly';
   end if;
-  if has_table_privilege('authenticated', 'public.venue_activity_cache', 'select') then
-    raise exception 'authenticated users must not read venue_activity_cache directly';
+  if to_regclass('public.venue_activity_cache') is not null then
+    if has_table_privilege('authenticated', 'public.venue_activity_cache', 'select') then
+      raise exception 'authenticated users must not read the obsolete activity cache';
+    end if;
   end if;
   if has_function_privilege('anon', 'public.get_nearby_feed(uuid, uuid)', 'execute') then
     raise exception 'anonymous users must not execute get_nearby_feed';

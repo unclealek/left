@@ -3,6 +3,8 @@ import type { RuntimeVenueCandidate } from "../location/location-storage";
 
 type VenueDetailsResponse = Pick<
   RuntimeVenueCandidate,
+  | "placeId"
+  | "timezone"
   | "photo"
   | "photoUrl"
   | "formattedAddress"

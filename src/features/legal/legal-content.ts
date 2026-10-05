@@ -63,7 +63,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocument> = {
       {
         heading: "Who may receive information",
         body:
-          "Depending on settings and current features, other users may see limited identity information, a venue, approximate area or distance, presence status, or visibility-related information. Left may use Google and Apple for sign-in, Google for venue content, BestTime for venue activity information, and infrastructure, database, networking, and mobile-platform providers as needed to operate the service.",
+          "Depending on settings and current features, other users may see limited identity information, a venue, approximate area or distance, presence status, or visibility-related information. Left may use Google and Apple for sign-in, Google for venue content, Google Maps data obtained through Apify for venue activity information, and infrastructure, database, networking, and mobile-platform providers as needed to operate the service.",
       },
       {
         heading: "Retention and deletion",

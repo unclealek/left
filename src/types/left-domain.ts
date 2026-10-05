@@ -244,7 +244,7 @@ export interface VenueActivity {
   updatedAt: string | null;
   isStale: boolean;
   refreshing: boolean;
-  source: "besttime" | "left";
+  source: "left" | "google_scrape" | "self_report" | "own_telemetry";
 }
 
 export interface VenuePresenceCounts {

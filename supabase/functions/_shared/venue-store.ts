@@ -141,36 +141,8 @@ export async function upsertVenueFromGooglePlace(supabaseAdmin: any, place: any)
 
 export async function loadVenueRowsByIds(supabaseAdmin: any, venueIds: string[]) {
   if (!venueIds.length) return [];
-  const { data, error } = await supabaseAdmin
-    .from("venues")
-    .select(`
-      id,
-      google_place_id,
-      besttime_venue_id,
-      besttime_status,
-      name,
-      formatted_address,
-      latitude,
-      longitude,
-      timezone,
-      primary_type,
-      google_types,
-      google_photo_name,
-      last_besttime_forecast_at
-    `)
-    .in("id", venueIds);
-
-  if (error) throw error;
-  return data ?? [];
-}
-
-export async function loadActivityCacheRows(supabaseAdmin: any, venueIds: string[]) {
-  if (!venueIds.length) return [];
-  const { data, error } = await supabaseAdmin
-    .from("venue_activity_cache")
-    .select("*")
-    .in("venue_id", venueIds);
-
+  const { data, error } = await supabaseAdmin.from("venues")
+    .select("id, google_place_id, name").in("id", venueIds).eq("is_active", true);
   if (error) throw error;
   return data ?? [];
 }

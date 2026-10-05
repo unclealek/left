@@ -2,6 +2,8 @@ import { useState } from "react";
 import { ActivityIndicator, Image, Linking, Pressable, Text, View } from "react-native";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
 import type { VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
+import { usePopularTimes } from "../../features/activity/use-popular-times";
+import { googleMapsPlaceUrl, popularTimesActivity } from "../../features/activity/popular-times-model";
 import { resolveVenueActivityDisplay } from "../../features/activity/venue-activity-display";
 import { T } from "../../app/leftTheme";
 import { PrimaryButton } from "../../components/buttons";
@@ -54,7 +56,16 @@ export function VenueDetailScreen({
   const showPhoto = !!photoUri && failedPhotoUri !== photoUri;
   const photoLoaded = showPhoto && loadedPhotoUri === photoUri;
   const roomVibes = isCurrentVenue ? venueSummary.activeVibes.slice(0, 4) : [];
-  const activityDisplay = resolveVenueActivityDisplay(venueActivity);
+  const popularTimes = usePopularTimes(venue.placeId, venue.placeId ? googleMapsPlaceUrl(venue.placeId) : null);
+  const popularActivity = popularTimesActivity(popularTimes.data, venue.timezone);
+  if (popularTimes.status !== "pending" && !popularTimes.data) {
+    popularActivity.refreshing = false;
+    popularActivity.displayText = "Popular times unavailable";
+  }
+  const activityDisplay = resolveVenueActivityDisplay({
+    venueId: venue.id, googlePlaceId: venue.placeId ?? null, name: venue.name,
+    activity: popularActivity, leftPresence: venueActivity?.leftPresence ?? {total:0,visible:0,openToMeet:0},
+  });
   const activityTone = getActivityTone(activityDisplay.tone);
   const activityState = { ...activityDisplay, ...activityTone };
   const pulseBars = activityState.score == null
@@ -200,8 +211,9 @@ export function VenueDetailScreen({
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Right now</Text>
+          <Text style={styles.sectionTitle}>Popular times</Text>
           <View style={styles.pulseCard}>
+            {popularTimes.status === "pending" ? <ActivityIndicator accessibilityLabel="Loading popular times" color={T.textMuted} /> : null}
             <View style={[styles.pulseIconWrap, { backgroundColor: activityState.softColor }]}>
               <LeftIcon name="activity" size={21} color={activityState.color} />
             </View>
@@ -230,6 +242,24 @@ export function VenueDetailScreen({
               ))}
             </View>
           </View>
+          {popularTimes.status === "ready" && popularTimes.hasData && !popularActivity.isStale && popularTimes.data?.popular_times ? (
+            <View accessibilityLabel="Weekly popular times" style={{gap: 8, marginTop: 16}}>
+              {Object.entries(popularTimes.data.popular_times).map(([day, hours]) => (
+                <View key={day} style={{flexDirection:"row", alignItems:"center", gap:8}}>
+                  <Text style={{width:36, color:T.textMuted}}>{day.slice(0,3)}</Text>
+                  <View style={{flex:1, flexDirection:"row", alignItems:"flex-end", height:32, gap:2}}>
+                    {Array.from({length:24}, (_,hour) => {
+                      const value = hours.find(item => item.hour === hour)?.busyness;
+                      return <View key={hour} accessible accessibilityLabel={`${day} ${hour}:00: ${value == null ? "no data" : `${value}%`}`}
+                        style={{flex:1, height:value == null ? 2 : Math.max(2,value * 0.32), backgroundColor:T.textMuted, opacity:value == null ? 0.15 : 0.7}} />;
+                    })}
+                  </View>
+                </View>
+              ))}
+              <Text style={styles.pulseSubtitle}>00:00 — 23:00 · venue local time · typical activity</Text>
+              {popularTimes.data.typical_time_spent ? <Text style={styles.pulseSubtitle}>{popularTimes.data.typical_time_spent}</Text> : null}
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.section}>

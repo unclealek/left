@@ -1,3 +1,5 @@
+> Archived October 5, 2026: this describes the removed integration. Use [the current popular-times guide](popular-times-migration.md).
+
 # BestTime Integration Gap Analysis
 
 Status:

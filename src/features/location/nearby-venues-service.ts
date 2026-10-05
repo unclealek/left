@@ -6,6 +6,7 @@ type NearbyVenueResponse = {
   venues?: Array<{
     id: string;
     googlePlaceId: string | null;
+    timezone?: string | null;
     name: string;
     venueType?: RuntimeVenueCandidate["venueType"];
     latitude: number;
@@ -39,6 +40,8 @@ export async function fetchNearbyVenuesFromServer(
 
   return (data?.venues ?? []).map((venue) => ({
     id: venue.id,
+    placeId: venue.googlePlaceId,
+    timezone: venue.timezone ?? null,
     name: venue.name,
     venueType: venue.venueType ?? "other",
     latitude: venue.latitude,

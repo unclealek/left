@@ -1,0 +1,43 @@
+{
+  "pending_migrations_applied": [],
+  "policies": [
+    {
+      "command": "SELECT",
+      "name": "Authenticated users read shared popular times",
+      "permissive": "PERMISSIVE",
+      "roles": [
+        "authenticated"
+      ],
+      "using": "true",
+      "with_check": null
+    }
+  ],
+  "privileges": [
+    {
+      "delete": false,
+      "insert": false,
+      "role": "anon",
+      "select": false,
+      "truncate": false,
+      "update": false
+    },
+    {
+      "delete": false,
+      "insert": false,
+      "role": "authenticated",
+      "select": true,
+      "truncate": false,
+      "update": false
+    },
+    {
+      "delete": true,
+      "insert": true,
+      "role": "service_role",
+      "select": true,
+      "truncate": true,
+      "update": true
+    }
+  ],
+  "project_ref": "xrracivlxgedlzdcrfwx",
+  "rls_enabled": true
+}

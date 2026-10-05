@@ -20,7 +20,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "ios:simulator": "node scripts/ios-simulator.mjs"
+    "ios:simulator": "node scripts/ios-simulator.mjs",
+    "test:popular-times:coverage": "vitest run --coverage --coverage.include='src/features/activity/popular-times-{model,subscription}.ts' --coverage.include='supabase/functions/_shared/popular-times-{provider,job}.ts' --coverage.include='supabase/functions/_shared/bounded-json.ts' --coverage.include='supabase/functions/get-popular-times/index.ts' --coverage.thresholds.lines=80 --coverage.thresholds.statements=80 --coverage.thresholds.functions=80 --coverage.thresholds.branches=80 --coverage.reportsDirectory=/tmp/left-popular-times-coverage"
   },
   "dependencies": {
     "@expo-google-fonts/manrope": "^0.4.2",
@@ -57,6 +58,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.1.10",
+    "@vitest/coverage-v8": "^3.2.7",
     "babel-preset-expo": "~54.0.10",
     "typescript": "~5.9.2",
     "vitest": "^3.2.7"

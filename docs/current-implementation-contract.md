@@ -234,6 +234,6 @@ If rebuilding or extending the app:
 4. Follow [location-venue-logic.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/location-venue-logic.md) and [venues-google.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/venues-google.md) for venue matching.
 5. Treat [left-mvp-wireframes.md](/Users/kelvinaliche/Desktop/Projects/leftApp/docs/left-mvp-wireframes.md) as inspiration only, not implementation truth.
 
-## BestTime venue activity
+## Popular times replacement (development schema applied)
 
-Forecast and live provider calls, cache refresh ownership, venue-local hour selection, retries, and forecast fallback are implemented. See [BestTime integration](besttime-integration.md) for configuration, deployment scope, and verification details. Development is enabled; production remains paused.
+The demand-driven Apify cache, authenticated `get-popular-times` function and Realtime hooks are implemented locally. BestTime runtime code and flags were removed October 5, 2026. Development now runs the presence-only `venue-activity` endpoint; legacy BestTime endpoints/secrets were removed. Migrations 0033 (shared run budget) and 0034 (legacy schema cleanup) await approval; Apify configuration and deployment remain pending. Migration `0032_venue_popular_times.sql` was applied to development with user approval on October 4, 2026; SQL cache/backoff/permission checks passed. Popular-times Edge Function and app deployment remain pending. See [migration audit and rollout](popular-times-migration.md) for consumers, limitations, verification, and deployment order.

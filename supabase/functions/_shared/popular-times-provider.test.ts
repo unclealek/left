@@ -34,3 +34,21 @@ describe('popular times provider', () => {
     await expect(provider.fetch({placeId:'ChIJtest',placeUrl:'https://www.google.com/maps/place/Test'})).rejects.toThrow('Popular times provider failed');
   });
 });
+it('limits provider response bytes and disallows HTTP redirects', async () => {
+  const fetcher=vi.fn().mockResolvedValue(new Response('x'.repeat(150000)));
+  await expect(createPopularTimesProvider({APIFY_TOKEN:'private'},fetcher).fetch({placeId:'ChIJtest',placeUrl:'https://www.google.com/maps/place/Test'})).rejects.toThrow('too large');
+  expect(fetcher.mock.calls[0][1].redirect).toBe('error');
+});
+it('rejects non-Maps paths on an otherwise trusted hostname',()=>{
+ expect(()=>validatePopularTimesInput({placeId:'ChIJtest',placeUrl:'https://www.google.com/maps-malicious'})).toThrow();
+});
+
+it('accepts maps.google.com URLs and canonicalizes them to the requested place', () => {
+ expect(validatePopularTimesInput({placeId:'EicExample_123',placeUrl:'https://maps.google.com/?q=example'}).placeUrl).toContain('query_place_id=EicExample_123');
+});
+it.each(['https://www.google.com.evil.test/maps/x','https://www.google.com@evil.test/maps/x','http://www.google.com/maps/x','https://www.google.com/search?q=x','https://www.google.com:444/maps/x'])('rejects unsafe Maps URL %s',placeUrl=>{
+ expect(()=>validatePopularTimesInput({placeId:'ChIJtest',placeUrl})).toThrow();
+});
+it.each(['','abc','ChIJ test','../ChIJtest','ChIJtest?foo=bar','x'.repeat(256)])('rejects invalid or oversized place identifiers',placeId=>{
+ expect(()=>validatePopularTimesInput({placeId,placeUrl:'https://www.google.com/maps/x'})).toThrow();
+});

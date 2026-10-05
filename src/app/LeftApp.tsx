@@ -149,7 +149,8 @@ import {
   legalContentReady,
   type LegalDocumentId,
 } from "../features/legal/legal-content";
-import { fetchVenueActivity } from "../features/activity/besttime-activity-service";
+import { usePopularTimesForVenues } from "../features/activity/use-popular-times";
+import { fetchVenueActivity } from "../features/activity/venue-activity-service";
 import {
   deriveSocialMomentum,
   fetchSocialMomentumEvents,
@@ -334,7 +335,11 @@ export function LeftApp() {
   const [attendanceBusy, setAttendanceBusy] = useState(false);
   const [experienceProposalBusy, setExperienceProposalBusy] = useState(false);
   const [experienceProposalError, setExperienceProposalError] = useState<string | null>(null);
-  const [venueActivityById, setVenueActivityById] = useState<Record<string, VenueActivityEnvelope>>({});
+  const [venuePresenceById, setVenueActivityById] = useState<Record<string, VenueActivityEnvelope>>({});
+  const venueActivityById = usePopularTimesForVenues(
+    selectedVenueDetail ? [...nearbyVenueOptions, selectedVenueDetail] : nearbyVenueOptions,
+    venuePresenceById, !!user,
+  );
   const [discoveryRefreshing, setDiscoveryRefreshing] = useState(false);
   const [refreshPullDistance, setRefreshPullDistance] = useState(0);
   const [venueDetailReturnScreen, setVenueDetailReturnScreen] = useState<Screen>("home");
@@ -853,6 +858,7 @@ export function LeftApp() {
           if (!disposed) {
             void refreshVenueContext(venueSummary.venueId);
             void refreshNearbyFeed(user.id, venueSummary.venueId);
+            void refreshVenueActivityForIds([venueSummary.venueId]);
           }
         }, 350);
       });
@@ -887,18 +893,9 @@ export function LeftApp() {
     const refresh = () => {
       if (AppState.currentState === "active") void refreshVenueActivityForIds(uniqueVenueIds);
     };
-    const interval = setInterval(refresh, 60_000);
     const subscription = AppState.addEventListener("change", state => { if (state === "active") refresh(); });
-    return () => { clearInterval(interval); subscription.remove(); };
+    return () => subscription.remove();
   }, [nearbyVenueOptions, venueSummary.venueId, selectedVenueDetail?.id, user?.id]);
-
-  useEffect(() => {
-    if (!user || AppState.currentState !== "active") return;
-    const pending = Object.values(venueActivityById).filter(value => value.activity.refreshing).map(value => value.venueId);
-    if (!pending.length) return;
-    const timer = setTimeout(() => { void refreshVenueActivityForIds(pending); }, 3_000);
-    return () => clearTimeout(timer);
-  }, [venueActivityById, user?.id]);
 
   useEffect(() => {
     if (!approach || approach.status !== "started" || approachRemainingSeconds > 0) return;

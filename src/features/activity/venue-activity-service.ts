@@ -1,3 +1,4 @@
+// The new path reads first-party presence only; popular times arrives through its Realtime hook.
 import { supabase } from "../../lib/supabase";
 import type { VenueActivityEnvelope } from "./activity-types";
 

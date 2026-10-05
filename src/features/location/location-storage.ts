@@ -28,6 +28,8 @@ export type LocationPromptState = {
 };
 
 export type RuntimeVenueCandidate = {
+  placeId?: string | null;
+  timezone?: string | null;
   id: string;
   name: string;
   venueType?: VenueType;
