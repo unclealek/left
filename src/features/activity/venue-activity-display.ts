@@ -26,7 +26,7 @@ export function resolveVenueActivityDisplay(
       ? "Fetching venue activity…"
       : venueActivity.activity.source === "google_scrape" && score == null
         ? venueActivity.activity.displayText === "Popular times available"
-          ? "See the weekly activity pattern below."
+          ? "Choose a day to see typical activity below."
           : "Popular-times data is not available for this venue yet."
       : venueActivity.activity.liveAvailable
       ? venueActivity.activity.comparisonText

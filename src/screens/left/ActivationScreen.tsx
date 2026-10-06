@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Text, TextInput, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
+import { VISIBILITY_DISCLOSURE } from "../../features/presence/visibility-copy";
 import type { AppUser } from "../../types/left-domain";
 import { durationOptions, formatElapsedDuration } from "../../app/leftConfig";
 import { T, styles } from "../../app/leftTheme";
@@ -95,8 +95,6 @@ export function ActivationScreen(props: {
   onOpenFeed: () => void;
   onEndSession: () => void;
 }) {
-  const [hintExpanded, setHintExpanded] = useState(true);
-
   if (props.sessionVisible) {
     const elapsedLabel = formatElapsedDuration(props.elapsedSeconds);
     const remainingSeconds = Math.max(props.selectedDuration * 60 - props.elapsedSeconds, 0);
@@ -179,7 +177,7 @@ export function ActivationScreen(props: {
           <View style={styles.activationLivePrivacyIconWrap}>
             <LeftIcon name="lock" size={14} color={T.primary} />
           </View>
-          <Text style={styles.activationLivePrivacyText}>Your precise location remains private.</Text>
+          <Text style={styles.activationLivePrivacyText}>{VISIBILITY_DISCLOSURE}</Text>
         </View>
       </View>
     );
@@ -220,7 +218,7 @@ export function ActivationScreen(props: {
                   venueConfirmed && styles.activationVenueMetaDotConfirmed,
                 ]}
               />
-              <Text style={styles.activationVenuePrivacy}>Your location stays private</Text>
+              <Text style={styles.activationVenuePrivacy}>Your precise location stays private</Text>
             </View>
             {!venueConfirmed ? (
               <Text style={styles.activationVenueBody}>{props.venueConfidenceCopy}</Text>
@@ -284,42 +282,30 @@ export function ActivationScreen(props: {
 
         <View style={styles.activationSectionDivider} />
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={hintExpanded ? "Close presence hint" : "Add a presence hint"}
-          onPress={() => setHintExpanded((current) => !current)}
-          style={({ pressed }) => [styles.activationHintCard, pressed && styles.primaryBtnPressed]}
-        >
+        <View style={styles.activationHintCard}>
           <View style={styles.activationHintIconWrap}>
             <LeftIcon name="edit" size={16} color={T.primary} />
           </View>
           <View style={styles.activationHintContent}>
             <Text style={styles.activationHintTitle}>
-              Add a hint <Text style={styles.activationHintOptional}>(required)</Text>
+              How can people recognize you?
             </Text>
-            <Text style={styles.activationHintMeta}>Help others spot you in the room. This is how people can identify you without a photo.</Text>
+            <Text style={styles.activationHintMeta}>Required. Describe something people can spot without a photo.</Text>
           </View>
-          <LeftIcon
-            name={hintExpanded ? "chevron-down" : "chevron-right"}
-            size={18}
-            color={T.textSecondary}
-          />
-        </Pressable>
+        </View>
 
-        {hintExpanded ? (
-          <View style={styles.activationHintEditor}>
-            <TextInput
-              autoFocus
-              value={props.hintDraft}
-              onChangeText={props.onChangeHint}
-              placeholder="e.g. Grey hoodie, corner seat"
-              placeholderTextColor={T.textMuted}
-              maxLength={42}
-              style={styles.activationHintInput}
-            />
-            <Text style={styles.activationHintCounter}>{`${props.hintDraft.length}/42`}</Text>
-          </View>
-        ) : null}
+        <View style={styles.activationHintEditor}>
+          <TextInput
+            accessibilityLabel="Recognition hint (required)"
+            value={props.hintDraft}
+            onChangeText={props.onChangeHint}
+            placeholder="e.g. Grey hoodie, corner seat"
+            placeholderTextColor={T.textMuted}
+            maxLength={42}
+            style={styles.activationHintInput}
+          />
+          <Text style={styles.activationHintCounter}>{`${props.hintDraft.length}/42`}</Text>
+        </View>
       </View>
 
       {props.venueHidden ? (
@@ -333,8 +319,8 @@ export function ActivationScreen(props: {
           <LeftIcon name="lock" size={17} color={T.primary} />
         </View>
         <View style={styles.activationPrivacyCopy}>
-          <Text style={styles.activationPrivacyTitle}>Your location and details remain private</Text>
-          <Text style={styles.activationPrivacyText}>People only see your vibes and identifying hint.</Text>
+          <Text style={styles.activationPrivacyTitle}>What people here can see</Text>
+          <Text style={styles.activationPrivacyText}>{VISIBILITY_DISCLOSURE}</Text>
         </View>
       </View>
 

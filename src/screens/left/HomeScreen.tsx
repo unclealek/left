@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
-import { AccessibilityInfo, ActivityIndicator, Animated, Easing, Image, Linking, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Image, Linking, Pressable, Text, View } from "react-native";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
 import {
   getVenueConfidenceLabel,
@@ -28,14 +28,11 @@ const VENUE_ILLUSTRATIONS = {
 } as const;
 
 export function HomeScreen({
-  firstName,
   venue,
   nearbyVenues,
   venueActivityById,
   experiences,
   feed,
-  intent,
-  vibes,
   sessionVisible,
   venueHidden,
   activationSubmitting = false,
@@ -47,8 +44,6 @@ export function HomeScreen({
   onOpenExperience,
   onCreateExperience,
   onOpenSafety,
-  profileCompletion,
-  onCompleteProfile,
 }: {
   firstName: string;
   venue: VenueContextSummary;
@@ -78,8 +73,6 @@ export function HomeScreen({
     nearbyVenues.find((candidate) => candidate.name === venueName) ??
     null;
   const isVisible = sessionVisible && !venueHidden;
-  const [reduceMotion, setReduceMotion] = useState(false);
-  const greetingHeartbeat = useRef(new Animated.Value(0)).current;
   const venueConfidence = resolveVenueConfidence(venue, nearbyVenues);
   const nearbyCards = buildNearbyVenueCards(nearbyVenues, venueName, venueActivityById);
   const photoVenueIds = JSON.stringify(nearbyCards.map((card) => card.id));
@@ -119,14 +112,14 @@ export function HomeScreen({
     if (!photo || loadedPhotos[id] !== photo.uri) return null;
     return (
       <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", paddingHorizontal: 16, paddingVertical: 8, gap: 6 }}>
-        <Text numberOfLines={1} style={{ fontSize: 12, color: "#5E5E5E" }}>Google Maps</Text>
+        <Text numberOfLines={1} style={{ fontSize: 12, color: T.textSecondary }}>Google Maps</Text>
         {photo.attributions.map((author, index) => author.uri ? (
           <Pressable key={index} accessibilityRole="link" accessibilityLabel={`Photo by ${author.displayName}`}
             style={{ minHeight: 44, justifyContent: "center", flexShrink: 1 }}
             onPress={(event) => { event.stopPropagation(); void Linking.openURL(author.uri!).catch(() => {}); }}>
-            <Text style={{ fontSize: 12, color: "#5E5E5E" }}>· {author.displayName}</Text>
+            <Text style={{ fontSize: 12, color: T.textSecondary }}>· {author.displayName}</Text>
           </Pressable>
-        ) : <Text key={index} style={{ fontSize: 12, color: "#5E5E5E" }}>· {author.displayName}</Text>)}
+        ) : <Text key={index} style={{ fontSize: 12, color: T.textSecondary }}>· {author.displayName}</Text>)}
       </View>
     );
   };
@@ -153,70 +146,6 @@ export function HomeScreen({
     : "You're private until you choose to be discovered.";
   const presenceMessage = isVisible ? "You’re sharing this moment here." : hiddenMessage;
   const primaryLabel = isVisible ? "Manage visibility" : activationSubmitting ? "Going visible..." : "Go visible";
-  const discoveryContext = buildDiscoveryContext(venueName, intent, vibes);
-
-  useEffect(() => {
-    void AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
-    const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduceMotion);
-    return () => subscription.remove();
-  }, []);
-
-  useEffect(() => {
-    if (!isVisible || reduceMotion) {
-      greetingHeartbeat.stopAnimation();
-      greetingHeartbeat.setValue(0);
-      return;
-    }
-
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(greetingHeartbeat, {
-          toValue: 1,
-          duration: 120,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(greetingHeartbeat, {
-          toValue: 0,
-          duration: 130,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.delay(90),
-        Animated.timing(greetingHeartbeat, {
-          toValue: 0.72,
-          duration: 110,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(greetingHeartbeat, {
-          toValue: 0,
-          duration: 170,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.delay(900),
-      ]),
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [greetingHeartbeat, isVisible, reduceMotion]);
-
-  const greetingHeartbeatStyle = {
-    transform: [
-      {
-        scale: greetingHeartbeat.interpolate({
-          inputRange: [0, 1],
-          outputRange: [1, 1.22],
-        }),
-      },
-    ],
-    opacity: greetingHeartbeat.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0.82, 1],
-    }),
-  };
-
   return (
     <View style={styles.homePage}>
       <View style={styles.homeVenueHeader}>
@@ -229,37 +158,10 @@ export function HomeScreen({
         <View style={styles.homeBrandLockup}>
           <View style={styles.homeBrandMark}>
             <LeftLogoMark size={24} tone="light" />
-            <PresencePulseIndicator isVisible={isVisible} />
+            <PresenceIndicator isVisible={isVisible} />
           </View>
           <Text style={styles.homeBrandLabel}>Left</Text>
         </View>
-      </View>
-
-      <View style={styles.homeEditorialIntro}>
-        <Text style={styles.homeEditorialEyebrow}>{`FOR ${firstName.toUpperCase()} · RIGHT NOW`}</Text>
-        <View style={styles.homeGreetingInline}>
-          <Text style={styles.homeEditorialTitle}>{"See what’s worth\nstepping into."}</Text>
-          <Animated.View
-            accessible
-            accessibilityLabel={isVisible ? "Presence live" : "Presence hidden"}
-            style={[styles.homeGreetingActivityIcon, greetingHeartbeatStyle]}
-          >
-            <LeftIcon name="activity" size={18} color={isVisible ? T.visibilityOn : T.venueAccent} />
-          </Animated.View>
-        </View>
-        <Text style={styles.homeEditorialSupport}>{discoveryContext}</Text>
-        {profileCompletion < 100 ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Complete your profile, ${profileCompletion}% complete`}
-            onPress={onCompleteProfile}
-            style={({ pressed }) => [styles.homeProfileNudge, pressed && styles.iconButtonPressed]}
-          >
-            <Text style={styles.homeProfileNudgeProgress}>{profileCompletion}%</Text>
-            <Text style={styles.homeProfileNudgeCopy}>Complete your profile to make your shared vibes more meaningful.</Text>
-            <LeftIcon name="chevron-right" size={16} color={T.textSecondary} />
-          </Pressable>
-        ) : null}
       </View>
 
       <View
@@ -279,10 +181,10 @@ export function HomeScreen({
                 ]}
               />
               <Text style={styles.homePresenceStateLabel}>
-                {isVisible ? "VISIBLE HERE" : "PRIVATE HERE"}
+                {isVisible ? "Visible here" : "Private here"}
               </Text>
             </View>
-            <Text numberOfLines={1} style={styles.homePresenceVenue}>{venueName}</Text>
+            <Text style={styles.homePresenceVenue}>{venueName}</Text>
             <Text style={styles.homePresenceMessage}>{presenceMessage}</Text>
           </View>
           <Pressable
@@ -308,7 +210,7 @@ export function HomeScreen({
               />
             )}
             <Text style={[styles.homePresenceActionText, hiddenCardHasError && styles.homePresenceActionTextError]}>
-              {isVisible ? "Manage" : "Go visible"}
+              {isVisible ? "Manage visibility" : "Go visible"}
             </Text>
           </Pressable>
         </View>
@@ -327,7 +229,69 @@ export function HomeScreen({
       <View style={styles.homeEditorialSection}>
         <View style={styles.homeEditorialSectionHeader}>
           <View style={styles.homeEditorialSectionCopy}>
-            <Text style={styles.homeEditorialSectionEyebrow}>ONE PLACE TO NOTICE</Text>
+            <Text style={styles.homeEditorialSectionTitle}>People here</Text>
+          </View>
+        </View>
+
+        {featuredPerson ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`View ${featuredPerson.firstName}'s profile`}
+            onPress={() => onOpenProfile(featuredPerson)}
+            style={({ pressed }) => [styles.homePersonCard, pressed && styles.iconButtonPressed]}
+          >
+            <View style={styles.homePersonAvatarShell}>
+              <LeftAvatar name={featuredPerson.firstName} avatarStyle={featuredPerson.avatarStyle} />
+            </View>
+            <View style={styles.homePersonCardCopy}>
+              <View style={styles.homePersonNameRow}>
+                <Text style={styles.homePersonName}>{featuredPerson.firstName}</Text>
+                <Text style={styles.homePersonTime}>{formatRemaining(featuredPerson.sessionDurationRemaining)}</Text>
+              </View>
+              <Text style={styles.homePersonIntent}>{formatIntent(featuredPerson.intent)}</Text>
+              <Text numberOfLines={2} style={styles.homePersonHint}>
+                {featuredPerson.hintText ?? `Open to ${featuredPerson.primaryVibe?.toLowerCase() ?? "a meaningful conversation"}.`}
+              </Text>
+            </View>
+            <View style={styles.homePersonArrow}>
+              <LeftIcon name="chevron-right" size={18} color={T.textPrimary} />
+            </View>
+          </Pressable>
+        ) : isVisible ? (
+          <View style={styles.homePeopleEmptyCard}>
+            <View style={styles.homePeopleEmptyIcon}>
+              <LeftIcon name="users" size={20} color={T.primary} />
+            </View>
+            <View style={styles.homePeopleEmptyCopy}>
+              <Text style={styles.homePeopleEmptyTitle}>You’re the first one here</Text>
+              <Text style={styles.homePeopleEmptyText}>We’ll show someone only when they choose to be visible too.</Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.homePeoplePrivateCard}>
+            <View style={styles.homePeoplePrivateIcon}>
+              <LeftIcon name="lock" size={20} color={T.primary} />
+            </View>
+            <View style={styles.homePeoplePrivateCopy}>
+              <Text style={styles.homePeoplePrivateTitle}>No profiles are shown while you’re private</Text>
+              <Text style={styles.homePeoplePrivateText}>Become visible when you want to see people who are open to meeting here.</Text>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Go visible"
+              onPress={onBecomeVisible}
+              style={({ pressed }) => [styles.homePeoplePrivateAction, pressed && styles.iconButtonPressed]}
+            >
+              <Text style={styles.homePeoplePrivateActionText}>Go visible</Text>
+              <LeftIcon name="arrow-right" size={15} color={T.primary} />
+            </Pressable>
+          </View>
+        )}
+      </View>
+
+      <View style={styles.homeEditorialSection}>
+        <View style={styles.homeEditorialSectionHeader}>
+          <View style={styles.homeEditorialSectionCopy}>
             <Text style={styles.homeEditorialSectionTitle}>Around you now</Text>
           </View>
           <Pressable
@@ -393,71 +357,6 @@ export function HomeScreen({
       <View style={styles.homeEditorialSection}>
         <View style={styles.homeEditorialSectionHeader}>
           <View style={styles.homeEditorialSectionCopy}>
-            <Text style={styles.homeEditorialSectionEyebrow}>PEOPLE, WITH PERMISSION</Text>
-            <Text style={styles.homeEditorialSectionTitle}>
-              {featuredPerson ? "Someone worth meeting" : isVisible ? "The room is still quiet" : "Meet when you’re ready"}
-            </Text>
-          </View>
-        </View>
-
-        {featuredPerson ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`View ${featuredPerson.firstName}'s profile`}
-            onPress={() => onOpenProfile(featuredPerson)}
-            style={({ pressed }) => [styles.homePersonCard, pressed && styles.iconButtonPressed]}
-          >
-            <LeftAvatar name={featuredPerson.firstName} avatarStyle={featuredPerson.avatarStyle} />
-            <View style={styles.homePersonCardCopy}>
-              <View style={styles.homePersonNameRow}>
-                <Text style={styles.homePersonName}>{featuredPerson.firstName}</Text>
-                <Text style={styles.homePersonTime}>{formatRemaining(featuredPerson.sessionDurationRemaining)}</Text>
-              </View>
-              <Text style={styles.homePersonIntent}>{formatIntent(featuredPerson.intent)}</Text>
-              <Text numberOfLines={2} style={styles.homePersonHint}>
-                {featuredPerson.hintText ?? `Open to ${featuredPerson.primaryVibe?.toLowerCase() ?? "a meaningful conversation"}.`}
-              </Text>
-            </View>
-            <View style={styles.homePersonArrow}>
-              <LeftIcon name="chevron-right" size={18} color={T.textPrimary} />
-            </View>
-          </Pressable>
-        ) : isVisible ? (
-          <View style={styles.homePeopleEmptyCard}>
-            <View style={styles.homePeopleEmptyIcon}>
-              <LeftIcon name="users" size={20} color={T.primary} />
-            </View>
-            <View style={styles.homePeopleEmptyCopy}>
-              <Text style={styles.homePeopleEmptyTitle}>You’re the first one here</Text>
-              <Text style={styles.homePeopleEmptyText}>We’ll show someone only when they choose to be visible too.</Text>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.homePeoplePrivateCard}>
-            <View style={styles.homePeoplePrivateIcon}>
-              <LeftIcon name="lock" size={20} color={T.primary} />
-            </View>
-            <View style={styles.homePeoplePrivateCopy}>
-              <Text style={styles.homePeoplePrivateTitle}>No profiles are shown while you’re private</Text>
-              <Text style={styles.homePeoplePrivateText}>Become visible when you want to see people who are open to meeting here.</Text>
-            </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Go visible"
-              onPress={onBecomeVisible}
-              style={({ pressed }) => [styles.homePeoplePrivateAction, pressed && styles.iconButtonPressed]}
-            >
-              <Text style={styles.homePeoplePrivateActionText}>Go visible</Text>
-              <LeftIcon name="arrow-right" size={15} color={T.primary} />
-            </Pressable>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.homeEditorialSection}>
-        <View style={styles.homeEditorialSectionHeader}>
-          <View style={styles.homeEditorialSectionCopy}>
-            <Text style={styles.homeEditorialSectionEyebrow}>SMALL, LOCAL, REVIEWED</Text>
             <Text style={styles.homeEditorialSectionTitle}>{experiences[0] ? "Something to join" : "Make a simple plan"}</Text>
           </View>
         </View>
@@ -517,7 +416,6 @@ export function HomeScreen({
         <View style={styles.homeEditorialSection}>
           <View style={styles.homeEditorialSectionHeader}>
             <View style={styles.homeEditorialSectionCopy}>
-              <Text style={styles.homeEditorialSectionEyebrow}>KEEP EXPLORING</Text>
               <Text style={styles.homeEditorialSectionTitle}>More around you</Text>
               <Text style={styles.homeEditorialSectionMeta}>{placesContext}</Text>
             </View>
@@ -579,66 +477,9 @@ export function HomeScreen({
   );
 }
 
-function PresencePulseIndicator({ isVisible }: { isVisible: boolean }) {
-  const pulse = useRef(new Animated.Value(0)).current;
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    void AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
-    const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduceMotion);
-    return () => subscription.remove();
-  }, []);
-
-  useEffect(() => {
-    if (!isVisible || reduceMotion) {
-      pulse.stopAnimation();
-      pulse.setValue(0);
-      return;
-    }
-
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 1400,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulse, {
-          toValue: 0,
-          duration: 0,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [isVisible, pulse, reduceMotion]);
-
-  const pulseStyle = {
-    transform: [
-      {
-        scale: pulse.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.8, 1.85],
-        }),
-      },
-    ],
-    opacity: pulse.interpolate({
-      inputRange: [0, 0.65, 1],
-      outputRange: [0.28, 0.14, 0],
-    }),
-  };
-
+function PresenceIndicator({ isVisible }: { isVisible: boolean }) {
   return (
     <View style={styles.homePresenceIndicatorWrap}>
-      <Animated.View
-        style={[
-          styles.homePresenceIndicatorPulse,
-          isVisible ? styles.homePresenceIndicatorPulseVisible : styles.homePresenceIndicatorPulseHidden,
-          pulseStyle,
-        ]}
-      />
       <View
         style={[
           styles.homePresenceIndicatorDot,
@@ -656,26 +497,6 @@ function resolveVenueName(value: string, nearbyVenues: RuntimeVenueCandidate[]) 
   }
   const fallbackVenue = nearbyVenues.find((candidate) => candidate.name.trim());
   return fallbackVenue?.name.trim() || "nearby venue";
-}
-
-function buildDiscoveryContext(
-  venueName: string,
-  intent: AppUser["defaultIntent"],
-  vibes: string[],
-) {
-  const intentCopy = intent ? formatIntent(intent) : null;
-  const vibeCopy = vibes.find((vibe) => vibe.trim())?.trim() ?? null;
-
-  if (intentCopy && vibeCopy) {
-    return `Selected around ${venueName} for ${intentCopy}, with a ${vibeCopy} mood.`;
-  }
-  if (intentCopy) {
-    return `Selected around ${venueName} with your interest in ${intentCopy} in mind.`;
-  }
-  if (vibeCopy) {
-    return `Places and people around ${venueName} that fit a ${vibeCopy} mood.`;
-  }
-  return `A small, live edit of meaningful places and people around ${venueName}.`;
 }
 
 function buildNearbyVenueCards(

@@ -110,13 +110,12 @@ export const homeStyles = {
     borderColor: T.dangerBorder,
   },
   homePresencePrimaryRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: "column",
+    alignItems: "stretch",
     gap: 12,
     paddingBottom: 12,
   },
   homePresenceCopy: {
-    flex: 1,
     minWidth: 0,
     gap: 4,
   },
@@ -139,10 +138,9 @@ export const homeStyles = {
   },
   homePresenceStateLabel: {
     color: T.textSecondary,
-    fontSize: 9,
-    lineHeight: 12,
+    fontSize: 14,
+    lineHeight: 20,
     fontFamily: T.fontBodyBold,
-    letterSpacing: 0.9,
   },
   homePresenceVenue: {
     color: T.textPrimary,
@@ -153,8 +151,8 @@ export const homeStyles = {
   },
   homePresenceMessage: {
     color: T.textSecondary,
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 14,
+    lineHeight: 20,
     fontFamily: T.fontBodyMedium,
   },
   homePresenceAction: {
@@ -199,12 +197,12 @@ export const homeStyles = {
   homePresencePrivacyText: {
     flex: 1,
     color: T.textSecondary,
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 14,
+    lineHeight: 20,
     fontFamily: T.fontBodyMedium,
   },
   homeEditorialSection: {
-    marginTop: 23,
+    marginTop: 8,
     gap: 12,
   },
   homeEditorialSectionHeader: {
@@ -348,6 +346,10 @@ export const homeStyles = {
     shadowOffset: { width: 0, height: 7 },
     elevation: 4,
   },
+  homePersonAvatarShell: {
+    borderRadius: 26,
+    backgroundColor: T.surfaceCard,
+  },
   homePersonCardCopy: {
     flex: 1,
     minWidth: 0,
@@ -367,22 +369,22 @@ export const homeStyles = {
   },
   homePersonTime: {
     color: T.primarySoft,
-    fontSize: 9,
-    lineHeight: 12,
+    fontSize: 14,
+    lineHeight: 20,
     fontFamily: T.fontBodyBold,
   },
   homePersonIntent: {
     color: T.primarySoft,
-    fontSize: 10,
-    lineHeight: 13,
+    fontSize: 14,
+    lineHeight: 20,
     fontFamily: T.fontBodyBold,
     textTransform: "capitalize",
   },
   homePersonHint: {
     marginTop: 3,
     color: T.white,
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 20,
     fontFamily: T.fontBodyMedium,
   },
   homePersonArrow: {
@@ -424,8 +426,8 @@ export const homeStyles = {
   },
   homePeopleEmptyText: {
     color: T.textSecondary,
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 20,
     fontFamily: T.fontBodyMedium,
   },
   homePeoplePrivateCard: {
@@ -455,8 +457,8 @@ export const homeStyles = {
   },
   homePeoplePrivateText: {
     color: T.textSecondary,
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 20,
     fontFamily: T.fontBodyMedium,
   },
   homePeoplePrivateAction: {

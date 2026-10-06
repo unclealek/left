@@ -28,19 +28,18 @@ export function ApproachScreen({
       <View style={styles.approachHero}>
         <Text style={styles.approachLabel}>Going over to</Text>
         <Text style={styles.approachName}>{item.firstName}</Text>
-        <View style={styles.timerRing}>
-          <Text style={styles.timerNum}>{remainingSeconds}</Text>
-          <Text style={styles.timerUnit}>sec</Text>
-        </View>
       </View>
       <View style={styles.approachSections}>
         <InfoBlock label="Look for">
-          <Text style={styles.infoText}>{item.hintText}</Text>
+          <Text style={styles.approachHint}>{item.hintText || "No recognition hint shared."}</Text>
         </InfoBlock>
         <InfoBlock label="Icebreaker">
           <Text style={[styles.infoText, styles.icebreakerText]}>"{approachPrompt}"</Text>
         </InfoBlock>
       </View>
+      <Text style={styles.approachTimeNote}>
+        {`${Math.max(0, remainingSeconds)} seconds until you return to people nearby.`}
+      </Text>
       <PrimaryButton label="We connected ✓" onPress={onConfirmConnected} />
     </View>
   );

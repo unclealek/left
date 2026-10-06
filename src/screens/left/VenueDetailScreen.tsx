@@ -1,3 +1,5 @@
+import { VISIBILITY_DISCLOSURE } from "../../features/presence/visibility-copy";
+import { PopularTimesChart } from "../../components/left/PopularTimesChart";
 import { useState } from "react";
 import { ActivityIndicator, Image, Linking, Pressable, Text, View } from "react-native";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
@@ -243,20 +245,8 @@ export function VenueDetailScreen({
             </View>
           </View>
           {popularTimes.status === "ready" && popularTimes.hasData && !popularActivity.isStale && popularTimes.data?.popular_times ? (
-            <View accessibilityLabel="Weekly popular times" style={{gap: 8, marginTop: 16}}>
-              {Object.entries(popularTimes.data.popular_times).map(([day, hours]) => (
-                <View key={day} style={{flexDirection:"row", alignItems:"center", gap:8}}>
-                  <Text style={{width:36, color:T.textMuted}}>{day.slice(0,3)}</Text>
-                  <View style={{flex:1, flexDirection:"row", alignItems:"flex-end", height:32, gap:2}}>
-                    {Array.from({length:24}, (_,hour) => {
-                      const value = hours.find(item => item.hour === hour)?.busyness;
-                      return <View key={hour} accessible accessibilityLabel={`${day} ${hour}:00: ${value == null ? "no data" : `${value}%`}`}
-                        style={{flex:1, height:value == null ? 2 : Math.max(2,value * 0.32), backgroundColor:T.textMuted, opacity:value == null ? 0.15 : 0.7}} />;
-                    })}
-                  </View>
-                </View>
-              ))}
-              <Text style={styles.pulseSubtitle}>00:00 — 23:00 · venue local time · typical activity</Text>
+            <View style={{ gap: 8, marginTop: 16 }}>
+              <PopularTimesChart key={venue.placeId ?? venue.id} data={popularTimes.data.popular_times} timezone={venue.timezone} />
               {popularTimes.data.typical_time_spent ? <Text style={styles.pulseSubtitle}>{popularTimes.data.typical_time_spent}</Text> : null}
             </View>
           ) : null}
@@ -283,8 +273,8 @@ export function VenueDetailScreen({
             <LeftIcon name="lock" size={17} color={T.primary} />
           </View>
           <View style={styles.privacyCopy}>
-            <Text style={styles.privacyTitle}>Your location stays private</Text>
-            <Text style={styles.privacyText}>Only your first name, venue, intent, and vibe are shown while visible.</Text>
+            <Text style={styles.privacyTitle}>What people here can see</Text>
+            <Text style={styles.privacyText}>{VISIBILITY_DISCLOSURE}</Text>
           </View>
         </View>
 
