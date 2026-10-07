@@ -2,6 +2,16 @@ import { StyleSheet } from "react-native";
 import { T } from "../../theme";
 
 export const homeStyles = {
+  homeGlassButton: { minHeight: 44 },
+  // Native Liquid Glass must not inherit opacity from pressed ancestors.
+  homeGlassButtonPressed: { transform: [{ translateY: 1 }] },
+  homeGlassContent: {
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0,
+    minHeight: 44,
+  },
   homePage: {
     gap: 16,
     paddingTop: 14,
@@ -178,7 +188,7 @@ export const homeStyles = {
     shadowOpacity: 0,
   },
   homePresenceActionText: {
-    color: T.actionContent,
+    color: T.textPrimary,
     fontSize: 12,
     lineHeight: 15,
     fontFamily: T.fontBodyBold,
@@ -311,7 +321,7 @@ export const homeStyles = {
     gap: 5,
   },
   homeFeaturedPlaceMeta: {
-    color: T.textSecondary,
+    color: T.secondary,
     fontSize: 11,
     lineHeight: 14,
     fontFamily: T.fontBodyMedium,
@@ -362,19 +372,19 @@ export const homeStyles = {
     gap: 8,
   },
   homePersonName: {
-    color: T.white,
+    color: T.textPrimary,
     fontSize: 19,
     lineHeight: 23,
     fontFamily: T.fontDisplayBold,
   },
   homePersonTime: {
-    color: T.primarySoft,
+    color: T.textPrimary,
     fontSize: 14,
     lineHeight: 20,
     fontFamily: T.fontBodyBold,
   },
   homePersonIntent: {
-    color: T.primarySoft,
+    color: T.textPrimary,
     fontSize: 14,
     lineHeight: 20,
     fontFamily: T.fontBodyBold,
@@ -382,7 +392,7 @@ export const homeStyles = {
   },
   homePersonHint: {
     marginTop: 3,
-    color: T.white,
+    color: T.textPrimary,
     fontSize: 14,
     lineHeight: 20,
     fontFamily: T.fontBodyMedium,
@@ -525,7 +535,7 @@ export const homeStyles = {
     fontFamily: T.fontDisplayBold,
   },
   homeExperienceMeta: {
-    color: T.textSecondary,
+    color: T.secondary,
     fontSize: 10,
     lineHeight: 14,
     fontFamily: T.fontBodyMedium,
@@ -1105,7 +1115,7 @@ export const homeStyles = {
     gap: 6,
   },
   homeVenueDistanceText: {
-    color: T.textSecondary,
+    color: T.secondary,
     fontSize: 13,
     lineHeight: 16,
     fontFamily: T.fontBodyMedium,
@@ -1163,7 +1173,7 @@ export const homeStyles = {
     fontFamily: T.fontBodyBold,
   },
   homeSafetyCardSubtitle: {
-    color: T.textSecondary,
+    color: T.secondary,
     fontSize: 12,
     lineHeight: 14,
     fontFamily: T.fontBodyMedium,

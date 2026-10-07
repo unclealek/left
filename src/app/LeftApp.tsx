@@ -2646,7 +2646,7 @@ export function LeftApp() {
   const scrollContentPaddingTop =
     isSessionNavScreen ? 20 : screen === "venue-detail" || isFullBleedScreen ? 0 : Math.max(56, insets.top + 20);
   const scrollContentPaddingBottom = isSessionNavScreen
-    ? 36
+    ? 98 + insets.bottom
     : isOnboardingScreen || screen === "venue-detail"
     ? 24 + insets.bottom
     : 72 + insets.bottom;
@@ -2665,7 +2665,7 @@ export function LeftApp() {
         ref={mainScrollRef}
         contentInsetAdjustmentBehavior={isFullBleedScreen || isSessionNavScreen || screen === "venue-detail" ? "never" : "automatic"}
         style={isSessionNavScreen
-          ? { marginTop: insets.top, marginBottom: 62 + insets.bottom }
+          ? { marginTop: insets.top }
           : screen === "venue-detail" ? { marginTop: insets.top } : undefined}
         bounces={isRefreshableScreen}
         alwaysBounceVertical={isRefreshableScreen}

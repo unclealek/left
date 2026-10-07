@@ -1,5 +1,12 @@
 # Development deployment
 
+> October 6 live update: [HTTP/Auth/Realtime verification](popular-times-live-verification.md)
+> passed with disposable fixtures and the production subscription module. The real
+> Apify worker chain remains blocked on staging token configuration. Earlier
+> outstanding-check statements below describe the October 5 deployment snapshot.
+
+> Latest: [follow-up fixes and verification](security-follow-up.md) records the applied RPC fixes, concurrency tests and dependency updates. Current advisor result: 0 errors / 15 warnings.
+
 Approved deployment completed to `xrracivlxgedlzdcrfwx` on October 5, 2026. Production and the mobile app release were not changed.
 
 - Applied migrations 0033, 0034 and 20261004220526. The obsolete BestTime cache and provider columns are removed.
@@ -11,6 +18,8 @@ Approved deployment completed to `xrracivlxgedlzdcrfwx` on October 5, 2026. Prod
 - Independent simultaneous-session contention testing remains outstanding; transactional regression tests passed.
 
 ## Wider database advisor results
+
+Update: the permission fixes have now been applied; current result is 0 errors / 17 warnings. See [database hardening](database-security-hardening.md). The list below records the earlier findings.
 
 {'ERROR': 1, 'WARN': 37} across the existing development database. No advisor finding names the new popular-times tables/functions. These results are not a clean security bill for the entire app.
 

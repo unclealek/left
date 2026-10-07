@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Animated, Pressable, Text, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import type { AppUser } from "../../types/left-domain";
 import { formatIntent, type FooterDestination } from "../../app/leftConfig";
 import { styles, T } from "../../app/leftTheme";
 import { LeftIcon, type LeftIconName } from "../icons";
 import { GlassSurface, glassRadii } from "../glass";
+import { LeftGlass } from "../glass/LeftGlass";
 
 export function BackNavButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
@@ -145,21 +145,13 @@ export function SessionFooterNav(props: {
         </View>
       ) : null}
       <View style={styles.footerNavRow}>
-        <GlassSurface
-          variant="soft"
-          tone="creole"
-          blurIntensity={42}
+        <LeftGlass
+          variant="navigation"
           radius={glassRadii.navigation}
           style={styles.footerNavTrack}
           contentStyle={styles.footerNavTrackContent}
           onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}
         >
-          <LinearGradient
-            pointerEvents="none"
-            colors={["rgba(255,255,255,0.09)", "rgba(255,255,255,0.02)", "rgba(66,79,45,0.10)"]}
-            locations={[0, 0.42, 1]}
-            style={styles.footerNavSpecular}
-          />
           {slotWidth > 0 && (
             <Animated.View
               pointerEvents="none"
@@ -195,7 +187,7 @@ export function SessionFooterNav(props: {
                 {!active ? (
                   <>
                     <View style={styles.footerNavIconBubble}>
-                      <LeftIcon name={item.icon} size={18} color={T.navInactiveContent} />
+                      <LeftIcon name={item.icon} size={18} color={T.white} />
                     </View>
                     <Text style={styles.footerNavLabel}>{item.label}</Text>
                   </>
@@ -208,7 +200,7 @@ export function SessionFooterNav(props: {
               </Pressable>
             );
           })}
-        </GlassSurface>
+        </LeftGlass>
       </View>
     </View>
   );

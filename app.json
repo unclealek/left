@@ -15,6 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.left.mobile",
+      "appleTeamId": "3Y42VMC42F",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We use your location to detect when you are in a social venue. We never share it.",

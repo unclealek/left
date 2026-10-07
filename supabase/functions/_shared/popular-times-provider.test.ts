@@ -52,3 +52,9 @@ it.each(['https://www.google.com.evil.test/maps/x','https://www.google.com@evil.
 it.each(['','abc','ChIJ test','../ChIJtest','ChIJtest?foo=bar','x'.repeat(256)])('rejects invalid or oversized place identifiers',placeId=>{
  expect(()=>validatePopularTimesInput({placeId,placeUrl:'https://www.google.com/maps/x'})).toThrow();
 });
+
+it.each(['REPLACE_WITH_APIFY_TOKEN', '  REPLACE_WITH_APIFY_TOKEN  ', ''])('fails closed for an unconfigured token %s', APIFY_TOKEN => {
+ const fetcher = vi.fn();
+ expect(() => createPopularTimesProvider({ APIFY_TOKEN }, fetcher)).toThrow('Popular times provider is not configured');
+ expect(fetcher).not.toHaveBeenCalled();
+});

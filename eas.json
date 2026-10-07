@@ -33,12 +33,29 @@
         "buildType": "apk"
       }
     },
+    "testflight": {
+      "extends": "production",
+      "distribution": "store",
+      "environment": "development",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://xrracivlxgedlzdcrfwx.supabase.co"
+      },
+      "ios": {
+        "simulator": false
+      }
+    },
     "production": {
       "autoIncrement": true,
       "environment": "production"
     }
   },
   "submit": {
+    "testflight": {
+      "ios": {
+        "appleTeamId": "3Y42VMC42F",
+        "ascAppId": "6820218499"
+      }
+    },
     "production": {}
   }
 }

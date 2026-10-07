@@ -195,13 +195,6 @@ export function createNavigationStyles(contentRailWidth: "92%", contentRailMax: 
       paddingTop: 3,
       paddingBottom: 3,
     },
-    footerNavSpecular: {
-      position: "absolute",
-      top: 0,
-      right: 0,
-      bottom: 0,
-      left: 0,
-    },
     footerNavBubbleTrack: {
       position: "absolute",
       top: -1,
@@ -212,7 +205,7 @@ export function createNavigationStyles(contentRailWidth: "92%", contentRailMax: 
     },
     footerNavItem: {
       flex: 1,
-      minHeight: 40,
+      minHeight: 44,
       alignItems: "center",
       justifyContent: "flex-end",
       gap: 2,
@@ -240,7 +233,7 @@ export function createNavigationStyles(contentRailWidth: "92%", contentRailMax: 
       width: 30,
       height: 30,
       borderRadius: 15,
-      backgroundColor: T.navActiveSurface,
+      backgroundColor: T.primary,
       borderWidth: 1,
       borderColor: T.navActiveBorder,
       shadowColor: T.textPrimary,
@@ -261,8 +254,8 @@ export function createNavigationStyles(contentRailWidth: "92%", contentRailMax: 
       color: T.onboardingAccent,
     },
     footerNavLabel: {
-      color: T.navInactiveContent,
-      fontSize: 9,
+      color: T.white,
+      fontSize: 11,
       fontWeight: "700",
       letterSpacing: 0.1,
       width: "100%",

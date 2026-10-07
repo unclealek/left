@@ -10,6 +10,7 @@ import { formatIntent, formatRemaining } from "../../app/leftConfig";
 import { styles, T } from "../../app/leftTheme";
 import { LeftIcon } from "../../components/icons";
 import { GlassSurface, glassRadii } from "../../components/glass";
+import { LeftGlass } from "../../components/glass/LeftGlass";
 import { LeftAvatar } from "../../components/left/LeftAvatar";
 import { LeftLogoMark } from "../../components/left/LeftLogoMark";
 import { VenueIdentityBlock } from "../../components/left/ui";
@@ -194,24 +195,22 @@ export function HomeScreen({
             accessibilityState={{ disabled: (!isVisible && hiddenCardHasError) || activationSubmitting, busy: activationSubmitting }}
             disabled={(!isVisible && hiddenCardHasError) || activationSubmitting}
             onPress={onBecomeVisible}
-            style={({ pressed }) => [
-              styles.homePresenceAction,
-              hiddenCardHasError && styles.homePresenceActionError,
-              pressed && !activationSubmitting && !hiddenCardHasError && styles.iconButtonPressed,
-            ]}
+            style={({ pressed }) => [styles.homeGlassButton, pressed && !activationSubmitting && !hiddenCardHasError && styles.homeGlassButtonPressed]}
           >
-            {activationSubmitting ? (
-              <ActivityIndicator size="small" color={hiddenCardHasError ? T.danger : T.actionContent} />
-            ) : (
-              <LeftIcon
-                name={isVisible ? "eye-off" : "eye"}
-                size={18}
-                color={hiddenCardHasError ? T.danger : T.actionContent}
-              />
-            )}
-            <Text style={[styles.homePresenceActionText, hiddenCardHasError && styles.homePresenceActionTextError]}>
-              {isVisible ? "Manage visibility" : "Go visible"}
-            </Text>
+            <LeftGlass isInteractive radius={15} contentStyle={[styles.homePresenceAction, styles.homeGlassContent, hiddenCardHasError && styles.homePresenceActionError]}>
+              {activationSubmitting ? (
+                <ActivityIndicator size="small" color={hiddenCardHasError ? T.danger : T.primary} />
+              ) : (
+                <LeftIcon
+                  name={isVisible ? "eye-off" : "eye"}
+                  size={18}
+                  color={hiddenCardHasError ? T.danger : T.primary}
+                />
+              )}
+              <Text style={[styles.homePresenceActionText, hiddenCardHasError && styles.homePresenceActionTextError]}>
+                {isVisible ? "Manage visibility" : "Go visible"}
+              </Text>
+            </LeftGlass>
           </Pressable>
         </View>
         <Pressable
@@ -238,24 +237,26 @@ export function HomeScreen({
             accessibilityRole="button"
             accessibilityLabel={`View ${featuredPerson.firstName}'s profile`}
             onPress={() => onOpenProfile(featuredPerson)}
-            style={({ pressed }) => [styles.homePersonCard, pressed && styles.iconButtonPressed]}
+            style={({ pressed }) => [styles.homeGlassButton, pressed && styles.homeGlassButtonPressed]}
           >
-            <View style={styles.homePersonAvatarShell}>
-              <LeftAvatar name={featuredPerson.firstName} avatarStyle={featuredPerson.avatarStyle} />
-            </View>
-            <View style={styles.homePersonCardCopy}>
-              <View style={styles.homePersonNameRow}>
-                <Text style={styles.homePersonName}>{featuredPerson.firstName}</Text>
-                <Text style={styles.homePersonTime}>{formatRemaining(featuredPerson.sessionDurationRemaining)}</Text>
+            <LeftGlass isInteractive radius={22} contentStyle={[styles.homePersonCard, styles.homeGlassContent]}>
+              <View style={styles.homePersonAvatarShell}>
+                <LeftAvatar name={featuredPerson.firstName} avatarStyle={featuredPerson.avatarStyle} />
               </View>
-              <Text style={styles.homePersonIntent}>{formatIntent(featuredPerson.intent)}</Text>
-              <Text numberOfLines={2} style={styles.homePersonHint}>
-                {featuredPerson.hintText ?? `Open to ${featuredPerson.primaryVibe?.toLowerCase() ?? "a meaningful conversation"}.`}
-              </Text>
-            </View>
-            <View style={styles.homePersonArrow}>
-              <LeftIcon name="chevron-right" size={18} color={T.textPrimary} />
-            </View>
+              <View style={styles.homePersonCardCopy}>
+                <View style={styles.homePersonNameRow}>
+                  <Text style={styles.homePersonName}>{featuredPerson.firstName}</Text>
+                  <Text style={styles.homePersonTime}>{formatRemaining(featuredPerson.sessionDurationRemaining)}</Text>
+                </View>
+                <Text style={styles.homePersonIntent}>{formatIntent(featuredPerson.intent)}</Text>
+                <Text numberOfLines={2} style={styles.homePersonHint}>
+                  {featuredPerson.hintText ?? `Open to ${featuredPerson.primaryVibe?.toLowerCase() ?? "a meaningful conversation"}.`}
+                </Text>
+              </View>
+              <View style={styles.homePersonArrow}>
+                <LeftIcon name="chevron-right" size={18} color={T.textPrimary} />
+              </View>
+            </LeftGlass>
           </Pressable>
         ) : isVisible ? (
           <View style={styles.homePeopleEmptyCard}>
@@ -280,10 +281,12 @@ export function HomeScreen({
               accessibilityRole="button"
               accessibilityLabel="Go visible"
               onPress={onBecomeVisible}
-              style={({ pressed }) => [styles.homePeoplePrivateAction, pressed && styles.iconButtonPressed]}
+              style={({ pressed }) => [styles.homeGlassButton, pressed && styles.homeGlassButtonPressed]}
             >
-              <Text style={styles.homePeoplePrivateActionText}>Go visible</Text>
-              <LeftIcon name="arrow-right" size={15} color={T.primary} />
+              <LeftGlass isInteractive radius={14} contentStyle={[styles.homePeoplePrivateAction, styles.homeGlassContent]}>
+                <Text style={styles.homePeoplePrivateActionText}>Go visible</Text>
+                <LeftIcon name="arrow-right" size={15} color={T.primary} />
+              </LeftGlass>
             </Pressable>
           </View>
         )}
@@ -310,40 +313,42 @@ export function HomeScreen({
             accessibilityRole="button"
             accessibilityLabel={`Open ${featuredPlace.name}`}
             onPress={() => onOpenVenueDetail(featuredPlace.venue)}
-            style={({ pressed }) => [styles.homeFeaturedPlaceCard, pressed && styles.homeFeaturedPlaceCardPressed]}
+            style={({ pressed }) => [styles.homeGlassButton, pressed && styles.homeGlassButtonPressed]}
           >
-            <View style={styles.homeFeaturedPlaceImageWrap}>
-              <Image source={featuredPlace.illustration} style={styles.homeVenueIllustrationImage} resizeMode="cover" />
-              {photoImage(featuredPlace.id)}
-              <LinearGradient
-                colors={["transparent", "rgba(26,24,21,0.28)"]}
-                start={{ x: 0.5, y: 0.45 }}
-                end={{ x: 0.5, y: 1 }}
-                style={styles.homeFeaturedPlaceShade}
-              />
-              <GlassSurface
-                variant="soft"
-                radius={glassRadii.pill}
-                style={styles.homeFeaturedPlaceSignal}
-                contentStyle={styles.homeFeaturedPlaceSignalContent}
-              >
-                <View style={[styles.homeFeaturedPlaceSignalDot, { backgroundColor: featuredPlace.signalBarColor }]} />
-                <Text style={styles.homeFeaturedPlaceSignalText}>{featuredPlace.energyLabel}</Text>
-              </GlassSurface>
-            </View>
-            {photoCredit(featuredPlace.id)}
-            <View style={styles.homeFeaturedPlaceBody}>
-              <View style={styles.homeFeaturedPlaceCopy}>
-                <Text style={styles.homeFeaturedPlaceName}>{featuredPlace.name}</Text>
-                <View style={styles.homeFeaturedPlaceMetaRow}>
-                  <LeftIcon name="map-pin" size={14} color={T.primary} />
-                  <Text style={styles.homeFeaturedPlaceMeta}>{featuredPlace.distanceLabel}</Text>
+            <LeftGlass isInteractive radius={24} contentStyle={[styles.homeFeaturedPlaceCard, styles.homeGlassContent]}>
+              <View style={styles.homeFeaturedPlaceImageWrap}>
+                <Image source={featuredPlace.illustration} style={styles.homeVenueIllustrationImage} resizeMode="cover" />
+                {photoImage(featuredPlace.id)}
+                <LinearGradient
+                  colors={["transparent", "rgba(26,24,21,0.28)"]}
+                  start={{ x: 0.5, y: 0.45 }}
+                  end={{ x: 0.5, y: 1 }}
+                  style={styles.homeFeaturedPlaceShade}
+                />
+                <GlassSurface
+                  variant="soft"
+                  radius={glassRadii.pill}
+                  style={styles.homeFeaturedPlaceSignal}
+                  contentStyle={styles.homeFeaturedPlaceSignalContent}
+                >
+                  <View style={[styles.homeFeaturedPlaceSignalDot, { backgroundColor: featuredPlace.signalBarColor }]} />
+                  <Text style={styles.homeFeaturedPlaceSignalText}>{featuredPlace.energyLabel}</Text>
+                </GlassSurface>
+              </View>
+              {photoCredit(featuredPlace.id)}
+              <View style={styles.homeFeaturedPlaceBody}>
+                <View style={styles.homeFeaturedPlaceCopy}>
+                  <Text style={styles.homeFeaturedPlaceName}>{featuredPlace.name}</Text>
+                  <View style={styles.homeFeaturedPlaceMetaRow}>
+                    <LeftIcon name="map-pin" size={14} color={T.primary} />
+                    <Text style={styles.homeFeaturedPlaceMeta}>{featuredPlace.distanceLabel}</Text>
+                  </View>
+                </View>
+                <View style={styles.homeFeaturedPlaceArrow}>
+                  <LeftIcon name="arrow-up-right" size={19} color={T.actionContent} />
                 </View>
               </View>
-              <View style={styles.homeFeaturedPlaceArrow}>
-                <LeftIcon name="arrow-up-right" size={19} color={T.actionContent} />
-              </View>
-            </View>
+            </LeftGlass>
           </Pressable>
         ) : (
           <View accessibilityRole="text" style={styles.homeVenueEmptyState}>
@@ -365,38 +370,42 @@ export function HomeScreen({
             accessibilityRole="button"
             accessibilityLabel={`Open ${experiences[0].title}`}
             onPress={() => onOpenExperience(experiences[0])}
-            style={({ pressed }) => [styles.homeExperienceCard, pressed && styles.iconButtonPressed]}
+            style={({ pressed }) => [styles.homeGlassButton, pressed && styles.homeGlassButtonPressed]}
           >
-            <View style={styles.homeExperienceDateBlock}>
-              <Text style={styles.homeExperienceMonth}>{formatExperienceMonth(experiences[0].startsAt)}</Text>
-              <Text style={styles.homeExperienceDay}>{formatExperienceDay(experiences[0].startsAt)}</Text>
-            </View>
-            <View style={styles.homeExperienceCopy}>
-              <Text style={styles.homeExperienceTitle}>{experiences[0].title}</Text>
-              <Text style={styles.homeExperienceMeta}>{`${formatExperienceTime(experiences[0].startsAt)} · ${experiences[0].venueName}`}</Text>
-              <Text style={styles.homeExperienceSeats}>{`${experiences[0].attendeeCount}/${experiences[0].capacity} going`}</Text>
-            </View>
-            <View style={styles.homePersonArrow}>
-              <LeftIcon name="arrow-up-right" size={17} color={T.textPrimary} />
-            </View>
+            <LeftGlass isInteractive radius={22} contentStyle={[styles.homeExperienceCard, styles.homeGlassContent]}>
+              <View style={styles.homeExperienceDateBlock}>
+                <Text style={styles.homeExperienceMonth}>{formatExperienceMonth(experiences[0].startsAt)}</Text>
+                <Text style={styles.homeExperienceDay}>{formatExperienceDay(experiences[0].startsAt)}</Text>
+              </View>
+              <View style={styles.homeExperienceCopy}>
+                <Text style={styles.homeExperienceTitle}>{experiences[0].title}</Text>
+                <Text style={styles.homeExperienceMeta}>{`${formatExperienceTime(experiences[0].startsAt)} · ${experiences[0].venueName}`}</Text>
+                <Text style={styles.homeExperienceSeats}>{`${experiences[0].attendeeCount}/${experiences[0].capacity} going`}</Text>
+              </View>
+              <View style={styles.homePersonArrow}>
+                <LeftIcon name="arrow-up-right" size={17} color={T.textPrimary} />
+              </View>
+            </LeftGlass>
           </Pressable>
         ) : (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Propose a small gathering"
             onPress={onCreateExperience}
-            style={({ pressed }) => [styles.homeExperienceEmptyCard, pressed && styles.iconButtonPressed]}
+            style={({ pressed }) => [styles.homeGlassButton, pressed && styles.homeGlassButtonPressed]}
           >
-            <View style={styles.homeExperienceEmptyIcon}>
-              <LeftIcon name="calendar" size={20} color={T.primary} />
-            </View>
-            <View style={styles.homeExperienceCopy}>
-              <Text style={styles.homeExperienceTitle}>Host something small</Text>
-              <Text style={styles.homeExperienceMeta}>Suggest a place and plan. Left reviews it before it appears nearby.</Text>
-            </View>
-            <View style={styles.homePersonArrow}>
-              <LeftIcon name="arrow-up-right" size={17} color={T.textPrimary} />
-            </View>
+            <LeftGlass isInteractive radius={22} contentStyle={[styles.homeExperienceEmptyCard, styles.homeGlassContent]}>
+              <View style={styles.homeExperienceEmptyIcon}>
+                <LeftIcon name="calendar" size={20} color={T.primary} />
+              </View>
+              <View style={styles.homeExperienceCopy}>
+                <Text style={styles.homeExperienceTitle}>Host something small</Text>
+                <Text style={styles.homeExperienceMeta}>Suggest a place and plan. Left reviews it before it appears nearby.</Text>
+              </View>
+              <View style={styles.homePersonArrow}>
+                <LeftIcon name="arrow-up-right" size={17} color={T.textPrimary} />
+              </View>
+            </LeftGlass>
           </Pressable>
         )}
         {experiences[0] ? (
@@ -428,28 +437,30 @@ export function HomeScreen({
                 accessibilityLabel={`Open ${item.name}`}
                 accessibilityHint="Shows venue details"
                 onPress={() => onOpenVenueDetail(item.venue)}
-                style={({ pressed }) => [styles.homeVenueCard, pressed && styles.iconButtonPressed]}
+                style={({ pressed }) => [styles.homeGlassButton, pressed && styles.homeGlassButtonPressed]}
               >
-                <View style={styles.homeVenueCardRow}>
-                  <View style={styles.homeVenueThumb}>
-                    <Image source={item.illustration} style={styles.homeVenueIllustrationImage} resizeMode="cover" />
-                    {photoImage(item.id)}
-                  </View>
-                  <View style={styles.homeVenueCardBody}>
-                    <View style={styles.homeVenueCardTopGroup}>
-                      <Text style={styles.homeVenueCardName}>{item.name}</Text>
-                      <Text style={[styles.homeVenueStatusText, { color: item.signalBarColor }]}>{item.energyLabel}</Text>
+                <LeftGlass isInteractive radius={22} contentStyle={[styles.homeVenueCard, styles.homeGlassContent]}>
+                  <View style={styles.homeVenueCardRow}>
+                    <View style={styles.homeVenueThumb}>
+                      <Image source={item.illustration} style={styles.homeVenueIllustrationImage} resizeMode="cover" />
+                      {photoImage(item.id)}
                     </View>
-                    <View style={styles.homeVenueDistanceRow}>
-                      <LeftIcon name="map-pin" size={15} color={T.textMuted} />
-                      <Text style={styles.homeVenueDistanceText}>{item.distanceLabel}</Text>
+                    <View style={styles.homeVenueCardBody}>
+                      <View style={styles.homeVenueCardTopGroup}>
+                        <Text style={styles.homeVenueCardName}>{item.name}</Text>
+                        <Text style={[styles.homeVenueStatusText, { color: item.signalBarColor }]}>{item.energyLabel}</Text>
+                      </View>
+                      <View style={styles.homeVenueDistanceRow}>
+                        <LeftIcon name="map-pin" size={15} color={T.textMuted} />
+                        <Text style={styles.homeVenueDistanceText}>{item.distanceLabel}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.homeVenueChevronBubble}>
+                      <LeftIcon name="chevron-right" size={20} color={T.secondary} />
                     </View>
                   </View>
-                  <View style={styles.homeVenueChevronBubble}>
-                    <LeftIcon name="chevron-right" size={20} color={T.secondary} />
-                  </View>
-                </View>
-                {photoCredit(item.id)}
+                  {photoCredit(item.id)}
+                </LeftGlass>
               </Pressable>
             ))}
           </View>
@@ -460,18 +471,20 @@ export function HomeScreen({
         accessibilityRole="button"
         accessibilityLabel="Open privacy and safety controls"
         onPress={onOpenSafety}
-        style={({ pressed }) => [styles.homeSafetyCard, pressed && styles.iconButtonPressed]}
+        style={({ pressed }) => [styles.homeGlassButton, pressed && styles.homeGlassButtonPressed]}
       >
-        <View style={styles.homeSafetyCardLeft}>
-          <View style={styles.homeSafetyCardIconWrap}>
-            <LeftIcon name="shield" size={20} color={T.primary} />
+        <LeftGlass isInteractive radius={22} contentStyle={[styles.homeSafetyCard, styles.homeGlassContent]}>
+          <View style={styles.homeSafetyCardLeft}>
+            <View style={styles.homeSafetyCardIconWrap}>
+              <LeftIcon name="shield" size={20} color={T.primary} />
+            </View>
+            <View style={styles.homeSafetyCardCopy}>
+              <Text style={styles.homeSafetyCardTitle}>You stay in control</Text>
+              <Text style={styles.homeSafetyCardSubtitle}>Review visibility, hiding, blocking, and reporting.</Text>
+            </View>
           </View>
-          <View style={styles.homeSafetyCardCopy}>
-            <Text style={styles.homeSafetyCardTitle}>You stay in control</Text>
-            <Text style={styles.homeSafetyCardSubtitle}>Review visibility, hiding, blocking, and reporting.</Text>
-          </View>
-        </View>
-        <LeftIcon name="chevron-right" size={22} color={T.textSecondary} />
+          <LeftIcon name="chevron-right" size={22} color={T.textSecondary} />
+        </LeftGlass>
       </Pressable>
     </View>
   );

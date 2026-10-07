@@ -81,3 +81,14 @@ it('rejects missing bearer token with a clear error',async()=>{
 it('allows CORS preflight without authentication',async()=>{
  expect((await endpoint.fetch(new Request('https://local/get-popular-times',{method:'OPTIONS'}))).status).toBe(200);
 });
+it('rejects the placeholder before claiming quota or launching a worker',async()=>{
+ const db=database();mocks.ctx={supabaseAdmin:db};
+ vi.stubGlobal('Deno',{env:{toObject:()=>({APIFY_TOKEN:'REPLACE_WITH_APIFY_TOKEN'})}});
+ expect((await endpoint.fetch(request())).status).toBe(503);
+ expect(db.rpc).not.toHaveBeenCalled();expect(mocks.job).not.toHaveBeenCalled();
+});
+it('continues to serve ready cache rows with a placeholder token',async()=>{
+ const db=database({status:'ready',has_data:false,expires_at:'2099-01-01'});mocks.ctx={supabaseAdmin:db};
+ vi.stubGlobal('Deno',{env:{toObject:()=>({APIFY_TOKEN:'REPLACE_WITH_APIFY_TOKEN'})}});
+ expect((await endpoint.fetch(request())).status).toBe(200);expect(db.rpc).not.toHaveBeenCalled();
+});

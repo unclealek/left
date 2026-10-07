@@ -54,12 +54,13 @@ export function normalizePopularTimes(payload: unknown, placeId: string): Popula
 
 export function createPopularTimesProvider(env: Record<string, string | undefined>, fetcher: typeof fetch = fetch): PopularTimesProvider {
   // Add future first-party adapters here; consumers and cache remain provider-independent.
-  if ((env.POPULAR_TIMES_PROVIDER ?? 'google_scrape') !== 'google_scrape' || !env.APIFY_TOKEN) throw new Error('Popular times provider is not configured');
+  const token = env.APIFY_TOKEN?.trim();
+  if ((env.POPULAR_TIMES_PROVIDER ?? 'google_scrape') !== 'google_scrape' || !token || token === 'REPLACE_WITH_APIFY_TOKEN') throw new Error('Popular times provider is not configured');
   return {
     source: 'google_scrape',
     async fetch(input) {
       const response = await fetcher('https://api.apify.com/v2/acts/crawlerbros~google-maps-popular-times/run-sync-get-dataset-items?timeout=90', {
-        method: 'POST', redirect: 'error', headers: { Authorization: `Bearer ${env.APIFY_TOKEN}`, 'Content-Type': 'application/json' },
+        method: 'POST', redirect: 'error', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ placeUrls: [input.placeUrl] }), signal: AbortSignal.timeout(100_000),
       });
       if (!response.ok) throw new Error('Popular times provider failed');

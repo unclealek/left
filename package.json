@@ -20,6 +20,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:popular-times:live": "node scripts/test-popular-times-live.mjs",
     "ios:simulator": "node scripts/ios-simulator.mjs",
     "test:popular-times:coverage": "vitest run --coverage --coverage.include='src/features/activity/popular-times-{model,subscription}.ts' --coverage.include='supabase/functions/_shared/popular-times-{provider,job}.ts' --coverage.include='supabase/functions/_shared/bounded-json.ts' --coverage.include='supabase/functions/get-popular-times/index.ts' --coverage.thresholds.lines=80 --coverage.thresholds.statements=80 --coverage.thresholds.functions=80 --coverage.thresholds.branches=80 --coverage.reportsDirectory=/tmp/left-popular-times-coverage"
   },
@@ -36,6 +37,7 @@
     "expo-crypto": "~15.0.9",
     "expo-dev-client": "~6.0.21",
     "expo-font": "~14.0.12",
+    "expo-glass-effect": "~0.1.10",
     "expo-image-manipulator": "~14.0.8",
     "expo-image-picker": "~17.0.11",
     "expo-linear-gradient": "~15.0.8",
@@ -58,9 +60,17 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.1.10",
-    "@vitest/coverage-v8": "^3.2.7",
+    "@vitest/coverage-v8": "4.1.11",
     "babel-preset-expo": "~54.0.10",
     "typescript": "~5.9.2",
-    "vitest": "^3.2.7"
+    "vitest": "4.1.11",
+    "image-size": "file:tooling/metro-image-size"
+  },
+  "overrides": {
+    "postcss": "8.5.28",
+    "xcode": {
+      "uuid": "11.1.1"
+    },
+    "image-size": "$image-size"
   }
 }

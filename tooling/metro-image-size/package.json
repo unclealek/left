@@ -1,0 +1,8 @@
+{
+  "name": "@left/metro-image-size",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Metro's synchronous image-size API backed by the patched upstream parser",
+  "main": "index.cjs",
+  "dependencies": { "image-size-modern": "npm:image-size@2.0.3" }
+}

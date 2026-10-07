@@ -2,7 +2,7 @@ import { makeRedirectUri } from "expo-auth-session";
 import * as QueryParams from "expo-auth-session/build/QueryParams";
 import * as WebBrowser from "expo-web-browser";
 import * as AppleAuthentication from "expo-apple-authentication";
-import { randomUUID } from "expo-crypto";
+import { CryptoDigestAlgorithm, digestStringAsync, randomUUID } from "expo-crypto";
 import { Platform } from "react-native";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
@@ -158,8 +158,10 @@ export async function startAppleAuthSession(): Promise<AppleAuthResult> {
   const nonce = randomUUID();
 
   try {
+    // Apple embeds this hash in its token; Supabase verifies it against the raw nonce.
+    const hashedNonce = await digestStringAsync(CryptoDigestAlgorithm.SHA256, nonce);
     const credential = await AppleAuthentication.signInAsync({
-      nonce,
+      nonce: hashedNonce,
       requestedScopes: [
         AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
         AppleAuthentication.AppleAuthenticationScope.EMAIL,
