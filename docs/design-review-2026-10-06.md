@@ -80,3 +80,17 @@ Validation:
 - The preview caught disclosure padding/wrapping and avatar contrast issues, which were corrected. React review checked hook ordering, stable list keys, selected/expanded accessibility state and preservation of the slider's existing accessibility action.
 
 Remaining limits: this is not a native VoiceOver/TalkBack, native keyboard or large-system-text certification. The web fixture does not verify authenticated API flows, native blur, or native device layout. Nothing was deployed.
+
+## Native follow-up — 7 October 2026
+
+Used the idle iPhone 17 Pro simulator on iOS 27.0 with an isolated Metro project under `/tmp/left-native-design`, rendering the real screen components with synthetic data. The other simulator's Apple sign-in and the workspace's in-progress auth changes were left untouched.
+
+Verified in the native accessibility tree and rendered UI:
+- Home private/visible states and recognition-first Approach layout.
+- Activation opens without focusing the hint field. An empty hint disables confirmation; entering a hint enables it.
+- The slider's exposed accessibility `activate` action changes the synthetic session to visible.
+- Chart day selection exposes the selected state; no-data text and expandable hourly details work. Decorative bars do not add 24 redundant accessibility stops.
+
+Found and corrected two activation accessibility issues: grouped the timer into one explicit minutes/seconds label, and hid decorative vibe/hint icons so their font glyphs are not announced. Verified the resulting native tree contains “29 minutes 30 seconds remaining” and no stray hint glyph.
+
+TypeScript and the current full test suite pass. These checks use native accessibility inspection, not a complete VoiceOver listening test. The simulator did not present the software keyboard, so keyboard occlusion remains unverified. System text-size testing is pending permission to temporarily change and restore the idle simulator's preference. No device preference, backend data or deployment was changed.

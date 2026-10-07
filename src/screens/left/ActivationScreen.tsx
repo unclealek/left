@@ -28,7 +28,9 @@ function PresenceTimerRing({
 
   return (
     <View
-      accessibilityLabel={`${remainingLabel} remaining`}
+      accessible
+      accessibilityRole="text"
+      accessibilityLabel={`${Math.floor(Math.max(0, remainingSeconds) / 60)} minutes ${Math.floor(Math.max(0, remainingSeconds) % 60)} seconds remaining`}
       style={styles.activationLiveTimerRing}
     >
       <Svg width={size} height={size} style={styles.activationLiveTimerSvg}>
@@ -138,7 +140,7 @@ export function ActivationScreen(props: {
 
         <View style={styles.activationLiveSummary}>
           <View style={styles.activationLiveSummaryItem}>
-            <View style={styles.activationLiveSummaryIconWrap}>
+            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.activationLiveSummaryIconWrap}>
               <LeftIcon name={getVibeIcon(vibeLabel)} size={18} color={T.primary} />
             </View>
             <View style={styles.activationLiveSummaryCopy}>
@@ -150,7 +152,7 @@ export function ActivationScreen(props: {
 
         {props.hintDraft.trim() ? (
           <View style={styles.activationLiveHint}>
-            <View style={styles.activationLiveSummaryIconWrap}>
+            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.activationLiveSummaryIconWrap}>
               <LeftIcon name="tag" size={18} color={T.primary} />
             </View>
             <View style={styles.activationLiveHintCopy}>
