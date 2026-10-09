@@ -169,6 +169,24 @@ export async function updatePresenceSessionEndState(sessionId: string, status: "
   return Boolean(data);
 }
 
+/** Query the server so a stale or missing UI session ID cannot leave presence behind. */
+export async function endOwnPresenceBeforeSignOut() {
+  const { data: { session }, error: authError } = await supabase.auth.getSession();
+  if (authError) return false;
+  if (!session) return true;
+  const { data, error } = await supabase.from("presence_sessions")
+    .select("id").eq("user_id", session.user.id).is("ended_at", null)
+    .in("status", ["activating", "visible", "discoverable", "expiring", "paused"]);
+  if (error) return false;
+  for (const row of data ?? []) {
+    const { error: endError } = await supabase.rpc("end_presence_session", {
+      p_session_id: row.id, p_status: "session_ended",
+    });
+    if (endError) return false;
+  }
+  return true;
+}
+
 export async function fetchVenueContextSummary(venueId: string): Promise<VenueContextSummary | null> {
   if (!isUuid(venueId)) return null;
 

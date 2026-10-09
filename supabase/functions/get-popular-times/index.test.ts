@@ -55,7 +55,7 @@ it('returns a bounded unavailable response when the shared budget is exhausted',
  const response=await endpoint.fetch(request());expect(response.status).toBe(429);expect(mocks.job).not.toHaveBeenCalled();
 });
 
-it.each([null,{id:'user-id',is_anonymous:true}])('rejects missing or anonymous users',async user=>{
+it.each([null,{id:'user-id',is_anonymous:true},{id:'user-id',app_metadata:{identity_removed:true}}])('rejects missing, anonymous, or removed users',async user=>{
  const db=database();mocks.ctx={supabaseAdmin:db};mocks.auth.mockResolvedValue({data:{user},error:null});
  expect((await endpoint.fetch(request())).status).toBe(401);expect(db.from).not.toHaveBeenCalled();
 });

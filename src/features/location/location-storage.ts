@@ -1,3 +1,4 @@
+import { supabase } from "../../lib/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { IntentType, VenueType } from "../../types/left-domain";
 import { VENUE_DISCOVERY_RADIUS_METERS } from "./venue-distance-policy";
@@ -67,6 +68,7 @@ export type RuntimeCoords = {
 };
 
 export type LocationRuntimeState = {
+  storageOwnerId?: string | null;
   permissionGranted: boolean;
   backgroundRegistered: boolean;
   currentVenueId: string | null;
@@ -110,18 +112,37 @@ const DEFAULT_RUNTIME_STATE: LocationRuntimeState = {
   launchActivationFromNotification: false,
 };
 
-async function readJson<T>(key: string, fallback: T): Promise<T> {
-  const raw = await AsyncStorage.getItem(key);
-  if (!raw) return fallback;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
+const transientCoords = new Map<string, { coords: RuntimeCoords; at: number }>();
+
+export async function getLocationStorageOwner() {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  return error ? null : session?.user.id ?? null;
 }
 
-async function writeJson<T>(key: string, value: T) {
-  await AsyncStorage.setItem(key, JSON.stringify(value));
+function scopedKey(key: string, owner: string) { return `${key}/account/${owner}`; }
+
+async function readJson<T>(key: string, fallback: T, owner?: string | null): Promise<T> {
+  const account = owner === undefined ? await getLocationStorageOwner() : owner;
+  if (!account) return fallback;
+  const raw = await AsyncStorage.getItem(scopedKey(key, account));
+  if (!raw || await getLocationStorageOwner() !== account) return fallback;
+  try { return JSON.parse(raw) as T; } catch { return fallback; }
+}
+
+async function writeJson<T>(key: string, value: T, owner?: string | null) {
+  const account = owner === undefined ? await getLocationStorageOwner() : owner;
+  if (!account || await getLocationStorageOwner() !== account) return;
+  await AsyncStorage.setItem(scopedKey(key, account), JSON.stringify(value));
+  // A logout racing the write must not leave data behind.
+  if (await getLocationStorageOwner() !== account) await AsyncStorage.multiRemove([scopedKey(key, account)]);
+}
+
+export async function clearLocationAccountData(owner: string | null) {
+  if (owner) transientCoords.delete(owner);
+  await AsyncStorage.multiRemove([
+    ...Object.values(STORAGE_KEYS), // Old unowned data must never migrate to another user.
+    ...(owner ? Object.values(STORAGE_KEYS).map(key => scopedKey(key, owner)) : []),
+  ]);
 }
 
 export function getDefaultRuntimeState() {
@@ -150,16 +171,23 @@ function normalizeLocationRuntimeState(
 }
 
 export async function getLocationRuntimeState() {
-  const runtime = await readJson<Partial<LocationRuntimeState>>(STORAGE_KEYS.runtime, DEFAULT_RUNTIME_STATE);
-  return normalizeLocationRuntimeState(runtime);
+  const owner = await getLocationStorageOwner();
+  const runtime = await readJson<Partial<LocationRuntimeState>>(STORAGE_KEYS.runtime, DEFAULT_RUNTIME_STATE, owner);
+  const fix = owner ? transientCoords.get(owner) : null;
+  return { ...normalizeLocationRuntimeState(runtime), storageOwnerId: owner,
+    lastKnownCoords: fix && Date.now() - fix.at < 5 * 60_000 ? fix.coords : null };
 }
 
 export async function saveLocationRuntimeState(next: LocationRuntimeState) {
+  const owner = next.storageOwnerId === undefined ? await getLocationStorageOwner() : next.storageOwnerId;
+  if (!owner || owner !== await getLocationStorageOwner()) return;
   const normalized = normalizeLocationRuntimeState(next);
+  if (normalized.lastKnownCoords) transientCoords.set(owner, { coords: normalized.lastKnownCoords, at: Date.now() });
   await writeJson(STORAGE_KEYS.runtime, {
     ...normalized,
+    lastKnownCoords: null,
     nearbyVenues: normalized.nearbyVenues.map(({ photo: _photo, ...venue }) => ({ ...venue, photoUrl: null })),
-  });
+  }, owner);
 }
 
 export async function updateLocationRuntimeState(
@@ -171,12 +199,12 @@ export async function updateLocationRuntimeState(
   return next;
 }
 
-export async function getVenuePreferences() {
-  return readJson<Record<string, VenuePreference>>(STORAGE_KEYS.venuePreferences, {});
+export async function getVenuePreferences(owner?: string | null) {
+  return readJson<Record<string, VenuePreference>>(STORAGE_KEYS.venuePreferences, {}, owner);
 }
 
-export async function saveVenuePreferences(next: Record<string, VenuePreference>) {
-  await writeJson(STORAGE_KEYS.venuePreferences, next);
+export async function saveVenuePreferences(next: Record<string, VenuePreference>, owner?: string | null) {
+  await writeJson(STORAGE_KEYS.venuePreferences, next, owner);
 }
 
 export async function upsertVenuePreference(
@@ -184,7 +212,8 @@ export async function upsertVenuePreference(
   venueName: string,
   updater: (current: VenuePreference) => VenuePreference,
 ) {
-  const all = await getVenuePreferences();
+  const owner = await getLocationStorageOwner();
+  const all = await getVenuePreferences(owner);
   const current =
     all[venueId] ??
     ({
@@ -197,14 +226,15 @@ export async function upsertVenuePreference(
     } satisfies VenuePreference);
   const next = updater(current);
   all[venueId] = next;
-  await writeJson(STORAGE_KEYS.venuePreferences, all);
+  await writeJson(STORAGE_KEYS.venuePreferences, all, owner);
   return next;
 }
 
 export async function clearVenuePreference(venueId: string) {
-  const all = await getVenuePreferences();
+  const owner = await getLocationStorageOwner();
+  const all = await getVenuePreferences(owner);
   delete all[venueId];
-  await writeJson(STORAGE_KEYS.venuePreferences, all);
+  await writeJson(STORAGE_KEYS.venuePreferences, all, owner);
 }
 
 export async function getActivationDefaults() {
@@ -228,13 +258,14 @@ export async function upsertVenueApproachPrompt(
   venueName: string,
   promptText: string,
 ) {
-  const all = await getVenueApproachPrompts();
+  const owner = await getLocationStorageOwner();
+  const all = await readJson<Record<string, VenueApproachPrompt>>(STORAGE_KEYS.venueApproachPrompts, {}, owner);
   all[venueId] = {
     venueId,
     venueName,
     promptText,
     updatedAt: new Date().toISOString(),
   };
-  await writeJson(STORAGE_KEYS.venueApproachPrompts, all);
+  await writeJson(STORAGE_KEYS.venueApproachPrompts, all, owner);
   return all[venueId];
 }

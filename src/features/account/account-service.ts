@@ -1,9 +1,10 @@
 import { supabase } from "../../lib/supabase";
+import * as AppleAuthentication from "expo-apple-authentication";
 import type { AppUser, AvatarStyle } from "../../types/left-domain";
 import type { UserProfileRow } from "../../app/leftConfig";
 import type { LegalDocumentId } from "../legal/legal-content";
 
-export type AccountDeletionResult = "processed" | "queued" | "duplicate" | "failed";
+export type AccountDeletionResult = "processed" | "queued" | "duplicate" | "failed" | "cancelled";
 
 export async function fetchUserProfile(userId: string) {
   const { data, error } = await supabase.from("users").select("*").eq("id", userId).maybeSingle();
@@ -111,9 +112,26 @@ export async function updateUserSettings(input: {
 export async function submitIdentityRemovalRequest(user: AppUser): Promise<AccountDeletionResult> {
   const {
     data: { user: authUser },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  const { data: requestRow, error } = await supabase
+  if (authError || !authUser || authUser.id !== user.id) return "failed";
+  let appleAuthorizationCode: string | undefined;
+  if (authUser.identities?.some((identity) => identity.provider === "apple")) {
+    try {
+      const credential = await AppleAuthentication.signInAsync();
+      if (!credential.authorizationCode) return "failed";
+      appleAuthorizationCode = credential.authorizationCode;
+    } catch (error) {
+      return typeof error === "object" && error !== null && "code" in error && error.code === "ERR_REQUEST_CANCELED"
+        ? "cancelled" : "failed";
+    }
+  }
+  const { data: pending, error: pendingError } = await supabase.from("identity_removal_requests")
+    .select("id").eq("user_id", user.id).in("status", ["pending", "processing"]).maybeSingle();
+  if (pendingError) return "failed";
+
+  const { data: requestRow, error } = pending ? { data: pending, error: null } : await supabase
     .from("identity_removal_requests")
     .insert({
       user_id: user.id,
@@ -152,9 +170,9 @@ export async function submitIdentityRemovalRequest(user: AppUser): Promise<Accou
 
   if (!requestRow?.id) return "failed";
 
-  const { error: processingError } = await supabase.functions.invoke("process-identity-removal", {
-    body: { requestId: requestRow.id },
+  const { data: processingResult, error: processingError } = await supabase.functions.invoke("process-identity-removal", {
+    body: { requestId: requestRow.id, ...(appleAuthorizationCode ? { appleAuthorizationCode } : {}) },
   });
 
-  return processingError ? "queued" : "processed";
+  return processingError || processingResult?.ok !== true ? "queued" : "processed";
 }

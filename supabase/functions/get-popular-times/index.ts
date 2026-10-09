@@ -11,7 +11,7 @@ const authenticatedFetch = withSupabase({auth:'user'}, async (req, ctx) => {
     if (req.method !== 'POST') return json({error:'POST required'}, 405);
     try {
       const {data: {user}, error: authError} = await ctx.supabase.auth.getUser(req.headers.get('Authorization')!.slice(7));
-      if (authError || !user || user.is_anonymous) return json({error:'A signed-in Supabase session is required'},401);
+      if (authError || !user || user.is_anonymous || user.app_metadata?.identity_removed) return json({error:'A signed-in Supabase session is required'},401);
       let input;
       try { input = validatePopularTimesInput(await readBoundedJson(req, 4096)); }
       catch (error) {

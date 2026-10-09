@@ -11,6 +11,8 @@ import {
   saveLocationRuntimeState,
   updateLocationRuntimeState,
   upsertVenuePreference,
+  getLocationStorageOwner,
+  clearLocationAccountData,
 } from "./location-storage";
 import { detectVenueFromCoords, getNearbyVenues } from "./venue-detection";
 import type { AppUser } from "../../types/left-domain";
@@ -20,6 +22,32 @@ export const VENUE_PROMPT_CATEGORY_ID = "left/venue-prompt";
 const VENUE_DWELL_MS = 5 * 60_000;
 const VENUE_COOLDOWN_MS = 2 * 60 * 60_000;
 const IGNORED_PROMPT_MS = 15 * 60_000;
+let locationGeneration = 0;
+
+function backgroundLocationOptions(): Location.LocationTaskOptions {
+  return {
+    accuracy: Location.Accuracy.Balanced, distanceInterval: 35, timeInterval: 60_000,
+    showsBackgroundLocationIndicator: false, pausesUpdatesAutomatically: false,
+    foregroundService: { notificationTitle: "Left is checking for social venues",
+      notificationBody: "Your location is used to find nearby venues." },
+  };
+}
+
+export async function stopLocationForAccount(owner: string | null) {
+  locationGeneration += 1;
+  try {
+    if (Platform.OS !== "web" && await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME)) {
+      await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+    }
+    if (Platform.OS !== "web") {
+      const notifications = await Notifications.getPresentedNotificationsAsync();
+      await Promise.all(notifications.filter(item => item.request.content.categoryIdentifier === VENUE_PROMPT_CATEGORY_ID)
+        .map(item => Notifications.dismissNotificationAsync(item.request.identifier)));
+    }
+  } finally {
+    await clearLocationAccountData(owner);
+  }
+}
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -103,6 +131,9 @@ export async function requestNotificationAccess() {
 }
 
 export async function requestLocationAccess() {
+  const owner = await getLocationStorageOwner();
+  const generation = locationGeneration;
+  if (!owner) return { granted: false, notificationsGranted: false, reason: "foreground_denied" as const };
   try {
     console.info("[location] requesting foreground permission");
     const foreground = await Location.requestForegroundPermissionsAsync();
@@ -139,25 +170,22 @@ export async function requestLocationAccess() {
 
     const notificationsGranted = await requestNotificationAccess();
     const alreadyStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
+    if (generation !== locationGeneration || owner !== await getLocationStorageOwner()) {
+      return { granted: false, notificationsGranted: false, reason: "foreground_denied" as const };
+    }
     console.info("[location] background registration state", { alreadyStarted });
     if (!alreadyStarted) {
       console.info("[location] starting background location updates");
       await withTimeout(
-        Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-          accuracy: Location.Accuracy.Balanced,
-          distanceInterval: 35,
-          timeInterval: 60_000,
-          showsBackgroundLocationIndicator: false,
-          pausesUpdatesAutomatically: false,
-          foregroundService: {
-            notificationTitle: "Left is checking for social venues",
-            notificationBody: "Location stays on-device until a venue is matched.",
-          },
-        }),
+        Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, backgroundLocationOptions()),
         10000,
         "Background location registration",
       );
       console.info("[location] background location updates started");
+    }
+    if (generation !== locationGeneration || owner !== await getLocationStorageOwner()) {
+      await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+      return { granted: false, notificationsGranted: false, reason: "foreground_denied" as const };
     }
 
     await updateLocationRuntimeState((current) => ({
@@ -196,6 +224,9 @@ export async function primeLocationFix() {
 }
 
 export async function syncLocationRegistrationState() {
+  const owner = await getLocationStorageOwner();
+  const generation = locationGeneration;
+  if (!owner) return getDefaultRuntimeState();
   if (Platform.OS === "web") {
     const foreground = await Location.getForegroundPermissionsAsync();
     return updateLocationRuntimeState((current) => ({
@@ -207,8 +238,17 @@ export async function syncLocationRegistrationState() {
 
   const foreground = await Location.getForegroundPermissionsAsync();
   const background = await Location.getBackgroundPermissionsAsync();
-  const backgroundRegistered = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
+  let backgroundRegistered = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
   const permissionGranted = foreground.status === "granted" && background.status === "granted";
+  if (permissionGranted && !backgroundRegistered && generation === locationGeneration && owner === await getLocationStorageOwner()) {
+    // Resume existing permission only; never ask for new permission during sign-in.
+    await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, backgroundLocationOptions());
+    if (generation !== locationGeneration || owner !== await getLocationStorageOwner()) {
+      await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+      return getDefaultRuntimeState();
+    }
+    backgroundRegistered = true;
+  }
   console.info("[location] sync registration state", {
     foreground: foreground.status,
     background: background.status,
@@ -247,10 +287,15 @@ export async function selectNearbyVenue(venueId: string) {
 }
 
 export async function processLocationFix(coords: Location.LocationObjectCoords) {
+  const generation = locationGeneration;
+  const owner = await getLocationStorageOwner();
+  if (!owner) return;
+  const stillCurrent = async () => generation === locationGeneration && owner === await getLocationStorageOwner();
   console.info("[location] processing location fix", {
     accuracyAvailable: coords.accuracy != null,
   });
   const runtime = await getLocationRuntimeState();
+  if (!await stillCurrent()) return;
 
   if (
     runtime.prompt &&
@@ -261,10 +306,11 @@ export async function processLocationFix(coords: Location.LocationObjectCoords) 
   }
 
   const nearbyVenues = await getNearbyVenues(coords);
+  if (!await stillCurrent()) return;
   if (!nearbyVenues.length) {
     console.info("[location] no venue detected, clearing dwell state");
-    await updateLocationRuntimeState((current) => ({
-      ...current,
+    await saveLocationRuntimeState({
+      ...runtime,
       currentVenueId: null,
       currentVenueName: null,
       selectedVenueId: null,
@@ -277,7 +323,7 @@ export async function processLocationFix(coords: Location.LocationObjectCoords) 
       },
       dwellEnteredAt: null,
       dwellLastSeenAt: null,
-    }));
+    });
     return;
   }
 
@@ -285,6 +331,7 @@ export async function processLocationFix(coords: Location.LocationObjectCoords) 
     ? runtime.selectedVenueId
     : null;
   const venue = await detectVenueFromCoords(coords, preferredVenueId, nearbyVenues);
+  if (!await stillCurrent()) return;
   if (!venue) {
     console.info("[location] nearby venues found, awaiting venue confirmation");
     await saveLocationRuntimeState({
@@ -306,7 +353,8 @@ export async function processLocationFix(coords: Location.LocationObjectCoords) 
     return;
   }
 
-  const preferences = await getVenuePreferences();
+  const preferences = await getVenuePreferences(owner);
+  if (!await stillCurrent()) return;
   const venuePreference = preferences[venue.id];
   const sameVenue = runtime.currentVenueId === venue.id;
   const enteredAt = sameVenue && runtime.dwellEnteredAt ? runtime.dwellEnteredAt : nowIso();
@@ -375,32 +423,41 @@ export async function processLocationFix(coords: Location.LocationObjectCoords) 
     venueId: venue.id,
     venueName: venue.name,
   });
-  await Notifications.scheduleNotificationAsync({
+  if (!await stillCurrent()) return;
+  const notificationId = await Notifications.scheduleNotificationAsync({
     content: {
       title: "Open to chat?",
       body: `You've been at ${venue.name} a while. Open to chat?`,
       categoryIdentifier: VENUE_PROMPT_CATEGORY_ID,
       data: {
+        ownerId: owner,
         venueId: venue.id,
         venueName: venue.name,
       },
     },
     trigger: null,
   });
-
-  await updateLocationRuntimeState((current) => ({
-    ...current,
+  if (!await stillCurrent()) {
+    await Notifications.dismissNotificationAsync(notificationId);
+    return;
+  }
+  const latest = await getLocationRuntimeState();
+  if (!await stillCurrent()) return;
+  await saveLocationRuntimeState({
+    ...latest,
     prompt: {
       venueId: venue.id,
       venueName: venue.name,
       sentAt: nowIso(),
       responded: false,
     },
-  }));
+  });
 }
 
 export async function handleVenuePromptResponse(response: NotificationResponse) {
   const data = response.notification.request.content.data ?? {};
+  const owner = await getLocationStorageOwner();
+  if (!owner || data.ownerId !== owner) return { action: "unknown" as const };
   const venueId = String(data.venueId ?? "");
   const venueName = String(data.venueName ?? "");
   console.info("[location] notification response received", {

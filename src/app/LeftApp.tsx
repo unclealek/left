@@ -19,6 +19,9 @@ import {
 } from "./leftConfig";
 import { styles } from "./leftTheme";
 import { supabase } from "../lib/supabase";
+import { signOutSafely } from "../features/auth/sign-out";
+import { endOwnPresenceBeforeSignOut } from "../features/presence/presence-service";
+import { stopLocationForAccount } from "../features/location/location-service";
 import { EMPTY_NEARBY_FEED, INITIAL_VENUE_SUMMARY } from "./initialState";
 import type {
   AppUser,
@@ -254,6 +257,9 @@ const PRIVATE_VENUE_SUMMARY: VenueContextSummary = {
 };
 
 export function LeftApp() {
+  const localAccountIdRef = useRef<string | null>(null);
+  const sessionSyncEpochRef = useRef(0);
+  const signOutInProgressRef = useRef(false);
   const insets = useSafeAreaInsets();
   const [screen, setScreen] = useState<Screen>("loading");
   const [activationReturnScreen, setActivationReturnScreen] = useState<Screen>("home");
@@ -666,7 +672,6 @@ export function LeftApp() {
 
   useEffect(() => {
     void bootstrapSession();
-    void bootstrapDeviceState();
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -685,6 +690,10 @@ export function LeftApp() {
       notificationSubscription.remove();
     };
   }, []);
+
+  useEffect(() => {
+    if (user) void bootstrapDeviceState();
+  }, [user?.id]);
 
   useEffect(() => {
     const step = onboardingStepForScreen(screen);
@@ -940,23 +949,30 @@ export function LeftApp() {
   }
 
   async function bootstrapDeviceState() {
+    const owner = localAccountIdRef.current;
+    if (!owner) return;
     try {
       const runtime = await syncLocationRegistrationState();
+      if (localAccountIdRef.current !== owner) return;
       setLocationEnabled(runtime.permissionGranted);
       const notificationPermission = await Notifications.getPermissionsAsync();
+      if (localAccountIdRef.current !== owner) return;
       setNotificationEnabled(notificationPermission.status === "granted");
       if (runtime.permissionGranted) {
         await primeLocationFix();
       }
       await refreshVenueFromRuntime();
       const defaults = await loadLastActivationDefaults();
+      if (localAccountIdRef.current !== owner) return;
       if (defaults) {
         setSelectedIntent(defaults.intent);
         setSelectedVibes(normalizeVibes(defaults.vibes));
         setSelectedDuration(defaults.durationMinutes);
         setHintDraft(defaults.hintText);
       }
-      setVenueApproachPrompts(await getVenueApproachPrompts());
+      const prompts = await getVenueApproachPrompts();
+      if (localAccountIdRef.current !== owner) return;
+      setVenueApproachPrompts(prompts);
       await refreshVenuePreferences();
     } catch (error) {
       console.warn("[location] device bootstrap failed", error);
@@ -966,6 +982,7 @@ export function LeftApp() {
 
   async function refreshVenueFromRuntime() {
     const runtime = await getLocationRuntimeState();
+    if (!runtime.storageOwnerId || runtime.storageOwnerId !== localAccountIdRef.current) return;
     setNearbyVenueOptions(runtime.nearbyVenues);
     setLastKnownCoords(runtime.lastKnownCoords);
     setVenueSelectionRequired(
@@ -1073,6 +1090,7 @@ export function LeftApp() {
 
   async function recoverActivePresenceSession(appUser: AppUser) {
     const activeSession = await fetchActivePresenceSession(appUser.id);
+    if (localAccountIdRef.current !== appUser.id) return false;
     if (!activeSession) {
       setActivePresenceSessionId(null);
       setSessionVisible(false);
@@ -1126,7 +1144,8 @@ export function LeftApp() {
   }
 
   async function refreshNearbyFeed(userId: string, venueId: string) {
-    setFeed(await fetchNearbyFeed(userId, venueId));
+    const next = await fetchNearbyFeed(userId, venueId);
+    if (localAccountIdRef.current === userId) setFeed(next);
   }
 
   async function refreshSocialMomentumEvents(visibilitySessionId: string | null, actorUserId = user?.id ?? null) {
@@ -1163,31 +1182,34 @@ export function LeftApp() {
   }
 
   async function refreshVenuePreferences() {
-    const preferences = await loadVenuePreferences(user?.id ?? null);
+    const owner = localAccountIdRef.current;
+    const preferences = await loadVenuePreferences(owner);
+    if (localAccountIdRef.current !== owner) return;
     setVenuePreferences(preferences);
     setVenueHidden(!!preferences[venueSummary.venueId]?.hidden);
   }
 
   async function loadVenuePreferences(userId: string | null) {
-    const localPreferences = await getVenuePreferences();
+    const localPreferences = await getVenuePreferences(userId);
     const serverPreferences = userId ? await fetchVenuePreferencesForUser(userId) : null;
     const mergedPreferences = mergeVenuePreferences(localPreferences, serverPreferences ?? {});
     if (serverPreferences) {
-      await saveVenuePreferences(mergedPreferences);
+      await saveVenuePreferences(mergedPreferences, userId);
     }
     return mergedPreferences;
   }
 
   async function syncVenuePreferencesForUser(userId: string) {
-    const localPreferences = await getVenuePreferences();
+    const localPreferences = await getVenuePreferences(userId);
     const serverPreferences = await fetchVenuePreferencesForUser(userId);
     if (!serverPreferences) return localPreferences;
 
     const mergedPreferences = mergeVenuePreferences(localPreferences, serverPreferences);
-    await saveVenuePreferences(mergedPreferences);
+    await saveVenuePreferences(mergedPreferences, userId);
 
     await Promise.all(
       Object.values(mergedPreferences).map(async (preference) => {
+        if (localAccountIdRef.current !== userId) return;
         const serverPreference = serverPreferences[preference.venueId];
         if (serverPreference && new Date(serverPreference.updatedAt).getTime() >= new Date(preference.updatedAt).getTime()) {
           return;
@@ -1223,12 +1245,14 @@ export function LeftApp() {
 
   async function syncApproachFollowUp(appUser: AppUser) {
     const pending = await getPendingApproachFeedback(appUser.id);
+    if (localAccountIdRef.current !== appUser.id) return;
     if (pending) {
       setPendingApproachFeedback(pending);
       return;
     }
 
     const storedApproach = await getStoredActiveApproach(appUser.id);
+    if (localAccountIdRef.current !== appUser.id) return;
     if (!storedApproach) return;
     if (Date.now() < new Date(storedApproach.expiresAt).getTime()) return;
 
@@ -1253,6 +1277,7 @@ export function LeftApp() {
 
     await savePendingApproachFeedback(nextPending);
     await clearStoredActiveApproach();
+    if (localAccountIdRef.current !== appUser.id) return;
     setPendingApproachFeedback(nextPending);
   }
 
@@ -1458,6 +1483,18 @@ export function LeftApp() {
   }
 
   async function syncSession(session: Session | null, isInitialLoad: boolean) {
+    const epoch = ++sessionSyncEpochRef.current;
+    const isCurrent = () => epoch === sessionSyncEpochRef.current;
+    const previousOwner = localAccountIdRef.current;
+    const nextOwner = session?.user.id ?? null;
+    localAccountIdRef.current = nextOwner;
+    if (previousOwner !== nextOwner || !nextOwner) {
+      clearLocalSessionState();
+      await stopLocationForAccount(previousOwner);
+      await Promise.all([clearStoredActiveApproach(), clearPendingApproachFeedback()]);
+      if (previousOwner) await clearOnboardingDraft(previousOwner);
+      if (!isCurrent()) return;
+    }
     setAuthError(null);
     logAuthDebug("sync session", {
       hasSession: !!session,
@@ -1476,6 +1513,7 @@ export function LeftApp() {
     setFirstNameDraft(inferredFirstName);
 
     const { profile, error } = await fetchUserProfile(session.user.id);
+    if (!isCurrent()) return;
     if (error) {
       logAuthDebug("profile lookup failed", { message: error.message, code: error.code });
       setBootError("We could not load your profile. Your session is still secure.");
@@ -1490,7 +1528,7 @@ export function LeftApp() {
     });
     if (profile?.identity_removed) {
       logAuthDebug("identity removed account detected", { userId: profile.id });
-      await forceLocalSignOut();
+      await forceLocalSignOut(true);
       setAuthError("This account has been removed.");
       return;
     }
@@ -1498,6 +1536,7 @@ export function LeftApp() {
       setUser(null);
       setOnboardingUserId(session.user.id);
       const draft = await loadOnboardingDraft(session.user.id);
+      if (!isCurrent()) return;
       if (draft) {
         setFirstNameDraft(draft.firstName || inferredFirstName);
         setAvatarStyleDraft(draft.avatarStyle);
@@ -1525,6 +1564,7 @@ export function LeftApp() {
         community: CURRENT_LEGAL_VERSIONS.community,
       };
       const acceptance = await hasAcceptedLegalVersions(session.user.id, currentVersions);
+      if (!isCurrent()) return;
       if (acceptance.error) {
         console.warn("[legal] acceptance lookup failed", acceptance.error);
         setBootError("We could not verify your policy choices. Your session is still secure.");
@@ -1546,9 +1586,11 @@ export function LeftApp() {
     void clearOnboardingDraft(session.user.id);
     setFirstNameDraft(profile.first_name);
     const syncedVenuePreferences = await syncVenuePreferencesForUser(appUser.id);
+    if (!isCurrent()) return;
     setVenuePreferences(syncedVenuePreferences);
     setVenueHidden(!!syncedVenuePreferences[venueSummary.venueId]?.hidden);
     const recoveredActiveSession = await recoverActivePresenceSession(appUser);
+    if (!isCurrent()) return;
     setScreen(recoveredActiveSession ? "venue" : "home");
   }
 
@@ -1777,7 +1819,7 @@ export function LeftApp() {
       showDialog("Finish your visibility details", "Choose at least one vibe and add a short hint so people can identify you in the venue.");
       return;
     }
-    if (activationAttemptRef.current) return;
+    if (activationAttemptRef.current || signOutInProgressRef.current) return;
     activationAttemptRef.current = true;
     setActivationSubmitting(true);
 
@@ -2444,22 +2486,64 @@ export function LeftApp() {
   }
 
   async function signOut() {
-    await supabase.auth.signOut();
-    clearLocalSessionState();
+    if (activationAttemptRef.current || visibilityAction || signOutInProgressRef.current) return;
+    signOutInProgressRef.current = true;
+    const owner = localAccountIdRef.current;
+    setVisibilityAction("end");
+    try {
+      await signOutSafely({
+        endPresence: endOwnPresenceBeforeSignOut,
+        signOut: () => supabase.auth.signOut(),
+        clearLocal: async () => {
+          await stopLocationForAccount(owner);
+          clearLocalSessionState();
+        },
+      });
+    } catch {
+      showDialog("Sign-out not completed", "We could not confirm that your visibility ended and sign-out completed. Stay online and try again.");
+    } finally {
+      signOutInProgressRef.current = false;
+      setVisibilityAction(null);
+    }
   }
 
-  async function forceLocalSignOut() {
-    await supabase.auth.signOut();
+  async function forceLocalSignOut(removedAccount = false) {
+    if (!removedAccount) return signOut();
+    const owner = localAccountIdRef.current;
+    await supabase.auth.signOut({ scope: "local" });
+    await stopLocationForAccount(owner);
     clearLocalSessionState();
   }
 
   function clearLocalSessionState() {
+    setPendingApproachFeedback(null);
+    setLastKnownCoords(null);
+    setNearbyVenueOptions([]);
+    setVenuePreferences({});
+    setVenueApproachPrompts({});
+    setVenueSummary(INITIAL_VENUE_SUMMARY);
+    setSelectedVenueDetail(null);
+    setVenueDraftPhotoUri(null);
+    setVenueDraftName("");
+    setVenueDraftAddress("");
+    setVenueDraftNotes("");
+    setFirstNameDraft("");
+    setHintDraft("");
+    setSelectedIntent(null);
+    setSelectedVibes([]);
+    setVenueHidden(false);
+    setLocationEnabled(false);
     setUser(null);
     setSelectedProfile(null);
     setSelectedExperience(null);
     setSavedVenues([]);
     setExperiences([]);
-    void endSessionState("session_ended", { toast: false });
+    setSessionVisible(false);
+    setSessionStartedAt(null);
+    setSessionExpiresAt(null);
+    setActivePresenceSessionId(null);
+    setSocialMomentumEvents([]);
+    setFeed([]);
     setApproach(null);
     setActiveApproachPrompt(defaultApproachPrompt);
     setAuthError(null);
@@ -2530,37 +2614,33 @@ export function LeftApp() {
     setDeletionRequestState("submitting");
     const result = await submitIdentityRemovalRequest(user);
 
+    if (result === "cancelled") {
+      setDeletionRequestState("idle");
+      return;
+    }
+
     if (result === "duplicate") {
-      setDeletionRequestState("submitted");
-      showDialog("Identity removal", "You already have an open identity-removal request.");
+      setDeletionRequestState("error");
+      showDialog("Identity removal", "Your request is already saved. Try removal again to finish processing it.");
       return;
     }
 
     if (result === "failed") {
       setDeletionRequestState("error");
-      showDialog("Identity removal failed", "We could not create your identity-removal request.");
+      showDialog("Identity removal failed", "We could not complete the authorization or save your request. Please try again.");
       return;
     }
 
     if (result === "queued") {
-      setDeletionRequestState("submitted");
+      setDeletionRequestState("error");
       showDialog(
-        "Identity removal queued",
-        "We recorded your request, but backend processing did not finish yet. Your request is still on file for follow-up.",
-        [
-          {
-            label: "OK",
-            variant: "primary",
-            onPress: () => {
-              void signOut();
-            },
-          },
-        ],
+        "Identity removal not completed",
+        "Your request is saved, but removal did not finish. Please stay signed in and try again. Apple accounts may need fresh authorization.",
       );
       return;
     }
 
-    setDeletionRequestState("submitted");
+    await forceLocalSignOut(true);
     showDialog(
       "Identity removed",
       "Direct identity fields were removed. Your retained records stay in place under the current policy.",
@@ -2568,9 +2648,6 @@ export function LeftApp() {
         {
           label: "OK",
           variant: "primary",
-          onPress: () => {
-            void signOut();
-          },
         },
       ],
     );
@@ -3028,7 +3105,7 @@ export function LeftApp() {
           onNavigate={goToFooterDestination}
         />
       )}
-      {pendingApproachFeedback ? (
+      {pendingApproachFeedback && pendingApproachFeedback.userId === user?.id ? (
         <ApproachFeedbackPrompt
           feedback={pendingApproachFeedback}
           wentOver={feedbackWentOver}

@@ -1,5 +1,5 @@
 import { makeRedirectUri } from "expo-auth-session";
-import * as QueryParams from "expo-auth-session/build/QueryParams";
+import { completePkceCallback } from "./oauth-callback";
 import * as WebBrowser from "expo-web-browser";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { CryptoDigestAlgorithm, digestStringAsync, randomUUID } from "expo-crypto";
@@ -117,41 +117,14 @@ export async function startGoogleAuthSession(
   logAuthDebug("browser auth result", { type: result.type });
   if (result.type !== "success" || !result.url) return { status: "cancelled" };
 
-  const { params, errorCode } = QueryParams.getQueryParams(result.url);
-  if (errorCode) {
-    logAuthDebug("callback query parsing failed", { errorCode });
-    return { status: "failed", message: "Google sign-in did not complete." };
-  }
-
-  const accessToken = typeof params.access_token === "string" ? params.access_token : null;
-  const refreshToken = typeof params.refresh_token === "string" ? params.refresh_token : null;
-  const authCode = typeof params.code === "string" ? params.code : null;
-
-  if (accessToken && refreshToken) {
-    const { error: sessionError } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    });
-    if (sessionError) {
-      logAuthDebug("session set failed", { message: sessionError.message, code: sessionError.code, status: sessionError.status });
-      return { status: "failed", message: "Google sign-in did not complete." };
-    }
-    logAuthDebug("session set from callback tokens");
+  try {
+    await completePkceCallback(result.url, redirectTo, (code) => supabase.auth.exchangeCodeForSession(code));
+    logAuthDebug("PKCE session exchange complete");
     return { status: "completed" };
+  } catch {
+    logAuthDebug("PKCE callback rejected");
+    return { status: "failed", message: "Google sign-in did not complete. Please start again." };
   }
-
-  if (authCode) {
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(authCode);
-    if (exchangeError) {
-      logAuthDebug("session exchange failed", { message: exchangeError.message, code: exchangeError.code, status: exchangeError.status });
-      return { status: "failed", message: "Google sign-in did not complete." };
-    }
-    logAuthDebug("session exchange complete");
-    return { status: "completed" };
-  }
-
-  logAuthDebug("callback missing auth tokens and code");
-  return { status: "failed", message: "Google sign-in did not complete." };
 }
 
 export async function startAppleAuthSession(): Promise<AppleAuthResult> {
