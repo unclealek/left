@@ -23,7 +23,8 @@
         "UIBackgroundModes": [
           "location"
         ]
-      }
+      },
+      "buildNumber": "2"
     },
     "android": {
       "package": "com.left.mobile",
