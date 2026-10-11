@@ -20,63 +20,75 @@ export async function findNearbyVenueRows(
   supabaseAdmin: any,
   input: { latitude: number; longitude: number; radiusMetres: number },
 ) {
-  const { data, error } = await supabaseAdmin
-    .from("venues")
-    .select(`
-      id,
-      name,
-      type,
-      source,
-      google_place_id,
-      formatted_address,
-      latitude,
-      longitude,
-      timezone,
-      primary_type,
-      google_photo_name,
-      community_added_by_name,
-      community_notes,
-      community_photo_path,
-      geofence_json
-    `)
-    .eq("is_active", true)
-    .limit(200);
-
-  if (error) throw error;
-
-  return (data ?? [])
-    .map((row: any) => {
-      const latitude =
-        row.latitude ??
-        row.geofence_json?.center?.latitude ??
-        null;
-      const longitude =
-        row.longitude ??
-        row.geofence_json?.center?.longitude ??
-        null;
-      if (typeof latitude !== "number" || typeof longitude !== "number") return null;
-      const distanceMetres = distanceMeters(
-        input.latitude,
-        input.longitude,
+  const nearbyVenues: any[] = [];
+  let afterId: string | null = null;
+  // Page by the stable primary key before filtering, including legacy rows
+  // whose coordinates live only in geofence_json. A global limit hides places.
+  while (true) {
+    let query = supabaseAdmin
+      .from("venues")
+      .select(`
+        id,
+        name,
+        type,
+        source,
+        google_place_id,
+        formatted_address,
         latitude,
         longitude,
-      );
-      const radiusMeters =
-        typeof row.geofence_json?.radius_meters === "number"
-          ? row.geofence_json.radius_meters
-          : 120;
-      if (distanceMetres > input.radiusMetres) return null;
+        timezone,
+        primary_type,
+        google_photo_name,
+        community_added_by_name,
+        community_notes,
+        community_photo_path,
+        geofence_json
+      `)
+      .eq("is_active", true)
+      .order("id", { ascending: true })
+      .limit(200);
+    if (afterId !== null) query = query.gt("id", afterId);
+    const { data, error } = await query;
 
-      return {
-        ...row,
-        latitude,
-        longitude,
-        radius_meters: radiusMeters,
-        distance_metres: distanceMetres,
-      };
-    })
-    .filter(Boolean)
-    .sort((a: any, b: any) => a.distance_metres - b.distance_metres);
+    if (error) throw error;
+
+    const page = data ?? [];
+    nearbyVenues.push(...page
+      .map((row: any) => {
+        const latitude =
+          row.latitude ??
+          row.geofence_json?.center?.latitude ??
+          null;
+        const longitude =
+          row.longitude ??
+          row.geofence_json?.center?.longitude ??
+          null;
+        if (typeof latitude !== "number" || typeof longitude !== "number") return null;
+        const distanceMetres = distanceMeters(
+          input.latitude,
+          input.longitude,
+          latitude,
+          longitude,
+        );
+        const radiusMeters =
+          typeof row.geofence_json?.radius_meters === "number"
+            ? row.geofence_json.radius_meters
+            : 120;
+        if (distanceMetres > input.radiusMetres) return null;
+
+        return {
+          ...row,
+          latitude,
+          longitude,
+          radius_meters: radiusMeters,
+          distance_metres: distanceMetres,
+        };
+      })
+      .filter(Boolean));
+    if (page.length < 200) break;
+    afterId = page[page.length - 1].id;
+  }
+  return nearbyVenues.sort((a: any, b: any) => a.distance_metres - b.distance_metres);
 }
 
 export async function upsertVenueFromGooglePlace(supabaseAdmin: any, place: any) {
@@ -111,7 +123,7 @@ export async function upsertVenueFromGooglePlace(supabaseAdmin: any, place: any)
           types: Array.isArray(place.types) ? place.types : [],
           photoName: place.photos?.[0]?.name ?? null,
         },
-        is_active: true,
+        // New rows use the database default true; refreshes preserve disablement.
         last_verified_at: new Date().toISOString(),
         last_google_sync_at: new Date().toISOString(),
       },

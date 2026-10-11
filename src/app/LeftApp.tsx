@@ -36,7 +36,8 @@ import type {
   VenueContextSummary,
 } from "../types/left-domain";
 import { AuthScreen } from "../screens/left/AuthScreen";
-import { LegalScreen } from "../screens/left/LegalScreen";
+import * as WebBrowser from "expo-web-browser";
+import { openLegalWebsite } from "../features/legal/legal-links";
 import { LoadingScreen } from "../screens/left/LoadingScreen";
 import { PreAuthOnboardingScreen } from "../screens/left/PreAuthOnboardingScreen";
 import {
@@ -148,10 +149,11 @@ import {
 import { validateFirstName } from "../features/onboarding/onboarding-validation";
 import { getLocationRecoveryMessage } from "../features/onboarding/onboarding-flow";
 import {
+  LEGAL_DOCUMENTS,
   CURRENT_LEGAL_VERSIONS,
   legalContentReady,
   type LegalDocumentId,
-} from "../features/legal/legal-content";
+} from "../features/legal/legal-config";
 import { usePopularTimesForVenues } from "../features/activity/use-popular-times";
 import { fetchVenueActivity } from "../features/activity/venue-activity-service";
 import {
@@ -274,13 +276,7 @@ export function LeftApp() {
   const [avatarStyleDraft, setAvatarStyleDraft] = useState<AvatarStyle>("geometric");
   const [onboardingInterests, setOnboardingInterests] = useState<string[]>([]);
   const [onboardingUserId, setOnboardingUserId] = useState<string | null>(null);
-  const [legalChecks, setLegalChecks] = useState<Record<LegalDocumentId, boolean>>({
-    terms: false,
-    privacy: false,
-    community: false,
-  });
-  const [activeLegalDocument, setActiveLegalDocument] = useState<LegalDocumentId>("terms");
-  const [legalReturnScreen, setLegalReturnScreen] = useState<Screen>("auth");
+  const [legalAgreed, setLegalAgreed] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [onboardingSaveBusy, setOnboardingSaveBusy] = useState(false);
@@ -463,10 +459,11 @@ export function LeftApp() {
     setScreen("safety");
   }
 
-  function openLegalDocument(document: LegalDocumentId, origin: Screen) {
-    setActiveLegalDocument(document);
-    setLegalReturnScreen(origin);
-    setScreen("legal");
+  async function openLegalDocument(document: LegalDocumentId) {
+    const result = await openLegalWebsite(LEGAL_DOCUMENTS[document].url, WebBrowser.openBrowserAsync);
+    if (!result.ok) {
+      showDialog("Could not open document", "Please check your connection and try opening the document again. Your agreement has not been recorded by opening this link.");
+    }
   }
 
   function onboardingScreenForStep(step: OnboardingDraftStep): Screen {
@@ -711,12 +708,10 @@ export function LeftApp() {
 
   useEffect(() => {
     const isOnboarding = screen.startsWith("onboarding-");
-    if (!isOnboarding && screen !== "legal-consent" && screen !== "legal") return;
+    if (!isOnboarding && screen !== "legal-consent") return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
       if (isOnboarding) {
         goBackInOnboarding();
-      } else if (screen === "legal") {
-        setScreen(legalReturnScreen);
       } else {
         void forceLocalSignOut();
       }
@@ -728,7 +723,6 @@ export function LeftApp() {
     firstNameDraft,
     avatarStyleDraft,
     onboardingUserId,
-    legalReturnScreen,
   ]);
 
   useEffect(() => {
@@ -1489,7 +1483,7 @@ export function LeftApp() {
     const nextOwner = session?.user.id ?? null;
     localAccountIdRef.current = nextOwner;
     if (previousOwner !== nextOwner || !nextOwner) {
-      clearLocalSessionState();
+      clearLocalSessionState("loading");
       await stopLocationForAccount(previousOwner);
       await Promise.all([clearStoredActiveApproach(), clearPendingApproachFeedback()]);
       if (previousOwner) await clearOnboardingDraft(previousOwner);
@@ -1576,6 +1570,7 @@ export function LeftApp() {
         setOnboardingUserId(session.user.id);
         setFirstNameDraft(appUser.firstName);
         setAvatarStyleDraft(appUser.avatarStyle);
+        setLegalAgreed(false);
         setScreen("legal-consent");
         return;
       }
@@ -1649,7 +1644,8 @@ export function LeftApp() {
       await primeLocationFix();
       await refreshVenueFromRuntime();
       await persistOnboardingStep("complete");
-      setScreen("legal-consent");
+      if (legalAgreed && legalContentReady) await finishOnboarding();
+      else setScreen("legal-consent");
     } catch (error) {
       console.warn("[onboarding] location step failed", error);
       setLocationError("Left could not finish the permission check. Try again, or review device settings.");
@@ -1659,6 +1655,31 @@ export function LeftApp() {
   }
 
   async function finishOnboarding() {
+    if (onboardingSaveBusy) return;
+    const versions = legalContentReady && CURRENT_LEGAL_VERSIONS.terms && CURRENT_LEGAL_VERSIONS.privacy && CURRENT_LEGAL_VERSIONS.community
+      ? { terms: CURRENT_LEGAL_VERSIONS.terms, privacy: CURRENT_LEGAL_VERSIONS.privacy, community: CURRENT_LEGAL_VERSIONS.community }
+      : null;
+    if (!versions || !legalAgreed) {
+      setAuthError("Agree to the Terms of Service and Community Guidelines once the legal documents are available.");
+      return;
+    }
+    if (user?.onboardingCompleted) {
+      setOnboardingSaveBusy(true);
+      setAuthError(null);
+      try {
+        const acceptance = await recordLegalAcceptance(versions);
+        if (!acceptance.ok) {
+          setAuthError("Your agreement could not be saved. Please try again.");
+          return;
+        }
+        setScreen("home");
+      } catch {
+        setAuthError("Your agreement could not be saved. Please try again.");
+      } finally {
+        setOnboardingSaveBusy(false);
+      }
+      return;
+    }
     const validation = validateFirstName(firstNameDraft);
     if (!validation.valid) {
       setAuthError(validation.message);
@@ -1670,11 +1691,6 @@ export function LeftApp() {
       setScreen("onboarding-name");
       return;
     }
-    if (legalContentReady && !Object.values(legalChecks).every(Boolean)) {
-      setAuthError("Review and accept all published policies to finish.");
-      return;
-    }
-
     setOnboardingSaveBusy(true);
     setAuthError(null);
     try {
@@ -1709,36 +1725,9 @@ export function LeftApp() {
         updatedAt: now,
       };
 
-      const versions =
-        legalContentReady &&
-        CURRENT_LEGAL_VERSIONS.terms &&
-        CURRENT_LEGAL_VERSIONS.privacy &&
-        CURRENT_LEGAL_VERSIONS.community
-          ? {
-              terms: CURRENT_LEGAL_VERSIONS.terms,
-              privacy: CURRENT_LEGAL_VERSIONS.privacy,
-              community: CURRENT_LEGAL_VERSIONS.community,
-            }
-          : null;
-      if (user?.onboardingCompleted) {
-        if (!versions) {
-          setScreen("home");
-          return;
-        }
-        const acceptance = await recordLegalAcceptance(versions);
-        if (!acceptance.ok) {
-          console.warn("[legal] acceptance save failed", acceptance.error);
-        setAuthError(describeSaveError(acceptance.error, "Your policy acceptance could not be saved. Please try again."));
-          return;
-        }
-        setAuthError(null);
-        setScreen("home");
-        return;
-      }
-
       const result = await upsertOnboardingProfile(
         nextUser,
-        versions ? { versions } : null,
+        { versions },
       );
       if (!result.ok) {
         console.warn("[onboarding] profile save failed", result.error);
@@ -1782,8 +1771,8 @@ export function LeftApp() {
   }
 
   async function continueLegalStep() {
-    if (!legalChecks.community) {
-      setAuthError("Agree to the community pledge to continue.");
+    if (!legalContentReady || !legalAgreed) {
+      setAuthError("Agree to the Terms of Service and Community Guidelines to continue.");
       return;
     }
     setAuthError(null);
@@ -2515,7 +2504,8 @@ export function LeftApp() {
     clearLocalSessionState();
   }
 
-  function clearLocalSessionState() {
+  function clearLocalSessionState(destination: "auth" | "loading" = "auth") {
+    setLegalAgreed(false);
     setPendingApproachFeedback(null);
     setLastKnownCoords(null);
     setNearbyVenueOptions([]);
@@ -2556,7 +2546,7 @@ export function LeftApp() {
     setVisibilityAction(null);
     setReportCategory("unsafe_behavior");
     setReportNotes("");
-    setScreen("auth");
+    setScreen(destination);
   }
 
   async function endSessionState(
@@ -2717,7 +2707,7 @@ export function LeftApp() {
     : "Background location is not enabled yet.";
   const isOnboardingScreen = screen.startsWith("onboarding-") || screen === "legal-consent";
   const isPreAuthScreen = screen === "preauth";
-  const isFullBleedScreen = screen === "auth" || screen === "legal" || screen === "loading" || isPreAuthScreen;
+  const isFullBleedScreen = screen === "auth" || screen === "loading" || isPreAuthScreen;
   const isSessionNavScreen = SESSION_NAV_SCREENS.includes(screen);
   const isRefreshableScreen = REFRESHABLE_SCREENS.includes(screen);
   const scrollContentPaddingTop =
@@ -2780,11 +2770,8 @@ export function LeftApp() {
             onAuth={startGoogleAuth}
             onAppleAuth={startAppleAuth}
             onBack={() => setScreen("preauth")}
-            onOpenLegal={(document) => openLegalDocument(document, "auth")}
+            onOpenLegal={(document) => void openLegalDocument(document)}
           />
-        )}
-        {screen === "legal" && (
-          <LegalScreen documentId={activeLegalDocument} onBack={() => setScreen(legalReturnScreen)} />
         )}
         {screen === "onboarding-name" && (
           <NameScreen
@@ -2801,11 +2788,9 @@ export function LeftApp() {
         )}
         {screen === "onboarding-legal" && (
           <LegalAcknowledgementScreen
-            checks={legalChecks}
-            onToggle={(document) =>
-              setLegalChecks((current) => ({ ...current, [document]: !current[document] }))
-            }
-            onOpenDocument={(document) => openLegalDocument(document, "onboarding-legal")}
+            agreed={legalAgreed}
+            onToggle={() => setLegalAgreed((current) => !current)}
+            onOpenDocument={(document) => void openLegalDocument(document)}
             onBack={goBackInOnboarding}
             onContinue={() => void continueLegalStep()}
             error={authError}
@@ -2831,11 +2816,9 @@ export function LeftApp() {
         )}
         {screen === "legal-consent" && (
           <LegalAcknowledgementScreen
-            checks={legalChecks}
-            onToggle={(document) =>
-              setLegalChecks((current) => ({ ...current, [document]: !current[document] }))
-            }
-            onOpenDocument={(document) => openLegalDocument(document, "legal-consent")}
+            agreed={legalAgreed}
+            onToggle={() => setLegalAgreed((current) => !current)}
+            onOpenDocument={(document) => void openLegalDocument(document)}
             onBack={user?.onboardingCompleted ? () => void forceLocalSignOut() : goBackInOnboarding}
             onContinue={() => void finishOnboarding()}
             busy={onboardingSaveBusy}
@@ -3062,7 +3045,7 @@ export function LeftApp() {
             onRequestDeletion={() => void requestAccountDeletion()}
             onShowDialog={showDialog}
             onBack={() => setScreen("me")}
-            onOpenLegal={(document) => openLegalDocument(document, "settings")}
+            onOpenLegal={(document) => void openLegalDocument(document)}
           />
         )}
         {screen === "saved" && (

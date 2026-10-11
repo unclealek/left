@@ -34,7 +34,7 @@ export default {
       radiusMetres,
     });
 
-    if (!venues.length) {
+    {
       const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
       if (apiKey) {
         const places = await searchNearbyPlaces({
@@ -42,12 +42,15 @@ export default {
           latitude,
           longitude,
           radiusMetres,
+          maxResultCount: 20,
         }).catch((error) => {
           console.warn("[nearby-venues] Google Places lookup failed", error?.message ?? error);
-          return [];
+          return null;
         });
 
-        for (const place of places) {
+        if (places === null && !venues.length) return json({ error: "Nearby places are temporarily unavailable. Please retry." }, 503);
+
+        for (const place of places ?? []) {
           try {
             await upsertVenueFromGooglePlace(ctx.supabaseAdmin, place);
           } catch (error) {
@@ -62,6 +65,8 @@ export default {
           longitude,
           radiusMetres,
         });
+      } else if (!venues.length) {
+        return json({ error: "Nearby places are temporarily unavailable. Please retry." }, 503);
       }
     }
 

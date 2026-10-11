@@ -22,7 +22,9 @@ export function resolveVenueActivityDisplay(
   const score = venueActivity.activity.score ?? venueActivity.activity.forecastScore;
   return {
     title: venueActivity.activity.displayText,
-    subtitle: venueActivity.activity.refreshing
+    subtitle: venueActivity.activity.displayText === "Popular times temporarily unavailable"
+      ? "We couldn’t load popular times. Please check again later."
+      : venueActivity.activity.refreshing
       ? "Fetching venue activity…"
       : venueActivity.activity.source === "google_scrape" && score == null
         ? venueActivity.activity.displayText === "Popular times available"

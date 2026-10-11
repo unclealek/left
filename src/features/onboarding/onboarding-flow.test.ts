@@ -16,10 +16,10 @@ describe("onboarding recovery", () => {
   });
 
   it("requires every published legal document and never records pending content", () => {
-    const complete = { terms: true, privacy: true, community: true };
+    const complete = true;
     expect(canCompleteLegalStep(true, complete)).toBe(true);
-    expect(canCompleteLegalStep(true, { ...complete, privacy: false })).toBe(false);
-    expect(canCompleteLegalStep(false, { terms: false, privacy: false, community: false })).toBe(true);
+    expect(canCompleteLegalStep(true, false)).toBe(false);
+    expect(canCompleteLegalStep(false, false)).toBe(false);
   });
 
   it("gives actionable permission recovery copy", () => {

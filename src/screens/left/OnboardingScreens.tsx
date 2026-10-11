@@ -15,7 +15,7 @@ import {
   LEGAL_DOCUMENTS,
   legalContentReady,
   type LegalDocumentId,
-} from "../../features/legal/legal-content";
+} from "../../features/legal/legal-config";
 
 const avatarLabels: Record<AvatarStyle, string> = {
   geometric: "Soft Square",
@@ -580,20 +580,12 @@ export function NotificationScreen({
   );
 }
 
-type LegalChecks = Record<LegalDocumentId, boolean>;
-
 export function LegalAcknowledgementScreen({
-  checks,
-  onToggle,
-  onOpenDocument,
-  onBack,
-  onContinue,
-  busy = false,
-  error,
-  standalone = false,
+  agreed, onToggle, onOpenDocument, onBack, onContinue,
+  busy = false, error, standalone = false,
 }: {
-  checks: LegalChecks;
-  onToggle: (document: LegalDocumentId) => void;
+  agreed: boolean;
+  onToggle: () => void;
   onOpenDocument: (document: LegalDocumentId) => void;
   onBack: () => void;
   onContinue: () => void;
@@ -601,150 +593,60 @@ export function LegalAcknowledgementScreen({
   error?: string | null;
   standalone?: boolean;
 }) {
-  const canContinue = standalone
-    ? canCompleteLegalStep(legalContentReady, checks)
-    : checks.community;
-  const allPoliciesAccepted = Object.values(checks).every(Boolean);
-
-  function toggleAllPolicies() {
-    (Object.keys(checks) as LegalDocumentId[]).forEach((documentId) => {
-      if (checks[documentId] === allPoliciesAccepted) onToggle(documentId);
-    });
-  }
-
+  const canContinue = canCompleteLegalStep(legalContentReady, agreed);
   return (
     <OnboardingShell
       step={standalone ? 5 : 2}
-      showProgress
+      showProgress={!standalone}
       onBack={onBack}
       footer={
-        <PrimaryButton
-          label={
-            busy
-              ? "Saving your choices…"
-              : standalone
-                ? legalContentReady
-                  ? "Join the community"
-                  : "Finish setup"
-                : "I agree"
-          }
-          onPress={onContinue}
-          disabled={!canContinue}
-          loading={busy}
-          trailingIcon="chevron-right"
-          tone="onboarding"
-        />
+        <PrimaryButton label="Agree & Continue" onPress={onContinue}
+          disabled={!canContinue || busy} loading={busy} trailingIcon="chevron-right" tone="onboarding" />
       }
     >
       <View style={styles.onboardingIntroBlock}>
-        <Text accessibilityRole="header" style={styles.onboardingTitle}>
-          {standalone ? "One last thing." : "Good people make good communities."}
-        </Text>
+        <Text accessibilityRole="header" style={styles.onboardingTitle}>Before you join Left</Text>
+        <Text style={styles.onboardingBody}>Welcome to a community designed for real-world social discovery.</Text>
         <Text style={styles.onboardingBody}>
-          {standalone
-            ? "Before entering Left, review the policies that protect our community and your privacy."
-            : "We build real connection through intentional presence, kindness, and respect for one another."}
+          By continuing, you agree to Left’s Terms of Service and Community Guidelines,
+          and acknowledge that our Privacy Policy has been made available to you.
         </Text>
       </View>
-
-      {!standalone ? (
-        <>
-          <View accessibilityLabel="Community principles" style={styles.onboardingPrincipleList}>
-            {[
-              { icon: "heart" as const, title: "Be respectful", body: "Treat people as you would in real life. Welcome individuality and assume positive intent." },
-              { icon: "minus-circle" as const, title: "Respect boundaries", body: "Check in before assuming conversational, emotional, or physical space." },
-              { icon: "smile" as const, title: "Be yourself", body: "Authenticity makes real connection easier. No performances or false personas." },
-              { icon: "shield" as const, title: "Keep the community safe", body: "Block or report behaviour that makes you or someone else uncomfortable." },
-            ].map((rule) => (
-              <View key={rule.title} style={styles.onboardingPrincipleCard}>
-                <View style={styles.onboardingPrincipleIcon}>
-                  <LeftIcon name={rule.icon} size={21} color={T.onboardingInk} />
-                </View>
-                <View style={styles.onboardingPrincipleCopy}>
-                  <Text style={styles.onboardingPrincipleTitle}>{rule.title}</Text>
-                  <Text style={styles.onboardingPrincipleBody}>{rule.body}</Text>
-                </View>
+      <View style={styles.onboardingLegalSection}>
+        <View accessibilityLabel="Legal documents" style={styles.onboardingFinalPolicyList}>
+          {(Object.keys(LEGAL_DOCUMENTS) as LegalDocumentId[]).map((id) => (
+            <Pressable key={id} accessibilityRole="link" onPress={() => onOpenDocument(id)}
+              style={({ pressed }) => [styles.onboardingFinalPolicyRow, pressed && styles.onboardingPressed]}>
+              <View style={styles.onboardingFinalPolicyIcon}>
+                <LeftIcon name={id === "privacy" ? "shield" : "file-text"} size={20} color={T.onboardingAccent} />
               </View>
-            ))}
-          </View>
-
-          <View style={styles.onboardingPledgeCard}>
-            <Pressable
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: checks.community }}
-              accessibilityLabel="Agree to follow the Community Guidelines"
-              onPress={() => onToggle("community")}
-              style={[
-                styles.onboardingPledgeCheck,
-                checks.community && styles.onboardingLegalCheckActive,
-              ]}
-            >
-              {checks.community ? <LeftIcon name="check" size={16} color={T.actionContent} /> : null}
+              <View style={styles.onboardingLegalLinkButton}>
+                <Text style={styles.onboardingFinalPolicyTitle}>{LEGAL_DOCUMENTS[id].title}</Text>
+                {LEGAL_DOCUMENTS[id].version ? <Text style={styles.onboardingFinalPolicySummary}>
+                  Version {LEGAL_DOCUMENTS[id].version} · Effective {LEGAL_DOCUMENTS[id].publishedAt}
+                </Text> : null}
+              </View>
+              <LeftIcon name="external-link" size={20} color={T.onboardingInkMuted} />
             </Pressable>
-            <View style={styles.onboardingPledgeCopy}>
-              <Text style={styles.onboardingPledgeTitle}>I agree to follow the Community Guidelines</Text>
-              <Text style={styles.onboardingPledgeBody}>I’ll help nurture a warm, accountable space.</Text>
-              <Pressable accessibilityRole="link" onPress={() => onOpenDocument("community")} style={styles.onboardingPledgeLink}>
-                <LeftIcon name="book-open" size={16} color={T.onboardingAccent} />
-                <Text style={styles.onboardingPledgeLinkText}>Read Community Guidelines</Text>
-              </Pressable>
-            </View>
-          </View>
-          <Text style={styles.onboardingSafetyStatement}>Zero tolerance for harassment, discrimination, or hate speech.</Text>
-        </>
-      ) : null}
-
-      {standalone ? (
-        <View style={styles.onboardingLegalSection}>
-          <View accessibilityLabel="Policies" style={styles.onboardingFinalPolicyList}>
-            {(Object.keys(LEGAL_DOCUMENTS) as LegalDocumentId[]).map((documentId) => {
-              const document = LEGAL_DOCUMENTS[documentId];
-              return (
-                <Pressable
-                  key={documentId}
-                  accessibilityRole="link"
-                  onPress={() => onOpenDocument(documentId)}
-                  style={({ pressed }) => [styles.onboardingFinalPolicyRow, pressed && styles.onboardingPressed]}
-                >
-                  <View style={styles.onboardingFinalPolicyIcon}>
-                    <LeftIcon name={documentId === "privacy" ? "shield" : "file-text"} size={20} color={T.onboardingAccent} />
-                  </View>
-                  <View style={styles.onboardingLegalLinkButton}>
-                    <Text style={styles.onboardingFinalPolicyTitle}>{document.title}</Text>
-                    <Text numberOfLines={1} style={styles.onboardingFinalPolicySummary}>{document.summary}</Text>
-                  </View>
-                  <LeftIcon name="chevron-right" size={20} color={T.onboardingInkMuted} />
-                </Pressable>
-              );
-            })}
-          </View>
-
-          {legalContentReady ? (
-            <Pressable
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: allPoliciesAccepted }}
-              onPress={toggleAllPolicies}
-              style={({ pressed }) => [styles.onboardingFinalConsent, pressed && styles.onboardingPressed]}
-            >
-              <View style={[styles.onboardingPledgeCheck, allPoliciesAccepted && styles.onboardingLegalCheckActive]}>
-                {allPoliciesAccepted ? <LeftIcon name="check" size={16} color={T.actionContent} /> : null}
-              </View>
-              <View style={styles.onboardingPledgeCopy}>
-                <Text style={styles.onboardingPledgeTitle}>I understand and accept all policies</Text>
-                <Text style={styles.onboardingPledgeBody}>I agree to Left’s terms, privacy rules, and community standards.</Text>
-              </View>
-            </Pressable>
-          ) : (
-            <View accessibilityRole="alert" style={styles.onboardingLegalPending}>
-              <LeftIcon name="alert-circle" size={18} color={T.visibilityOff} />
-              <Text style={styles.onboardingLegalPendingText}>
-                These preview documents are still being finalized. No policy acceptance will be recorded yet.
-              </Text>
-            </View>
-          )}
+          ))}
         </View>
-      ) : null}
-
+        <Pressable accessibilityRole="checkbox"
+          accessibilityLabel="I agree to the Terms of Service and Community Guidelines"
+          accessibilityState={{ checked: agreed, disabled: busy || !legalContentReady }}
+          disabled={busy || !legalContentReady} onPress={onToggle}
+          style={({ pressed }) => [styles.onboardingFinalConsent, pressed && styles.onboardingPressed]}>
+          <View style={[styles.onboardingPledgeCheck, agreed && styles.onboardingLegalCheckActive]}>
+            {agreed ? <LeftIcon name="check" size={16} color={T.actionContent} /> : null}
+          </View>
+          <View style={styles.onboardingPledgeCopy}>
+            <Text style={styles.onboardingPledgeTitle}>I agree to the Terms of Service and Community Guidelines.</Text>
+            <Text style={styles.onboardingPledgeBody}>The Privacy Policy explains how Left uses personal data. Location and notification permissions remain separate.</Text>
+          </View>
+        </Pressable>
+        {!legalContentReady ? <View accessibilityRole="alert" style={styles.onboardingLegalPending}>
+          <Text style={styles.onboardingLegalPendingText}>Left’s legal documents are not available yet. Please try again after the next update.</Text>
+        </View> : null}
+      </View>
       {error ? <Text accessibilityRole="alert" style={styles.onboardingError}>{error}</Text> : null}
     </OnboardingShell>
   );

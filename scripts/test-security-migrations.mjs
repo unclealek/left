@@ -38,7 +38,7 @@ try {
     try { await db.exec(await readFile(`supabase/migrations/${name}`, "utf8")); }
     catch (error) { throw new Error(`Migration ${name}: ${error.message}`); }
   }
-  for (const name of ["rpc-authorization.sql", "presence-location-validation.sql", "database-advisor-hardening.sql", "removed-account-access.sql"]) {
+  for (const name of ["rpc-authorization.sql", "presence-location-validation.sql", "database-advisor-hardening.sql", "removed-account-access.sql", "venue-actions.sql"]) {
     try { await db.exec(await readFile(`supabase/tests/${name}`, "utf8")); }
     catch (error) { throw new Error(`Fixture ${name}: ${error.message}`); }
     console.log(`PASS ${name}`);

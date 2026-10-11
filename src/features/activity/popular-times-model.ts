@@ -31,7 +31,7 @@ export function popularTimesActivity(row: PopularTimesRow | null, timezone?: str
   const label = score == null ? 'unknown' : score >= 85 ? 'packed' : score >= 65 ? 'busy' : score >= 40 ? 'active' : score >= 20 ? 'light' : 'quiet';
   return {
     label, score, forecastScore:score, liveAvailable:false, comparison:'unknown', comparisonText:'',
-    displayText:pending ? 'Loading popular times…' : score != null ? `Typically ${label}` : fresh && row?.has_data ? 'Popular times available' : 'Popular times unavailable',
+    displayText:row?.status === 'failed' ? 'Popular times temporarily unavailable' : pending ? 'Loading popular times…' : score != null ? `Typically ${label}` : fresh && row?.has_data ? 'Popular times available' : 'Popular times unavailable',
     updatedAt:row?.fetched_at ?? null, isStale:!fresh, refreshing:pending, source:row?.source ?? 'google_scrape',
   };
 }

@@ -17,3 +17,7 @@ it('builds a stable Google Maps URL from the cache identity', async () => {
   const {googleMapsPlaceUrl} = await import('./popular-times-model');
   expect(new URL(googleMapsPlaceUrl('ChIJ_test')).searchParams.get('query_place_id')).toBe('ChIJ_test');
 });
+it('distinguishes provider failure from successful no-data results', () => {
+ expect(popularTimesActivity({...row,status:'failed'},'UTC').displayText).toBe('Popular times temporarily unavailable');
+ expect(popularTimesActivity({...row,has_data:false},'UTC',new Date('2026-09-29')) .displayText).toBe('Popular times unavailable');
+});

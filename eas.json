@@ -37,6 +37,7 @@
       "extends": "production",
       "distribution": "store",
       "environment": "development",
+      "autoIncrement": false,
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://xrracivlxgedlzdcrfwx.supabase.co"
       },

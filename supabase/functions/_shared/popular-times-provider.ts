@@ -1,3 +1,6 @@
+export class PopularTimesHttpError extends Error {
+  constructor(readonly status: number, readonly reason = 'unknown') { super('Popular times provider failed'); this.name = 'PopularTimesHttpError'; }
+}
 import { readBoundedJson } from "./bounded-json.ts";
 
 export const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
@@ -63,7 +66,19 @@ export function createPopularTimesProvider(env: Record<string, string | undefine
         method: 'POST', redirect: 'error', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ placeUrls: [input.placeUrl] }), signal: AbortSignal.timeout(100_000),
       });
-      if (!response.ok) throw new Error('Popular times provider failed');
+      if (!response.ok) {
+        let reason = 'unknown';
+        try {
+          const body = await readBoundedJson(response, 8192) as {error?: {type?: unknown}};
+          const type = body?.error?.type;
+          const allowed = ['insufficient-permissions', 'actor-is-not-rented', 'apify-plan-required-to-use-paid-actor',
+            'missing-actor-rights', 'actor-disabled', 'public-actor-disabled', 'user-or-token-not-found',
+            'not-enough-usage-to-run-paid-actor', 'monthly-usage-limit-too-low', 'user-email-not-verified',
+            'user-has-no-subscription', 'store-terms-not-accepted', 'platform-feature-disabled', 'actor-not-public'];
+          if (typeof type === 'string' && allowed.includes(type)) reason = type;
+        } catch { /* Keep only status if the response is malformed or too large. */ }
+        throw new PopularTimesHttpError(response.status, reason);
+      }
       return normalizePopularTimes(await readBoundedJson(response, 128 * 1024), input.placeId);
     },
   };

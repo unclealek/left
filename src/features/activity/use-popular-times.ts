@@ -50,7 +50,7 @@ export function usePopularTimesForVenues(venues: RuntimeVenueCandidate[], presen
     if (!venue.placeId) continue;
     const state = states[venue.placeId] ?? PENDING_POPULAR_TIMES;
     const activity = popularTimesActivity(state.data,venue.timezone);
-    if (state.status === 'failed' && !state.data) {activity.refreshing = false; activity.displayText = 'Popular times unavailable';}
+    if (state.status === 'failed' && !state.data) {activity.refreshing = false; activity.displayText = 'Popular times temporarily unavailable';}
     result[venue.id] = {venueId:venue.id, googlePlaceId:venue.placeId,name:venue.name, activity,
       leftPresence:presence[venue.id]?.leftPresence ?? {total:0,visible:0,openToMeet:0}};
   }

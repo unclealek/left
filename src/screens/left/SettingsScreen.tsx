@@ -74,11 +74,14 @@ export function SettingsScreen({
         <SettingsMenuRow icon="radio" label="Notifications" helper="Manage alerts." onPress={openNotificationPreferences} last />
       </View>
 
-      <Text style={styles.settingsGroupTitle}>General</Text>
+      <Text style={styles.settingsGroupTitle}>Legal</Text>
       <View style={styles.settingsMenuCard}>
         <SettingsMenuRow icon="file-text" label="Terms of Service" onPress={() => onOpenLegal("terms")} />
         <SettingsMenuRow icon="lock" label="Privacy Policy" onPress={() => onOpenLegal("privacy")} />
-        <SettingsMenuRow icon="users" label="Community Guidelines" onPress={() => onOpenLegal("community")} />
+        <SettingsMenuRow icon="users" label="Community Guidelines" onPress={() => onOpenLegal("community")} last />
+      </View>
+      <Text style={styles.settingsGroupTitle}>General</Text>
+      <View style={styles.settingsMenuCard}>
         <SettingsMenuRow icon="activity" label="About Left" helper="App info and updates." onPress={openAboutLeft} last />
       </View>
       {settingsActionMessage ? <Text style={styles.settingsInfoBody}>{settingsActionMessage}</Text> : null}

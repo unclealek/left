@@ -62,7 +62,7 @@ export function VenueDetailScreen({
   const popularActivity = popularTimesActivity(popularTimes.data, venue.timezone);
   if (popularTimes.status !== "pending" && !popularTimes.data) {
     popularActivity.refreshing = false;
-    popularActivity.displayText = "Popular times unavailable";
+    popularActivity.displayText = popularTimes.status === "failed" ? "Popular times temporarily unavailable" : "Popular times unavailable";
   }
   const activityDisplay = resolveVenueActivityDisplay({
     venueId: venue.id, googlePlaceId: venue.placeId ?? null, name: venue.name,

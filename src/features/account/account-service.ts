@@ -17,11 +17,6 @@ export async function upsertOnboardingProfile(
     versions: Record<LegalDocumentId, string>;
   } | null,
 ) {
-  if (legalAcceptance) {
-    const acceptance = await recordLegalAcceptance(legalAcceptance.versions);
-    if (!acceptance.ok) return acceptance;
-  }
-
   const { error } = await supabase.from("users").upsert(
     {
       id: user.id,
@@ -39,12 +34,21 @@ export async function upsertOnboardingProfile(
       approach_prompt: user.approachPrompt,
       focus_mode_enabled: user.focusModeEnabled,
       prompts_enabled: user.promptsEnabled,
-      onboarding_completed: user.onboardingCompleted,
+      onboarding_completed: legalAcceptance ? false : user.onboardingCompleted,
     },
     { onConflict: "id" },
   );
 
-  return { ok: !error, error };
+  if (error) return { ok: false, error };
+  if (legalAcceptance) {
+    // The acceptance FK requires a profile; never complete setup before the RPC succeeds.
+    const acceptance = await recordLegalAcceptance(legalAcceptance.versions);
+    if (!acceptance.ok) return acceptance;
+    const completion = await supabase.from("users")
+      .update({ onboarding_completed: user.onboardingCompleted }).eq("id", user.id);
+    return { ok: !completion.error, error: completion.error };
+  }
+  return { ok: true, error: null };
 }
 
 export async function recordLegalAcceptance(versions: Record<LegalDocumentId, string>) {
@@ -66,12 +70,11 @@ export async function hasAcceptedLegalVersions(
     .eq("user_id", userId);
 
   if (error) return { accepted: false, error };
-  const accepted = new Map(
-    (data ?? []).map((row) => [row.document_id as LegalDocumentId, row.document_version as string]),
-  );
+  // Historical versions coexist; an older row must not shadow a current one.
+  const accepted = new Set((data ?? []).map((row) => JSON.stringify([row.document_id, row.document_version])));
   return {
     accepted: (Object.keys(versions) as LegalDocumentId[]).every(
-      (documentId) => accepted.get(documentId) === versions[documentId],
+      (documentId) => accepted.has(JSON.stringify([documentId, versions[documentId]])),
     ),
     error: null,
   };

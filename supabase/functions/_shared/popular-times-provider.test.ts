@@ -58,3 +58,15 @@ it.each(['REPLACE_WITH_APIFY_TOKEN', '  REPLACE_WITH_APIFY_TOKEN  ', ''])('fails
  expect(() => createPopularTimesProvider({ APIFY_TOKEN }, fetcher)).toThrow('Popular times provider is not configured');
  expect(fetcher).not.toHaveBeenCalled();
 });
+it('reports only the HTTP status for failed provider requests', async () => {
+ const provider=createPopularTimesProvider({APIFY_TOKEN:'private'},vi.fn().mockResolvedValue(new Response('private response',{status:401})));
+ await expect(provider.fetch({placeId:'ChIJtest',placeUrl:'https://www.google.com/maps/place/Test'})).rejects.toMatchObject({name:'PopularTimesHttpError',status:401,message:'Popular times provider failed'});
+});
+it.each(['insufficient-permissions','actor-is-not-rented','apify-plan-required-to-use-paid-actor'])('keeps a safe actionable provider code: %s',async type=>{
+ const provider=createPopularTimesProvider({APIFY_TOKEN:'private'},vi.fn().mockResolvedValue(new Response(JSON.stringify({error:{type,message:'private details'}}),{status:403})));
+ await expect(provider.fetch({placeId:'ChIJtest',placeUrl:'https://www.google.com/maps/place/Test'})).rejects.toMatchObject({status:403,reason:type,message:'Popular times provider failed'});
+});
+it('does not preserve arbitrary provider error types',async()=>{
+ const provider=createPopularTimesProvider({APIFY_TOKEN:'private'},vi.fn().mockResolvedValue(new Response(JSON.stringify({error:{type:'secret-token-private'}}),{status:403})));
+ await expect(provider.fetch({placeId:'ChIJtest',placeUrl:'https://www.google.com/maps/place/Test'})).rejects.toMatchObject({reason:'unknown'});
+});

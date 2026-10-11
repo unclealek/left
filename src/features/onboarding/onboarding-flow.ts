@@ -1,4 +1,3 @@
-import type { LegalDocumentId } from "../legal/legal-content";
 import type { OnboardingDraftStep } from "./onboarding-storage";
 
 export function getPreviousOnboardingStep(step: OnboardingDraftStep): OnboardingDraftStep | null {
@@ -12,9 +11,9 @@ export function getPreviousOnboardingStep(step: OnboardingDraftStep): Onboarding
 
 export function canCompleteLegalStep(
   contentReady: boolean,
-  checks: Record<LegalDocumentId, boolean>,
+  agreed: boolean,
 ) {
-  return !contentReady || Object.values(checks).every(Boolean);
+  return contentReady && agreed;
 }
 
 export function getLocationRecoveryMessage(
