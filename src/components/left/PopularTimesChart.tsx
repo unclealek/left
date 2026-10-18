@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { T } from "../theme";
 import { chartDay, chartHours, chartSummary, dayLabel, WEEKDAYS } from "../../features/activity/popular-times-chart";
 import type { PopularTimesRow } from "../../features/activity/popular-times-model";
@@ -19,7 +19,7 @@ export function PopularTimesChart({ data, timezone }: {
   return (
     <View style={s.container}>
       <Text style={s.heading}>{dayLabel(day)}{day === today ? " · Today" : ""}</Text>
-      <View style={s.days} accessibilityRole="tablist" accessibilityLabel="Popular-times day">
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.days} accessibilityRole="tablist" accessibilityLabel="Popular-times day">
         {WEEKDAYS.map(value => (
           <Pressable key={value} accessibilityRole="tab" accessibilityLabel={dayLabel(value)}
             accessibilityState={{ selected: value === day }}
@@ -28,7 +28,7 @@ export function PopularTimesChart({ data, timezone }: {
             <Text style={[s.dayText, value === day && s.selectedText]}>{dayLabel(value).slice(0, 3)}</Text>
           </Pressable>
         ))}
-      </View>
+      </ScrollView>
       <Text style={s.copy} accessibilityLiveRegion="polite">{summary}</Text>
       {hasHours ? (
         <>
@@ -64,7 +64,7 @@ export function PopularTimesChart({ data, timezone }: {
 const s = StyleSheet.create({
   container: { gap: 12 },
   heading: { color: T.textPrimary, fontFamily: T.fontBodyBold, fontSize: 18, lineHeight: 26 },
-  days: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  days: { flexDirection: "row", gap: 6 },
   day: { minWidth: 44, minHeight: 44, padding: 10, alignItems: "center", justifyContent: "center", borderRadius: 12, backgroundColor: T.surfaceDim },
   selectedDay: { backgroundColor: T.actionSurface },
   dayText: { color: T.textPrimary, fontFamily: T.fontBodyMedium, fontSize: 14 },

@@ -1,6 +1,7 @@
 import { VISIBILITY_DISCLOSURE } from "../../features/presence/visibility-copy";
 import { PopularTimesChart } from "../../components/left/PopularTimesChart";
 import { useState } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActivityIndicator, Image, Linking, Pressable, Text, View } from "react-native";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
 import type { VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
@@ -26,6 +27,7 @@ const VENUE_ILLUSTRATIONS = {
 } as const;
 
 export function VenueDetailScreen({
+  guest = false,
   venue,
   venueSummary,
   venueActivity,
@@ -37,6 +39,7 @@ export function VenueDetailScreen({
   onPrimaryAction,
   onToggleSaved,
 }: {
+  guest?: boolean;
   venue: RuntimeVenueCandidate;
   venueSummary: VenueContextSummary;
   venueActivity: VenueActivityEnvelope | null;
@@ -48,6 +51,7 @@ export function VenueDetailScreen({
   onPrimaryAction: () => void;
   onToggleSaved: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   const isCurrentVenue = venue.id === venueSummary.venueId || venue.name === venueSummary.venueName;
   const venueType = venue.venueType ?? inferVenueTypeFromName(venue.name);
   const imageSource = getVenueIllustrationSource(venue.name, venueType);
@@ -70,12 +74,9 @@ export function VenueDetailScreen({
   });
   const activityTone = getActivityTone(activityDisplay.tone);
   const activityState = { ...activityDisplay, ...activityTone };
-  const pulseBars = activityState.score == null
-    ? Array.from({ length: 5 }, () => false)
-    : getPulseBarsForScore(activityState.score);
   const subline = formatVenueSubline(venue, isCurrentVenue, venueType);
-  const statusLabel = formatDistanceLabel(venue.distanceMeters) ?? "Nearby venue";
-  const primaryLabel = isCurrentVenue && sessionVisible
+  const statusLabel = guest ? "Venue preview" : formatDistanceLabel(venue.distanceMeters) ?? "Nearby venue";
+  const primaryLabel = guest ? "Sign in to take part" : isCurrentVenue && sessionVisible
     ? "See people here"
     : !sessionVisible
       ? "Go visible here"
@@ -99,7 +100,7 @@ export function VenueDetailScreen({
 
   return (
     <View style={styles.page}>
-      <View style={styles.hero}>
+      <View style={[styles.hero, { height: 252 + insets.top }]}>
         <Image source={imageSource} style={styles.heroImage} resizeMode="cover" accessible={false} />
         {showPhoto ? (
           <Image
@@ -117,16 +118,16 @@ export function VenueDetailScreen({
             <ActivityIndicator size="small" color={T.primary} />
           </View>
         ) : null}
-        <View style={styles.heroBackButton}>
+        <View style={[styles.heroBackButton, { top: insets.top + 12 }]}>
           <BackNavButton label="" onPress={onBack} />
         </View>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={saved ? "Remove from saved places" : "Save this place"}
+          accessibilityLabel={guest ? "Sign in to save places" : saved ? "Remove from saved places" : "Save this place"}
           accessibilityState={{ selected: saved, busy: saving, disabled: saving }}
           disabled={saving}
           onPress={onToggleSaved}
-          style={({ pressed }) => [styles.heroSaveButton, saved && styles.heroSaveButtonActive, pressed && styles.detailPressed]}
+          style={({ pressed }) => [styles.heroSaveButton, { top: insets.top + 12 }, saved && styles.heroSaveButtonActive, pressed && styles.detailPressed]}
         >
           {saving ? <ActivityIndicator size="small" color={saved ? T.actionContent : T.primary} /> : <LeftIcon name={saved ? "check" : "bookmark"} size={19} color={saved ? T.actionContent : T.textPrimary} />}
         </Pressable>
@@ -214,42 +215,23 @@ export function VenueDetailScreen({
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Popular times</Text>
-          <View style={styles.pulseCard}>
-            {popularTimes.status === "pending" ? <ActivityIndicator accessibilityLabel="Loading popular times" color={T.textMuted} /> : null}
-            <View style={[styles.pulseIconWrap, { backgroundColor: activityState.softColor }]}>
-              <LeftIcon name="activity" size={21} color={activityState.color} />
-            </View>
-            <View style={styles.pulseCopy}>
-              <Text style={[styles.pulseTitle, { color: activityState.color }]}>{activityState.title}</Text>
-              <Text style={styles.pulseSubtitle}>{activityState.subtitle}</Text>
-            </View>
-            <View
-              accessible
-              accessibilityLabel={activityState.score == null
-                ? "Activity score unavailable"
-                : `Activity score ${activityState.score} out of 100`}
-              style={styles.pulseBars}
-            >
-              {pulseBars.map((active, index) => (
-                <View
-                  key={`pulse-${index}`}
-                  style={[
-                    styles.pulseBar,
-                    getSignalBarHeightStyle(index),
-                    active
-                      ? { backgroundColor: activityState.color, borderColor: activityState.color }
-                      : styles.pulseBarInactive,
-                  ]}
-                />
-              ))}
-            </View>
-          </View>
           {popularTimes.status === "ready" && popularTimes.hasData && !popularActivity.isStale && popularTimes.data?.popular_times ? (
-            <View style={{ gap: 8, marginTop: 16 }}>
+            <View style={styles.popularTimesCard}>
               <PopularTimesChart key={venue.placeId ?? venue.id} data={popularTimes.data.popular_times} timezone={venue.timezone} />
               {popularTimes.data.typical_time_spent ? <Text style={styles.pulseSubtitle}>{popularTimes.data.typical_time_spent}</Text> : null}
             </View>
-          ) : null}
+          ) : (
+            <View style={styles.pulseCard}>
+              {popularTimes.status === "pending" ? <ActivityIndicator accessibilityLabel="Loading popular times" color={T.textMuted} /> : null}
+              <View style={[styles.pulseIconWrap, { backgroundColor: activityState.softColor }]}>
+                <LeftIcon name="activity" size={21} color={activityState.color} />
+              </View>
+              <View style={styles.pulseCopy}>
+                <Text style={[styles.pulseTitle, { color: activityState.color }]}>{activityState.title}</Text>
+                <Text style={styles.pulseSubtitle}>{activityState.subtitle}</Text>
+              </View>
+            </View>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -367,14 +349,4 @@ function formatVenueTypeLabel(venueType: RuntimeVenueCandidate["venueType"], ven
   if (/market|bazaar/i.test(venueName)) return "Market";
   if (/park|garden/i.test(venueName)) return "Park";
   return "Venue";
-}
-
-function getPulseBarsForScore(score: number) {
-  const activeCount = score <= 20 ? 1 : score <= 40 ? 2 : score <= 60 ? 3 : score <= 80 ? 4 : 5;
-  return Array.from({ length: 5 }, (_, index) => index < activeCount);
-}
-
-function getSignalBarHeightStyle(index: number) {
-  const heights = [12, 17, 22, 27, 32];
-  return { height: heights[index] ?? heights[heights.length - 1] };
 }

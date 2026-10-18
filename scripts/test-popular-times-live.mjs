@@ -123,8 +123,9 @@ try {
   if (paidPlace) {
     assert(cli(['secrets', 'list']).some(secret => secret.name === 'APIFY_TOKEN'), 'APIFY_TOKEN missing in staging');
     const venue = ok(await admin.from('venues').select('id').eq('google_place_id', paidPlace).eq('is_active', true).single(), 'Known active paid-test venue');
-    const existing = ok(await admin.from('venue_popular_times').select('place_id').eq('place_id', paidPlace).maybeSingle(), 'Check paid-test cache');
-    assert(!existing, 'Choose an uncached venue; test will not delete or expire existing cache');
+    const existing = ok(await admin.from('venue_popular_times').select('place_id,status,retry_at').eq('place_id', paidPlace).maybeSingle(), 'Check paid-test cache');
+    assert(!existing || (existing.status === 'failed' && Date.parse(existing.retry_at) <= Date.now()),
+      'Choose an uncached venue or a failed venue whose retry delay has expired; test will not delete or expire existing cache');
     // Establish the subscription before invoking the endpoint, including fast actors.
     const completion = waiter('Paid worker Realtime completion', 150_000);
     const connected = waiter('Paid Realtime subscription');

@@ -18,6 +18,7 @@ import {
   type UserProfileRow,
 } from "./leftConfig";
 import { styles } from "./leftTheme";
+import { createForegroundVenueRefresh, resolveRuntimeVenueSummary } from "./venue-runtime";
 import { supabase } from "../lib/supabase";
 import { signOutSafely } from "../features/auth/sign-out";
 import { endOwnPresenceBeforeSignOut } from "../features/presence/presence-service";
@@ -258,7 +259,8 @@ const PRIVATE_VENUE_SUMMARY: VenueContextSummary = {
   pulseCopy: "Your venue stays private until you become visible. Turn on visibility to detect your venue and unlock nearby people.",
 };
 
-export function LeftApp() {
+export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,startAtAuth=false}:{onBrowseGuest?:()=>void;sharedGatheringId?:string|null;sharedLinkRevision?:number;startAtAuth?:boolean} = {}) {
+  const deliveredGatheringRef = useRef<string|null>(null);
   const localAccountIdRef = useRef<string | null>(null);
   const sessionSyncEpochRef = useRef(0);
   const signOutInProgressRef = useRef(false);
@@ -317,6 +319,7 @@ export function LeftApp() {
   const preAuthSeenRef = useRef(false);
   const preAuthReadyRef = useRef(false);
   const activationAttemptRef = useRef(false);
+  const foregroundVenueRefreshRef = useRef(createForegroundVenueRefresh());
   const [nearbyVenueOptions, setNearbyVenueOptions] = useState<RuntimeVenueCandidate[]>([]);
   const [lastKnownCoords, setLastKnownCoords] = useState<RuntimeCoords | null>(null);
   const [venueSelectionRequired, setVenueSelectionRequired] = useState(false);
@@ -762,19 +765,28 @@ export function LeftApp() {
       screen === "venue-select" ||
       screen === "venue-add";
     if (!shouldMonitorVenueRuntime) return;
+    const refreshCurrentLocation = () => {
+      if (AppState.currentState !== "active" || !locationEnabled || !user) return;
+      void foregroundVenueRefreshRef.current(primeLocationFix, refreshVenueFromRuntime)
+        .catch(error => console.warn("[location] foreground refresh failed", error));
+    };
+    refreshCurrentLocation();
     const subscription = AppState.addEventListener("change", (nextState) => {
       if (nextState === "active") {
+        refreshCurrentLocation();
         void refreshVenueFromRuntime();
       }
     });
     const interval = setInterval(() => {
+      if (AppState.currentState !== "active") return;
+      refreshCurrentLocation();
       void refreshVenueFromRuntime();
     }, 3000);
     return () => {
       subscription.remove();
       clearInterval(interval);
     };
-  }, [screen, sessionVisible, venueSelectionRequired]);
+  }, [screen, sessionVisible, venueSelectionRequired, locationEnabled, user?.id]);
 
   useEffect(() => {
     if (!user) return;
@@ -984,28 +996,7 @@ export function LeftApp() {
       !runtime.selectedVenueId &&
       (!runtime.currentVenueId || runtime.nearbyVenues.length > 1),
     );
-    if (!runtime.currentVenueId || !runtime.currentVenueName) return;
-    const currentVenueId = runtime.currentVenueId;
-    const currentVenueName = runtime.currentVenueName;
-
-    setVenueSummary((current) => {
-      if (
-        current.venueId === currentVenueId &&
-        current.venueName === currentVenueName
-      ) {
-        return current;
-      }
-
-      return {
-        ...current,
-        venueId: currentVenueId,
-        venueName: currentVenueName,
-        pulseCopy:
-          runtime.nearbyVenues.length > 1 && !runtime.selectedVenueId
-            ? "We found multiple nearby venues. Confirm yours before going visible."
-            : `You're currently at ${currentVenueName}.`,
-      };
-    });
+    setVenueSummary(current => resolveRuntimeVenueSummary(current, runtime));
   }
 
   async function refreshVenueActivityForIds(venueIds: string[]) {
@@ -1499,7 +1490,7 @@ export function LeftApp() {
     if (!session) {
       setUser(null);
       setOnboardingUserId(null);
-      setScreen(preAuthReadyRef.current && !preAuthSeenRef.current ? "preauth" : "auth");
+      setScreen(!startAtAuth && preAuthReadyRef.current && !preAuthSeenRef.current ? "preauth" : "auth");
       return;
     }
 
@@ -2705,6 +2696,21 @@ export function LeftApp() {
       ? "Foreground location is available while this preview is open."
       : "Background location is active. Venue matching runs on-device and only venue IDs are used for app state."
     : "Background location is not enabled yet.";
+  useEffect(() => {
+    if(!sharedGatheringId || !user || onboardingUserId || screen === "loading")return;
+    const delivery=`${user.id}:${sharedGatheringId}:${sharedLinkRevision}`;
+    if(deliveredGatheringRef.current===delivery)return;
+    deliveredGatheringRef.current=delivery;
+    let active=true;
+    void fetchPublishedExperiences([]).then(plans=>{
+      if(!active)return;
+      const plan=plans.find(item=>item.id===sharedGatheringId);
+      if(plan)openExperience(plan,"home");
+      else showToast("This gathering is no longer available.");
+    });
+    return()=>{active=false;};
+  },[sharedGatheringId,sharedLinkRevision,user?.id,onboardingUserId,screen]);
+
   const isOnboardingScreen = screen.startsWith("onboarding-") || screen === "legal-consent";
   const isPreAuthScreen = screen === "preauth";
   const isFullBleedScreen = screen === "auth" || screen === "loading" || isPreAuthScreen;
@@ -2731,9 +2737,7 @@ export function LeftApp() {
       <ScrollView
         ref={mainScrollRef}
         contentInsetAdjustmentBehavior={isFullBleedScreen || isSessionNavScreen || screen === "venue-detail" ? "never" : "automatic"}
-        style={isSessionNavScreen
-          ? { marginTop: insets.top }
-          : screen === "venue-detail" ? { marginTop: insets.top } : undefined}
+        style={isSessionNavScreen ? { marginTop: insets.top } : undefined}
         bounces={isRefreshableScreen}
         alwaysBounceVertical={isRefreshableScreen}
         refreshControl={isRefreshableScreen ? (
@@ -2767,6 +2771,7 @@ export function LeftApp() {
           <AuthScreen
             authError={authError}
             busy={authBusy}
+            onBrowseGuest={onBrowseGuest}
             onAuth={startGoogleAuth}
             onAppleAuth={startAppleAuth}
             onBack={() => setScreen("preauth")}

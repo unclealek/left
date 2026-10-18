@@ -21,7 +21,7 @@ describe('popular times provider', () => {
   });
   it('uses bearer token and expected actor input', async () => {
     const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify([{popularTimesHasData:false}])));
-    const provider = createPopularTimesProvider({APIFY_TOKEN:'private'}, fetcher);
+    const provider = createPopularTimesProvider({APIFY_TOKEN:'private', APIFY_POPULAR_TIMES_ACTOR:'crawlerbros/google-maps-popular-times'}, fetcher);
     await provider.fetch({placeId:'ChIJtest',placeUrl:'https://www.google.com/maps/place/Test'});
     expect(fetcher.mock.calls[0][0]).not.toContain('private');
     expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer private');
@@ -69,4 +69,41 @@ it.each(['insufficient-permissions','actor-is-not-rented','apify-plan-required-t
 it('does not preserve arbitrary provider error types',async()=>{
  const provider=createPopularTimesProvider({APIFY_TOKEN:'private'},vi.fn().mockResolvedValue(new Response(JSON.stringify({error:{type:'secret-token-private'}}),{status:403})));
  await expect(provider.fetch({placeId:'ChIJtest',placeUrl:'https://www.google.com/maps/place/Test'})).rejects.toMatchObject({reason:'unknown'});
+});
+
+
+import compassFixture from "./fixtures/compass-popular-times.json";
+describe('Compass actor integration', () => {
+ it('normalizes all 50 supplied places by identity, including 39 empty histograms', () => {
+  const results = compassFixture.map(item => normalizePopularTimes(compassFixture, item.placeId));
+  expect(results.filter(item => item.has_data)).toHaveLength(11);
+  expect(results.filter(item => !item.has_data)).toHaveLength(39);
+  const elo = normalizePopularTimes(compassFixture, 'ChIJ33wTmtP3jUYRzq6mJkmi8FQ');
+  expect(elo.popular_times?.monday).toContainEqual({hour: 12, busyness: 85});
+  expect(elo.current_busyness).toBeNull();
+ });
+ it('preserves a current snapshot without inventing a histogram', () => {
+  expect(normalizePopularTimes([{placeId:'ChIJtest',popularTimesHistogram:{},popularTimesLivePercent:0}], 'ChIJtest')).toMatchObject({has_data:false,popular_times:null,current_busyness:0});
+ });
+ it.each([
+  [{placeId:'other',popularTimesHistogram:{}}],
+  [{placeId:'ChIJtest'}],
+  [{placeId:'ChIJtest',popularTimesHistogram:null}],
+  [{placeId:'ChIJtest',popularTimesHistogram:{Mo:null}}],
+  [{placeId:'ChIJtest',popularTimesHistogram:{Mo:[{hour:12,occupancyPercent:101}]}}],
+  [{placeId:'ChIJtest',popularTimesHistogram:{Mo:[{hour:12,occupancyPercent:40},{hour:12,occupancyPercent:50}]}}],
+  [{placeId:'ChIJtest',popularTimesHistogram:{XX:[]}}],
+  [{placeId:'ChIJtest',popularTimesHistogram:{}},{placeId:'ChIJtest',popularTimesHistogram:{}}],
+ ])('rejects missing, ambiguous or malformed Compass data %j', payload => {
+  expect(() => normalizePopularTimes(payload,'ChIJtest')).toThrow();
+ });
+ it('defaults to Compass with one exact place and detail scraping enabled', async () => {
+  const fetcher=vi.fn().mockResolvedValue(new Response(JSON.stringify([{placeId:'ChIJtest',popularTimesHistogram:{}}])));
+  await createPopularTimesProvider({APIFY_TOKEN:'private'},fetcher).fetch({placeId:'ChIJtest',placeUrl:'https://www.google.com/maps/search/?api=1&query_place_id=ChIJtest'});
+  expect(fetcher.mock.calls[0][0]).toContain('compass~crawler-google-places');
+  expect(JSON.parse(fetcher.mock.calls[0][1].body)).toMatchObject({searchStringsArray:['place_id:ChIJtest'],maxCrawledPlacesPerSearch:1,scrapePlaceDetailPage:true,maxReviews:0,maxImages:0,scrapeReviewsPersonalData:false});
+ });
+ it('rejects arbitrary actor configuration before sending a request', () => {
+  expect(() => createPopularTimesProvider({APIFY_TOKEN:'private',APIFY_POPULAR_TIMES_ACTOR:'untrusted/actor'})).toThrow();
+ });
 });

@@ -32,6 +32,25 @@ export function validatePopularTimesInput(body: unknown) {
 }
 
 export function normalizePopularTimes(payload: unknown, placeId: string): PopularTimesResult {
+  if (Array.isArray(payload) && payload.some(item => item && Object.hasOwn(item, 'popularTimesHistogram'))) {
+    const matches = payload.filter(item => item?.placeId === placeId);
+    if (matches.length !== 1) throw new Error('Invalid popular times identity');
+    const item = matches[0];
+    const raw = item.popularTimesHistogram;
+    const aliases = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw) || Object.keys(raw).some(day => !aliases.includes(day))) throw new Error('Invalid histogram');
+    const week: Histogram = {};
+    DAYS.forEach((day, index) => {
+      const entries = raw[aliases[index]] === undefined ? [] : raw[aliases[index]];
+      if (!Array.isArray(entries)) throw new Error('Invalid histogram day');
+      week[day] = entries.map(entry => ({ hour: entry?.hour, busyness: entry?.occupancyPercent }));
+    });
+    // Reuse the common range/duplicate checks even for a completed empty result.
+    const result = normalizePopularTimes([{placeId, popularTimesHasData:true, popularTimes:week,
+      currentBusyness:item.popularTimesLivePercent ?? null}], placeId);
+    const hasData = Object.values(week).some(hours => hours.length > 0);
+    return {...result, has_data:hasData, popular_times:hasData ? result.popular_times : null};
+  }
   if (!Array.isArray(payload) || payload.length !== 1) throw new Error('Invalid popular times response');
   const item = payload[0];
   if (!item || typeof item.popularTimesHasData !== 'boolean' || (item.placeId && item.placeId !== placeId)) throw new Error('Invalid popular times identity or data');
@@ -59,12 +78,19 @@ export function createPopularTimesProvider(env: Record<string, string | undefine
   // Add future first-party adapters here; consumers and cache remain provider-independent.
   const token = env.APIFY_TOKEN?.trim();
   if ((env.POPULAR_TIMES_PROVIDER ?? 'google_scrape') !== 'google_scrape' || !token || token === 'REPLACE_WITH_APIFY_TOKEN') throw new Error('Popular times provider is not configured');
+  const actor = env.APIFY_POPULAR_TIMES_ACTOR ?? 'compass/crawler-google-places';
+  if (!['compass/crawler-google-places', 'crawlerbros/google-maps-popular-times'].includes(actor)) throw new Error('Unsupported popular times actor');
   return {
     source: 'google_scrape',
     async fetch(input) {
-      const response = await fetcher('https://api.apify.com/v2/acts/crawlerbros~google-maps-popular-times/run-sync-get-dataset-items?timeout=90', {
+      const actorInput = actor === 'compass/crawler-google-places'
+        ? {searchStringsArray:[`place_id:${input.placeId}`], maxCrawledPlacesPerSearch:1, language:'en',
+          scrapePlaceDetailPage:true, maxReviews:0, maxImages:0, scrapeReviewsPersonalData:false,
+          scrapeContacts:false, scrapeDirectories:false, includeWebResults:false, maximumLeadsEnrichmentRecords:0}
+        : {placeUrls:[input.placeUrl]};
+      const response = await fetcher(`https://api.apify.com/v2/acts/${actor.replace('/', '~')}/run-sync-get-dataset-items?timeout=90`, {
         method: 'POST', redirect: 'error', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ placeUrls: [input.placeUrl] }), signal: AbortSignal.timeout(100_000),
+        body: JSON.stringify(actorInput), signal: AbortSignal.timeout(100_000),
       });
       if (!response.ok) {
         let reason = 'unknown';

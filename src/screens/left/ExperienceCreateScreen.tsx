@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Text, TextInput, View } from "react-native";
+import { Pressable, Share, Text, TextInput, View } from "react-native";
 import { styles, T } from "../../app/leftTheme";
 import { FieldBlock, PrimaryButton, SelectChip } from "../../components/left/ui";
 import { ScreenHeader } from "../../components/left/navigation";
 import { fetchHostedExperiences, type HostedExperience, type ExperienceProposalInput } from "../../features/discovery/discovery-service";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
+
+import { COST_CHOICES, POTLUCK_CHOICES, changeAmount, costNotesFor, parseEuroAmount, type GatheringCostChoice } from "../../features/discovery/gathering-cost";
+import { approvedGatheringUrl } from "../../features/guest/gathering-links";
 
 type ProposalDraft = Omit<ExperienceProposalInput, "hostUserId">;
 
@@ -50,7 +53,18 @@ export function ExperienceCreateScreen({
   const [startsAt, setStartsAt] = useState(schedules[0].startsAt);
   const [capacity, setCapacity] = useState(8);
   const [accessibilityNotes, setAccessibilityNotes] = useState("");
-  const [costNotes, setCostNotes] = useState("");
+  const [costChoice, setCostChoice] = useState<GatheringCostChoice>("free");
+  const [amountCents, setAmountCents] = useState(500);
+  const [amountText, setAmountText] = useState("5");
+  const [potluck, setPotluck] = useState(POTLUCK_CHOICES[0]);
+  const [costDetails, setCostDetails] = useState("");
+  const costNotes = costNotesFor(costChoice, amountCents, potluck, costDetails);
+  const hasAmount = costChoice === "paid" || costChoice === "split";
+  const amountInvalid = hasAmount && parseEuroAmount(amountText) === null;
+  const adjustAmount = (direction:number) => {
+    const next=changeAmount(parseEuroAmount(amountText) ?? amountCents,direction);
+    setAmountCents(next);setAmountText(String(next/100));
+  };
 
   useEffect(() => {
     if (eligibleVenues.some((venue) => venue.id === venueId)) return;
@@ -61,7 +75,7 @@ export function ExperienceCreateScreen({
     );
   }, [defaultVenueId, eligibleVenues, venueId]);
 
-  const validationMessage = !venueId
+  const validationMessage = amountInvalid ? "Enter an amount between €0 and €1,000, with up to two decimal places." : !venueId
     ? "Choose a verified nearby venue first."
     : title.trim().length < 3
       ? "Add a short title."
@@ -87,6 +101,12 @@ export function ExperienceCreateScreen({
             <Text style={styles.experienceReviewEyebrow}>{plan.status === "pending_review" ? "Awaiting review" : plan.status}</Text>
             <Text style={styles.experienceReviewText}>{plan.title}</Text>
             <Text style={styles.experienceValidationHint}>{new Date(plan.starts_at).toLocaleString()}</Text>
+            {approvedGatheringUrl(plan, process.env.EXPO_PUBLIC_GATHERING_SHARE_ORIGIN) ? (
+              <SelectChip label="Share gathering" active={false} onPress={() => {
+                const url=approvedGatheringUrl(plan, process.env.EXPO_PUBLIC_GATHERING_SHARE_ORIGIN);
+                if(url) void Share.share({message:`${plan.title} — ${url}`,url}).catch(() => setPlansError("Couldn’t open sharing. Try again."));
+              }} />
+            ) : plan.status === "published" && Date.parse(plan.starts_at)>Date.now() ? <Text style={styles.experienceValidationHint}>Sharing will be available soon.</Text> : null}
           </View>
         ))}
         <SelectChip label="Refresh plans" active={false} onPress={() => setReloadPlans((value) => value + 1)} />
@@ -163,14 +183,23 @@ export function ExperienceCreateScreen({
         />
       </FieldBlock>
 
-      <FieldBlock label="Cost" hint="Optional. Be clear about any expected spend.">
-        <TextInput
-          value={costNotes}
-          onChangeText={(value) => setCostNotes(value.slice(0, 160))}
-          placeholder="Free, or buy your own drink"
-          placeholderTextColor={T.textMuted}
-          style={styles.input}
-        />
+      <FieldBlock label="Cost" hint="Choose an option, then add any practical details.">
+        <View style={styles.chipWrap}>
+          {COST_CHOICES.map(option => <SelectChip key={option.id} label={option.label} active={costChoice===option.id} onPress={() => setCostChoice(option.id)} />)}
+        </View>
+        {costChoice === "potluck" ? <View style={styles.chipWrap}>
+          {POTLUCK_CHOICES.map(option => <SelectChip key={option} label={option} active={potluck===option} onPress={() => setPotluck(option)} />)}
+        </View> : null}
+        {hasAmount ? <View style={{flexDirection:"row",alignItems:"center",gap:12}}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Decrease amount by one euro" disabled={amountCents===0} accessibilityState={{disabled:amountCents===0}} onPress={() => adjustAmount(-1)} style={[styles.input,{width:48,alignItems:"center",justifyContent:"center"}]}><Text style={styles.experienceReviewText}>−</Text></Pressable>
+          <View style={{flex:1}}>
+            <Text style={styles.experienceValidationHint}>EUR per person</Text>
+            <TextInput accessibilityLabel="Amount in euros per person" value={amountText} keyboardType="decimal-pad" onChangeText={value => {setAmountText(value.slice(0,8));const cents=parseEuroAmount(value);if(cents!==null)setAmountCents(cents);}} style={styles.input} />
+          </View>
+          <Pressable accessibilityRole="button" accessibilityLabel="Increase amount by one euro" disabled={amountCents===100000} accessibilityState={{disabled:amountCents===100000}} onPress={() => adjustAmount(1)} style={[styles.input,{width:48,alignItems:"center",justifyContent:"center"}]}><Text style={styles.experienceReviewText}>+</Text></Pressable>
+        </View> : null}
+        <TextInput accessibilityLabel="Custom cost or potluck details" value={costDetails} onChangeText={value => setCostDetails(value.slice(0,100))} placeholder={costChoice === "potluck" ? "Dietary needs or what to bring…" : "Add your own details (optional)…"} placeholderTextColor={T.textMuted} style={styles.input} />
+        {costNotes ? <Text style={styles.experienceValidationHint}>{costNotes}</Text> : null}
       </FieldBlock>
 
       {submitError ? <Text style={styles.experienceFieldError}>{submitError}</Text> : null}

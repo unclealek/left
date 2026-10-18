@@ -39,7 +39,9 @@ export function AuthScreen({
   onAppleAuth,
   onBack,
   onOpenLegal,
+  onBrowseGuest,
 }: {
+  onBrowseGuest?: () => void;
   authError: string | null;
   busy?: boolean;
   onAuth: () => void;
@@ -253,6 +255,8 @@ export function AuthScreen({
               style={[styles.authAppleButton, busy && styles.authButtonDisabled]}
             />
           ) : null}
+
+          {onBrowseGuest ? <Pressable accessibilityRole="button" accessibilityLabel="Explore as a guest" disabled={busy} onPress={onBrowseGuest} style={{minHeight:44,alignItems:"center",justifyContent:"center"}}><Text style={styles.authLegalLink}>Explore as a guest</Text></Pressable> : null}
 
           {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
 

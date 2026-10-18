@@ -1,4 +1,6 @@
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { useState } from "react";
+import { ActivityIndicator, Pressable, Share, Text, View } from "react-native";
+import { approvedGatheringUrl } from "../../features/guest/gathering-links";
 import type { VenueExperience } from "../../types/left-domain";
 import { styles, T } from "../../app/leftTheme";
 import { LeftIcon } from "../../components/icons";
@@ -10,13 +12,17 @@ export function ExperienceDetailScreen({
   onBack,
   onToggleAttendance,
   onOpenVenue,
+  guest = false,
 }: {
+  guest?: boolean;
   experience: VenueExperience;
   attendanceBusy: boolean;
   onBack: () => void;
   onToggleAttendance: () => void;
   onOpenVenue: () => void;
 }) {
+  const [shareError,setShareError] = useState<string|null>(null);
+  const shareUrl = guest ? null : approvedGatheringUrl({id:experience.id,status:"published",starts_at:experience.startsAt},process.env.EXPO_PUBLIC_GATHERING_SHARE_ORIGIN);
   const remaining = Math.max(experience.capacity - experience.attendeeCount, 0);
 
   return (
@@ -47,6 +53,11 @@ export function ExperienceDetailScreen({
         {experience.costNotes ? <ExperienceFact icon="credit-card" title="Cost" text={experience.costNotes} /> : null}
       </View>
 
+      {shareUrl ? <Pressable accessibilityRole="button" accessibilityLabel="Share approved gathering" onPress={() => {
+        setShareError(null);void Share.share({message:`${experience.title} — ${shareUrl}`,url:shareUrl}).catch(()=>setShareError("Couldn’t open sharing. Try again."));
+      }} style={[styles.experienceFact,{minHeight:44}]}><Text style={styles.experienceFactTitle}>Share gathering</Text></Pressable> : null}
+      {shareError ? <Text style={styles.experienceFieldError}>{shareError}</Text> : null}
+
       <View style={styles.experienceSafetyNote}>
         <LeftIcon name="shield" size={18} color={T.primary} />
         <Text style={styles.experienceSafetyText}>Experiences appear publicly only after review. Normal blocking and reporting controls still apply.</Text>
@@ -69,7 +80,7 @@ export function ExperienceDetailScreen({
           <LeftIcon name={experience.viewerAttending ? "check" : "calendar"} size={18} color={T.actionContent} />
         )}
         <Text style={styles.experiencePrimaryActionText}>
-          {experience.viewerAttending ? "You’re going · Change plans" : remaining > 0 ? "Attend this gathering" : "Gathering full"}
+          {guest ? "Sign in to attend" : experience.viewerAttending ? "You’re going · Change plans" : remaining > 0 ? "Attend this gathering" : "Gathering full"}
         </Text>
       </Pressable>
     </View>

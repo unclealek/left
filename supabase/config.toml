@@ -382,3 +382,8 @@ s3_region = "env(S3_REGION)"
 s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
+
+# Deliberately public, GET-only landing page. Uses the anon key to read exactly
+# one approved future gathering; no service key or write endpoint.
+[functions.shared-gathering]
+verify_jwt = false

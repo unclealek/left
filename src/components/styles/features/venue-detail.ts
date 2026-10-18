@@ -6,16 +6,14 @@ import { radii, screenTypography, spacing } from "../../token";
 export const venueDetailStyles = StyleSheet.create({
   page: {
     marginHorizontal: -20,
-    paddingTop: 12,
+    paddingTop: 0,
     paddingBottom: 8,
     backgroundColor: T.ink,
   },
   hero: {
     height: 252,
-    marginHorizontal: spacing[4],
-    borderRadius: radii.xxl,
-    borderWidth: 1,
-    borderColor: T.border,
+    borderBottomLeftRadius: radii.xxl,
+    borderBottomRightRadius: radii.xxl,
     overflow: "hidden",
     backgroundColor: T.primarySoft,
   },
@@ -191,19 +189,14 @@ export const venueDetailStyles = StyleSheet.create({
     lineHeight: 18,
     fontFamily: T.fontBody,
   },
-  pulseBars: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 3,
-  },
-  pulseBar: {
-    width: 7,
-    borderRadius: 4,
+  popularTimesCard: {
+    borderRadius: radii.xl,
     borderWidth: 1,
-  },
-  pulseBarInactive: {
-    backgroundColor: T.surfaceMid,
-    borderColor: T.borderAccent,
+    borderColor: T.border,
+    backgroundColor: T.surfaceCard,
+    padding: 16,
+    gap: 12,
+    ...leftShadows.small,
   },
   peopleCard: {
     borderRadius: radii.xl,
