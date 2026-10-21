@@ -11,7 +11,7 @@ Maintain this log as fixes are made. For each entry, record the symptom, change,
 - **Scope:** Accumulated Home/Profile/venue visual updates, native glass navigation, settings and regional preferences, opt-in analytics, location freshness, legal links and shared-component cleanup.
 - **Version:** Retain marketing version 0.1.0; increment iOS build 7 to 8 in Expo and both native configurations. Runtime 1.0.1 separates the added native modules from runtime 1.0.0 binaries. No OTA update is part of this release.
 - **Validation:** TypeScript and all 418 tests across 72 files pass. Bundle, dependency, secret and cloud build checks are recorded in `docs/releases/2026-10-21-testflight-build-8.md`.
-- **Release status:** User authorized Git push and TestFlight submission. Build/upload results will be recorded after execution. Historical entries below describe the status when each change was made.
+- **Release status:** App commit `fdd603c` pushed to `origin/codex/ios-scene-lifecycle`. EAS build `e181da1d-5319-4128-b58f-fee7f3bd504b` finished and submission `20672e34-7853-4a69-82b5-d9454f283633` uploaded successfully to App Store Connect. Apple processing/tester availability and physical-device checks remain pending. Historical entries below describe the status when each change was made.
 - **Limitations:** Staging TestFlight target; data export requires the separately approved settings migration. Draft legal documents and unset publication metadata still prevent new-user legal completion. Live Realtime delivery and physical-device regression checks remain outstanding. This mobile submission does not apply backend migrations or publish legal documents.
 
 ## Fixed locally, awaiting the next build
