@@ -12,7 +12,13 @@ Maintain this log as fixes are made. For each entry, record the symptom, change,
 - **Version:** Retain marketing version 0.1.0; increment iOS build 7 to 8 in Expo and both native configurations. Runtime 1.0.1 separates the added native modules from runtime 1.0.0 binaries. No OTA update is part of this release.
 - **Validation:** TypeScript and all 418 tests across 72 files pass. Bundle, dependency, secret and cloud build checks are recorded in `docs/releases/2026-10-21-testflight-build-8.md`.
 - **Release status:** App commit `fdd603c` pushed to `origin/codex/ios-scene-lifecycle`. EAS build `e181da1d-5319-4128-b58f-fee7f3bd504b` finished and submission `20672e34-7853-4a69-82b5-d9454f283633` uploaded successfully to App Store Connect. Apple processing/tester availability and physical-device checks remain pending. Historical entries below describe the status when each change was made.
-- **Limitations:** Staging TestFlight target; data export requires the separately approved settings migration. Draft legal documents and unset publication metadata still prevent new-user legal completion. Live Realtime delivery and physical-device regression checks remain outstanding. This mobile submission does not apply backend migrations or publish legal documents.
+- **Limitations:** Staging TestFlight target; data-export migration applied and SQL-verified on 2026-10-21, with native file/share checks pending. Draft legal documents and unset publication metadata still prevent new-user legal completion. Live Realtime delivery and physical-device regression checks remain outstanding. This mobile submission does not apply backend migrations or publish legal documents.
+
+### 2026-10-21 — Data-export backend enabled on staging
+
+- **Change/status:** User approved and applied `account_settings_tools` to `left-staging`; remote migration version `20261021034732` corresponds to local file `20261020100750_account_settings_tools.sql`. The RPC needed by build 8 is now deployed.
+- **Validation:** Local authorization/pagination tests and deployed SQL checks passed for all 17 categories, caller-only profile isolation, invalid inputs and anonymous/removed-account denial. Synthetic live fixtures rolled back; security advisors show no new findings.
+- **Pending:** Authenticated HTTP export and physical-device file saving/share/cancel tests. Legal publication/onboarding limitations remain unchanged. See the build-8 release record for evidence.
 
 ## Fixed locally, awaiting the next build
 

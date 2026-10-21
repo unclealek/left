@@ -1,5 +1,9 @@
 # Settings and regional preferences — 2026-10-20
 
+## Backend update — 2026-10-21
+
+User-approved settings migration applied to `left-staging`, recorded remotely as `20261021034732_account_settings_tools` (local source `20261020100750_account_settings_tools.sql`). All 17 deployed export categories, caller-only profile isolation, invalid inputs and anonymous/removed-account denial passed transactional SQL checks; fixtures rolled back. Anonymous function grants are denied and advisors show no new findings. Authenticated HTTP export and native file/share behavior remain unverified. Earlier local-only notes below are historical.
+
 ## Implemented locally
 
 - Settings now includes App language, Measurement units, Privacy preferences, Hidden & muted venues, Download my data, Licences, and the installed native version/build. The existing identity-removal flow is presented as a request for account deletion with retained-record wording; its processing/authentication behavior is preserved.
@@ -37,7 +41,7 @@
 
 ## Release follow-up
 
-1. Approve/apply the single settings migration to staging; inspect advisors and verify with dedicated test accounts (export A cannot expose B, all export categories work against the actual schema).
+1. Staging migration, advisor comparison and transactional SQL checks completed on 2026-10-21. Verify authenticated HTTP export and populated category pagination end to end.
 2. Check file saving/share cancellation on iOS and Android, offline errors, large exports, account switching and deletion retry/Apple reauthorization. Keep analytics off during tests unless test telemetry transmission is explicitly approved.
 3. Review Finnish and Swedish translations with native speakers, check remaining dynamic/server messages, and verify larger text sizes and native/provider language behavior.
 4. Regenerate notices after dependency changes and complete native SDK/font attribution checks.

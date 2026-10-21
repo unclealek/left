@@ -21,7 +21,7 @@
 
 ## Known limitations and device checks
 
-- Data download requires migration `20261020100750_account_settings_tools.sql`, which this release does not apply.
+- Data-download migration `20261020100750_account_settings_tools.sql` was applied to `left-staging` on 2026-10-21 after user approval; remote migration history records `20261021034732_account_settings_tools`. Physical-device file saving/sharing remains unverified.
 - Legal pages are drafts; unset publication metadata intentionally prevents new-user completion. Verify using existing accounts or guest browsing until legal publication/registry setup is approved.
 - Public gathering sharing and universal-link activation remain dependent on the documented backend/domain prerequisites.
 - Live popular-times Realtime delivery remains unverified.
@@ -38,3 +38,12 @@
 - Final cloud build: FINISHED; version/build/runtime and app commit verified against EAS.
 - Apple upload: EAS Submit confirmed successful upload. Apple processing/tester availability remains pending; the immediate App Store Connect status query still listed build 7 as the newest visible build.
 - No physical-device installation or regression pass was performed for build 8.
+
+## 2026-10-21 — Data-export migration applied
+
+- Applied the exact reviewed `account_settings_tools` migration to `left-staging` (`xrracivlxgedlzdcrfwx`), remote version `20261021034732`. No other pending migrations applied.
+- Local SQL suite passed ownership, pagination, category/offset validation and anonymous/removed-account denial checks.
+- Deployed database transaction passed all 17 categories against the actual schema, caller-only profile isolation, invalid category/offset rejection and anonymous/removed-account denial. Two synthetic account/profile fixtures were rolled back; no user data was exported or printed.
+- Function grants verified: anonymous execution denied for both functions, authenticated execution allowed; public wrapper is invoker, privileged implementation is in `security_private`, both use empty search paths.
+- Security advisors unchanged: zero errors, 15 existing warnings and three informational findings; no new export-function finding.
+- Backend SQL proof only: authenticated HTTP export, large populated exports and native file/share/cancel checks remain pending. No new mobile binary is required for this RPC deployment.
