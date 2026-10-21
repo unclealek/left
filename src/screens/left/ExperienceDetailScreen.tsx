@@ -1,3 +1,4 @@
+import { t, getTranslationLocale } from "../../features/preferences/translation-runtime";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, Share, Text, View } from "react-native";
 import { approvedGatheringUrl } from "../../features/guest/gathering-links";
@@ -27,10 +28,10 @@ export function ExperienceDetailScreen({
 
   return (
     <View style={styles.discoveryPage}>
-      <ScreenHeader title="Small gathering" onBack={onBack} variant="utility" />
+      <ScreenHeader title={t("Small gathering")} onBack={onBack} variant="utility" />
 
       <View style={styles.experienceHero}>
-        <Text style={styles.experienceEyebrow}>HOSTED BY {experience.hostFirstName.toUpperCase()}</Text>
+        <Text style={styles.experienceEyebrow}>{t("HOSTED BY")}{" "}{experience.hostFirstName.toUpperCase()}</Text>
         <Text style={styles.experienceTitle}>{experience.title}</Text>
         <View style={styles.experienceHeroMeta}>
           <LeftIcon name="calendar" size={16} color={T.primary} />
@@ -41,26 +42,26 @@ export function ExperienceDetailScreen({
       <Text style={styles.experienceDescription}>{experience.description}</Text>
 
       <View style={styles.experienceFacts}>
-        <ExperienceFact icon="map-pin" title={experience.venueName} text="Open venue details" onPress={onOpenVenue} />
+        <ExperienceFact icon="map-pin" title={experience.venueName} text={guest ? "Sign in to view venue details" : "Open venue details"} onPress={onOpenVenue} />
         <ExperienceFact
           icon="users"
           title={`${experience.attendeeCount} of ${experience.capacity} going`}
           text={remaining > 0 ? `${remaining} ${remaining === 1 ? "place" : "places"} left` : "This gathering is full"}
         />
         {experience.accessibilityNotes ? (
-          <ExperienceFact icon="heart" title="Accessibility" text={experience.accessibilityNotes} />
+          <ExperienceFact icon="heart" title={t("Accessibility")} text={experience.accessibilityNotes} />
         ) : null}
-        {experience.costNotes ? <ExperienceFact icon="credit-card" title="Cost" text={experience.costNotes} /> : null}
+        {experience.costNotes ? <ExperienceFact icon="credit-card" title={t("Cost")} text={experience.costNotes} /> : null}
       </View>
 
-      {shareUrl ? <Pressable accessibilityRole="button" accessibilityLabel="Share approved gathering" onPress={() => {
+      {shareUrl ? <Pressable accessibilityRole="button" accessibilityLabel={t("Share approved gathering")} onPress={() => {
         setShareError(null);void Share.share({message:`${experience.title} — ${shareUrl}`,url:shareUrl}).catch(()=>setShareError("Couldn’t open sharing. Try again."));
-      }} style={[styles.experienceFact,{minHeight:44}]}><Text style={styles.experienceFactTitle}>Share gathering</Text></Pressable> : null}
-      {shareError ? <Text style={styles.experienceFieldError}>{shareError}</Text> : null}
+      }} style={[styles.experienceFact,{minHeight:44}]}><Text style={styles.experienceFactTitle}>{t("Share gathering")}</Text></Pressable> : null}
+      {shareError ? <Text style={styles.experienceFieldError}>{t(shareError)}</Text> : null}
 
       <View style={styles.experienceSafetyNote}>
         <LeftIcon name="shield" size={18} color={T.primary} />
-        <Text style={styles.experienceSafetyText}>Experiences appear publicly only after review. Normal blocking and reporting controls still apply.</Text>
+        <Text style={styles.experienceSafetyText}>{t("Experiences appear publicly only after review. Normal blocking and reporting controls still apply.")}</Text>
       </View>
 
       <Pressable
@@ -80,7 +81,7 @@ export function ExperienceDetailScreen({
           <LeftIcon name={experience.viewerAttending ? "check" : "calendar"} size={18} color={T.actionContent} />
         )}
         <Text style={styles.experiencePrimaryActionText}>
-          {guest ? "Sign in to attend" : experience.viewerAttending ? "You’re going · Change plans" : remaining > 0 ? "Attend this gathering" : "Gathering full"}
+          {guest ? t("Sign in to attend") : experience.viewerAttending ? t("You’re going · Change plans") : remaining > 0 ? t("Attend this gathering") : t("Gathering full")}
         </Text>
       </Pressable>
     </View>
@@ -105,7 +106,7 @@ function ExperienceFact({ icon, title, text, onPress }: { icon: "map-pin" | "use
 
 function formatExperienceDate(value: string) {
   const date = new Date(value);
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(getTranslationLocale(), {
     weekday: "long",
     month: "short",
     day: "numeric",

@@ -10,6 +10,7 @@ The native `ios/` project is intentionally checked in because it contains a Coco
 - `preview`: internal Android APK build using the preview EAS environment.
 - `ios-simulator-preview`: internal iOS Simulator build using the preview EAS environment.
 - `ios-device-preview`: internal iOS device build using the preview EAS environment.
+- `testflight`: App Store distribution against staging using the EAS development environment; explicit local build number. See [build 8](releases/2026-10-21-testflight-build-8.md).
 - `production`: store-ready production build with app version auto-incrementing.
 
 ## Required EAS Environment Variables

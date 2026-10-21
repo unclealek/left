@@ -1,7 +1,7 @@
 import { T } from "../theme";
 import { screenTypography } from "../token";
 
-export function createNavigationStyles(contentRailWidth: "92%", contentRailMax: number) {
+export function createNavigationStyles() {
   return {
     backNavButton: {
       flexDirection: "row",
@@ -171,99 +171,6 @@ export function createNavigationStyles(contentRailWidth: "92%", contentRailMax: 
       fontSize: 12,
       fontWeight: "600",
       textTransform: "capitalize",
-    },
-    footerNavRow: {
-      position: "relative",
-      minHeight: 62,
-      marginTop: 0,
-      paddingHorizontal: 4,
-      paddingTop: 2,
-      paddingBottom: 1,
-      overflow: "visible",
-    },
-    footerNavTrack: {
-      position: "relative",
-      alignSelf: "center",
-      width: contentRailWidth,
-      maxWidth: contentRailMax,
-    },
-    footerNavTrackContent: {
-      minHeight: 56,
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: 12,
-      paddingTop: 3,
-      paddingBottom: 3,
-    },
-    footerNavBubbleTrack: {
-      position: "absolute",
-      top: -1,
-      bottom: 0,
-      alignItems: "center",
-      justifyContent: "flex-start",
-      zIndex: 0,
-    },
-    footerNavItem: {
-      flex: 1,
-      minHeight: 44,
-      alignItems: "center",
-      justifyContent: "flex-end",
-      gap: 2,
-      zIndex: 1,
-    },
-    footerNavItemActive: {
-      zIndex: 2,
-      paddingTop: 3,
-    },
-    footerNavItemPressed: {
-      opacity: 0.86,
-    },
-    footerNavIconBubble: {
-      width: 26,
-      height: 26,
-      borderRadius: 13,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    footerNavIconPlaceholder: {
-      width: 26,
-      height: 22,
-    },
-    footerNavIconBubbleActive: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
-      backgroundColor: T.primary,
-      borderWidth: 1,
-      borderColor: T.navActiveBorder,
-      shadowColor: T.textPrimary,
-      shadowOpacity: 0.14,
-      shadowRadius: 5,
-      shadowOffset: { width: 0, height: 2 },
-      elevation: 3,
-      marginTop: 0,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    footerNavIcon: {
-      color: T.textMuted,
-      fontSize: 22,
-      lineHeight: 24,
-    },
-    footerNavIconActive: {
-      color: T.onboardingAccent,
-    },
-    footerNavLabel: {
-      color: T.white,
-      fontSize: 11,
-      fontWeight: "700",
-      letterSpacing: 0.1,
-      width: "100%",
-      textAlign: "center",
-    },
-    footerNavLabelActive: {
-      color: T.navActiveContent,
-      fontWeight: "800",
     },
   } as const;
 }

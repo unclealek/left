@@ -17,21 +17,7 @@ export const venueDetailStyles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: T.primarySoft,
   },
-  heroImage: {
-    width: "100%",
-    height: "100%",
-  },
-  googlePhoto: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
-  photoLoading: {
-    position: "absolute", right: 16, bottom: 16, width: 36, height: 36,
-    borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: T.surfaceGlassStrong,
-  },
-  photoAttribution: {
-    paddingHorizontal: spacing[5], paddingTop: 8, flexDirection: "row", flexWrap: "wrap",
-    alignItems: "center", columnGap: 4,
-  },
-  photoAttributionText: { color: T.textSecondary, fontFamily: T.fontBody, fontSize: 12, lineHeight: 17 },
-  photoAttributionLink: { minHeight: 44, justifyContent: "center" },
+  photoFallbackCaption: { color: T.textSecondary, fontFamily: T.fontBody, fontSize: 11, lineHeight: 17, backgroundColor: T.surfaceCard, paddingHorizontal: spacing[5], paddingVertical: 6 },
   heroBackButton: {
     position: "absolute",
     top: 12,
@@ -217,29 +203,6 @@ export const venueDetailStyles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontFamily: T.fontBody,
-  },
-  peopleMetric: {
-    flex: 1,
-    alignItems: "center",
-    gap: 3,
-    paddingHorizontal: 5,
-  },
-  peopleMetricDivider: {
-    width: 1,
-    backgroundColor: T.border,
-  },
-  peopleMetricValue: {
-    color: T.textPrimary,
-    fontSize: 24,
-    lineHeight: 29,
-    fontFamily: T.fontDisplayBold,
-  },
-  peopleMetricLabel: {
-    color: T.textSecondary,
-    fontSize: 12,
-    lineHeight: 17,
-    fontFamily: T.fontBodyMedium,
-    textAlign: "center",
   },
   privacyRow: {
     flexDirection: "row",

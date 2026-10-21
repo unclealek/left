@@ -1,3 +1,5 @@
+import { t, getTranslationLocale } from "../../features/preferences/translation-runtime";
+import { isUuid } from "../../lib/validation";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, Share, Text, TextInput, View } from "react-native";
 import { styles, T } from "../../app/leftTheme";
@@ -42,7 +44,8 @@ export function ExperienceCreateScreen({
     return () => { active = false; };
   }, [reloadPlans]);
   const eligibleVenues = useMemo(() => venues.filter((venue) => isUuid(venue.id)), [venues]);
-  const schedules = useMemo(buildScheduleOptions, []);
+  const locale = getTranslationLocale();
+  const schedules = useMemo(() => buildScheduleOptions(locale), [locale]);
   const [venueId, setVenueId] = useState(
     eligibleVenues.some((venue) => venue.id === defaultVenueId)
       ? defaultVenueId!
@@ -63,7 +66,7 @@ export function ExperienceCreateScreen({
   const amountInvalid = hasAmount && parseEuroAmount(amountText) === null;
   const adjustAmount = (direction:number) => {
     const next=changeAmount(parseEuroAmount(amountText) ?? amountCents,direction);
-    setAmountCents(next);setAmountText(String(next/100));
+    setAmountCents(next);setAmountText(new Intl.NumberFormat(locale, { useGrouping: false, maximumFractionDigits: 2 }).format(next / 100));
   };
 
   useEffect(() => {
@@ -86,40 +89,38 @@ export function ExperienceCreateScreen({
   return (
     <View style={styles.discoveryPage}>
       <ScreenHeader
-        title="Host something small"
-        subtitle="A simple plan, reviewed before anyone nearby can see it."
+        title={t("Host something small")}
+        subtitle={t("A simple plan, reviewed before anyone nearby can see it.")}
         onBack={onBack}
         variant="utility"
       />
 
-      <FieldBlock label="Your plans" hint="Submitted plans stay private until a reviewer approves them.">
-        {plansLoading ? <Text style={styles.experienceValidationHint}>Loading your plans…</Text> : null}
-        {plansError ? <Text style={styles.experienceFieldError}>{plansError}</Text> : null}
-        {!plansLoading && !plansError && !hostedPlans.length ? <Text style={styles.experienceValidationHint}>You haven’t submitted a plan yet.</Text> : null}
+      <FieldBlock label={t("Your plans")} hint="Submitted plans stay private until a reviewer approves them.">
+        {plansLoading ? <Text style={styles.experienceValidationHint}>{t("Loading your plans…")}</Text> : null}
+        {plansError ? <Text style={styles.experienceFieldError}>{t(plansError)}</Text> : null}
+        {!plansLoading && !plansError && !hostedPlans.length ? <Text style={styles.experienceValidationHint}>{t("You haven’t submitted a plan yet.")}</Text> : null}
         {hostedPlans.map((plan) => (
           <View key={plan.id} style={styles.experienceReviewNotice}>
-            <Text style={styles.experienceReviewEyebrow}>{plan.status === "pending_review" ? "Awaiting review" : plan.status}</Text>
+            <Text style={styles.experienceReviewEyebrow}>{plan.status === "pending_review" ? t("Awaiting review") : plan.status}</Text>
             <Text style={styles.experienceReviewText}>{plan.title}</Text>
-            <Text style={styles.experienceValidationHint}>{new Date(plan.starts_at).toLocaleString()}</Text>
+            <Text style={styles.experienceValidationHint}>{new Date(plan.starts_at).toLocaleString(getTranslationLocale())}</Text>
             {approvedGatheringUrl(plan, process.env.EXPO_PUBLIC_GATHERING_SHARE_ORIGIN) ? (
-              <SelectChip label="Share gathering" active={false} onPress={() => {
+              <SelectChip label={t("Share gathering")} active={false} onPress={() => {
                 const url=approvedGatheringUrl(plan, process.env.EXPO_PUBLIC_GATHERING_SHARE_ORIGIN);
                 if(url) void Share.share({message:`${plan.title} — ${url}`,url}).catch(() => setPlansError("Couldn’t open sharing. Try again."));
               }} />
-            ) : plan.status === "published" && Date.parse(plan.starts_at)>Date.now() ? <Text style={styles.experienceValidationHint}>Sharing will be available soon.</Text> : null}
+            ) : plan.status === "published" && Date.parse(plan.starts_at)>Date.now() ? <Text style={styles.experienceValidationHint}>{t("Sharing will be available soon.")}</Text> : null}
           </View>
         ))}
-        <SelectChip label="Refresh plans" active={false} onPress={() => setReloadPlans((value) => value + 1)} />
+        <SelectChip label={t("Refresh plans")} active={false} onPress={() => setReloadPlans((value) => value + 1)} />
       </FieldBlock>
 
       <View style={styles.experienceReviewNotice}>
-        <Text style={styles.experienceReviewEyebrow}>REVIEWED, NOT INSTANT</Text>
-        <Text style={styles.experienceReviewText}>
-          Left checks the plan, place, and wording first. Submitting does not publish it automatically.
-        </Text>
+        <Text style={styles.experienceReviewEyebrow}>{t("REVIEWED, NOT INSTANT")}</Text>
+        <Text style={styles.experienceReviewText}>{t("Left checks the plan, place, and wording first. Submitting does not publish it automatically.")}{" "}</Text>
       </View>
 
-      <FieldBlock label="Place" hint="Choose where the gathering will actually happen.">
+      <FieldBlock label={t("Place")} hint="Choose where the gathering will actually happen.">
         {eligibleVenues.length ? (
           <View style={styles.chipWrap}>
             {eligibleVenues.slice(0, 5).map((venue) => (
@@ -127,37 +128,37 @@ export function ExperienceCreateScreen({
             ))}
           </View>
         ) : (
-          <Text style={styles.experienceFieldError}>No verified nearby venue is available yet.</Text>
+          <Text style={styles.experienceFieldError}>{t("No verified nearby venue is available yet.")}</Text>
         )}
       </FieldBlock>
 
-      <FieldBlock label="Title" hint="Keep it specific and welcoming.">
+      <FieldBlock label={t("Title")} hint="Keep it specific and welcoming.">
         <TextInput
           value={title}
           onChangeText={(value) => setTitle(value.slice(0, 90))}
-          placeholder="Coffee and portfolio feedback"
+          placeholder={t("Coffee and portfolio feedback")}
           placeholderTextColor={T.textMuted}
           style={styles.input}
         />
       </FieldBlock>
 
-      <FieldBlock label="What will happen" hint="At least 20 characters. Say who it suits and what to expect.">
+      <FieldBlock label={t("What will happen")} hint="At least 20 characters. Say who it suits and what to expect.">
         <TextInput
           value={description}
           onChangeText={(value) => setDescription(value.slice(0, 1200))}
-          placeholder="A relaxed hour for sharing one piece of work and getting thoughtful feedback."
+          placeholder={t("A relaxed hour for sharing one piece of work and getting thoughtful feedback.")}
           placeholderTextColor={T.textMuted}
           style={[styles.input, styles.multilineInput]}
           multiline
         />
       </FieldBlock>
 
-      <FieldBlock label="When" hint="Preset times keep the first version simple and dependable.">
+      <FieldBlock label={t("When")} hint="Preset times keep the first version simple and dependable.">
         <View style={styles.experienceChoiceColumn}>
           {schedules.map((option) => (
             <SelectChip
               key={option.startsAt}
-              label={`${option.label} · ${option.time}`}
+              label={`${t(option.label)} · ${option.time}`}
               active={startsAt === option.startsAt}
               onPress={() => setStartsAt(option.startsAt)}
             />
@@ -165,7 +166,7 @@ export function ExperienceCreateScreen({
         </View>
       </FieldBlock>
 
-      <FieldBlock label="Group size" hint="Small enough for everyone to take part.">
+      <FieldBlock label={t("Group size")} hint="Small enough for everyone to take part.">
         <View style={styles.chipWrap}>
           {[6, 8, 12, 16].map((value) => (
             <SelectChip key={value} label={`${value} people`} active={capacity === value} onPress={() => setCapacity(value)} />
@@ -173,41 +174,41 @@ export function ExperienceCreateScreen({
         </View>
       </FieldBlock>
 
-      <FieldBlock label="Accessibility" hint="Optional practical access information.">
+      <FieldBlock label={t("Accessibility")} hint="Optional practical access information.">
         <TextInput
           value={accessibilityNotes}
           onChangeText={(value) => setAccessibilityNotes(value.slice(0, 300))}
-          placeholder="Step-free entrance, quiet corner, seating…"
+          placeholder={t("Step-free entrance, quiet corner, seating…")}
           placeholderTextColor={T.textMuted}
           style={styles.input}
         />
       </FieldBlock>
 
-      <FieldBlock label="Cost" hint="Choose an option, then add any practical details.">
+      <FieldBlock label={t("Cost")} hint="Choose an option, then add any practical details.">
         <View style={styles.chipWrap}>
-          {COST_CHOICES.map(option => <SelectChip key={option.id} label={option.label} active={costChoice===option.id} onPress={() => setCostChoice(option.id)} />)}
+          {COST_CHOICES.map(option => <SelectChip key={option.id} label={t(option.label)} active={costChoice===option.id} onPress={() => setCostChoice(option.id)} />)}
         </View>
         {costChoice === "potluck" ? <View style={styles.chipWrap}>
-          {POTLUCK_CHOICES.map(option => <SelectChip key={option} label={option} active={potluck===option} onPress={() => setPotluck(option)} />)}
+          {POTLUCK_CHOICES.map(option => <SelectChip key={option} label={t(option)} active={potluck===option} onPress={() => setPotluck(option)} />)}
         </View> : null}
         {hasAmount ? <View style={{flexDirection:"row",alignItems:"center",gap:12}}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Decrease amount by one euro" disabled={amountCents===0} accessibilityState={{disabled:amountCents===0}} onPress={() => adjustAmount(-1)} style={[styles.input,{width:48,alignItems:"center",justifyContent:"center"}]}><Text style={styles.experienceReviewText}>−</Text></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("Decrease amount by one euro")} disabled={amountCents===0} accessibilityState={{disabled:amountCents===0}} onPress={() => adjustAmount(-1)} style={[styles.input,{width:48,alignItems:"center",justifyContent:"center"}]}><Text style={styles.experienceReviewText}>−</Text></Pressable>
           <View style={{flex:1}}>
-            <Text style={styles.experienceValidationHint}>EUR per person</Text>
-            <TextInput accessibilityLabel="Amount in euros per person" value={amountText} keyboardType="decimal-pad" onChangeText={value => {setAmountText(value.slice(0,8));const cents=parseEuroAmount(value);if(cents!==null)setAmountCents(cents);}} style={styles.input} />
+            <Text style={styles.experienceValidationHint}>{t("EUR per person")}</Text>
+            <TextInput accessibilityLabel={t("Amount in euros per person")} value={amountText} keyboardType="decimal-pad" onChangeText={value => {setAmountText(value.slice(0,8));const cents=parseEuroAmount(value);if(cents!==null)setAmountCents(cents);}} style={styles.input} />
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Increase amount by one euro" disabled={amountCents===100000} accessibilityState={{disabled:amountCents===100000}} onPress={() => adjustAmount(1)} style={[styles.input,{width:48,alignItems:"center",justifyContent:"center"}]}><Text style={styles.experienceReviewText}>+</Text></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel={t("Increase amount by one euro")} disabled={amountCents===100000} accessibilityState={{disabled:amountCents===100000}} onPress={() => adjustAmount(1)} style={[styles.input,{width:48,alignItems:"center",justifyContent:"center"}]}><Text style={styles.experienceReviewText}>+</Text></Pressable>
         </View> : null}
-        <TextInput accessibilityLabel="Custom cost or potluck details" value={costDetails} onChangeText={value => setCostDetails(value.slice(0,100))} placeholder={costChoice === "potluck" ? "Dietary needs or what to bring…" : "Add your own details (optional)…"} placeholderTextColor={T.textMuted} style={styles.input} />
+        <TextInput accessibilityLabel={t("Custom cost or potluck details")} value={costDetails} onChangeText={value => setCostDetails(value.slice(0,100))} placeholder={costChoice === "potluck" ? t("Dietary needs or what to bring…") : t("Add your own details (optional)…")} placeholderTextColor={T.textMuted} style={styles.input} />
         {costNotes ? <Text style={styles.experienceValidationHint}>{costNotes}</Text> : null}
       </FieldBlock>
 
-      {submitError ? <Text style={styles.experienceFieldError}>{submitError}</Text> : null}
+      {submitError ? <Text style={styles.experienceFieldError}>{t(submitError)}</Text> : null}
       {validationMessage && (title.length > 0 || description.length > 0) ? (
-        <Text style={styles.experienceValidationHint}>{validationMessage}</Text>
+        <Text style={styles.experienceValidationHint}>{t(validationMessage)}</Text>
       ) : null}
       <PrimaryButton
-        label={submitting ? "Submitting for review…" : "Submit for review"}
+        label={submitting ? t("Submitting for review…") : t("Submit for review")}
         loading={submitting}
         disabled={!!validationMessage || submitting}
         onPress={() => onSubmit({
@@ -224,11 +225,8 @@ export function ExperienceCreateScreen({
   );
 }
 
-function isUuid(value: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-}
 
-function buildScheduleOptions() {
+function buildScheduleOptions(locale: string) {
   const now = new Date();
   const make = (daysAhead: number, hour: number, label: string) => {
     const date = new Date(now);
@@ -236,7 +234,7 @@ function buildScheduleOptions() {
     date.setHours(hour, 0, 0, 0);
     return {
       label,
-      time: new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(date),
+      time: new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit" }).format(date),
       startsAt: date.toISOString(),
     };
   };

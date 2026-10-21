@@ -174,8 +174,20 @@ export async function getLocationRuntimeState() {
   const owner = await getLocationStorageOwner();
   const runtime = await readJson<Partial<LocationRuntimeState>>(STORAGE_KEYS.runtime, DEFAULT_RUNTIME_STATE, owner);
   const fix = owner ? transientCoords.get(owner) : null;
-  return { ...normalizeLocationRuntimeState(runtime), storageOwnerId: owner,
-    lastKnownCoords: fix && Date.now() - fix.at < 5 * 60_000 ? fix.coords : null };
+  const normalized = normalizeLocationRuntimeState(runtime);
+  const fresh = fix && Date.now() - fix.at >= 0 && Date.now() - fix.at < 5 * 60_000;
+  return { ...normalized, storageOwnerId: owner,
+    ...(fresh ? { lastKnownCoords: fix.coords } : {
+      lastKnownCoords: null,
+      currentVenueId: null,
+      currentVenueName: null,
+      selectedVenueId: null,
+      selectedVenueName: null,
+      nearbyVenues: [],
+      dwellEnteredAt: null,
+      dwellLastSeenAt: null,
+    }),
+  };
 }
 
 export async function saveLocationRuntimeState(next: LocationRuntimeState) {
@@ -183,6 +195,7 @@ export async function saveLocationRuntimeState(next: LocationRuntimeState) {
   if (!owner || owner !== await getLocationStorageOwner()) return;
   const normalized = normalizeLocationRuntimeState(next);
   if (normalized.lastKnownCoords) transientCoords.set(owner, { coords: normalized.lastKnownCoords, at: Date.now() });
+  else transientCoords.delete(owner);
   await writeJson(STORAGE_KEYS.runtime, {
     ...normalized,
     lastKnownCoords: null,

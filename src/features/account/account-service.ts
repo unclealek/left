@@ -173,9 +173,13 @@ export async function submitIdentityRemovalRequest(user: AppUser): Promise<Accou
 
   if (!requestRow?.id) return "failed";
 
-  const { data: processingResult, error: processingError } = await supabase.functions.invoke("process-identity-removal", {
-    body: { requestId: requestRow.id, ...(appleAuthorizationCode ? { appleAuthorizationCode } : {}) },
-  });
-
-  return processingError || processingResult?.ok !== true ? "queued" : "processed";
+  try {
+    const { data: processingResult, error: processingError } = await supabase.functions.invoke("process-identity-removal", {
+      body: { requestId: requestRow.id, ...(appleAuthorizationCode ? { appleAuthorizationCode } : {}) },
+    });
+    return processingError || processingResult?.ok !== true ? "queued" : "processed";
+  } catch {
+    // The request already exists; preserve its retry path on transport failure.
+    return "queued";
+  }
 }

@@ -22,7 +22,8 @@ const authenticatedFetch = withSupabase({auth:'user'}, async (req, ctx) => {
       const {data: cached, error: cacheError} = await ctx.supabaseAdmin.from('venue_popular_times').select('*').eq('place_id', input.placeId).maybeSingle();
       if (cacheError) throw cacheError;
       const now = Date.now();
-      if (cached && ((cached.status === 'ready' && Date.parse(cached.expires_at) > now) ||
+      // Expiry disabled for now: reuse every ready result, including legacy expired rows.
+      if (cached && (cached.status === 'ready' ||
           (cached.status === 'failed' && Date.parse(cached.retry_at) > now) ||
           (cached.status === 'pending' && Date.parse(cached.pending_until) > now))) return json(publicRow(cached));
       // Only known canonical venues may incur a paid lookup.

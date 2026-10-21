@@ -1,3 +1,4 @@
+import { t } from "../../features/preferences/translation-runtime";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { T } from "../theme";
@@ -18,8 +19,8 @@ export function PopularTimesChart({ data, timezone }: {
 
   return (
     <View style={s.container}>
-      <Text style={s.heading}>{dayLabel(day)}{day === today ? " · Today" : ""}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.days} accessibilityRole="tablist" accessibilityLabel="Popular-times day">
+      <Text style={s.heading}>{dayLabel(day)}{day === today ? t(" · Today") : ""}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.days} accessibilityRole="tablist" accessibilityLabel={t("Popular-times day")}>
         {WEEKDAYS.map(value => (
           <Pressable key={value} accessibilityRole="tab" accessibilityLabel={dayLabel(value)}
             accessibilityState={{ selected: value === day }}
@@ -45,14 +46,14 @@ export function PopularTimesChart({ data, timezone }: {
               {['00:00', '06:00', '12:00', '18:00', '23:00'].map(label => <Text key={label} style={s.axisText}>{label}</Text>)}
             </View>
           </View>
-          <Text style={s.copy}>Venue local time. Typical activity, not a live count of people. Gray marks mean no data.</Text>
+          <Text style={s.copy}>{t("Venue local time. Typical activity, not a live count of people. Gray marks mean no data.")}</Text>
           <Pressable accessibilityRole="button" accessibilityState={{ expanded: showHours }}
             onPress={() => setShowHours(value => !value)} style={s.detailsButton}>
-            <Text style={s.detailsText}>{showHours ? "Hide hourly details" : "Show hourly details"}</Text>
+            <Text style={s.detailsText}>{showHours ? t("Hide hourly details") : t("Show hourly details")}</Text>
           </Pressable>
           {showHours ? <View style={s.details}>
             {hours.map(value => <Text key={value.hour} style={s.copy}>
-              {`${String(value.hour).padStart(2, '0')}:00 — ${value.busyness === null ? "No data" : `${value.busyness}% typical activity`}`}
+              {`${String(value.hour).padStart(2, '0')}:00 — ${value.busyness === null ? t("No data") : t("{percent}% typical activity", { percent: value.busyness })}`}
             </Text>)}
           </View> : null}
         </>

@@ -1,3 +1,4 @@
+import { t } from "../../features/preferences/translation-runtime";
 import type { ReactNode } from "react";
 import { Modal, Pressable, Text, View } from "react-native";
 import { styles, T } from "../../app/leftTheme";
@@ -125,48 +126,7 @@ export function IconSelectChip({
   );
 }
 
-export function StatusPill({
-  label,
-  visible,
-  onPress,
-  showChevron = false,
-}: {
-  label: string;
-  visible: boolean;
-  onPress?: () => void;
-  showChevron?: boolean;
-}) {
-  const content = (
-    <>
-      <View
-        style={[
-          styles.statusPillDot,
-          visible ? styles.statusPillDotVisible : styles.statusPillDotHidden,
-        ]}
-      />
-      <Text style={styles.statusPillLabel}>{label}</Text>
-      {showChevron ? <LeftIcon name="chevron-down" size={16} color={T.textSecondary} /> : null}
-    </>
-  );
-
-  if (!onPress) {
-    return (
-      <GlassSurface variant="soft" radius={glassRadii.pill} contentStyle={styles.statusPillBase}>
-        {content}
-      </GlassSurface>
-    );
-  }
-
-  return (
-    <GlassSurface variant="soft" radius={glassRadii.pill}>
-      <Pressable onPress={onPress} style={({ pressed }) => [styles.statusPillBase, pressed && styles.primaryBtnPressed]}>
-        {content}
-      </Pressable>
-    </GlassSurface>
-  );
-}
-
-export function UtilityIconButton({
+function UtilityIconButton({
   icon,
   label,
   onPress,
@@ -208,7 +168,7 @@ export function SafetyActionButton({
   onPress: () => void;
   compact?: boolean;
 }) {
-  return <UtilityIconButton icon="shield" label="Safety" onPress={onPress} compact={compact} showLabel={false} />;
+  return <UtilityIconButton icon="shield" label={t("Safety")} onPress={onPress} compact={compact} showLabel={false} />;
 }
 
 export function VenueIdentityBlock({
@@ -260,19 +220,6 @@ export function VenueIdentityBlock({
   );
 }
 
-export function EnergyPill({ level }: { level: string }) {
-  const normalizedLevel = level.toLowerCase();
-  const isEmphasized = normalizedLevel === "busy" || normalizedLevel === "active";
-  return (
-    <View style={[styles.energyPill, isEmphasized && styles.energyPillHigh]}>
-      <View style={[styles.energyPillDot, isEmphasized && styles.energyPillDotHigh]} />
-      <Text style={[styles.energyPillLabel, isEmphasized && styles.energyPillLabelHigh]}>
-        {level}
-      </Text>
-    </View>
-  );
-}
-
 export function AppDialog({
   visible,
   title,
@@ -295,8 +242,8 @@ export function AppDialog({
         <View style={styles.dialogCard}>
           <View style={styles.dialogAccent} />
           <View style={styles.dialogTextBlock}>
-            <Text style={styles.dialogTitle}>{title}</Text>
-            <Text style={styles.dialogBody}>{message}</Text>
+            <Text style={styles.dialogTitle}>{t(title)}</Text>
+            <Text style={styles.dialogBody}>{t(message)}</Text>
           </View>
           <View style={styles.dialogActions}>
             {actions.map((action) => {

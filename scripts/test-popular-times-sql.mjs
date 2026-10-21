@@ -13,7 +13,7 @@ create function auth.uid() returns uuid language sql as 'select null::uuid';
 create table public.venues(id uuid primary key default gen_random_uuid(),name text,geofence_json jsonb,google_place_id text unique,is_active boolean default true);
 create publication supabase_realtime;
 grant usage on schema public to anon,authenticated,service_role;`);
-for (const file of ['0032_venue_popular_times.sql','0033_popular_times_run_budget.sql','0034_remove_legacy_venue_activity.sql','20261004220526_popular_times_user_trigger_limits.sql']) {
+for (const file of ['0032_venue_popular_times.sql','0033_popular_times_run_budget.sql','0034_remove_legacy_venue_activity.sql','20261004220526_popular_times_user_trigger_limits.sql','20261018105330_reuse_popular_times_indefinitely.sql']) {
  await db.exec(await readFile(new URL('../supabase/migrations/'+file,import.meta.url),'utf8'));
 }
 for(const file of ['popular-times.sql','popular-times-budget.sql','popular-times-user-limits.sql']) {

@@ -4,10 +4,16 @@ Implemented locally on 2026-10-12. No backend migration/deployment, associated-d
 
 ## Mobile behavior
 
-- Auth offers **Explore as a guest**, opening a separate `GuestApp` without an anonymous Auth sign-in. It does not mount member presence/attendance/hosting/profile workflows or request location permission.
-- Guests can browse a Home preview, an explicitly illustrative venue page, gathering information from an approved shared link, and a profile introduction. Member profiles and presence are not fetched. Actions to host, attend, save or become visible open sign-in. A dedicated non-persistent anon-key client can read only the proposed single-gathering RPC; it has no stored member session.
+- Signed-out users can view only the gathering opened through a valid shared link. There is no general guest entry on Auth and no guest Home, Map, Venues, Profile or bottom navigation.
+- The preview reuses ExperienceDetailScreen and the product theme. Attendance, opening venue details and leaving the preview route to sign-in. Unavailable links show a restricted error/retry screen; no link shows only a sign-in prompt. Member profiles, location and presence are never fetched. A dedicated non-persistent anon-key client reads only the proposed single-gathering RPC.
 - Approved, upcoming plans in **Your plans** gain a Share button once `EXPO_PUBLIC_GATHERING_SHARE_ORIGIN` is configured. Published detail pages can also share. Pending/rejected/cancelled/expired plans never receive a share action. Hosts can refresh Your plans to see approval changes.
 - The hosting form offers Free, Buy your own, Per person, Split costs, Potluck and Other. Potluck suggestions cover dishes, snacks, drinks and dessert; typed details remain. Expected EUR amounts use ±€1 controls and an editable decimal input, bounded to €0–€1,000. Existing `cost_notes` stores the readable result, so no cost schema migration is needed. It is an expected-spend note, not payment collection.
+
+## Guest scope correction — 2026-10-19
+
+The earlier general guest browsing implementation has been replaced with an event-only preview, following the clarified product requirement. Only the linked event is visible without signing in. No placeholder venue or product tab destinations are mounted. Link transitions discard previous event content and cancelled requests cannot restore it.
+
+Earlier screenshots in `output/reviews/guest-product-design/` document the superseded browsing design, not the current guest flow. The event-only restriction is covered by automated tests; live public sharing remains dependent on the setup below.
 
 ## Sharing contract
 

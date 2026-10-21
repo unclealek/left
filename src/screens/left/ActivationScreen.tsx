@@ -1,3 +1,4 @@
+import { t } from "../../features/preferences/translation-runtime";
 import { Text, TextInput, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 import { VISIBILITY_DISCLOSURE } from "../../features/presence/visibility-copy";
@@ -68,7 +69,7 @@ function PresenceTimerRing({
       </Svg>
       <View pointerEvents="none" style={styles.activationLiveTimerContent}>
         <Text style={styles.activationLiveTimerValue}>{remainingLabel}</Text>
-        <Text style={styles.activationLiveTimerLabel}>remaining</Text>
+        <Text style={styles.activationLiveTimerLabel}>{t("remaining")}</Text>
       </View>
     </View>
   );
@@ -106,8 +107,8 @@ export function ActivationScreen(props: {
     return (
       <View style={[styles.activationPage, styles.activationLivePage]}>
         <ScreenHeader
-          title="You’re visible"
-          subtitle="People here can discover you for this moment."
+          title={t("You’re visible")}
+          subtitle={t("People here can discover you for this moment.")}
           onBack={props.onBack}
           variant="utility"
         />
@@ -115,14 +116,14 @@ export function ActivationScreen(props: {
         <View style={styles.activationLiveHero}>
           <View style={styles.activationLiveStatusRow}>
             <View style={styles.activationLiveStatusDot} />
-            <Text style={styles.activationLiveStatusText}>Visible now</Text>
+            <Text style={styles.activationLiveStatusText}>{t("Visible now")}</Text>
           </View>
           <PresenceTimerRing
             remainingLabel={remainingLabel}
             remainingSeconds={remainingSeconds}
             totalSeconds={props.selectedDuration * 60}
           />
-          <Text style={styles.activationLiveElapsed}>{elapsedLabel} elapsed</Text>
+          <Text style={styles.activationLiveElapsed}>{elapsedLabel}{" "}{t("elapsed")}</Text>
         </View>
 
         <View style={styles.activationLiveVenueRow}>
@@ -130,7 +131,7 @@ export function ActivationScreen(props: {
             <LeftIcon name="map-pin" size={22} color={T.venueAccent} active />
           </View>
           <View style={styles.activationLiveVenueCopy}>
-            <Text style={styles.activationLiveVenueLabel}>Current venue</Text>
+            <Text style={styles.activationLiveVenueLabel}>{t("Current venue")}</Text>
             <Text style={[styles.activationVenueName, styles.activationLiveVenueName]}>{props.venueName}</Text>
           </View>
           <View style={[styles.activationVenueStatus, styles.activationVenueStatusConfirmed]}>
@@ -144,7 +145,7 @@ export function ActivationScreen(props: {
               <LeftIcon name={getVibeIcon(vibeLabel)} size={18} color={T.primary} />
             </View>
             <View style={styles.activationLiveSummaryCopy}>
-              <Text style={styles.activationLiveSummaryLabel}>Vibe</Text>
+              <Text style={styles.activationLiveSummaryLabel}>{t("Vibe")}</Text>
               <Text style={styles.activationLiveSummaryValue}>{vibeLabel}</Text>
             </View>
           </View>
@@ -156,21 +157,21 @@ export function ActivationScreen(props: {
               <LeftIcon name="tag" size={18} color={T.primary} />
             </View>
             <View style={styles.activationLiveHintCopy}>
-              <Text style={styles.activationLiveHintLabel}>Your hint</Text>
+              <Text style={styles.activationLiveHintLabel}>{t("Your hint")}</Text>
               <Text style={styles.activationLiveHintText}>{props.hintDraft.trim()}</Text>
             </View>
           </View>
         ) : null}
 
         <BrandPrimaryButton
-          label="See who’s here"
-          subtitle="See who is visible here"
+          label={t("See who’s here")}
+          subtitle={t("See who is visible here")}
           onPress={props.onOpenFeed}
           size="compact"
           trailingIcon="arrow"
         />
         <GhostButton
-          label={props.endingSession ? "Ending visibility..." : "End visibility"}
+          label={props.endingSession ? t("Ending visibility...") : t("End visibility")}
           onPress={props.onEndSession}
           destructive
           loading={props.endingSession}
@@ -179,7 +180,7 @@ export function ActivationScreen(props: {
           <View style={styles.activationLivePrivacyIconWrap}>
             <LeftIcon name="lock" size={14} color={T.primary} />
           </View>
-          <Text style={styles.activationLivePrivacyText}>{VISIBILITY_DISCLOSURE}</Text>
+          <Text style={styles.activationLivePrivacyText}>{t(VISIBILITY_DISCLOSURE)}</Text>
         </View>
       </View>
     );
@@ -191,14 +192,14 @@ export function ActivationScreen(props: {
   return (
     <View style={styles.activationPage}>
       <ScreenHeader
-        title="Share this moment"
-        subtitle="Choose how you want to be discovered nearby."
+        title={t("Share this moment")}
+        subtitle={t("Choose how you want to be discovered nearby.")}
         onBack={props.onBack}
         variant="utility"
       />
 
       <View style={[styles.activationSectionCard, styles.activationVenueCard]}>
-        <Text style={styles.activationSectionTitle}>Current venue</Text>
+        <Text style={styles.activationSectionTitle}>{t("Current venue")}</Text>
         <View style={styles.activationVenueCardTopRow}>
           <View style={styles.activationVenueIconWrap}>
             <LeftIcon name="map-pin" size={22} color={T.venueAccent} active={venueConfirmed} />
@@ -220,10 +221,10 @@ export function ActivationScreen(props: {
                   venueConfirmed && styles.activationVenueMetaDotConfirmed,
                 ]}
               />
-              <Text style={styles.activationVenuePrivacy}>Your precise location stays private</Text>
+              <Text style={styles.activationVenuePrivacy}>{t("Your precise location stays private")}</Text>
             </View>
             {!venueConfirmed ? (
-              <Text style={styles.activationVenueBody}>{props.venueConfidenceCopy}</Text>
+              <Text style={styles.activationVenueBody}>{t(props.venueConfidenceCopy)}</Text>
             ) : null}
           </View>
           <View
@@ -238,9 +239,9 @@ export function ActivationScreen(props: {
       </View>
 
       <View style={styles.activationSectionCard}>
-        <Text style={styles.activationSectionTitle}>How you show up</Text>
+        <Text style={styles.activationSectionTitle}>{t("How you show up")}</Text>
         <FieldBlock
-          label="What's your vibe?"
+          label={t("What's your vibe?")}
           hint="Choose one or more of the interests you added to your profile."
           step={1}
           variant="section"
@@ -249,7 +250,7 @@ export function ActivationScreen(props: {
             {props.availableVibes.map((v) => (
               <IconSelectChip
                 key={v}
-                label={v}
+                label={t(v)}
                 icon={getVibeIcon(v)}
                 active={props.selectedVibes.includes(v)}
                 halfWidth
@@ -261,9 +262,9 @@ export function ActivationScreen(props: {
       </View>
 
       <View style={styles.activationSectionCard}>
-        <Text style={styles.activationSectionTitle}>Session details</Text>
+        <Text style={styles.activationSectionTitle}>{t("Session details")}</Text>
         <FieldBlock
-          label="How long will your signal stay active?"
+          label={t("How long will your signal stay active?")}
           hint="You can change this anytime."
           step={2}
           variant="section"
@@ -289,19 +290,17 @@ export function ActivationScreen(props: {
             <LeftIcon name="edit" size={16} color={T.primary} />
           </View>
           <View style={styles.activationHintContent}>
-            <Text style={styles.activationHintTitle}>
-              How can people recognize you?
-            </Text>
-            <Text style={styles.activationHintMeta}>Required. Describe something people can spot without a photo.</Text>
+            <Text style={styles.activationHintTitle}>{t("How can people recognize you?")}{" "}</Text>
+            <Text style={styles.activationHintMeta}>{t("Required. Describe something people can spot without a photo.")}</Text>
           </View>
         </View>
 
         <View style={styles.activationHintEditor}>
           <TextInput
-            accessibilityLabel="Recognition hint (required)"
+            accessibilityLabel={t("Recognition hint (required)")}
             value={props.hintDraft}
             onChangeText={props.onChangeHint}
-            placeholder="e.g. Grey hoodie, corner seat"
+            placeholder={t("e.g. Grey hoodie, corner seat")}
             placeholderTextColor={T.textMuted}
             maxLength={42}
             style={styles.activationHintInput}
@@ -311,9 +310,7 @@ export function ActivationScreen(props: {
       </View>
 
       {props.venueHidden ? (
-        <Text style={styles.activationWarningText}>
-          This venue is hidden in your settings. Unhide it before going visible here again.
-        </Text>
+        <Text style={styles.activationWarningText}>{t("This venue is hidden in your settings. Unhide it before going visible here again.")}{" "}</Text>
       ) : null}
 
       <View style={styles.activationPrivacyNote}>
@@ -321,14 +318,14 @@ export function ActivationScreen(props: {
           <LeftIcon name="lock" size={17} color={T.primary} />
         </View>
         <View style={styles.activationPrivacyCopy}>
-          <Text style={styles.activationPrivacyTitle}>What people here can see</Text>
-          <Text style={styles.activationPrivacyText}>{VISIBILITY_DISCLOSURE}</Text>
+          <Text style={styles.activationPrivacyTitle}>{t("What people here can see")}</Text>
+          <Text style={styles.activationPrivacyText}>{t(VISIBILITY_DISCLOSURE)}</Text>
         </View>
       </View>
 
       <SlideToConfirmButton
-        label="Slide to go visible"
-        subtitle={`Start a ${durationLabel} presence`}
+        label={t("Slide to go visible")}
+        subtitle={t("Start a {duration} presence", { duration: durationLabel })}
         onConfirm={props.onActivate}
         disabled={props.venueHidden || props.activationSubmitting || props.selectedVibes.length === 0 || !props.hintDraft.trim()}
         loading={props.activationSubmitting}
@@ -338,9 +335,9 @@ export function ActivationScreen(props: {
 }
 
 function formatDurationOption(duration: number) {
-  if (duration === 60) return "1 hour";
-  if (duration === 120) return "2 hours";
-  return `${duration} min`;
+  if (duration === 60) return t("1 hour");
+  if (duration === 120) return t("2 hours");
+  return t("{count} min", { count: duration });
 }
 
 function getVibeIcon(vibe: string): LeftIconName {

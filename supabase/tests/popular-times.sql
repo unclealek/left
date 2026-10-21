@@ -31,7 +31,14 @@ begin
   if (result->>'claimed')::boolean then raise exception 'no-data cache retriggered'; end if;
   update public.venue_popular_times set expires_at=now()-interval '1 second' where place_id='test_popular_times_fixture';
   result := public.claim_popular_times_budgeted('test_popular_times_fixture',venue,'google_scrape',test_user);
-  if not (result->>'claimed')::boolean then raise exception 'expired cache did not refresh'; end if;
+  if (result->>'claimed')::boolean then raise exception 'ready cache with legacy expiry was refreshed'; end if;
+  update public.venue_popular_times set expires_at=null where place_id='test_popular_times_fixture';
+  result := public.claim_popular_times_budgeted('test_popular_times_fixture',venue,'google_scrape',test_user);
+  if (result->>'claimed')::boolean then raise exception 'non-expiring ready cache was refreshed'; end if;
+  -- Failed lookups still acquire a new lease after their retry window.
+  update public.venue_popular_times set status='failed',retry_at=now()-interval '1 second' where place_id='test_popular_times_fixture';
+  result := public.claim_popular_times_budgeted('test_popular_times_fixture',venue,'google_scrape',test_user);
+  if not (result->>'claimed')::boolean then raise exception 'failed cache did not retry'; end if;
   if result->'row'->>'claim_token' = first_claim->'row'->>'claim_token' then raise exception 'lease reused'; end if;
   update public.venue_popular_times set pending_until=now()-interval '1 second' where place_id='test_popular_times_fixture';
   result := public.claim_popular_times_budgeted('test_popular_times_fixture',venue,'google_scrape',test_user);

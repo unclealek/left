@@ -17,3 +17,14 @@ describe('gathering cost choices', () => {
   expect(parseEuroAmount('-1')).toBeNull(); expect(parseEuroAmount('1001')).toBeNull();
  });
 });
+
+it("formats app-generated costs in the chosen language without changing the amount", async () => {
+  const { setTranslationLanguage, setTranslationLocale } = await import("../preferences/translation-runtime");
+  try {
+    setTranslationLanguage("fi"); setTranslationLocale("fi-FI");
+    const finnish = costNotesFor("paid", 550, "", "");
+    expect(finnish).toContain("5,50"); expect(finnish).toContain("henkilöltä");
+    setTranslationLanguage("sv"); setTranslationLocale("sv-FI");
+    expect(costNotesFor("potluck", 0, "Bring snacks", "")).toBe("Knytkalas — Ta med snacks");
+  } finally { setTranslationLanguage("en"); setTranslationLocale("en"); }
+});

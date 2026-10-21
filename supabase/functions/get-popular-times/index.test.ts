@@ -16,6 +16,8 @@ afterEach(() => vi.unstubAllGlobals());
 describe('get-popular-times endpoint', () => {
   it.each([
     {status:'ready',has_data:false,expires_at:'2099-01-01'},
+    {status:'ready',has_data:true,popular_times:{monday:[{hour:12,busyness:60}]},expires_at:'2020-01-01'},
+    {status:'ready',has_data:false,expires_at:null},
     {status:'pending',pending_until:'2099-01-01'},
     {status:'failed',retry_at:'2099-01-01'},
   ])('returns cached $status without claiming or starting work', async cached => {

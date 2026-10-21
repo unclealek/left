@@ -1,5 +1,7 @@
+import { t } from "../../features/preferences/translation-runtime";
+import { useReducedMotion } from "../../components/left/use-navigation-accessibility";
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, Animated, Easing, Platform, Pressable, Text, useWindowDimensions, View } from "react-native";
+import { Animated, Easing, Platform, Pressable, Text, useWindowDimensions, View } from "react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
@@ -11,7 +13,7 @@ import { GlassSurface, glassRadii } from "../../components/glass";
 
 function GoogleLogo() {
   return (
-    <Svg width={21} height={21} viewBox="0 0 24 24" accessibilityLabel="Google">
+    <Svg width={21} height={21} viewBox="0 0 24 24" accessibilityLabel={t("Google")}>
       <Path
         fill="#4285F4"
         d="M21.35 11.1h-9.18v3.8h5.26c-.23 1.22-.93 2.25-1.98 2.94l3.2 2.48c1.87-1.72 2.95-4.26 2.95-7.28 0-.69-.06-1.35-.25-1.94Z"
@@ -39,9 +41,7 @@ export function AuthScreen({
   onAppleAuth,
   onBack,
   onOpenLegal,
-  onBrowseGuest,
 }: {
-  onBrowseGuest?: () => void;
   authError: string | null;
   busy?: boolean;
   onAuth: () => void;
@@ -53,14 +53,8 @@ export function AuthScreen({
   const insets = useSafeAreaInsets();
   const entrance = useRef(new Animated.Value(0)).current;
   const ambient = useRef(new Animated.Value(0)).current;
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
   const [appleAvailable, setAppleAvailable] = useState(false);
-
-  useEffect(() => {
-    void AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
-    const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduceMotion);
-    return () => subscription.remove();
-  }, []);
 
   useEffect(() => {
     if (Platform.OS !== "ios") return;
@@ -171,7 +165,7 @@ export function AuthScreen({
         <View style={styles.authFlowHeader}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Back to welcome"
+            accessibilityLabel={t("Back to welcome")}
             onPress={onBack}
             style={({ pressed }) => [styles.authBackButton, pressed && styles.authBtnPressed]}
           >
@@ -179,7 +173,7 @@ export function AuthScreen({
           </Pressable>
           <View style={styles.authStepBadge}>
             <View style={styles.authStepDot} />
-            <Text style={styles.authStepBadgeText}>SECURE SIGN IN</Text>
+            <Text style={styles.authStepBadgeText}>{t("SECURE SIGN IN")}</Text>
           </View>
           <View style={styles.authHeaderSpacer} />
         </View>
@@ -188,7 +182,7 @@ export function AuthScreen({
           <View style={styles.authMarkRing}>
             <LeftLogoMark size={47} />
           </View>
-          <Text style={styles.authWordmark}>LEFT</Text>
+          <Text style={styles.authWordmark}>{t("LEFT")}</Text>
         </View>
 
         <GlassSurface
@@ -197,9 +191,9 @@ export function AuthScreen({
           style={styles.authCardGlass}
           contentStyle={styles.authCard}
         >
-          <Text style={styles.authEyebrow}>FAST & SECURE</Text>
-          <Text style={styles.authHeadline}>Let’s get you in.</Text>
-          <Text style={styles.authSub}>Create your account or continue where you left off with one effortless sign-in.</Text>
+          <Text style={styles.authEyebrow}>{t("FAST & SECURE")}</Text>
+          <Text style={styles.authHeadline}>{t("Let’s get you in.")}</Text>
+          <Text style={styles.authSub}>{t("Create your account or continue where you left off with one effortless sign-in.")}</Text>
 
           <View style={styles.authBenefitList}>
             {[
@@ -212,8 +206,8 @@ export function AuthScreen({
                   <LeftIcon name={benefit.icon} size={18} color={T.onboardingAccent} />
                 </View>
                 <View style={styles.authBenefitCopy}>
-                  <Text style={styles.authBenefitTitle}>{benefit.title}</Text>
-                  <Text style={styles.authBenefitBody}>{benefit.body}</Text>
+                  <Text style={styles.authBenefitTitle}>{t(benefit.title)}</Text>
+                  <Text style={styles.authBenefitBody}>{t(benefit.body)}</Text>
                 </View>
               </View>
             ))}
@@ -223,7 +217,7 @@ export function AuthScreen({
             onPress={onAuth}
             disabled={busy}
             accessibilityRole="button"
-            accessibilityLabel="Continue with Google"
+            accessibilityLabel={t("Continue with Google")}
             accessibilityState={{ disabled: busy, busy }}
             style={({ pressed }) => [
               styles.authGoogleButton,
@@ -233,14 +227,14 @@ export function AuthScreen({
           >
             {busy ? (
               <View style={styles.authGoogleLoading}>
-                <LeftLoadingAnimation size="small" label="Connecting securely with Google" />
+                <LeftLoadingAnimation size="small" label={t("Connecting securely with Google")} />
               </View>
             ) : (
               <View style={styles.authGoogleIcon}>
                 <GoogleLogo />
               </View>
             )}
-            <Text style={styles.authGoogleLabel}>{busy ? "Connecting securely" : "Continue with Google"}</Text>
+            <Text style={styles.authGoogleLabel}>{busy ? t("Connecting securely") : t("Continue with Google")}</Text>
           </Pressable>
 
           {appleAvailable ? (
@@ -256,26 +250,25 @@ export function AuthScreen({
             />
           ) : null}
 
-          {onBrowseGuest ? <Pressable accessibilityRole="button" accessibilityLabel="Explore as a guest" disabled={busy} onPress={onBrowseGuest} style={{minHeight:44,alignItems:"center",justifyContent:"center"}}><Text style={styles.authLegalLink}>Explore as a guest</Text></Pressable> : null}
 
-          {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
+          {authError ? <Text style={styles.errorText}>{t(authError)}</Text> : null}
 
           <View style={styles.authLegalRow}>
             <Pressable accessibilityRole="link" onPress={() => onOpenLegal("terms")}>
-              <Text style={styles.authLegalLink}>Terms</Text>
+              <Text style={styles.authLegalLink}>{t("Terms")}</Text>
             </Pressable>
             <Text style={styles.authLegalSeparator}>·</Text>
             <Pressable accessibilityRole="link" onPress={() => onOpenLegal("privacy")}>
-              <Text style={styles.authLegalLink}>Privacy</Text>
+              <Text style={styles.authLegalLink}>{t("Privacy")}</Text>
             </Pressable>
             <Text style={styles.authLegalSeparator}>·</Text>
             <Pressable accessibilityRole="link" onPress={() => onOpenLegal("community")}>
-              <Text style={styles.authLegalLink}>Guidelines</Text>
+              <Text style={styles.authLegalLink}>{t("Guidelines")}</Text>
             </Pressable>
           </View>
         </GlassSurface>
 
-        <Text style={styles.authMemberNote}>Existing and new members sign in together.</Text>
+        <Text style={styles.authMemberNote}>{t("Existing and new members sign in together.")}</Text>
       </Animated.View>
     </View>
   );

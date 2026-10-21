@@ -10,7 +10,8 @@ export async function completePopularTimesJob(
     const result = await provider.fetch(input);
     const now = Date.now();
     const {error} = await save({...result, source:provider.source, status:'ready', fetched_at:new Date(now).toISOString(),
-      expires_at:new Date(now+14*86400000).toISOString(), claim_token:null, pending_until:null, retry_at:null});
+      // 14-day expiry disabled for now; ready results are reused indefinitely.
+      expires_at:null, claim_token:null, pending_until:null, retry_at:null});
     if (error) throw new Error('Cache update failed');
   } catch (error) {
     // Log only status and allowlisted error codes, never response bodies or credentials.

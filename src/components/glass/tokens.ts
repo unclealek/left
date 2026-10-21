@@ -67,6 +67,5 @@ export const glassRadii = {
   compactCard: 18,
   card: 24,
   largeCard: 30,
-  navigation: 24,
   pill: 999,
 } as const;

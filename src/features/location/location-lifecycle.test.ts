@@ -1,10 +1,11 @@
+vi.mock("../preferences/notification-copy", () => ({ loadVenueNotificationCopy: async () => ({ title: "Open to chat?", body: "Venue prompt", yes: "Yes", no: "No" }) }));
 import { beforeEach, expect, it, vi } from "vitest";
-const m = vi.hoisted(() => ({ owner: "a" as string | null, nearby: vi.fn(), stop: vi.fn(), save: vi.fn(), clear: vi.fn(), schedule: vi.fn(), presented: vi.fn(), started: false, start: vi.fn(), permissions: "granted" }));
+const m = vi.hoisted(() => ({ owner: "a" as string | null, nearby: vi.fn(), stop: vi.fn(), save: vi.fn(), clear: vi.fn(), schedule: vi.fn(), presented: vi.fn(), started: false, start: vi.fn(), fix: vi.fn(), permissions: "granted" }));
 vi.mock("react-native", () => ({ Platform: { OS: "ios" } }));
 vi.mock("expo-location", () => ({ hasStartedLocationUpdatesAsync: async () => m.started, stopLocationUpdatesAsync: m.stop,
-  startLocationUpdatesAsync: m.start, Accuracy: { Balanced: 3 }, getForegroundPermissionsAsync: async () => ({ status: m.permissions }),
+  startLocationUpdatesAsync: m.start, getCurrentPositionAsync: m.fix, Accuracy: { Balanced: 3, High: 4 }, getForegroundPermissionsAsync: async () => ({ status: m.permissions }),
   getBackgroundPermissionsAsync: async () => ({ status: m.permissions }) }));
-vi.mock("expo-notifications", () => ({ setNotificationHandler: vi.fn(), getPresentedNotificationsAsync: m.presented,
+vi.mock("expo-notifications", () => ({ setNotificationHandler: vi.fn(), setNotificationCategoryAsync: vi.fn(), getPresentedNotificationsAsync: m.presented,
   dismissNotificationAsync: vi.fn(), scheduleNotificationAsync: m.schedule }));
 vi.mock("./venue-detection", () => ({ getNearbyVenues: m.nearby, detectVenueFromCoords: vi.fn() }));
 vi.mock("./location-storage", () => ({
@@ -15,7 +16,7 @@ vi.mock("./location-storage", () => ({
   getDefaultRuntimeState: () => ({ permissionGranted: false }),
   updateLocationRuntimeState: async (updater: any) => updater({}),
 }));
-import { handleVenuePromptResponse, processLocationFix, stopLocationForAccount, syncLocationRegistrationState } from "./location-service";
+import { handleVenuePromptResponse, primeLocationFix, processLocationFix, stopLocationForAccount, syncLocationRegistrationState } from "./location-service";
 beforeEach(() => {
   vi.clearAllMocks(); m.owner = "a"; m.nearby.mockResolvedValue([]); m.stop.mockResolvedValue(undefined); m.presented.mockResolvedValue([]);
   m.started = true; m.permissions = "granted"; m.start.mockResolvedValue(undefined);
@@ -55,4 +56,21 @@ it.each(["signed-out", "denied"])("does not start tracking when %s", async (reas
   if (reason === "signed-out") m.owner = null; else m.permissions = "denied";
   await syncLocationRegistrationState();
   expect(m.start).not.toHaveBeenCalled();
+});
+
+it("clears the old venue when the fresh location lookup fails", async () => {
+  m.fix.mockRejectedValue(new Error("GPS unavailable"));
+  expect(await primeLocationFix()).toBe(false);
+  expect(m.save).toHaveBeenCalledWith(expect.objectContaining({ currentVenueId: null, currentVenueName: null, nearbyVenues: [], lastKnownCoords: null }));
+});
+it("requests a more accurate foreground fix", async () => {
+  m.fix.mockResolvedValue({ coords });
+  expect(await primeLocationFix()).toBe(true);
+  expect(m.fix).toHaveBeenCalledWith({ accuracy: 4 });
+});
+it("does not apply a foreground fix to a different account", async () => {
+  m.fix.mockImplementation(async () => { m.owner = "b"; return { coords }; });
+  expect(await primeLocationFix()).toBe(false);
+  expect(m.nearby).not.toHaveBeenCalled();
+  expect(m.save).not.toHaveBeenCalled();
 });

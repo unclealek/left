@@ -1,11 +1,9 @@
+import { isUuid } from "../../lib/validation";
 import type { RuntimeVenueCandidate } from "./location-storage";
 import type { VenueContextSummary } from "../../types/left-domain";
 
 export type VenueConfidence = "confirmed" | "nearby_guess" | "needs_confirmation";
 
-export function isUuid(value: string | null | undefined) {
-  return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-}
 
 export function resolveVenueConfidence(
   venue: VenueContextSummary,

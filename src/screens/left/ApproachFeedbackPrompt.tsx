@@ -1,3 +1,4 @@
+import { t } from "../../features/preferences/translation-runtime";
 import { Text, View } from "react-native";
 import { styles } from "../../app/leftTheme";
 import type { PendingApproachFeedback } from "../../features/interactions/approach-feedback-storage";
@@ -31,37 +32,35 @@ export function ApproachFeedbackPrompt({
         style={styles.feedbackPromptGlass}
         contentStyle={styles.feedbackPromptCard}
       >
-        <Text style={styles.feedbackPromptEyebrow}>Quick follow-up</Text>
-        <Text style={styles.feedbackPromptTitle}>How did it go with {feedback.targetFirstName}?</Text>
-        <Text style={styles.feedbackPromptBody}>
-          We assumed you went over after the countdown ended. Confirm what happened so the prompt flow stays useful.
-        </Text>
+        <Text style={styles.feedbackPromptEyebrow}>{t("Quick follow-up")}</Text>
+        <Text style={styles.feedbackPromptTitle}>{t("How did it go with")}{" "}{feedback.targetFirstName}?</Text>
+        <Text style={styles.feedbackPromptBody}>{t("We assumed you went over after the countdown ended. Confirm what happened so the prompt flow stays useful.")}{" "}</Text>
 
         <View style={styles.feedbackPromptBlock}>
-          <Text style={styles.fieldLabel}>DID YOU GO OVER?</Text>
+          <Text style={styles.fieldLabel}>{t("DID YOU GO OVER?")}</Text>
           <View style={styles.feedbackPromptChoiceRow}>
-            <SelectChip label="Yes" active={wentOver === true} onPress={() => onSetWentOver(true)} />
-            <SelectChip label="No" active={wentOver === false} onPress={() => onSetWentOver(false)} />
+            <SelectChip label={t("Yes")} active={wentOver === true} onPress={() => onSetWentOver(true)} />
+            <SelectChip label={t("No")} active={wentOver === false} onPress={() => onSetWentOver(false)} />
           </View>
         </View>
 
         {wentOver === true ? (
           <View style={styles.feedbackPromptBlock}>
-            <Text style={styles.fieldLabel}>DID YOU USE THE ICEBREAKER?</Text>
+            <Text style={styles.fieldLabel}>{t("DID YOU USE THE ICEBREAKER?")}</Text>
             <View style={styles.feedbackPromptChoiceRow}>
-              <SelectChip label="Yes" active={usedIcebreaker === true} onPress={() => onSetUsedIcebreaker(true)} />
-              <SelectChip label="No" active={usedIcebreaker === false} onPress={() => onSetUsedIcebreaker(false)} />
+              <SelectChip label={t("Yes")} active={usedIcebreaker === true} onPress={() => onSetUsedIcebreaker(true)} />
+              <SelectChip label={t("No")} active={usedIcebreaker === false} onPress={() => onSetUsedIcebreaker(false)} />
             </View>
             <Text style={styles.feedbackPromptIcebreaker}>"{feedback.approachPrompt}"</Text>
           </View>
         ) : null}
 
         <View style={styles.feedbackPromptActions}>
-          <GhostButton label="Later" onPress={onLater} />
-          <PrimaryButton label="Save feedback" onPress={onSubmit} disabled={!canSubmit} />
+          <GhostButton label={t("Later")} onPress={onLater} />
+          <PrimaryButton label={t("Save feedback")} onPress={onSubmit} disabled={!canSubmit} />
         </View>
 
-        {!canSubmit ? <Text style={styles.feedbackPromptHint}>Answer the prompt above to continue.</Text> : null}
+        {!canSubmit ? <Text style={styles.feedbackPromptHint}>{t("Answer the prompt above to continue.")}</Text> : null}
       </GlassSurface>
     </View>
   );

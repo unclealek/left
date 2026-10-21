@@ -18,7 +18,8 @@ export function googleMapsPlaceUrl(placeId: string) {
 }
 export function popularTimesActivity(row: PopularTimesRow | null, timezone?: string | null, now = new Date()): VenueActivity {
   const pending = !row || row.status === 'pending';
-  const fresh = row?.status === 'ready' && !!row.expires_at && Date.parse(row.expires_at) > now.getTime();
+  // Expiry disabled for now, including rows saved with the previous 14-day TTL.
+  const fresh = row?.status === 'ready';
   let score: number | null = null;
   if (fresh && row.has_data && timezone) {
     try {

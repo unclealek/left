@@ -1,5 +1,33 @@
 # Legal website integration — next release after 0.1.0
 
+## Supplied website review (2026-10-20)
+
+The user supplied these public routes and requested app integration and content review:
+
+| App document | Verified URL | Publication status |
+| --- | --- | --- |
+| Terms of Service | https://here-web-azure.vercel.app/terms | Page title is Terms of Use; pre-launch draft |
+| Privacy Policy | https://here-web-azure.vercel.app/privacy | Pre-launch draft |
+| Community Guidelines | https://here-web-azure.vercel.app/community-guidelines | Pre-launch draft |
+
+All three returned HTTP 200 without authentication and contained the expected document text when fetched directly. Each prominently says **“Pre-launch draft — not final legal terms.”** No document version or effective date is supplied. This is content/HTTP verification, not mobile layout or native browser verification.
+
+The local mobile manifest and `.env.example` now use these routes instead of Google placeholders. Existing HTTPS environment overrides remain supported. Publication metadata stays blank, so `legalContentReady` remains false by default, the agreement checkbox stays disabled, and new-user completion remains blocked. Existing sign-in/onboarding/Settings browser handlers use the shared manifest. No backend records, EAS variables, or hosted pages were changed. Existing environment overrides take precedence and must be checked during release preparation.
+
+### Content findings to resolve before final publication
+
+1. **All documents remain drafts.** Finalise the actual text, publish version identifiers/effective dates and register matching approved versions and content hashes before enabling acceptance. A working URL alone is insufficient.
+2. **Operator and contact details are absent.** Terms section 1 calls More Data the intended operator subject to confirmation; Privacy section 1 leaves the controller, address and privacy/support contact unspecified. Supply verified details rather than treating the intended operator as established.
+3. **Background location is implemented locally.** Privacy section 3 says “If the app uses background location”. `src/features/location/location-service.ts` requests background permission and starts location updates on native platforms. Replace conditional instructions with accurate collection purposes, permission behavior, controls, recipients and retention after checking the deployed flow. Device permission and public visibility remain separate choices.
+4. **Analytics and diagnostics are implemented locally.** Privacy sections 2 and 6 leave these as items to add if used. `src/lib/posthog.ts` configures PostHog when public configuration is present, including lifecycle capture and automatic exception/rejection capture; `src/app/LeftApp.tsx` identifies the user and captures product events. Review actual event properties, configuration, processing locations, retention and any controls. This code review does not establish delivery from an installed build.
+5. **Provider and retention disclosures are unfinished.** Privacy sections 5–8 explicitly leave purpose-specific legal bases, provider recipients, international transfers, retention periods and rights-request procedures for completion. Verify current backend/provider settings; no legal bases or retention periods were inferred in this change.
+6. **Reporting and deletion need concrete user instructions.** Community section 6 leaves reporting, safety contact and appeals unresolved. Local app code has user report/block handlers and an identity-removal request flow (`src/features/account/account-service.ts`); describe the actual supported routes and limitations, and verify live handling. Do not promise an unimplemented appeals or immediate deletion workflow.
+7. **Brand and document naming differ.** Website uses HERE and Terms of Use; mobile still says Left and Terms of Service. Align visible naming with the separately planned rebrand and final operator identity. This link change does not perform a wider rebrand.
+8. **Terms contain unresolved clauses.** Content licence, takedown/appeals, liability, consumer rights, dispute resolution and applicable law remain drafting instructions in sections 6–8. These need final owner/legal decisions before users are asked to agree.
+9. **Public invitations are described as prospective.** The privacy/gathering warnings about forwarded public links are useful, but the local share origin remains a separate release dependency. Confirm what is actually deployed before presenting sharing as available.
+
+This is a publication-readiness and implementation-consistency review, not legal approval. No hosted text was edited. Prior audit and verification below describe the 2026-10-10 implementation and are retained as historical context; the supplied URLs above supersede its placeholder/domain discovery steps.
+
 ## Audit (2026-10-10)
 
 - `src/features/legal/legal-content.ts` contains the original mobile document definitions: empty draft Terms and Community Guidelines, and a draft Privacy Policy dated 28 August 2026. None is approved/published. No approved clauses were changed or invented.

@@ -1,8 +1,12 @@
+import { t, getTranslationLocale } from "../../features/preferences/translation-runtime";
+import { useDistanceFormatter } from "../../features/preferences/use-distance";
+import { getVenuePhotoFallbackLabel, resolveVenuePhotoKind } from "../../components/left/venue-photo-model";
+import { VenuePhoto, PhotoCredits } from "../../components/left/VenuePhoto";
 import { VISIBILITY_DISCLOSURE } from "../../features/presence/visibility-copy";
 import { PopularTimesChart } from "../../components/left/PopularTimesChart";
 import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ActivityIndicator, Image, Linking, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Linking, Pressable, Text, View } from "react-native";
 import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
 import type { VenueActivityEnvelope, VenueContextSummary } from "../../types/left-domain";
 import { usePopularTimes } from "../../features/activity/use-popular-times";
@@ -14,17 +18,6 @@ import { LeftIcon } from "../../components/icons";
 import { GlassSurface, glassRadii } from "../../components/glass";
 import { BackNavButton } from "../../components/left/navigation";
 import { venueDetailStyles as styles } from "../../components/styles/features/venue-detail";
-
-const VENUE_ILLUSTRATIONS = {
-  cafe: require("../../../output/illustrations/venues/cafe.png"),
-  restaurant: require("../../../output/illustrations/venues/restaurant.png"),
-  bar: require("../../../output/illustrations/venues/bar.png"),
-  coworking: require("../../../output/illustrations/venues/coworking.png"),
-  market: require("../../../output/illustrations/venues/market.png"),
-  park: require("../../../output/illustrations/venues/park.png"),
-  library: require("../../../output/illustrations/venues/library.png"),
-  generic: require("../../../output/illustrations/venues/generic-place.png"),
-} as const;
 
 export function VenueDetailScreen({
   guest = false,
@@ -54,13 +47,10 @@ export function VenueDetailScreen({
   const insets = useSafeAreaInsets();
   const isCurrentVenue = venue.id === venueSummary.venueId || venue.name === venueSummary.venueName;
   const venueType = venue.venueType ?? inferVenueTypeFromName(venue.name);
-  const imageSource = getVenueIllustrationSource(venue.name, venueType);
   const photoUri = venue.photo?.uri ?? venue.photoUrl ?? null;
   const isGooglePhoto = !!venue.photo?.uri;
   const [loadedPhotoUri, setLoadedPhotoUri] = useState<string | null>(null);
-  const [failedPhotoUri, setFailedPhotoUri] = useState<string | null>(null);
-  const showPhoto = !!photoUri && failedPhotoUri !== photoUri;
-  const photoLoaded = showPhoto && loadedPhotoUri === photoUri;
+  const photoLoaded = !!photoUri && loadedPhotoUri === photoUri;
   const roomVibes = isCurrentVenue ? venueSummary.activeVibes.slice(0, 4) : [];
   const popularTimes = usePopularTimes(venue.placeId, venue.placeId ? googleMapsPlaceUrl(venue.placeId) : null);
   const popularActivity = popularTimesActivity(popularTimes.data, venue.timezone);
@@ -75,6 +65,7 @@ export function VenueDetailScreen({
   const activityTone = getActivityTone(activityDisplay.tone);
   const activityState = { ...activityDisplay, ...activityTone };
   const subline = formatVenueSubline(venue, isCurrentVenue, venueType);
+  const formatDistanceLabel = useDistanceFormatter();
   const statusLabel = guest ? "Venue preview" : formatDistanceLabel(venue.distanceMeters) ?? "Nearby venue";
   const primaryLabel = guest ? "Sign in to take part" : isCurrentVenue && sessionVisible
     ? "See people here"
@@ -92,8 +83,8 @@ export function VenueDetailScreen({
     } : null,
     venue.rating != null ? {
       icon: "star" as const,
-      title: `${venue.rating.toFixed(1)} rating`,
-      text: venue.userRatingCount ? `Based on ${venue.userRatingCount.toLocaleString()} Google ratings` : "Google rating",
+      title: t("{rating} rating", { rating: new Intl.NumberFormat(getTranslationLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(venue.rating) }),
+      text: venue.userRatingCount ? t("Based on {count} Google ratings", { count: venue.userRatingCount.toLocaleString(getTranslationLocale()) }) : "Google rating",
     } : null,
     accessibilitySummary ? { icon: "heart" as const, title: "Accessibility", text: accessibilitySummary } : null,
   ].filter((fact): fact is NonNullable<typeof fact> => !!fact);
@@ -101,29 +92,14 @@ export function VenueDetailScreen({
   return (
     <View style={styles.page}>
       <View style={[styles.hero, { height: 252 + insets.top }]}>
-        <Image source={imageSource} style={styles.heroImage} resizeMode="cover" accessible={false} />
-        {showPhoto ? (
-          <Image
-            key={`${venue.id}-${photoUri}`}
-            source={{ uri: photoUri! }}
-            style={styles.googlePhoto}
-            resizeMode="cover"
-            accessibilityLabel={`Photo of ${venue.name}`}
-            onLoad={() => setLoadedPhotoUri(photoUri)}
-            onError={() => setFailedPhotoUri(photoUri)}
-          />
-        ) : null}
-        {showPhoto && !photoLoaded ? (
-          <View style={styles.photoLoading} accessibilityLabel="Loading venue photo">
-            <ActivityIndicator size="small" color={T.primary} />
-          </View>
-        ) : null}
+        <VenuePhoto venue={venue} photo={venue.photo} uri={venue.photoUrl} showFallbackLabel={false}
+          onPhotoLoad={() => setLoadedPhotoUri(photoUri)} onPhotoError={() => setLoadedPhotoUri(null)} />
         <View style={[styles.heroBackButton, { top: insets.top + 12 }]}>
           <BackNavButton label="" onPress={onBack} />
         </View>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={guest ? "Sign in to save places" : saved ? "Remove from saved places" : "Save this place"}
+          accessibilityLabel={guest ? t("Sign in to save places") : saved ? t("Remove from saved places") : t("Save this place")}
           accessibilityState={{ selected: saved, busy: saving, disabled: saving }}
           disabled={saving}
           onPress={onToggleSaved}
@@ -142,37 +118,21 @@ export function VenueDetailScreen({
         </GlassSurface>
       </View>
 
-      {photoLoaded && isGooglePhoto ? (
-        <View style={styles.photoAttribution}>
-          <Text numberOfLines={1} style={styles.photoAttributionText}>Google Maps</Text>
-          {venue.photo?.attributions.map((author, index) => (
-            author.uri ? (
-              <Pressable
-                key={`${author.displayName}-${index}`}
-                accessibilityRole="link"
-                accessibilityLabel={`Photo by ${author.displayName}`}
-                onPress={() => void Linking.openURL(author.uri!).catch(() => {})}
-                style={styles.photoAttributionLink}
-              >
-                <Text style={styles.photoAttributionText}>· {author.displayName}</Text>
-              </Pressable>
-            ) : <Text key={`${author.displayName}-${index}`} style={styles.photoAttributionText}>· {author.displayName}</Text>
-          ))}
-        </View>
-      ) : null}
+      {photoLoaded && isGooglePhoto ? <PhotoCredits photo={venue.photo} />
+        : !photoLoaded ? <Text style={styles.photoFallbackCaption}>{getVenuePhotoFallbackLabel(resolveVenuePhotoKind(venue))}</Text> : null}
 
       <View style={styles.content}>
         <View style={styles.identityBlock}>
           <Text style={styles.title}>{venue.name}</Text>
           <Text style={styles.subtitle}>{subline}</Text>
           {venue.communityAddedByName ? (
-            <Text style={styles.subtitle}>Added by: {venue.communityAddedByName}</Text>
+            <Text style={styles.subtitle}>{t("Added by:")}{" "}{venue.communityAddedByName}</Text>
           ) : null}
         </View>
 
         <View style={styles.section}>
           <View style={styles.venuePracticalHeading}>
-            <Text style={styles.sectionTitle}>Good to know</Text>
+            <Text style={styles.sectionTitle}>{t("Good to know")}</Text>
             {detailsLoading ? <ActivityIndicator size="small" color={T.primary} /> : null}
           </View>
           {practicalFacts.length > 0 ? (
@@ -183,27 +143,27 @@ export function VenueDetailScreen({
                     <LeftIcon name={fact.icon} size={16} color={T.primary} />
                   </View>
                   <View style={styles.venuePracticalCopy}>
-                    <Text style={styles.venuePracticalTitle}>{fact.title}</Text>
+                    <Text style={styles.venuePracticalTitle}>{t(fact.title)}</Text>
                     <Text style={styles.venuePracticalText}>{fact.text}</Text>
                   </View>
                 </View>
               ))}
             </View>
           ) : detailsLoading ? null : (
-            <Text style={styles.venuePracticalUnavailable}>Practical details have not been published for this venue yet.</Text>
+            <Text style={styles.venuePracticalUnavailable}>{t("Practical details have not been published for this venue yet.")}</Text>
           )}
           {venue.websiteUri || venue.phoneNumber ? (
             <View style={styles.venuePracticalActions}>
               {venue.websiteUri ? (
-                <Pressable accessibilityRole="link" accessibilityLabel="Open venue website" onPress={() => void Linking.openURL(venue.websiteUri!)} style={({ pressed }) => [styles.venuePracticalAction, pressed && styles.detailPressed]}>
+                <Pressable accessibilityRole="link" accessibilityLabel={t("Open venue website")} onPress={() => void Linking.openURL(venue.websiteUri!)} style={({ pressed }) => [styles.venuePracticalAction, pressed && styles.detailPressed]}>
                   <LeftIcon name="external-link" size={15} color={T.primary} />
-                  <Text style={styles.venuePracticalActionText}>Website</Text>
+                  <Text style={styles.venuePracticalActionText}>{t("Website")}</Text>
                 </Pressable>
               ) : null}
               {venue.phoneNumber ? (
-                <Pressable accessibilityRole="button" accessibilityLabel="Call venue" onPress={() => void Linking.openURL(`tel:${venue.phoneNumber}`)} style={({ pressed }) => [styles.venuePracticalAction, pressed && styles.detailPressed]}>
+                <Pressable accessibilityRole="button" accessibilityLabel={t("Call venue")} onPress={() => void Linking.openURL(`tel:${venue.phoneNumber}`)} style={({ pressed }) => [styles.venuePracticalAction, pressed && styles.detailPressed]}>
                   <LeftIcon name="phone" size={15} color={T.primary} />
-                  <Text style={styles.venuePracticalActionText}>Call</Text>
+                  <Text style={styles.venuePracticalActionText}>{t("Call")}</Text>
                 </Pressable>
               ) : null}
             </View>
@@ -214,7 +174,7 @@ export function VenueDetailScreen({
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Popular times</Text>
+          <Text style={styles.sectionTitle}>{t("Popular times")}</Text>
           {popularTimes.status === "ready" && popularTimes.hasData && !popularActivity.isStale && popularTimes.data?.popular_times ? (
             <View style={styles.popularTimesCard}>
               <PopularTimesChart key={venue.placeId ?? venue.id} data={popularTimes.data.popular_times} timezone={venue.timezone} />
@@ -222,13 +182,13 @@ export function VenueDetailScreen({
             </View>
           ) : (
             <View style={styles.pulseCard}>
-              {popularTimes.status === "pending" ? <ActivityIndicator accessibilityLabel="Loading popular times" color={T.textMuted} /> : null}
+              {popularTimes.status === "pending" ? <ActivityIndicator accessibilityLabel={t("Loading popular times")} color={T.textMuted} /> : null}
               <View style={[styles.pulseIconWrap, { backgroundColor: activityState.softColor }]}>
                 <LeftIcon name="activity" size={21} color={activityState.color} />
               </View>
               <View style={styles.pulseCopy}>
-                <Text style={[styles.pulseTitle, { color: activityState.color }]}>{activityState.title}</Text>
-                <Text style={styles.pulseSubtitle}>{activityState.subtitle}</Text>
+                <Text style={[styles.pulseTitle, { color: activityState.color }]}>{t(activityState.title)}</Text>
+                <Text style={styles.pulseSubtitle}>{t(activityState.subtitle)}</Text>
               </View>
             </View>
           )}
@@ -236,8 +196,8 @@ export function VenueDetailScreen({
 
         <View style={styles.section}>
           <View style={styles.peopleHeading}>
-            <Text style={styles.sectionTitle}>Social signals</Text>
-            <Text style={styles.peopleSubtitle}>Aggregated from people who are visible here</Text>
+            <Text style={styles.sectionTitle}>{t("Social signals")}</Text>
+            <Text style={styles.peopleSubtitle}>{t("Aggregated from people who are visible here")}</Text>
           </View>
           <View style={styles.peopleCard}>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -255,13 +215,13 @@ export function VenueDetailScreen({
             <LeftIcon name="lock" size={17} color={T.primary} />
           </View>
           <View style={styles.privacyCopy}>
-            <Text style={styles.privacyTitle}>What people here can see</Text>
-            <Text style={styles.privacyText}>{VISIBILITY_DISCLOSURE}</Text>
+            <Text style={styles.privacyTitle}>{t("What people here can see")}</Text>
+            <Text style={styles.privacyText}>{t(VISIBILITY_DISCLOSURE)}</Text>
           </View>
         </View>
 
         <PrimaryButton
-          label={primaryLabel}
+          label={t(primaryLabel)}
           onPress={onPrimaryAction}
         />
       </View>
@@ -285,22 +245,6 @@ function formatVenueSubline(
   return isCurrentVenue ? `${venueLabel} · current venue` : venueLabel;
 }
 
-function getVenueIllustrationSource(
-  venueName: string,
-  venueType: RuntimeVenueCandidate["venueType"] | undefined,
-) {
-  const resolvedVenueType = venueType ?? inferVenueTypeFromName(venueName);
-  if (resolvedVenueType === "cafe") return VENUE_ILLUSTRATIONS.cafe;
-  if (resolvedVenueType === "coworking_space") return VENUE_ILLUSTRATIONS.coworking;
-  if (resolvedVenueType === "library" || resolvedVenueType === "university") return VENUE_ILLUSTRATIONS.library;
-  const normalized = venueName.toLowerCase();
-  if (/restaurant|grill|steak|bistro|kitchen|diner|pizza|sushi|brasserie|eatery/.test(normalized)) return VENUE_ILLUSTRATIONS.restaurant;
-  if (/bar|pub|tap|cocktail|wine|brew|club|lounge/.test(normalized)) return VENUE_ILLUSTRATIONS.bar;
-  if (/market|hall|grocery|bazaar/.test(normalized)) return VENUE_ILLUSTRATIONS.market;
-  if (/park|garden|green|square/.test(normalized)) return VENUE_ILLUSTRATIONS.park;
-  return VENUE_ILLUSTRATIONS.generic;
-}
-
 function inferVenueTypeFromName(venueName: string) {
   const normalized = venueName.toLowerCase();
   if (/cafe|coffee|espresso|roastery/.test(normalized)) return "cafe" as const;
@@ -310,11 +254,6 @@ function inferVenueTypeFromName(venueName: string) {
   return "other" as const;
 }
 
-function formatDistanceLabel(distanceMeters: number | null) {
-  if (distanceMeters == null || distanceMeters <= 0) return null;
-  if (distanceMeters < 1000) return `${Math.round(distanceMeters)} m away`;
-  return `${Math.max(1, Math.round(distanceMeters / 80))} min walk`;
-}
 
 function getTodayHours(descriptions: string[]) {
   if (!descriptions.length) return null;
@@ -333,7 +272,7 @@ function formatAccessibility(options: RuntimeVenueCandidate["accessibilityOption
   };
   const available = Object.entries(options)
     .filter(([, enabled]) => enabled === true)
-    .map(([key]) => labels[key])
+    .map(([key]) => t(labels[key] ?? ""))
     .filter((label): label is string => !!label);
   if (!available.length) return null;
   return `${available.slice(0, 3).join(", ")}.`;

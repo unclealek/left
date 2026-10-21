@@ -1,3 +1,4 @@
+import { loadVenueNotificationCopy } from "../preferences/notification-copy";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import type { NotificationResponse } from "expo-notifications";
@@ -94,18 +95,19 @@ async function markPromptRejected(venueId: string, venueName: string) {
   }));
 }
 
-export async function registerVenuePromptCategory() {
+export async function registerVenuePromptCategory(copy?: Awaited<ReturnType<typeof loadVenueNotificationCopy>>) {
+  const labels = copy ?? await loadVenueNotificationCopy("");
   await Notifications.setNotificationCategoryAsync(VENUE_PROMPT_CATEGORY_ID, [
     {
       identifier: "yes",
-      buttonTitle: "Yes",
+      buttonTitle: labels.yes,
       options: {
         opensAppToForeground: true,
       },
     },
     {
       identifier: "no",
-      buttonTitle: "No",
+      buttonTitle: labels.no,
       options: {
         opensAppToForeground: false,
       },
@@ -206,19 +208,29 @@ export async function requestLocationAccess() {
 }
 
 export async function primeLocationFix() {
+  const owner = await getLocationStorageOwner();
+  const generation = locationGeneration;
+  if (!owner) return false;
   try {
     console.info("[location] priming immediate location fix");
     const currentPosition = await withTimeout(
       Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
+        accuracy: Location.Accuracy.High,
       }),
       10000,
       "Current location lookup",
     );
+    if (generation !== locationGeneration || owner !== await getLocationStorageOwner()) return false;
     await processLocationFix(currentPosition.coords);
     return true;
   } catch (error) {
     console.warn("[location] primeLocationFix failed", error);
+    if (generation === locationGeneration && owner === await getLocationStorageOwner()) {
+      const runtime = await getLocationRuntimeState();
+      await saveLocationRuntimeState({ ...runtime, currentVenueId: null, currentVenueName: null,
+        selectedVenueId: null, selectedVenueName: null, nearbyVenues: [], lastKnownCoords: null,
+        dwellEnteredAt: null, dwellLastSeenAt: null });
+    }
     return false;
   }
 }
@@ -424,10 +436,13 @@ export async function processLocationFix(coords: Location.LocationObjectCoords) 
     venueName: venue.name,
   });
   if (!await stillCurrent()) return;
+  const copy = await loadVenueNotificationCopy(venue.name);
+  await registerVenuePromptCategory(copy);
+  if (!await stillCurrent()) return;
   const notificationId = await Notifications.scheduleNotificationAsync({
     content: {
-      title: "Open to chat?",
-      body: `You've been at ${venue.name} a while. Open to chat?`,
+      title: copy.title,
+      body: copy.body,
       categoryIdentifier: VENUE_PROMPT_CATEGORY_ID,
       data: {
         ownerId: owner,

@@ -1,0 +1,3158 @@
+{
+  "remaining": [
+    "jäljellä",
+    "kvar"
+  ],
+  "You’re visible": [
+    "Olet näkyvissä",
+    "Du är synlig"
+  ],
+  "People here can discover you for this moment.": [
+    "Täällä olevat ihmiset voivat löytää sinut tämän hetken ajan.",
+    "Personer här kan upptäcka dig under den här stunden."
+  ],
+  "Visible now": [
+    "Nyt näkyvissä",
+    "Synlig nu"
+  ],
+  "elapsed": [
+    "kulunut",
+    "har gått"
+  ],
+  "Current venue": [
+    "Nykyinen paikka",
+    "Aktuell plats"
+  ],
+  "Vibe": [
+    "Tunnelma",
+    "Stämning"
+  ],
+  "Your hint": [
+    "Tunnistusvihjeesi",
+    "Ditt kännetecken"
+  ],
+  "See who’s here": [
+    "Katso, keitä täällä on",
+    "Se vilka som är här"
+  ],
+  "See who is visible here": [
+    "Katso, ketkä ovat näkyvissä täällä",
+    "Se vilka som är synliga här"
+  ],
+  "Share this moment": [
+    "Jaa tämä hetki",
+    "Dela den här stunden"
+  ],
+  "Choose how you want to be discovered nearby.": [
+    "Valitse, miten haluat tulla löydetyksi lähellä.",
+    "Välj hur du vill bli upptäckt i närheten."
+  ],
+  "Your precise location stays private": [
+    "Tarkka sijaintisi pysyy yksityisenä",
+    "Din exakta plats förblir privat"
+  ],
+  "How you show up": [
+    "Miten näyt muille",
+    "Hur du syns"
+  ],
+  "What's your vibe?": [
+    "Millä mielellä olet?",
+    "Vilken är din stämning?"
+  ],
+  "Session details": [
+    "Istunnon tiedot",
+    "Sessionsinformation"
+  ],
+  "How long will your signal stay active?": [
+    "Kuinka kauan haluat näkyä?",
+    "Hur länge vill du vara synlig?"
+  ],
+  "How can people recognize you?": [
+    "Miten muut tunnistavat sinut?",
+    "Hur kan andra känna igen dig?"
+  ],
+  "Required. Describe something people can spot without a photo.": [
+    "Pakollinen. Kuvaile jotain, josta sinut tunnistaa ilman kuvaa.",
+    "Obligatoriskt. Beskriv något som gör dig igenkännbar utan foto."
+  ],
+  "Recognition hint (required)": [
+    "Tunnistusvihje (pakollinen)",
+    "Kännetecken (obligatoriskt)"
+  ],
+  "e.g. Grey hoodie, corner seat": [
+    "esim. harmaa huppari, kulmapaikka",
+    "t.ex. grå huvtröja, hörnplats"
+  ],
+  "This venue is hidden in your settings. Unhide it before going visible here again.": [
+    "Tämä paikka on piilotettu asetuksissasi. Poista piilotus ennen kuin palaat näkyviin täällä.",
+    "Platsen är dold i dina inställningar. Visa den igen innan du blir synlig här."
+  ],
+  "What people here can see": [
+    "Mitä täällä olevat näkevät",
+    "Vad andra här kan se"
+  ],
+  "Slide to go visible": [
+    "Liu’uta tullaksesi näkyviin",
+    "Dra för att bli synlig"
+  ],
+  "Quick follow-up": [
+    "Lyhyt palaute",
+    "Snabb uppföljning"
+  ],
+  "How did it go with": [
+    "Miten sujui henkilön kanssa:",
+    "Hur gick det med"
+  ],
+  "We assumed you went over after the countdown ended. Confirm what happened so the prompt flow stays useful.": [
+    "Oletimme, että lähdit juttelemaan ajan päätyttyä. Kerro, mitä tapahtui, jotta ehdotukset pysyvät hyödyllisinä.",
+    "Vi antog att du gick fram när tiden var slut. Bekräfta vad som hände så att förslagen förblir användbara."
+  ],
+  "DID YOU GO OVER?": [
+    "MENITKÖ JUTTELEMAAN?",
+    "GICK DU FRAM?"
+  ],
+  "Yes": [
+    "Kyllä",
+    "Ja"
+  ],
+  "No": [
+    "Ei",
+    "Nej"
+  ],
+  "DID YOU USE THE ICEBREAKER?": [
+    "KÄYTITKÖ ALOITUSKYSYMYSTÄ?",
+    "ANVÄNDE DU SAMTALSÖPPNAREN?"
+  ],
+  "Later": [
+    "Myöhemmin",
+    "Senare"
+  ],
+  "Save feedback": [
+    "Tallenna palaute",
+    "Spara feedback"
+  ],
+  "Answer the prompt above to continue.": [
+    "Jatka vastaamalla yllä olevaan kysymykseen.",
+    "Svara på frågan ovan för att fortsätta."
+  ],
+  "Back to nearby": [
+    "Takaisin lähistölle",
+    "Tillbaka till närheten"
+  ],
+  "Going over to": [
+    "Menossa juttelemaan:",
+    "På väg till"
+  ],
+  "Look for": [
+    "Etsi tätä",
+    "Leta efter"
+  ],
+  "Icebreaker": [
+    "Aloituskysymys",
+    "Samtalsöppnare"
+  ],
+  "We connected ✓": [
+    "Kohtasimme ✓",
+    "Vi fick kontakt ✓"
+  ],
+  "Back to welcome": [
+    "Takaisin aloitukseen",
+    "Tillbaka till välkomstsidan"
+  ],
+  "SECURE SIGN IN": [
+    "TURVALLINEN KIRJAUTUMINEN",
+    "SÄKER INLOGGNING"
+  ],
+  "FAST & SECURE": [
+    "NOPEA JA TURVALLINEN",
+    "SNABBT OCH SÄKERT"
+  ],
+  "Let’s get you in.": [
+    "Tule mukaan.",
+    "Nu loggar vi in dig."
+  ],
+  "Create your account or continue where you left off with one effortless sign-in.": [
+    "Luo tili tai jatka siitä, mihin jäit, yhdellä helpolla kirjautumisella.",
+    "Skapa ditt konto eller fortsätt där du slutade med en enkel inloggning."
+  ],
+  "Continue with Google": [
+    "Jatka Googlella",
+    "Fortsätt med Google"
+  ],
+  "Connecting securely with Google": [
+    "Yhdistetään turvallisesti Googleen",
+    "Ansluter säkert med Google"
+  ],
+  "Terms": [
+    "Käyttöehdot",
+    "Villkor"
+  ],
+  "Privacy": [
+    "Tietosuoja",
+    "Integritet"
+  ],
+  "Guidelines": [
+    "Yhteisön säännöt",
+    "Riktlinjer"
+  ],
+  "Existing and new members sign in together.": [
+    "Uudet ja nykyiset jäsenet kirjautuvat samalla tavalla.",
+    "Nya och befintliga medlemmar loggar in på samma sätt."
+  ],
+  "Host something small": [
+    "Järjestä pieni tapaaminen",
+    "Ordna en liten träff"
+  ],
+  "A simple plan, reviewed before anyone nearby can see it.": [
+    "Yksinkertainen suunnitelma, joka tarkistetaan ennen julkaisua.",
+    "En enkel plan som granskas innan andra i närheten kan se den."
+  ],
+  "Your plans": [
+    "Omat suunnitelmasi",
+    "Dina planer"
+  ],
+  "Loading your plans…": [
+    "Ladataan suunnitelmiasi…",
+    "Laddar dina planer…"
+  ],
+  "You haven’t submitted a plan yet.": [
+    "Et ole vielä lähettänyt suunnitelmaa.",
+    "Du har inte skickat in någon plan ännu."
+  ],
+  "Share gathering": [
+    "Jaa tapaaminen",
+    "Dela träff"
+  ],
+  "Sharing will be available soon.": [
+    "Jakaminen on pian käytettävissä.",
+    "Delning blir snart tillgänglig."
+  ],
+  "Refresh plans": [
+    "Päivitä suunnitelmat",
+    "Uppdatera planer"
+  ],
+  "REVIEWED, NOT INSTANT": [
+    "TARKISTETAAN ENNEN JULKAISUA",
+    "GRANSKAS FÖRE PUBLICERING"
+  ],
+  "Left checks the plan, place, and wording first. Submitting does not publish it automatically.": [
+    "Left tarkistaa ensin suunnitelman, paikan ja tekstin. Lähetys ei julkaise sitä automaattisesti.",
+    "Left granskar planen, platsen och texten först. Den publiceras inte automatiskt när du skickar in den."
+  ],
+  "Place": [
+    "Paikka",
+    "Plats"
+  ],
+  "No verified nearby venue is available yet.": [
+    "Vahvistettua lähipaikkaa ei ole vielä saatavilla.",
+    "Ingen bekräftad plats i närheten är tillgänglig ännu."
+  ],
+  "Title": [
+    "Otsikko",
+    "Rubrik"
+  ],
+  "Coffee and portfolio feedback": [
+    "Kahvia ja portfoliopalautetta",
+    "Kaffe och feedback på portfolio"
+  ],
+  "What will happen": [
+    "Mitä tapahtuu",
+    "Vad händer"
+  ],
+  "A relaxed hour for sharing one piece of work and getting thoughtful feedback.": [
+    "Rento tunti yhden työn esittelyyn ja rakentavan palautteen saamiseen.",
+    "En avslappnad timme för att visa ett arbete och få genomtänkt feedback."
+  ],
+  "When": [
+    "Ajankohta",
+    "När"
+  ],
+  "Group size": [
+    "Ryhmän koko",
+    "Gruppstorlek"
+  ],
+  "Accessibility": [
+    "Esteettömyys",
+    "Tillgänglighet"
+  ],
+  "Step-free entrance, quiet corner, seating…": [
+    "Esteetön sisäänkäynti, rauhallinen nurkka, istumapaikat…",
+    "Stegfri entré, lugnt hörn, sittplatser…"
+  ],
+  "Cost": [
+    "Hinta",
+    "Kostnad"
+  ],
+  "Decrease amount by one euro": [
+    "Pienennä summaa eurolla",
+    "Minska beloppet med en euro"
+  ],
+  "EUR per person": [
+    "EUR henkilöltä",
+    "EUR per person"
+  ],
+  "Amount in euros per person": [
+    "Summa euroina henkilöltä",
+    "Belopp i euro per person"
+  ],
+  "Increase amount by one euro": [
+    "Kasvata summaa eurolla",
+    "Öka beloppet med en euro"
+  ],
+  "Custom cost or potluck details": [
+    "Muut hintatiedot tai nyyttikestien ohjeet",
+    "Annan kostnad eller information om knytkalas"
+  ],
+  "Small gathering": [
+    "Pieni tapaaminen",
+    "Liten träff"
+  ],
+  "HOSTED BY": [
+    "JÄRJESTÄJÄ",
+    "ARRANGÖR"
+  ],
+  "Share approved gathering": [
+    "Jaa hyväksytty tapaaminen",
+    "Dela godkänd träff"
+  ],
+  "Experiences appear publicly only after review. Normal blocking and reporting controls still apply.": [
+    "Tapaamiset julkaistaan vasta tarkistuksen jälkeen. Tavalliset esto- ja ilmoitustoiminnot ovat käytössä.",
+    "Träffar visas offentligt först efter granskning. Vanliga funktioner för blockering och rapportering gäller."
+  ],
+  "People nearby": [
+    "Ihmisiä lähellä",
+    "Personer i närheten"
+  ],
+  "View profile": [
+    "Näytä profiili",
+    "Visa profil"
+  ],
+  "See all": [
+    "Näytä kaikki",
+    "Visa alla"
+  ],
+  "Privacy and safety controls": [
+    "Tietosuoja- ja turvallisuusasetukset",
+    "Integritets- och säkerhetsinställningar"
+  ],
+  "People here": [
+    "Ihmisiä täällä",
+    "Personer här"
+  ],
+  "Connection interests, without availability counts": [
+    "Yhteisiä kiinnostuksia, ilman saatavuusmääriä",
+    "Gemensamma intressen utan tillgänglighetsantal"
+  ],
+  "No discoverable people here yet. Check back in a moment.": [
+    "Täällä ei vielä ole löydettäviä ihmisiä. Tarkista hetken kuluttua.",
+    "Ingen är synlig här ännu. Titta igen om en stund."
+  ],
+  "Profiles are hidden while you're private": [
+    "Profiilit ovat piilossa, kun olet yksityinen",
+    "Profiler är dolda när du är privat"
+  ],
+  "Go visible to discover people nearby.": [
+    "Tule näkyviin löytääksesi ihmisiä läheltä.",
+    "Bli synlig för att upptäcka personer i närheten."
+  ],
+  "Suggest a place and plan. Left reviews it before it appears nearby.": [
+    "Ehdota paikkaa ja suunnitelmaa. Left tarkistaa sen ennen julkaisua.",
+    "Föreslå en plats och en plan. Left granskar den innan den visas i närheten."
+  ],
+  "Maps could not open. Please try again.": [
+    "Karttaa ei voitu avata. Yritä uudelleen.",
+    "Kunde inte öppna kartan. Försök igen."
+  ],
+  "Around you now": [
+    "Ympärilläsi nyt",
+    "Omkring dig nu"
+  ],
+  "Bring people together": [
+    "Tuo ihmisiä yhteen",
+    "Samla människor"
+  ],
+  "Something to join": [
+    "Tule mukaan",
+    "Något att delta i"
+  ],
+  "View gathering →": [
+    "Näytä tapaaminen →",
+    "Visa träff →"
+  ],
+  "Bringing nearby moments into focus": [
+    "Tuodaan lähistön hetket esiin",
+    "Lyfter fram stunder i närheten"
+  ],
+  "We couldn’t open Left": [
+    "Leftiä ei voitu avata",
+    "Vi kunde inte öppna Left"
+  ],
+  "Restoring your private session…": [
+    "Palautetaan yksityistä istuntoasi…",
+    "Återställer din privata session…"
+  ],
+  "Edit profile": [
+    "Muokkaa profiilia",
+    "Redigera profil"
+  ],
+  "Open settings": [
+    "Avaa asetukset",
+    "Öppna inställningar"
+  ],
+  "First name": [
+    "Etunimi",
+    "Förnamn"
+  ],
+  "Your first name": [
+    "Etunimesi",
+    "Ditt förnamn"
+  ],
+  "Avatar style": [
+    "Profiilisymbolin tyyli",
+    "Profilfigurens stil"
+  ],
+  "Your interests": [
+    "Kiinnostuksesi",
+    "Dina intressen"
+  ],
+  "Choose at least three. These become the vibes you can select when you go visible.": [
+    "Valitse vähintään kolme. Voit valita näistä tunnelman, kun tulet näkyviin.",
+    "Välj minst tre. Dessa blir stämningar du kan välja när du blir synlig."
+  ],
+  "What draws you out?": [
+    "Mikä saa sinut liikkeelle?",
+    "Vad lockar dig ut?"
+  ],
+  "When are you usually open to meeting?": [
+    "Milloin olet yleensä avoin tapaamisille?",
+    "När vill du oftast träffa andra?"
+  ],
+  "Conversation style": [
+    "Keskustelutyyli",
+    "Samtalsstil"
+  ],
+  "What might you bring to a conversation?": [
+    "Mitä tuot keskusteluun?",
+    "Vad kan du bidra med i ett samtal?"
+  ],
+  "A perspective, a skill, or simply a listening ear…": [
+    "Näkökulman, taidon tai vain kuuntelevan korvan…",
+    "Ett perspektiv, en färdighet eller bara ett lyssnande öra…"
+  ],
+  "We couldn’t save your profile settings. Check your connection and try again.": [
+    "Profiiliasetuksia ei voitu tallentaa. Tarkista yhteys ja yritä uudelleen.",
+    "Kunde inte spara profilinställningarna. Kontrollera anslutningen och försök igen."
+  ],
+  "Go back": [
+    "Palaa takaisin",
+    "Gå tillbaka"
+  ],
+  "STEP": [
+    "VAIHE",
+    "STEG"
+  ],
+  "OF 5": [
+    "/ 5",
+    "AV 5"
+  ],
+  "FINAL STEP": [
+    "VIIMEINEN VAIHE",
+    "SISTA STEGET"
+  ],
+  "AUTHENTIC PRESENCE": [
+    "AITO LÄSNÄOLO",
+    "ÄKTA NÄRVARO"
+  ],
+  "Tell us a little about you.": [
+    "Kerro hieman itsestäsi.",
+    "Berätta lite om dig själv."
+  ],
+  "Help people nearby recognize your name and profile symbol.": [
+    "Auta lähellä olevia tunnistamaan nimesi ja profiilisymbolisi.",
+    "Hjälp andra i närheten att känna igen ditt namn och din profilfigur."
+  ],
+  "Your profile symbol": [
+    "Profiilisymbolisi",
+    "Din profilfigur"
+  ],
+  "Choose how you appear to people nearby": [
+    "Valitse, miltä näyt lähellä oleville",
+    "Välj hur du visas för andra i närheten"
+  ],
+  "Choose a shape": [
+    "Valitse muoto",
+    "Välj en form"
+  ],
+  "What are you into?": [
+    "Mikä sinua kiinnostaa?",
+    "Vad är du intresserad av?"
+  ],
+  "Choose at least three communities and conversations. These become the vibes you can share when you go visible.": [
+    "Valitse vähintään kolme yhteisöä tai keskustelunaihetta. Voit jakaa näitä tunnelmia tullessasi näkyviin.",
+    "Välj minst tre gemenskaper och samtalsämnen. Dessa blir stämningar du kan dela när du blir synlig."
+  ],
+  "Mutual respect and real presence": [
+    "Keskinäistä kunnioitusta ja aitoa läsnäoloa",
+    "Ömsesidig respekt och äkta närvaro"
+  ],
+  "Your profile stays intentionally simple and grounded in real places.": [
+    "Profiilisi pysyy tarkoituksella yksinkertaisena ja liittyy oikeisiin paikkoihin.",
+    "Din profil hålls avsiktligt enkel och förankrad i verkliga platser."
+  ],
+  "You’re in control.": [
+    "Sinä päätät.",
+    "Du bestämmer."
+  ],
+  "Your safety and privacy are fundamental to every connection you make here.": [
+    "Turvallisuutesi ja yksityisyytesi ovat jokaisen kohtaamisen perusta.",
+    "Din säkerhet och integritet är grunden för varje kontakt här."
+  ],
+  "“A good community begins when every person feels respected and safe.”": [
+    "”Hyvä yhteisö syntyy, kun jokainen tuntee olevansa turvassa ja arvostettu.”",
+    "”En bra gemenskap börjar med att alla känner sig respekterade och trygga.”"
+  ],
+  "Open device settings": [
+    "Avaa laitteen asetukset",
+    "Öppna enhetens inställningar"
+  ],
+  "Not now": [
+    "Ei nyt",
+    "Inte nu"
+  ],
+  "QUIET UPDATES": [
+    "HILLITYT ILMOITUKSET",
+    "DISKRETA UPPDATERINGAR"
+  ],
+  "Stay in the loop, quietly.": [
+    "Pysy mukana, rauhassa.",
+    "Håll dig uppdaterad, i lugn och ro."
+  ],
+  "Notifications are optional. Left only uses them for moments that help you act, connect, or stay safe.": [
+    "Ilmoitukset ovat valinnaisia. Left käyttää niitä vain hetkiin, jotka auttavat sinua toimimaan, kohtaamaan tai pysymään turvassa.",
+    "Aviseringar är valfria. Left använder dem för tillfällen som hjälper dig att agera, få kontakt eller vara trygg."
+  ],
+  "Notification types": [
+    "Ilmoitustyypit",
+    "Aviseringstyper"
+  ],
+  "You can change this any time in Settings. Choosing “Not now” will not block account setup.": [
+    "Voit muuttaa tätä asetuksissa milloin tahansa. ”Ei nyt” ei estä tilin luomista.",
+    "Du kan ändra detta i Inställningar när som helst. ”Inte nu” hindrar dig inte från att skapa kontot."
+  ],
+  "Agree & Continue": [
+    "Hyväksy ja jatka",
+    "Godkänn och fortsätt"
+  ],
+  "Before you join Left": [
+    "Ennen kuin liityt Leftiin",
+    "Innan du går med i Left"
+  ],
+  "Welcome to a community designed for real-world social discovery.": [
+    "Tervetuloa yhteisöön, jossa kohdataan oikeassa elämässä.",
+    "Välkommen till en gemenskap för att möta människor i verkligheten."
+  ],
+  "By continuing, you agree to Left’s Terms of Service and Community Guidelines, and acknowledge that our Privacy Policy has been made available to you.": [
+    "Jatkamalla hyväksyt Leftin käyttöehdot ja yhteisön säännöt sekä vahvistat, että tietosuojakäytäntö on ollut saatavillasi.",
+    "Genom att fortsätta godkänner du Lefts användarvillkor och gemenskapsregler och bekräftar att du har fått tillgång till integritetspolicyn."
+  ],
+  "Legal documents": [
+    "Oikeudelliset asiakirjat",
+    "Juridiska dokument"
+  ],
+  "· Effective": [
+    "· Voimassa alkaen",
+    "· Gäller från"
+  ],
+  "I agree to the Terms of Service and Community Guidelines": [
+    "Hyväksyn käyttöehdot ja yhteisön säännöt",
+    "Jag godkänner användarvillkoren och gemenskapsreglerna"
+  ],
+  "I agree to the Terms of Service and Community Guidelines.": [
+    "Hyväksyn käyttöehdot ja yhteisön säännöt.",
+    "Jag godkänner användarvillkoren och gemenskapsreglerna."
+  ],
+  "The Privacy Policy explains how Left uses personal data. Location and notification permissions remain separate.": [
+    "Tietosuojakäytäntö kertoo, miten Left käyttää henkilötietoja. Sijainti- ja ilmoitusluvat annetaan erikseen.",
+    "Integritetspolicyn beskriver hur Left använder personuppgifter. Plats- och aviseringsbehörigheter ges separat."
+  ],
+  "Left’s legal documents are not available yet. Please try again after the next update.": [
+    "Leftin oikeudelliset asiakirjat eivät ole vielä saatavilla. Yritä uudelleen seuraavan päivityksen jälkeen.",
+    "Lefts juridiska dokument är inte tillgängliga ännu. Försök igen efter nästa uppdatering."
+  ],
+  "MEET THE ROOM": [
+    "KOHTAA IHMISET",
+    "MÖT MÄNNISKORNA"
+  ],
+  "A quieter way to find your people.": [
+    "Rauhallisempi tapa löytää omat ihmiset.",
+    "Ett lugnare sätt att hitta dina människor."
+  ],
+  "Left helps real conversations begin in the places you already share.": [
+    "Left auttaa aloittamaan aitoja keskusteluja paikoissa, joissa jo käyt.",
+    "Left hjälper riktiga samtal att börja på platser ni redan delar."
+  ],
+  "What Left is for": [
+    "Mihin Left on tarkoitettu",
+    "Vad Left är till för"
+  ],
+  "Get started": [
+    "Aloita",
+    "Kom igång"
+  ],
+  "18+ · Community first · Private by default": [
+    "18+ · Yhteisö edellä · Oletuksena yksityinen",
+    "18+ · Gemenskapen först · Privat som standard"
+  ],
+  "Hint": [
+    "Tunnistusvihje",
+    "Kännetecken"
+  ],
+  "What I bring": [
+    "Mitä tuon mukanani",
+    "Vad jag bidrar med"
+  ],
+  "Shared alignment": [
+    "Yhteistä",
+    "Gemensamma intressen"
+  ],
+  "I'm going over": [
+    "Menen juttelemaan",
+    "Jag går fram"
+  ],
+  "Need space? These controls update your nearby feed right away.": [
+    "Tarvitsetko tilaa? Nämä valinnat päivittävät lähinäkymäsi heti.",
+    "Behöver du utrymme? Dessa val uppdaterar din närhetsvy direkt."
+  ],
+  "Report": [
+    "Ilmoita",
+    "Rapportera"
+  ],
+  "Use this for safety issues, harassment, spam, or impersonation.": [
+    "Ilmoita turvallisuusongelmista, häirinnästä, roskapostista tai toisena esiintymisestä.",
+    "Använd detta för säkerhetsproblem, trakasserier, skräppost eller falska identiteter."
+  ],
+  "Add optional context": [
+    "Lisää halutessasi lisätietoja",
+    "Lägg till valfri bakgrundsinformation"
+  ],
+  "Choose when, where, and how you can be discovered.": [
+    "Valitse, milloin, missä ja miten sinut voi löytää.",
+    "Välj när, var och hur du kan bli upptäckt."
+  ],
+  "Current visibility": [
+    "Näkyvyys nyt",
+    "Aktuell synlighet"
+  ],
+  "Venue privacy": [
+    "Paikan yksityisyys",
+    "Platsintegritet"
+  ],
+  "Choose where you can be seen and where alerts are allowed.": [
+    "Valitse, missä näyt ja mistä saat ilmoituksia.",
+    "Välj var du syns och var aviseringar tillåts."
+  ],
+  "Your venue stays private until you're visible.": [
+    "Paikkasi pysyy yksityisenä, kunnes tulet näkyviin.",
+    "Din plats förblir privat tills du blir synlig."
+  ],
+  "Hidden & muted venues": [
+    "Piilotetut ja mykistetyt paikat",
+    "Dolda och tystade platser"
+  ],
+  "No hidden or muted venues yet.": [
+    "Ei vielä piilotettuja tai mykistettyjä paikkoja.",
+    "Inga dolda eller tystade platser ännu."
+  ],
+  "Places you hide or mute will appear here.": [
+    "Piilottamasi ja mykistämäsi paikat näkyvät täällä.",
+    "Platser du döljer eller tystar visas här."
+  ],
+  "Saved places": [
+    "Tallennetut paikat",
+    "Sparade platser"
+  ],
+  "A private list for the next time you want to step out.": [
+    "Yksityinen lista seuraavaa lähtöäsi varten.",
+    "En privat lista för nästa gång du vill gå ut."
+  ],
+  "Nothing saved yet": [
+    "Ei vielä tallennuksia",
+    "Inget sparat ännu"
+  ],
+  "Save a nearby place and it will wait here across your devices.": [
+    "Tallenna lähipaikka, niin löydät sen täältä kaikilla laitteillasi.",
+    "Spara en plats i närheten så finns den här på alla dina enheter."
+  ],
+  "Explore nearby": [
+    "Tutki lähistöä",
+    "Utforska närheten"
+  ],
+  "Added by:": [
+    "Lisännyt:",
+    "Tillagd av:"
+  ],
+  "Good to know": [
+    "Hyvä tietää",
+    "Bra att veta"
+  ],
+  "Practical details have not been published for this venue yet.": [
+    "Tämän paikan käytännön tietoja ei ole vielä julkaistu.",
+    "Praktisk information om den här platsen har inte publicerats ännu."
+  ],
+  "Open venue website": [
+    "Avaa paikan verkkosivusto",
+    "Öppna platsens webbplats"
+  ],
+  "Website": [
+    "Verkkosivusto",
+    "Webbplats"
+  ],
+  "Call venue": [
+    "Soita paikkaan",
+    "Ring platsen"
+  ],
+  "Call": [
+    "Soita",
+    "Ring"
+  ],
+  "Popular times": [
+    "Suositut ajat",
+    "Populära tider"
+  ],
+  "Loading popular times": [
+    "Ladataan suosittuja aikoja",
+    "Laddar populära tider"
+  ],
+  "Social signals": [
+    "Sosiaaliset signaalit",
+    "Sociala signaler"
+  ],
+  "Aggregated from people who are visible here": [
+    "Kooste täällä näkyvistä ihmisistä",
+    "Sammanställt från personer som är synliga här"
+  ],
+  "Venue radar": [
+    "Paikkatutka",
+    "Platsradar"
+  ],
+  "Energy": [
+    "Energia",
+    "Energi"
+  ],
+  "Room vibes": [
+    "Paikan tunnelma",
+    "Stämning på platsen"
+  ],
+  "Go visible to see people nearby.": [
+    "Tule näkyviin nähdäksesi ihmisiä lähellä.",
+    "Bli synlig för att se personer i närheten."
+  ],
+  "No live activity signal yet.": [
+    "Ei vielä reaaliaikaista aktiivisuustietoa.",
+    "Ingen aktivitetssignal i realtid ännu."
+  ],
+  "Social momentum": [
+    "Kohtaamisten virta",
+    "Socialt flöde"
+  ],
+  "Choose a different nearby venue": [
+    "Valitse toinen lähipaikka",
+    "Välj en annan plats i närheten"
+  ],
+  "Can't find your venue? Add +": [
+    "Etkö löydä paikkaasi? Lisää +",
+    "Hittar du inte din plats? Lägg till +"
+  ],
+  "Pick your": [
+    "Valitse",
+    "Välj din"
+  ],
+  "venue.": [
+    "paikkasi.",
+    "plats."
+  ],
+  "We found more than one nearby place. Choose the one you are actually in so presence and prompts stay accurate.": [
+    "Löysimme useita lähipaikkoja. Valitse se, jossa todella olet, jotta näkyvyys ja ehdotukset pysyvät tarkkoina.",
+    "Vi hittade flera platser i närheten. Välj den du är på så att närvaro och förslag blir korrekta."
+  ],
+  "Add this": [
+    "Lisää tämä",
+    "Lägg till denna"
+  ],
+  "If the right place is missing, add it with enough detail for the next person standing nearby.": [
+    "Jos oikea paikka puuttuu, lisää se riittävän tarkasti seuraavaa kävijää varten.",
+    "Om rätt plats saknas kan du lägga till den med tillräckliga detaljer för nästa besökare."
+  ],
+  "Name and address are mandatory before this venue can be saved.": [
+    "Nimi ja osoite ovat pakollisia ennen tallentamista.",
+    "Namn och adress krävs för att spara platsen."
+  ],
+  "Venue name": [
+    "Paikan nimi",
+    "Platsens namn"
+  ],
+  "Use the real name people would recognize on arrival.": [
+    "Käytä oikeaa nimeä, jonka tulijat tunnistavat.",
+    "Använd det riktiga namnet som besökare känner igen."
+  ],
+  "e.g. Workshop Cafe": [
+    "esim. Workshop Cafe",
+    "t.ex. Workshop Cafe"
+  ],
+  "Venue photo": [
+    "Paikan kuva",
+    "Foto av platsen"
+  ],
+  "Add a clear photo of the venue, sign, or entrance. It will be public with this community venue.": [
+    "Lisää selkeä kuva paikasta, kyltistä tai sisäänkäynnistä. Se julkaistaan tämän yhteisön lisäämän paikan yhteydessä.",
+    "Lägg till ett tydligt foto av platsen, skylten eller entrén. Det visas offentligt med den här platsen."
+  ],
+  "Remove photo": [
+    "Poista kuva",
+    "Ta bort foto"
+  ],
+  "Contributor credit": [
+    "Lisääjän nimi",
+    "Bidragsgivarens namn"
+  ],
+  "Type": [
+    "Tyyppi",
+    "Typ"
+  ],
+  "Pick the closest category so discovery and filtering stay accurate.": [
+    "Valitse sopivin luokka, jotta haku ja suodatus pysyvät tarkkoina.",
+    "Välj närmaste kategori så att sökning och filtrering blir korrekta."
+  ],
+  "Address or landmark": [
+    "Osoite tai maamerkki",
+    "Adress eller landmärke"
+  ],
+  "Add the key detail someone would need to find this exact place.": [
+    "Lisää tieto, jolla tämän paikan löytää tarkasti.",
+    "Lägg till den viktigaste detaljen för att hitta just den här platsen."
+  ],
+  "Street, mall level, corner, or entrance": [
+    "Katu, kauppakeskuksen kerros, kulma tai sisäänkäynti",
+    "Gata, våning, hörn eller entré"
+  ],
+  "Notes": [
+    "Lisätiedot",
+    "Anteckningar"
+  ],
+  "Use notes for anything unusual like floor, entrance, or inside-a-building context.": [
+    "Kerro poikkeavista yksityiskohdista, kuten kerroksesta tai sisäänkäynnistä.",
+    "Beskriv särskilda detaljer som våning, entré eller var i byggnaden platsen finns."
+  ],
+  "Optional context that helps distinguish the venue": [
+    "Valinnaiset tiedot, jotka auttavat tunnistamaan paikan",
+    "Valfri information som hjälper till att skilja platsen från andra"
+  ],
+  "Back to nearby venues": [
+    "Takaisin lähipaikkoihin",
+    "Tillbaka till platser i närheten"
+  ],
+  "Popular-times day": [
+    "Suosittujen aikojen päivä",
+    "Dag för populära tider"
+  ],
+  "Venue local time. Typical activity, not a live count of people. Gray marks mean no data.": [
+    "Paikan paikallinen aika. Tyypillinen aktiivisuus, ei reaaliaikainen henkilömäärä. Harmaa tarkoittaa puuttuvaa tietoa.",
+    "Platsens lokala tid. Typisk aktivitet, inte antal personer i realtid. Grått betyder att data saknas."
+  ],
+  "Profile completion": [
+    "Profiilin valmius",
+    "Profilens färdigställande"
+  ],
+  "On Left since": [
+    "Leftissä alkaen",
+    "På Left sedan"
+  ],
+  "My social compass": [
+    "Sosiaalinen kompassini",
+    "Min sociala kompass"
+  ],
+  "Edit social compass": [
+    "Muokkaa sosiaalista kompassia",
+    "Redigera social kompass"
+  ],
+  "Edit": [
+    "Muokkaa",
+    "Redigera"
+  ],
+  "Build a private list for later": [
+    "Kokoa yksityinen lista myöhemmäksi",
+    "Skapa en privat lista för senare"
+  ],
+  "Your recent moments": [
+    "Viimeisimmät hetkesi",
+    "Dina senaste stunder"
+  ],
+  "AT": [
+    "PAIKASSA",
+    "PÅ"
+  ],
+  "Private until you choose to be seen": [
+    "Yksityinen, kunnes päätät näkyä",
+    "Privat tills du väljer att synas"
+  ],
+  "Safety": [
+    "Turvallisuus",
+    "Säkerhet"
+  ],
+  "Going visible...": [
+    "Tullaan näkyviin…",
+    "Blir synlig…"
+  ],
+  " · Today": [
+    " · Tänään",
+    " · Idag"
+  ],
+  "Currently private": [
+    "Tällä hetkellä yksityinen",
+    "Privat just nu"
+  ],
+  "Manage your visibility at this venue.": [
+    "Hallitse näkyvyyttäsi tässä paikassa.",
+    "Hantera din synlighet på den här platsen."
+  ],
+  "Go visible to appear at venues and see people around you.": [
+    "Tule näkyviin paikoissa ja näe ihmisiä ympärilläsi.",
+    "Bli synlig på platser och se personer omkring dig."
+  ],
+  "Manage visibility": [
+    "Hallitse näkyvyyttä",
+    "Hantera synlighet"
+  ],
+  "Go visible": [
+    "Tule näkyviin",
+    "Bli synlig"
+  ],
+  "Manage": [
+    "Hallitse",
+    "Hantera"
+  ],
+  "Your social compass is ready.": [
+    "Sosiaalinen kompassisi on valmis.",
+    "Din sociala kompass är klar."
+  ],
+  "Add a few details to make your vibe and introductions more useful.": [
+    "Lisää muutama tieto, jotta tunnelmasi ja esittäytymisesi kertovat enemmän.",
+    "Lägg till några detaljer så blir din stämning och presentation mer användbara."
+  ],
+  "Ending visibility...": [
+    "Lopetetaan näkyvyyttä…",
+    "Avslutar synlighet…"
+  ],
+  "End visibility": [
+    "Lopeta näkyvyys",
+    "Avsluta synlighet"
+  ],
+  "Connecting securely": [
+    "Yhdistetään turvallisesti",
+    "Ansluter säkert"
+  ],
+  "Awaiting review": [
+    "Odottaa tarkistusta",
+    "Väntar på granskning"
+  ],
+  "Dietary needs or what to bring…": [
+    "Ruokavaliot tai mitä tuoda…",
+    "Kostbehov eller vad du ska ta med…"
+  ],
+  "Add your own details (optional)…": [
+    "Lisää omat tiedot (valinnainen)…",
+    "Lägg till egna detaljer (valfritt)…"
+  ],
+  "Submitting for review…": [
+    "Lähetetään tarkistettavaksi…",
+    "Skickar för granskning…"
+  ],
+  "Submit for review": [
+    "Lähetä tarkistettavaksi",
+    "Skicka för granskning"
+  ],
+  "Sign in to attend": [
+    "Kirjaudu osallistuaksesi",
+    "Logga in för att delta"
+  ],
+  "You’re going · Change plans": [
+    "Olet osallistumassa · Muuta suunnitelmaa",
+    "Du deltar · Ändra plan"
+  ],
+  "Attend this gathering": [
+    "Osallistu tapaamiseen",
+    "Delta i träffen"
+  ],
+  "Gathering full": [
+    "Tapaaminen on täynnä",
+    "Träffen är full"
+  ],
+  "People choosing to be visible at this venue.": [
+    "Ihmisiä, jotka ovat valinneet näkyä täällä.",
+    "Personer som väljer att vara synliga här."
+  ],
+  "Go visible to see people at your venue.": [
+    "Tule näkyviin nähdäksesi ihmisiä tässä paikassa.",
+    "Bli synlig för att se personer på din plats."
+  ],
+  "Venue private": [
+    "Paikka yksityinen",
+    "Platsen är privat"
+  ],
+  "Live social signals are private and aggregated": [
+    "Reaaliaikaiset sosiaaliset signaalit ovat yksityisiä koosteita",
+    "Sociala signaler i realtid är privata och sammanställda"
+  ],
+  "Your venue stays private until visible": [
+    "Paikkasi pysyy yksityisenä, kunnes tulet näkyviin",
+    "Din plats förblir privat tills du blir synlig"
+  ],
+  "Visible here": [
+    "Näkyvissä täällä",
+    "Synlig här"
+  ],
+  "Private right now": [
+    "Nyt yksityinen",
+    "Privat just nu"
+  ],
+  "Private here": [
+    "Yksityinen täällä",
+    "Privat här"
+  ],
+  "Sign in to confirm your venue and discover people nearby.": [
+    "Kirjaudu vahvistaaksesi paikkasi ja löytääksesi ihmisiä läheltä.",
+    "Logga in för att bekräfta din plats och upptäcka personer i närheten."
+  ],
+  "Confirm your venue to become visible and discover people nearby.": [
+    "Vahvista paikkasi tullaksesi näkyviin ja löytääksesi ihmisiä läheltä.",
+    "Bekräfta din plats för att bli synlig och upptäcka personer i närheten."
+  ],
+  "People here can discover you through your interests and vibe. You stay anonymous.": [
+    "Täällä olevat voivat löytää sinut kiinnostustesi ja tunnelmasi perusteella. Pysyt anonyyminä.",
+    "Personer här kan upptäcka dig genom dina intressen och din stämning. Du förblir anonym."
+  ],
+  "You're hidden until you choose to be discovered.": [
+    "Pysyt piilossa, kunnes päätät tulla löydetyksi.",
+    "Du är dold tills du väljer att bli upptäckt."
+  ],
+  "Sign in to go visible": [
+    "Kirjaudu tullaksesi näkyviin",
+    "Logga in för att bli synlig"
+  ],
+  "Go private": [
+    "Piiloudu",
+    "Bli privat"
+  ],
+  "Confirmed venue": [
+    "Vahvistettu paikka",
+    "Bekräftad plats"
+  ],
+  "Guest preview": [
+    "Vierailijan esikatselu",
+    "Förhandsvisning för gäster"
+  ],
+  "Find your place": [
+    "Löydä paikkasi",
+    "Hitta din plats"
+  ],
+  "Explore nearby places and confirm where you are.": [
+    "Tutki lähistön paikkoja ja vahvista sijaintisi.",
+    "Utforska platser i närheten och bekräfta var du är."
+  ],
+  "Open in Maps": [
+    "Avaa kartoissa",
+    "Öppna i Kartor"
+  ],
+  "Explore nearby places": [
+    "Tutki lähipaikkoja",
+    "Utforska platser i närheten"
+  ],
+  "Choose at least 3": [
+    "Valitse vähintään 3",
+    "Välj minst 3"
+  ],
+  "Review browser location settings": [
+    "Tarkista selaimen sijaintiasetukset",
+    "Kontrollera webbläsarens platsinställningar"
+  ],
+  "Review device location settings": [
+    "Tarkista laitteen sijaintiasetukset",
+    "Kontrollera enhetens platsinställningar"
+  ],
+  "Hiding...": [
+    "Piilotetaan…",
+    "Döljer…"
+  ],
+  "Hide this person": [
+    "Piilota tämä henkilö",
+    "Dölj den här personen"
+  ],
+  "Blocking...": [
+    "Estetään…",
+    "Blockerar…"
+  ],
+  "Block": [
+    "Estä",
+    "Blockera"
+  ],
+  "Sending...": [
+    "Lähetetään…",
+    "Skickar…"
+  ],
+  "Send report": [
+    "Lähetä ilmoitus",
+    "Skicka rapport"
+  ],
+  "Visible nearby": [
+    "Näkyvissä lähistöllä",
+    "Synlig i närheten"
+  ],
+  "Not currently visible": [
+    "Et ole nyt näkyvissä",
+    "Inte synlig just nu"
+  ],
+  "You’re discoverable nearby only for the moment you chose.": [
+    "Sinut voi löytää läheltä vain valitsemasi hetken ajan.",
+    "Du kan bara upptäckas i närheten under den tid du valt."
+  ],
+  "You’re private until you choose to be discovered.": [
+    "Olet yksityinen, kunnes päätät tulla löydetyksi.",
+    "Du är privat tills du väljer att bli upptäckt."
+  ],
+  "Pausing...": [
+    "Keskeytetään…",
+    "Pausar…"
+  ],
+  "Pause visibility": [
+    "Keskeytä näkyvyys",
+    "Pausa synlighet"
+  ],
+  "Ending...": [
+    "Lopetetaan…",
+    "Avslutar…"
+  ],
+  "End session": [
+    "Lopeta istunto",
+    "Avsluta session"
+  ],
+  "Venue already hidden": [
+    "Paikka on jo piilotettu",
+    "Platsen är redan dold"
+  ],
+  "Hide this venue": [
+    "Piilota tämä paikka",
+    "Dölj den här platsen"
+  ],
+  "Muting alerts here": [
+    "Mykistetään paikan ilmoituksia",
+    "Tystar aviseringar här"
+  ],
+  "Alerts already muted here": [
+    "Paikan ilmoitukset on jo mykistetty",
+    "Aviseringarna är redan tystade här"
+  ],
+  "Mute alerts here": [
+    "Mykistä paikan ilmoitukset",
+    "Tysta aviseringar här"
+  ],
+  "Sign out on this device. You can sign back in anytime.": [
+    "Kirjaudu ulos tällä laitteella. Voit kirjautua takaisin milloin tahansa.",
+    "Logga ut på den här enheten. Du kan logga in igen när som helst."
+  ],
+  "Sign in to save places": [
+    "Kirjaudu tallentaaksesi paikkoja",
+    "Logga in för att spara platser"
+  ],
+  "Remove from saved places": [
+    "Poista tallennetuista paikoista",
+    "Ta bort från sparade platser"
+  ],
+  "Save this place": [
+    "Tallenna tämä paikka",
+    "Spara den här platsen"
+  ],
+  "Sign in for location-based discovery. Guest mode does not access your location.": [
+    "Kirjaudu sijaintiin perustuvaa hakua varten. Vierailijatila ei käytä sijaintiasi.",
+    "Logga in för platsbaserad upptäckt. Gästläget använder inte din plats."
+  ],
+  "Go visible to unlock venue details, room energy, and the social vibes around you.": [
+    "Tule näkyviin nähdäksesi paikan tiedot, energian ja ympärilläsi olevan tunnelman.",
+    "Bli synlig för att se platsinformation, energi och stämningen omkring dig."
+  ],
+  "Discover your surroundings": [
+    "Tutustu ympäristöösi",
+    "Upptäck din omgivning"
+  ],
+  "Your venue is private": [
+    "Paikkasi on yksityinen",
+    "Din plats är privat"
+  ],
+  "Explore real places and anonymous social signals after signing in and confirming your venue.": [
+    "Tutki oikeita paikkoja ja anonyymejä sosiaalisia signaaleja kirjautumisen ja paikan vahvistamisen jälkeen.",
+    "Utforska verkliga platser och anonyma sociala signaler när du loggat in och bekräftat din plats."
+  ],
+  "When you are visible, you can see the venue’s live energy and vibes without exposing anyone’s headcount.": [
+    "Näkyvissä ollessasi näet paikan reaaliaikaisen energian ja tunnelman ilman henkilömääriä.",
+    "När du är synlig ser du platsens energi och stämning i realtid utan att visa antalet personer."
+  ],
+  "Sign in to explore": [
+    "Kirjaudu tutustuaksesi",
+    "Logga in för att utforska"
+  ],
+  "Choose vibes and go visible": [
+    "Valitse tunnelma ja tule näkyviin",
+    "Välj stämning och bli synlig"
+  ],
+  "Open nearby feed": [
+    "Avaa lähistönäkymä",
+    "Öppna närhetsflödet"
+  ],
+  "Visible": [
+    "Näkyvissä",
+    "Synlig"
+  ],
+  "Hidden": [
+    "Piilotettu",
+    "Dold"
+  ],
+  "Replace photo": [
+    "Vaihda kuva",
+    "Byt foto"
+  ],
+  "Add photo": [
+    "Lisää kuva",
+    "Lägg till foto"
+  ],
+  "Your name will not be shown on this venue.": [
+    "Nimeäsi ei näytetä tämän paikan yhteydessä.",
+    "Ditt namn visas inte på den här platsen."
+  ],
+  "Show my name": [
+    "Näytä nimeni",
+    "Visa mitt namn"
+  ],
+  "Add anonymously": [
+    "Lisää nimettömänä",
+    "Lägg till anonymt"
+  ],
+  "Saving venue...": [
+    "Tallennetaan paikkaa…",
+    "Sparar plats…"
+  ],
+  "Save venue": [
+    "Tallenna paikka",
+    "Spara plats"
+  ],
+  "Unhiding...": [
+    "Poistetaan piilotusta…",
+    "Visar igen…"
+  ],
+  "Unhide": [
+    "Poista piilotus",
+    "Visa igen"
+  ],
+  "Turning on...": [
+    "Otetaan käyttöön…",
+    "Aktiverar…"
+  ],
+  "Unmute": [
+    "Poista mykistys",
+    "Slå på ljud"
+  ],
+  "Control your visibility": [
+    "Hallitse näkyvyyttäsi",
+    "Styr din synlighet"
+  ],
+  "Choose when people can discover you at a shared venue.": [
+    "Valitse, milloin muut löytävät sinut yhteisestä paikasta.",
+    "Välj när andra kan upptäcka dig på en gemensam plats."
+  ],
+  "Your location stays protected": [
+    "Sijaintisi pysyy suojattuna",
+    "Din plats förblir skyddad"
+  ],
+  "Left uses venue context. Your precise coordinates are never shown to other people.": [
+    "Left käyttää paikkatietoa. Tarkkoja koordinaattejasi ei näytetä muille.",
+    "Left använder platsens sammanhang. Dina exakta koordinater visas aldrig för andra."
+  ],
+  "Block and report": [
+    "Estä ja ilmoita",
+    "Blockera och rapportera"
+  ],
+  "Quickly block or quietly report behaviour that makes you uncomfortable.": [
+    "Estä nopeasti tai ilmoita huomaamattomasti epämiellyttävästä käytöksestä.",
+    "Blockera snabbt eller rapportera diskret beteenden som känns obehagliga."
+  ],
+  "Change settings anytime": [
+    "Muuta asetuksia milloin tahansa",
+    "Ändra inställningar när som helst"
+  ],
+  "Privacy controls remain available inside your profile.": [
+    "Tietosuoja-asetukset ovat aina saatavilla profiilissasi.",
+    "Integritetsinställningarna finns alltid i din profil."
+  ],
+  "Mutual openings": [
+    "Yhteiset mahdollisuudet",
+    "Gemensamma möjligheter"
+  ],
+  "Know when the timing is right for both people.": [
+    "Tiedä, milloin hetki sopii molemmille.",
+    "Få veta när tidpunkten passar er båda."
+  ],
+  "Venue moments": [
+    "Hetket paikoissa",
+    "Stunder på platser"
+  ],
+  "Get a quiet prompt after you have settled into a place.": [
+    "Saat hillityn ehdotuksen asetuttuasi paikkaan.",
+    "Få ett diskret förslag när du har kommit till ro på en plats."
+  ],
+  "Safety and account": [
+    "Turvallisuus ja tili",
+    "Säkerhet och konto"
+  ],
+  "Receive important trust, privacy, and account updates.": [
+    "Saat tärkeät turvallisuus-, tietosuoja- ja tilipäivitykset.",
+    "Få viktiga uppdateringar om säkerhet, integritet och konto."
+  ],
+  "Hide this venue?": [
+    "Piilotetaanko tämä paikka?",
+    "Dölja den här platsen?"
+  ],
+  "Tap to view": [
+    "Avaa napauttamalla",
+    "Tryck för att visa"
+  ],
+  "View": [
+    "Näytä",
+    "Visa"
+  ],
+  "Required": [
+    "Pakollinen",
+    "Obligatoriskt"
+  ],
+  "Important": [
+    "Tärkeä",
+    "Viktigt"
+  ],
+  "Optional": [
+    "Valinnainen",
+    "Valfritt"
+  ],
+  "Delete your Left account?": [
+    "Poistetaanko Left-tilisi?",
+    "Radera ditt Left-konto?"
+  ],
+  "Keep my account": [
+    "Säilytä tilini",
+    "Behåll mitt konto"
+  ],
+  "Identity removal": [
+    "Tilin poistaminen",
+    "Kontoradering"
+  ],
+  "Identity removal failed": [
+    "Tilin poistaminen epäonnistui",
+    "Kontoraderingen misslyckades"
+  ],
+  "Identity removal not completed": [
+    "Tilin poistaminen on kesken",
+    "Kontoraderingen slutfördes inte"
+  ],
+  "Identity removed": [
+    "Tili poistettu",
+    "Kontot raderat"
+  ],
+  "OK": [
+    "OK",
+    "OK"
+  ],
+  "Saving...": [
+    "Tallennetaan…",
+    "Sparar…"
+  ],
+  "Saved": [
+    "Tallennettu",
+    "Sparat"
+  ],
+  "Save Changes": [
+    "Tallenna muutokset",
+    "Spara ändringar"
+  ],
+  "Requesting location...": [
+    "Pyydetään sijaintilupaa…",
+    "Begär platsbehörighet…"
+  ],
+  "Allow location": [
+    "Salli sijainti",
+    "Tillåt platsåtkomst"
+  ],
+  "Requesting notifications...": [
+    "Pyydetään ilmoituslupaa…",
+    "Begär aviseringsbehörighet…"
+  ],
+  "Allow notifications": [
+    "Salli ilmoitukset",
+    "Tillåt aviseringar"
+  ],
+  "People in the same place": [
+    "Ihmisiä samassa paikassa",
+    "Människor på samma plats"
+  ],
+  "Visible only when it is mutual": [
+    "Näkyvissä vain molemmin puolin",
+    "Synlig bara när det är ömsesidigt"
+  ],
+  "Venue context, never a public trail": [
+    "Paikan yhteys, ei julkista reittiä",
+    "Platssammanhang, aldrig ett offentligt spår"
+  ],
+  "Networking": [
+    "Verkostoituminen",
+    "Nätverkande"
+  ],
+  "Open to chat": [
+    "Avoin keskustelulle",
+    "Öppen för samtal"
+  ],
+  "Group discussion": [
+    "Ryhmäkeskustelu",
+    "Gruppsamtal"
+  ],
+  "Casual chat": [
+    "Rento juttelu",
+    "Avslappnat samtal"
+  ],
+  "networking": [
+    "verkostoituminen",
+    "nätverkande"
+  ],
+  "open to conversation": [
+    "avoin keskustelulle",
+    "öppen för samtal"
+  ],
+  "group discussion": [
+    "ryhmäkeskustelu",
+    "gruppsamtal"
+  ],
+  "casual chat": [
+    "rento juttelu",
+    "avslappnat samtal"
+  ],
+  "Building things": [
+    "Rakentaminen",
+    "Skapande"
+  ],
+  "Arts & culture": [
+    "Taide ja kulttuuri",
+    "Konst och kultur"
+  ],
+  "Local life": [
+    "Paikallinen elämä",
+    "Lokalt liv"
+  ],
+  "Learning": [
+    "Oppiminen",
+    "Lärande"
+  ],
+  "Wellbeing": [
+    "Hyvinvointi",
+    "Välmående"
+  ],
+  "Food & coffee": [
+    "Ruoka ja kahvi",
+    "Mat och kaffe"
+  ],
+  "LGBTQ+ community": [
+    "LGBTQ+-yhteisö",
+    "HBTQ+-gemenskap"
+  ],
+  "Politics & civic life": [
+    "Politiikka ja yhteiskunta",
+    "Politik och samhälle"
+  ],
+  "Faith & spirituality": [
+    "Usko ja hengellisyys",
+    "Tro och andlighet"
+  ],
+  "Music & nightlife": [
+    "Musiikki ja yöelämä",
+    "Musik och nattliv"
+  ],
+  "Outdoors & movement": [
+    "Ulkoilu ja liikunta",
+    "Friluftsliv och rörelse"
+  ],
+  "Gaming & pop culture": [
+    "Pelit ja populaarikulttuuri",
+    "Spel och populärkultur"
+  ],
+  "Weekday mornings": [
+    "Arki-aamut",
+    "Vardagsmorgnar"
+  ],
+  "Weekday afternoons": [
+    "Arki-iltapäivät",
+    "Vardag eftermiddag"
+  ],
+  "Weekday evenings": [
+    "Arki-illat",
+    "Vardagskvällar"
+  ],
+  "Weekend days": [
+    "Viikonlopun päivät",
+    "Helgdagar"
+  ],
+  "Weekend evenings": [
+    "Viikonlopun illat",
+    "Helgkvällar"
+  ],
+  "Easygoing and spontaneous": [
+    "Rento ja spontaani",
+    "Avslappnad och spontan"
+  ],
+  "Thoughtful one-to-one": [
+    "Pohdiskeleva kahdenkeskinen",
+    "Eftertänksamt enskilt samtal"
+  ],
+  "Small group energy": [
+    "Pienryhmän tunnelma",
+    "Liten gruppenergi"
+  ],
+  "Purposeful and practical": [
+    "Tavoitteellinen ja käytännöllinen",
+    "Målmedveten och praktisk"
+  ],
+  "Show hourly details": [
+    "Näytä tuntitiedot",
+    "Visa timinformation"
+  ],
+  "Hide hourly details": [
+    "Piilota tuntitiedot",
+    "Dölj timinformation"
+  ],
+  "No data": [
+    "Ei tietoja",
+    "Inga data"
+  ],
+  "No one else is visible yet": [
+    "Muita ei vielä ole näkyvissä",
+    "Ingen annan är synlig ännu"
+  ],
+  "Your nearby feed is private": [
+    "Lähinäkymäsi on yksityinen",
+    "Ditt närhetsflöde är privat"
+  ],
+  "No shared profiles are available yet. Venue energy and vibes update as people go visible.": [
+    "Jaettuja profiileja ei ole vielä saatavilla. Paikan energia ja tunnelmat päivittyvät ihmisten tullessa näkyviin.",
+    "Inga delade profiler finns ännu. Platsens energi och stämningar uppdateras när personer blir synliga."
+  ],
+  "Start a presence when you are ready to see and be seen by people at your venue.": [
+    "Aloita näkyvyys, kun olet valmis näkemään muita ja tulemaan nähdyksi tässä paikassa.",
+    "Bli synlig när du är redo att se andra och bli sedd på din plats."
+  ],
+  "You're visible at this venue": [
+    "Olet näkyvissä tässä paikassa",
+    "Du är synlig på den här platsen"
+  ],
+  "You're private at this venue": [
+    "Olet yksityinen tässä paikassa",
+    "Du är privat på den här platsen"
+  ],
+  "Finding nearby places…": [
+    "Etsitään lähipaikkoja…",
+    "Hittar platser i närheten…"
+  ],
+  "A place to begin": [
+    "Paikka aloittaa",
+    "En plats att börja på"
+  ],
+  "Preview venue pages or sign in for location-based discovery.": [
+    "Esikatsele paikkoja tai kirjaudu sijaintiin perustuvaa hakua varten.",
+    "Förhandsvisa platser eller logga in för platsbaserad upptäckt."
+  ],
+  "Explore nearby places to check location access and choose your current venue.": [
+    "Tutki lähistön paikkoja, tarkista sijaintilupa ja valitse nykyinen paikkasi.",
+    "Utforska platser i närheten, kontrollera platsåtkomst och välj din aktuella plats."
+  ],
+  "Hidden and alerts muted": [
+    "Piilotettu ja ilmoitukset mykistetty",
+    "Dold och aviseringar tystade"
+  ],
+  "Hidden venue": [
+    "Piilotettu paikka",
+    "Dold plats"
+  ],
+  "Alerts muted": [
+    "Ilmoitukset mykistetty",
+    "Aviseringar tystade"
+  ],
+  "Your next little discovery": [
+    "Seuraava pieni löytösi",
+    "Din nästa lilla upptäckt"
+  ],
+  "Drawn to": [
+    "Kiinnostukset",
+    "Intressen"
+  ],
+  "Usually around": [
+    "Yleensä paikalla",
+    "Oftast tillgänglig"
+  ],
+  "Live now": [
+    "Nyt näkyvissä",
+    "Synlig nu"
+  ],
+  "Approaches started": [
+    "Aloitetut lähestymiset",
+    "Påbörjade kontakter"
+  ],
+  "Venues nearby": [
+    "Paikkoja lähellä",
+    "Platser i närheten"
+  ],
+  "Add your interests": [
+    "Lisää kiinnostuksesi",
+    "Lägg till dina intressen"
+  ],
+  "Add your rhythm": [
+    "Lisää oma rytmisi",
+    "Lägg till din rytm"
+  ],
+  "Add your style": [
+    "Lisää oma tyylisi",
+    "Lägg till din stil"
+  ],
+  "Monday": [
+    "Maanantai",
+    "Måndag"
+  ],
+  "Tuesday": [
+    "Tiistai",
+    "Tisdag"
+  ],
+  "Wednesday": [
+    "Keskiviikko",
+    "Onsdag"
+  ],
+  "Thursday": [
+    "Torstai",
+    "Torsdag"
+  ],
+  "Friday": [
+    "Perjantai",
+    "Fredag"
+  ],
+  "Saturday": [
+    "Lauantai",
+    "Lördag"
+  ],
+  "Sunday": [
+    "Sunnuntai",
+    "Söndag"
+  ],
+  "{day}: no popular-times data for this day.": [
+    "{day}: tältä päivältä ei ole suosittujen aikojen tietoja.",
+    "{day}: inga uppgifter om populära tider för den här dagen."
+  ],
+  "{day}: reported typical activity is 0% throughout the available hours.": [
+    "{day}: tyypillinen aktiivisuus on 0 % kaikilla saatavilla olevilla tunneilla.",
+    "{day}: typisk aktivitet är 0 % under alla tillgängliga timmar."
+  ],
+  "{day}: busiest around {hour}:00, {percent}% typical activity.": [
+    "{day}: vilkkainta noin klo {hour}:00, tyypillinen aktiivisuus {percent} %.",
+    "{day}: mest aktivitet runt {hour}:00, {percent} % typisk aktivitet."
+  ],
+  "{count} hours have no data.": [
+    "{count} tunnilta puuttuu tieto.",
+    "{count} timmar saknar data."
+  ],
+  "{percent}% typical activity": [
+    "{percent} % tyypillinen aktiivisuus",
+    "{percent} % typisk aktivitet"
+  ],
+  "Café": [
+    "Kahvila",
+    "Kafé"
+  ],
+  "Coworking space": [
+    "Yhteistyötila",
+    "Kontorsgemenskap"
+  ],
+  "Library": [
+    "Kirjasto",
+    "Bibliotek"
+  ],
+  "University": [
+    "Yliopisto",
+    "Universitet"
+  ],
+  "Airport": [
+    "Lentokenttä",
+    "Flygplats"
+  ],
+  "Gym": [
+    "Kuntosali",
+    "Gym"
+  ],
+  "Calm": [
+    "Rauhallinen",
+    "Lugnt"
+  ],
+  "Warm": [
+    "Lämmin",
+    "Varmt"
+  ],
+  "Active": [
+    "Aktiivinen",
+    "Aktivt"
+  ],
+  "Busy": [
+    "Vilkas",
+    "Livligt"
+  ],
+  "Focused": [
+    "Keskittynyt",
+    "Fokuserat"
+  ],
+  "Manage hidden venues and muted alerts.": [
+    "Hallitse piilotettuja paikkoja ja mykistettyjä ilmoituksia.",
+    "Hantera dolda platser och tystade aviseringar."
+  ],
+  "Settings": [
+    "Asetukset",
+    "Inställningar"
+  ],
+  "Account": [
+    "Tili",
+    "Konto"
+  ],
+  "Account information": [
+    "Tilitiedot",
+    "Kontoinformation"
+  ],
+  "Privacy and safety": [
+    "Yksityisyys ja turvallisuus",
+    "Integritet och säkerhet"
+  ],
+  "Manage blocks and hidden venues.": [
+    "Hallitse estoja ja piilotettuja paikkoja.",
+    "Hantera blockeringar och dolda platser."
+  ],
+  "Notifications": [
+    "Ilmoitukset",
+    "Aviseringar"
+  ],
+  "Manage alerts.": [
+    "Hallitse ilmoituksia.",
+    "Hantera aviseringar."
+  ],
+  "Legal": [
+    "Lakiasiat",
+    "Juridisk information"
+  ],
+  "Terms of Service": [
+    "Käyttöehdot",
+    "Användarvillkor"
+  ],
+  "Privacy Policy": [
+    "Tietosuojakäytäntö",
+    "Integritetspolicy"
+  ],
+  "Community Guidelines": [
+    "Yhteisön säännöt",
+    "Gemenskapsregler"
+  ],
+  "General": [
+    "Yleiset",
+    "Allmänt"
+  ],
+  "About Left": [
+    "Tietoa Leftistä",
+    "Om Left"
+  ],
+  "App info and updates.": [
+    "Sovelluksen tiedot ja päivitykset.",
+    "Appinformation och uppdateringar."
+  ],
+  "Log out": [
+    "Kirjaudu ulos",
+    "Logga ut"
+  ],
+  "Log out?": [
+    "Kirjaudutaanko ulos?",
+    "Logga ut?"
+  ],
+  "You can sign back in anytime.": [
+    "Voit kirjautua takaisin milloin tahansa.",
+    "Du kan logga in igen när som helst."
+  ],
+  "Cancel": [
+    "Peruuta",
+    "Avbryt"
+  ],
+  "Session": [
+    "Istunto",
+    "Session"
+  ],
+  "Language and region": [
+    "Kieli ja alue",
+    "Språk och region"
+  ],
+  "App language": [
+    "Sovelluksen kieli",
+    "Appspråk"
+  ],
+  "Measurement units": [
+    "Mittayksiköt",
+    "Måttenheter"
+  ],
+  "Follow device": [
+    "Laitteen asetusten mukaan",
+    "Följ enhetens inställningar"
+  ],
+  "Metric": [
+    "Metrinen",
+    "Metriska"
+  ],
+  "Imperial": [
+    "Imperiaalinen",
+    "Imperiala"
+  ],
+  "Metres and kilometres": [
+    "Metrit ja kilometrit",
+    "Meter och kilometer"
+  ],
+  "Feet and miles": [
+    "Jalat ja mailit",
+    "Fot och miles"
+  ],
+  "Privacy preferences": [
+    "Tietosuoja-asetukset",
+    "Integritetsinställningar"
+  ],
+  "Usage analytics and diagnostics": [
+    "Käyttöanalytiikka ja diagnostiikka",
+    "Användningsanalys och diagnostik"
+  ],
+  "Help improve the app with usage events and error reports. Optional; this choice applies on this device.": [
+    "Auta kehittämään sovellusta käyttötapahtumilla ja virheraporteilla. Valinnainen asetus koskee tätä laitetta.",
+    "Hjälp oss förbättra appen med användningshändelser och felrapporter. Valfritt; inställningen gäller på den här enheten."
+  ],
+  "Blocked people": [
+    "Estetyt henkilöt",
+    "Blockerade personer"
+  ],
+  "Review people you have blocked.": [
+    "Tarkastele estämiäsi henkilöitä.",
+    "Se personer du har blockerat."
+  ],
+  "Download my data": [
+    "Lataa omat tietoni",
+    "Ladda ner mina uppgifter"
+  ],
+  "Save a copy of your app account records.": [
+    "Tallenna kopio sovellustilisi tiedoista.",
+    "Spara en kopia av dina kontouppgifter i appen."
+  ],
+  "Licences": [
+    "Lisenssit",
+    "Licenser"
+  ],
+  "Open-source software notices": [
+    "Avoimen lähdekoodin ohjelmistojen tiedot",
+    "Information om programvara med öppen källkod"
+  ],
+  "App version": [
+    "Sovellusversio",
+    "Appversion"
+  ],
+  "Delete account": [
+    "Poista tili",
+    "Radera konto"
+  ],
+  "Request account deletion": [
+    "Pyydä tilin poistamista",
+    "Begär radering av konto"
+  ],
+  "Sending request...": [
+    "Lähetetään pyyntöä…",
+    "Skickar begäran…"
+  ],
+  "Try request again": [
+    "Yritä pyyntöä uudelleen",
+    "Försök igen"
+  ],
+  "Removal requested": [
+    "Poistoa pyydetty",
+    "Radering begärd"
+  ],
+  "Your request is recorded and ready for processing.": [
+    "Pyyntösi on tallennettu käsittelyä varten.",
+    "Din begäran är sparad för behandling."
+  ],
+  "Request removal of your account and direct identity details. Some safety and operational records may be retained under the Privacy Policy.": [
+    "Pyydä tilisi ja tunnistetietojesi poistamista. Joitakin turvallisuus- ja toimintatietoja voidaan säilyttää tietosuojakäytännön mukaisesti.",
+    "Begär radering av ditt konto och dina identitetsuppgifter. Vissa säkerhets- och driftuppgifter kan sparas enligt integritetspolicyn."
+  ],
+  "We could not submit your request. Nothing was removed.": [
+    "Pyyntöä ei voitu lähettää. Mitään ei poistettu.",
+    "Vi kunde inte skicka din begäran. Inget raderades."
+  ],
+  "Couldn't open phone settings.": [
+    "Puhelimen asetuksia ei voitu avata.",
+    "Kunde inte öppna telefonens inställningar."
+  ],
+  "Could not save your preferences. Please try again.": [
+    "Asetuksia ei voitu tallentaa. Yritä uudelleen.",
+    "Kunde inte spara inställningarna. Försök igen."
+  ],
+  "Loading…": [
+    "Ladataan…",
+    "Laddar…"
+  ],
+  "No blocked people.": [
+    "Ei estettyjä henkilöitä.",
+    "Inga blockerade personer."
+  ],
+  "Could not load blocked people. Try again.": [
+    "Estettyjä henkilöitä ei voitu ladata. Yritä uudelleen.",
+    "Kunde inte ladda blockerade personer. Försök igen."
+  ],
+  "Try again": [
+    "Yritä uudelleen",
+    "Försök igen"
+  ],
+  "Unblock": [
+    "Poista esto",
+    "Avblockera"
+  ],
+  "Unblock this person?": [
+    "Poistetaanko tämän henkilön esto?",
+    "Avblockera den här personen?"
+  ],
+  "You may see each other again. They will not be notified.": [
+    "Saatatte nähdä toisenne jälleen. Henkilölle ei lähetetä ilmoitusta.",
+    "Ni kan se varandra igen. Personen får inget meddelande."
+  ],
+  "Blocked person": [
+    "Estetty henkilö",
+    "Blockerad person"
+  ],
+  "Could not unblock this person. Try again.": [
+    "Estoa ei voitu poistaa. Yritä uudelleen.",
+    "Kunde inte avblockera personen. Försök igen."
+  ],
+  "Preparing your download…": [
+    "Valmistellaan latausta…",
+    "Förbereder nedladdningen…"
+  ],
+  "Could not prepare your data. Please try again.": [
+    "Tietojasi ei voitu valmistella. Yritä uudelleen.",
+    "Kunde inte förbereda dina uppgifter. Försök igen."
+  ],
+  "Your data includes personal information. Choose where to save it in the next step.": [
+    "Tietosi sisältävät henkilötietoja. Valitse seuraavassa vaiheessa tallennuspaikka.",
+    "Dina uppgifter innehåller personuppgifter. Välj var du vill spara dem i nästa steg."
+  ],
+  "Continue": [
+    "Jatka",
+    "Fortsätt"
+  ],
+  "Close": [
+    "Sulje",
+    "Stäng"
+  ],
+  "Back": [
+    "Takaisin",
+    "Tillbaka"
+  ],
+  "Done": [
+    "Valmis",
+    "Klart"
+  ],
+  "Home": [
+    "Koti",
+    "Hem"
+  ],
+  "Map": [
+    "Kartta",
+    "Karta"
+  ],
+  "Venues": [
+    "Paikat",
+    "Platser"
+  ],
+  "Profile": [
+    "Profiili",
+    "Profil"
+  ],
+  "Nearby venue": [
+    "Lähellä oleva paikka",
+    "Plats i närheten"
+  ],
+  "Venue preview": [
+    "Paikan esikatselu",
+    "Förhandsvisning av plats"
+  ],
+  "away": [
+    "päässä",
+    "bort"
+  ],
+  "Version": [
+    "Versio",
+    "Version"
+  ],
+  "Build": [
+    "Koontiversio",
+    "Byggversion"
+  ],
+  "Web": [
+    "Verkko",
+    "Webb"
+  ],
+  "English": [
+    "Englanti",
+    "Engelska"
+  ],
+  "Finnish": [
+    "Suomi",
+    "Finska"
+  ],
+  "Swedish": [
+    "Ruotsi",
+    "Svenska"
+  ],
+  "Could not open document": [
+    "Asiakirjaa ei voitu avata",
+    "Kunde inte öppna dokumentet"
+  ],
+  "Please check your connection and try opening the document again. Your agreement has not been recorded by opening this link.": [
+    "Tarkista yhteys ja yritä avata asiakirja uudelleen. Linkin avaaminen ei tallenna hyväksyntääsi.",
+    "Kontrollera anslutningen och försök öppna dokumentet igen. Att öppna länken registrerar inte ditt godkännande."
+  ],
+  "Go visible to unlock venue details": [
+    "Tule näkyviin nähdäksesi paikan tiedot",
+    "Bli synlig för att se platsinformation"
+  ],
+  "Venue details and live signals are shared only while you are visible at a venue.": [
+    "Paikan tiedot ja reaaliaikaiset signaalit ovat saatavilla vain, kun olet näkyvissä paikassa.",
+    "Platsinformation och signaler i realtid delas bara när du är synlig på en plats."
+  ],
+  "Could not save this place": [
+    "Paikkaa ei voitu tallentaa",
+    "Kunde inte spara platsen"
+  ],
+  "Left can save a place after it has been confirmed in the venue directory.": [
+    "Left voi tallentaa paikan, kun se on vahvistettu paikkahakemistossa.",
+    "Left kan spara en plats när den har bekräftats i platskatalogen."
+  ],
+  "Could not update saved places": [
+    "Tallennettuja paikkoja ei voitu päivittää",
+    "Kunde inte uppdatera sparade platser"
+  ],
+  "Check your connection and try again.": [
+    "Tarkista yhteys ja yritä uudelleen.",
+    "Kontrollera anslutningen och försök igen."
+  ],
+  "Could not update attendance": [
+    "Osallistumista ei voitu päivittää",
+    "Kunde inte uppdatera deltagandet"
+  ],
+  "This gathering may be full or unavailable. Try again shortly.": [
+    "Tapaaminen voi olla täynnä tai poissa saatavilta. Yritä pian uudelleen.",
+    "Träffen kan vara full eller otillgänglig. Försök igen om en stund."
+  ],
+  "We could not restore your account state. Your session is still secure.": [
+    "Tilisi tilaa ei voitu palauttaa. Istuntosi on edelleen suojattu.",
+    "Vi kunde inte återställa kontots tillstånd. Din session är fortfarande säker."
+  ],
+  "Check your connection, then try again.": [
+    "Tarkista yhteys ja yritä sitten uudelleen.",
+    "Kontrollera anslutningen och försök sedan igen."
+  ],
+  "Couldn’t refresh right now": [
+    "Päivitys ei onnistunut juuri nyt",
+    "Kunde inte uppdatera just nu"
+  ],
+  "Feedback saved": [
+    "Palaute tallennettu",
+    "Feedback sparad"
+  ],
+  "Venue unavailable": [
+    "Paikka ei ole saatavilla",
+    "Platsen är inte tillgänglig"
+  ],
+  "That nearby venue is no longer available. Try again from the refreshed list.": [
+    "Tämä lähipaikka ei ole enää saatavilla. Yritä uudelleen päivitetystä luettelosta.",
+    "Platsen i närheten är inte längre tillgänglig. Försök igen från den uppdaterade listan."
+  ],
+  "Add this venue first": [
+    "Lisää ensin tämä paikka",
+    "Lägg till platsen först"
+  ],
+  "Add venue": [
+    "Lisää paikka",
+    "Lägg till plats"
+  ],
+  "Venue location missing": [
+    "Paikan sijainti puuttuu",
+    "Platsens position saknas"
+  ],
+  "Move around the venue once so Left has a recent device location.": [
+    "Liiku hieman paikassa, jotta Left saa tuoreen sijaintitiedon.",
+    "Rör dig lite på platsen så att Left får en aktuell position."
+  ],
+  "Missing venue details": [
+    "Paikan tietoja puuttuu",
+    "Platsinformation saknas"
+  ],
+  "Add a venue name, address or landmark, and a clear venue photo.": [
+    "Lisää paikan nimi, osoite tai maamerkki sekä selkeä kuva paikasta.",
+    "Lägg till platsens namn, adress eller landmärke och ett tydligt foto."
+  ],
+  "Venue already exists": [
+    "Paikka on jo olemassa",
+    "Platsen finns redan"
+  ],
+  "Venue submission failed": [
+    "Paikan lähettäminen epäonnistui",
+    "Kunde inte skicka in platsen"
+  ],
+  "We could not submit that venue yet.": [
+    "Paikkaa ei voitu vielä lähettää.",
+    "Vi kunde inte skicka in platsen ännu."
+  ],
+  "Photo permission needed": [
+    "Kuvalupa tarvitaan",
+    "Fotoåtkomst behövs"
+  ],
+  "Allow photo access to attach a venue photo.": [
+    "Salli kuvien käyttö liittääksesi paikan kuvan.",
+    "Tillåt fotoåtkomst för att bifoga ett foto av platsen."
+  ],
+  "We could not load your profile. Your session is still secure.": [
+    "Profiiliasi ei voitu ladata. Istuntosi on edelleen suojattu.",
+    "Vi kunde inte ladda din profil. Din session är fortfarande säker."
+  ],
+  "This account has been removed.": [
+    "Tämä tili on poistettu.",
+    "Det här kontot har raderats."
+  ],
+  "We could not verify your policy choices. Your session is still secure.": [
+    "Käytäntöjen hyväksyntääsi ei voitu tarkistaa. Istuntosi on edelleen suojattu.",
+    "Vi kunde inte kontrollera dina godkännanden. Din session är fortfarande säker."
+  ],
+  "Google sign-in was cancelled. Try again when you’re ready.": [
+    "Google-kirjautuminen peruttiin. Yritä uudelleen, kun olet valmis.",
+    "Google-inloggningen avbröts. Försök igen när du är redo."
+  ],
+  "Google sign-in could not complete. Check your connection and try again.": [
+    "Google-kirjautuminen ei onnistunut. Tarkista yhteys ja yritä uudelleen.",
+    "Google-inloggningen kunde inte slutföras. Kontrollera anslutningen och försök igen."
+  ],
+  "Apple sign-in was cancelled. Try again when you’re ready.": [
+    "Apple-kirjautuminen peruttiin. Yritä uudelleen, kun olet valmis.",
+    "Apple-inloggningen avbröts. Försök igen när du är redo."
+  ],
+  "Apple sign-in could not complete. Check your connection and try again.": [
+    "Apple-kirjautuminen ei onnistunut. Tarkista yhteys ja yritä uudelleen.",
+    "Apple-inloggningen kunde inte slutföras. Kontrollera anslutningen och försök igen."
+  ],
+  "Sign in again to finish onboarding.": [
+    "Kirjaudu uudelleen viimeistelläksesi käyttöönoton.",
+    "Logga in igen för att slutföra kontoinställningen."
+  ],
+  "Left could not finish the permission check. Try again, or review device settings.": [
+    "Left ei voinut viimeistellä lupien tarkistusta. Yritä uudelleen tai tarkista laitteen asetukset.",
+    "Left kunde inte slutföra behörighetskontrollen. Försök igen eller kontrollera enhetens inställningar."
+  ],
+  "Agree to the Terms of Service and Community Guidelines once the legal documents are available.": [
+    "Hyväksy käyttöehdot ja yhteisön säännöt, kun oikeudelliset asiakirjat ovat saatavilla.",
+    "Godkänn användarvillkoren och gemenskapsreglerna när de juridiska dokumenten är tillgängliga."
+  ],
+  "Your agreement could not be saved. Please try again.": [
+    "Hyväksyntääsi ei voitu tallentaa. Yritä uudelleen.",
+    "Ditt godkännande kunde inte sparas. Försök igen."
+  ],
+  "Choose at least three interests so you have a meaningful set of vibes to share.": [
+    "Valitse vähintään kolme kiinnostuksenkohdetta, joista voit valita tunnelmasi.",
+    "Välj minst tre intressen så att du har meningsfulla stämningar att dela."
+  ],
+  "Open your device settings and allow location access for Left.": [
+    "Avaa laitteen asetukset ja salli Leftin sijaintilupa.",
+    "Öppna enhetens inställningar och tillåt platsåtkomst för Left."
+  ],
+  "Agree to the Terms of Service and Community Guidelines to continue.": [
+    "Jatka hyväksymällä käyttöehdot ja yhteisön säännöt.",
+    "Godkänn användarvillkoren och gemenskapsreglerna för att fortsätta."
+  ],
+  "Finish your visibility details": [
+    "Viimeistele näkyvyystietosi",
+    "Fyll i dina synlighetsuppgifter"
+  ],
+  "Choose at least one vibe and add a short hint so people can identify you in the venue.": [
+    "Valitse vähintään yksi tunnelma ja lisää lyhyt tunnistusvihje, jotta muut tunnistavat sinut paikassa.",
+    "Välj minst en stämning och lägg till ett kort kännetecken så att andra kan känna igen dig på platsen."
+  ],
+  "Could not start visibility": [
+    "Näkyvyyttä ei voitu aloittaa",
+    "Kunde inte aktivera synlighet"
+  ],
+  "Left could not complete the location check. Please try again.": [
+    "Left ei voinut viimeistellä sijainnin tarkistusta. Yritä uudelleen.",
+    "Left kunde inte slutföra platskontrollen. Försök igen."
+  ],
+  "Location needed": [
+    "Sijainti tarvitaan",
+    "Platsåtkomst behövs"
+  ],
+  "Venue hidden": [
+    "Paikka piilotettu",
+    "Platsen är dold"
+  ],
+  "Unhide this venue in Settings before becoming visible here again.": [
+    "Poista paikan piilotus asetuksissa ennen kuin tulet taas näkyviin täällä.",
+    "Visa platsen igen i Inställningar innan du blir synlig här på nytt."
+  ],
+  "Venue found nearby": [
+    "Lähipaikka löytyi",
+    "Plats i närheten hittad"
+  ],
+  "Left does not have location permission yet, so it cannot confirm your venue.": [
+    "Leftillä ei vielä ole sijaintilupaa, joten paikkaasi ei voida vahvistaa.",
+    "Left har inte platsbehörighet ännu och kan därför inte bekräfta din plats."
+  ],
+  "Location not ready": [
+    "Sijainti ei ole valmis",
+    "Positionen är inte klar"
+  ],
+  "Left does not have a recent location fix yet. Wait a moment and try again.": [
+    "Leftillä ei vielä ole tuoretta sijaintitietoa. Odota hetki ja yritä uudelleen.",
+    "Left har ingen aktuell position ännu. Vänta en stund och försök igen."
+  ],
+  "Venue not ready": [
+    "Paikka ei ole valmis",
+    "Platsen är inte klar"
+  ],
+  "Left could not confirm a nearby venue from your current location yet.": [
+    "Left ei vielä voinut vahvistaa lähipaikkaa nykyisen sijaintisi perusteella.",
+    "Left kunde ännu inte bekräfta en plats i närheten utifrån din aktuella position."
+  ],
+  "Your session was not saved. Try again before becoming visible.": [
+    "Istuntoasi ei tallennettu. Yritä uudelleen ennen kuin tulet näkyviin.",
+    "Din session sparades inte. Försök igen innan du blir synlig."
+  ],
+  "You are visible": [
+    "Olet näkyvissä",
+    "Du är synlig"
+  ],
+  "Please try again.": [
+    "Yritä uudelleen.",
+    "Försök igen."
+  ],
+  "Sign in before hosting a gathering.": [
+    "Kirjaudu ennen tapaamisen järjestämistä.",
+    "Logga in innan du ordnar en träff."
+  ],
+  "We couldn’t submit this plan. Check your connection and try again.": [
+    "Suunnitelmaa ei voitu lähettää. Tarkista yhteys ja yritä uudelleen.",
+    "Vi kunde inte skicka in planen. Kontrollera anslutningen och försök igen."
+  ],
+  "Sent for review. You can track it under Your plans.": [
+    "Lähetetty tarkistettavaksi. Voit seurata tilannetta kohdasta Omat suunnitelmasi.",
+    "Skickad för granskning. Du kan följa den under Dina planer."
+  ],
+  "Could not start approach": [
+    "Lähestymistä ei voitu aloittaa",
+    "Kunde inte påbörja kontakten"
+  ],
+  "Could not confirm connection": [
+    "Kohtaamista ei voitu vahvistaa",
+    "Kunde inte bekräfta kontakten"
+  ],
+  "Could not cancel approach": [
+    "Lähestymistä ei voitu perua",
+    "Kunde inte avbryta kontakten"
+  ],
+  "Please try again so the cancellation is saved.": [
+    "Yritä uudelleen, jotta peruutus tallentuu.",
+    "Försök igen så att avbokningen sparas."
+  ],
+  "Could not hide person": [
+    "Henkilöä ei voitu piilottaa",
+    "Kunde inte dölja personen"
+  ],
+  "Person hidden": [
+    "Henkilö piilotettu",
+    "Personen är dold"
+  ],
+  "Could not block person": [
+    "Henkilöä ei voitu estää",
+    "Kunde inte blockera personen"
+  ],
+  "Person blocked": [
+    "Henkilö estetty",
+    "Personen är blockerad"
+  ],
+  "Could not submit report": [
+    "Ilmoitusta ei voitu lähettää",
+    "Kunde inte skicka rapporten"
+  ],
+  "Report submitted": [
+    "Ilmoitus lähetetty",
+    "Rapporten har skickats"
+  ],
+  "Profile saved": [
+    "Profiili tallennettu",
+    "Profilen är sparad"
+  ],
+  "Sign-out not completed": [
+    "Uloskirjautuminen on kesken",
+    "Utloggningen slutfördes inte"
+  ],
+  "We could not confirm that your visibility ended and sign-out completed. Stay online and try again.": [
+    "Näkyvyyden päättymistä ja uloskirjautumista ei voitu vahvistaa. Pysy verkossa ja yritä uudelleen.",
+    "Vi kunde inte bekräfta att din synlighet avslutades och att du loggades ut. Stanna online och försök igen."
+  ],
+  "We couldn't confirm the visibility change. Please try again.": [
+    "Näkyvyyden muutosta ei voitu vahvistaa. Yritä uudelleen.",
+    "Vi kunde inte bekräfta synlighetsändringen. Försök igen."
+  ],
+  "Could not update visibility": [
+    "Näkyvyyttä ei voitu päivittää",
+    "Kunde inte uppdatera synligheten"
+  ],
+  "The server did not confirm the change. Please try again.": [
+    "Palvelin ei vahvistanut muutosta. Yritä uudelleen.",
+    "Servern bekräftade inte ändringen. Försök igen."
+  ],
+  "This requests deletion of your account and direct identity details. You will be signed out when processing completes. Some safety and operational records may be retained under the Privacy Policy.": [
+    "Tämä pyytää tilisi ja tunnistetietojesi poistamista. Sinut kirjataan ulos, kun käsittely valmistuu. Joitakin turvallisuus- ja toimintatietoja voidaan säilyttää tietosuojakäytännön mukaisesti.",
+    "Detta begär radering av ditt konto och dina identitetsuppgifter. Du loggas ut när behandlingen är klar. Vissa säkerhets- och driftuppgifter kan sparas enligt integritetspolicyn."
+  ],
+  "Your request is already saved. Try removal again to finish processing it.": [
+    "Pyyntösi on jo tallennettu. Yritä poistamista uudelleen käsittelyn viimeistelemiseksi.",
+    "Din begäran är redan sparad. Försök radera igen för att slutföra behandlingen."
+  ],
+  "We could not complete the authorization or save your request. Please try again.": [
+    "Valtuutusta ei voitu viimeistellä tai pyyntöä tallentaa. Yritä uudelleen.",
+    "Vi kunde inte slutföra auktoriseringen eller spara din begäran. Försök igen."
+  ],
+  "Your request is saved, but removal did not finish. Please stay signed in and try again. Apple accounts may need fresh authorization.": [
+    "Pyyntösi on tallennettu, mutta poistaminen ei valmistunut. Pysy kirjautuneena ja yritä uudelleen. Apple-tilit voivat vaatia uuden valtuutuksen.",
+    "Din begäran är sparad, men raderingen slutfördes inte. Förbli inloggad och försök igen. Apple-konton kan behöva en ny auktorisering."
+  ],
+  "Direct identity fields were removed. Your retained records stay in place under the current policy.": [
+    "Suorat tunnistetiedot poistettiin. Säilytettävät tiedot jäävät voimaan nykyisen käytännön mukaisesti.",
+    "Direkta identitetsuppgifter har raderats. Kvarvarande uppgifter behålls enligt gällande policy."
+  ],
+  "This gathering is no longer available.": [
+    "Tämä tapaaminen ei ole enää saatavilla.",
+    "Den här träffen är inte längre tillgänglig."
+  ],
+  "No live activity yet": [
+    "Ei vielä reaaliaikaista aktiivisuutta",
+    "Ingen aktivitet i realtid ännu"
+  ],
+  "OAuth redirects are more reliable in a development build or standalone app with the native left:// scheme.": [
+    "OAuth-paluuohjaus toimii luotettavammin kehitysversiossa tai erillisessä sovelluksessa, joka käyttää left://-osoitetta.",
+    "OAuth-omdirigeringar fungerar säkrare i en utvecklingsversion eller fristående app som använder left://-schemat."
+  ],
+  "Google sign-in could not start.": [
+    "Google-kirjautumista ei voitu aloittaa.",
+    "Google-inloggningen kunde inte startas."
+  ],
+  "Google sign-in did not return an auth URL.": [
+    "Google-kirjautuminen ei palauttanut kirjautumisosoitetta.",
+    "Google-inloggningen gav ingen inloggningsadress."
+  ],
+  "Open the app in a new tab, then try Google sign-in again.": [
+    "Avaa sovellus uudessa välilehdessä ja yritä Google-kirjautumista uudelleen.",
+    "Öppna appen i en ny flik och försök logga in med Google igen."
+  ],
+  "Google sign-in did not complete. Please start again.": [
+    "Google-kirjautuminen ei valmistunut. Aloita uudelleen.",
+    "Google-inloggningen slutfördes inte. Börja om."
+  ],
+  "Apple sign-in did not return an identity token.": [
+    "Apple-kirjautuminen ei palauttanut tunnistetta.",
+    "Apple-inloggningen gav ingen identitetstoken."
+  ],
+  "Apple sign-in could not complete.": [
+    "Apple-kirjautuminen ei valmistunut.",
+    "Apple-inloggningen kunde inte slutföras."
+  ],
+  "Buy your own": [
+    "Osta omasi",
+    "Köp själv"
+  ],
+  "Per person": [
+    "Henkilöltä",
+    "Per person"
+  ],
+  "Split costs": [
+    "Jaetut kulut",
+    "Dela kostnaden"
+  ],
+  "Open to chat?": [
+    "Avoin juttelulle?",
+    "Öppen för samtal?"
+  ],
+  "Enter your first name.": [
+    "Kirjoita etunimesi.",
+    "Ange ditt förnamn."
+  ],
+  "Use 40 characters or fewer.": [
+    "Käytä enintään 40 merkkiä.",
+    "Använd högst 40 tecken."
+  ],
+  "Use letters, spaces, apostrophes, or hyphens only.": [
+    "Käytä vain kirjaimia, välilyöntejä, heittomerkkejä tai yhdysmerkkejä.",
+    "Använd bara bokstäver, mellanslag, apostrofer eller bindestreck."
+  ],
+  "You made a connection.": [
+    "Kohtasit uuden ihmisen.",
+    "Du fick kontakt."
+  ],
+  "Stay present and keep safety controls close if anything feels off.": [
+    "Pysy läsnä ja pidä turvallisuustoiminnot lähellä, jos jokin tuntuu väärältä.",
+    "Var närvarande och ha säkerhetsfunktionerna nära om något känns fel."
+  ],
+  "You’re engaging.": [
+    "Olet mukana.",
+    "Du är engagerad."
+  ],
+  "You’ve already made a small move. Keep going at your own pace.": [
+    "Olet jo ottanut pienen askeleen. Jatka omaan tahtiisi.",
+    "Du har redan tagit ett litet steg. Fortsätt i din egen takt."
+  ],
+  "You’re warming up.": [
+    "Olet pääsemässä vauhtiin.",
+    "Du börjar komma igång."
+  ],
+  "You’ve been checking people out. Open a profile when someone feels worth approaching.": [
+    "Olet katsellut muita. Avaa profiili, kun joku tuntuu kiinnostavalta.",
+    "Du har tittat på personer. Öppna en profil när någon känns intressant att gå fram till."
+  ],
+  "You’re mostly observing.": [
+    "Olet enimmäkseen tarkkaillut.",
+    "Du observerar mest."
+  ],
+  "Want to make a small move? Browse the room and approach when someone feels right.": [
+    "Haluatko ottaa pienen askeleen? Tutki paikkaa ja lähesty, kun joku tuntuu sopivalta.",
+    "Vill du ta ett litet steg? Se dig omkring och gå fram när det känns rätt."
+  ],
+  "No passwords to remember": [
+    "Ei muistettavia salasanoja",
+    "Inga lösenord att komma ihåg"
+  ],
+  "Instant one-tap access without credential fatigue.": [
+    "Helppo pääsy yhdellä napautuksella ilman salasanavaivaa.",
+    "Enkel åtkomst med ett tryck utan lösenordsbesvär."
+  ],
+  "Zero spam or auto-posts": [
+    "Ei roskapostia tai automaattisia julkaisuja",
+    "Ingen skräppost eller automatiska inlägg"
+  ],
+  "We never share or post without your consent.": [
+    "Emme koskaan jaa tai julkaise ilman suostumustasi.",
+    "Vi delar eller publicerar aldrig utan ditt samtycke."
+  ],
+  "Real human connections": [
+    "Aitoja kohtaamisia",
+    "Äkta mänskliga möten"
+  ],
+  "One account for genuine, place-based connection.": [
+    "Yksi tili aitoihin kohtaamisiin oikeissa paikoissa.",
+    "Ett konto för äkta möten på verkliga platser."
+  ],
+  "Couldn’t open sharing. Try again.": [
+    "Jakamista ei voitu avata. Yritä uudelleen.",
+    "Kunde inte öppna delning. Försök igen."
+  ],
+  "Hide venue": [
+    "Piilota paikka",
+    "Dölj plats"
+  ],
+  "Active now": [
+    "Aktiivinen nyt",
+    "Aktivt nu"
+  ],
+  "Sign in": [
+    "Kirjaudu sisään",
+    "Logga in"
+  ],
+  "{venue} was detected nearby, but it is not in Left's venue database yet. Add it once before you can go visible there.": [
+    "{venue} löytyi läheltä, mutta sitä ei vielä ole Leftin paikkahakemistossa. Lisää se ensin, jotta voit tulla näkyviin siellä.",
+    "{venue} hittades i närheten men finns ännu inte i Lefts platskatalog. Lägg till platsen innan du blir synlig där."
+  ],
+  "{venue} is already pinned nearby, so Left reused it instead of creating a duplicate.": [
+    "{venue} on jo merkitty lähelle, joten Left käytti olemassa olevaa paikkaa.",
+    "{venue} finns redan markerad i närheten, så Left använde den befintliga platsen."
+  ],
+  "{venue} is now available to people nearby.": [
+    "{venue} on nyt lähellä olevien saatavilla.",
+    "{venue} är nu tillgänglig för personer i närheten."
+  ],
+  "{venue} was already in the community venue list, so Left reused it instead of creating a duplicate.": [
+    "{venue} oli jo yhteisön paikkalistalla, joten Left käytti olemassa olevaa paikkaa.",
+    "{venue} fanns redan i gemenskapens platslista, så Left använde den befintliga platsen."
+  ],
+  "{venue} was detected nearby, but it is not a confirmed Left venue yet. Add it first, then you can go visible there.": [
+    "{venue} löytyi läheltä, mutta sitä ei vielä ole vahvistettu Leftissä. Lisää se ensin, niin voit tulla näkyviin siellä.",
+    "{venue} hittades i närheten men är ännu inte en bekräftad Left-plats. Lägg till den först så kan du bli synlig där."
+  ],
+  "{venue} is hidden. You will not be visible there until you unhide it.": [
+    "{venue} on piilotettu. Et näy siellä ennen kuin poistat piilotuksen.",
+    "{venue} är dold. Du syns inte där förrän du visar platsen igen."
+  ],
+  "{venue} is hidden on this device, but server sync did not complete.": [
+    "{venue} on piilotettu tällä laitteella, mutta synkronointi palvelimelle ei valmistunut.",
+    "{venue} är dold på den här enheten, men synkroniseringen med servern slutfördes inte."
+  ],
+  "We could not hide {venue}. Please try again.": [
+    "Paikkaa {venue} ei voitu piilottaa. Yritä uudelleen.",
+    "Vi kunde inte dölja {venue}. Försök igen."
+  ],
+  "Notifications are off at {venue}.": [
+    "Paikan {venue} ilmoitukset on poistettu käytöstä.",
+    "Aviseringar är avstängda för {venue}."
+  ],
+  "We could not mute {venue}. Please try again.": [
+    "Paikan {venue} ilmoituksia ei voitu mykistää. Yritä uudelleen.",
+    "Vi kunde inte tysta {venue}. Försök igen."
+  ],
+  "{venue} is unhidden. You can become visible there again.": [
+    "Paikan {venue} piilotus on poistettu. Voit tulla taas näkyviin siellä.",
+    "{venue} visas igen. Du kan bli synlig där på nytt."
+  ],
+  "{venue} is unhidden on this device, but server sync did not complete.": [
+    "Paikan {venue} piilotus on poistettu tällä laitteella, mutta synkronointi palvelimelle ei valmistunut.",
+    "{venue} visas igen på den här enheten, men synkroniseringen med servern slutfördes inte."
+  ],
+  "We could not unhide {venue}. Please try again.": [
+    "Paikan {venue} piilotusta ei voitu poistaa. Yritä uudelleen.",
+    "Vi kunde inte visa {venue} igen. Försök igen."
+  ],
+  "Notifications are back on for {venue}.": [
+    "Paikan {venue} ilmoitukset ovat taas käytössä.",
+    "Aviseringar är påslagna igen för {venue}."
+  ],
+  "We could not update notifications for {venue}. Please try again.": [
+    "Paikan {venue} ilmoituksia ei voitu päivittää. Yritä uudelleen.",
+    "Vi kunde inte uppdatera aviseringarna för {venue}. Försök igen."
+  ],
+  "Free": [
+    "Maksuton",
+    "Gratis"
+  ],
+  "Buy your own food or drink": [
+    "Osta omat ruoat tai juomat",
+    "Köp egen mat eller dryck"
+  ],
+  "{amount} per person": [
+    "{amount} henkilöltä",
+    "{amount} per person"
+  ],
+  "Split costs — about {amount} per person": [
+    "Jaetut kulut — noin {amount} henkilöltä",
+    "Dela kostnaden — cirka {amount} per person"
+  ],
+  "Potluck — {dish}": [
+    "Nyyttikestit — {dish}",
+    "Knytkalas — {dish}"
+  ],
+  "Start a {duration} presence": [
+    "Näy ajan {duration}",
+    "Var synlig i {duration}"
+  ],
+  "1 hour": [
+    "1 tunti",
+    "1 timme"
+  ],
+  "2 hours": [
+    "2 tuntia",
+    "2 timmar"
+  ],
+  "{count} min": [
+    "{count} min",
+    "{count} min"
+  ],
+  "{rating} rating": [
+    "Arvosana {rating}",
+    "Betyg {rating}"
+  ],
+  "Based on {count} Google ratings": [
+    "Perustuu {count} Google-arvioon",
+    "Baserat på {count} Google-betyg"
+  ],
+  "Loading Left": [
+    "Ladataan Leftiä",
+    "Laddar Left"
+  ],
+  "Left couldn’t load its interface.": [
+    "Leftin käyttöliittymää ei voitu ladata.",
+    "Left kunde inte ladda gränssnittet."
+  ],
+  "Opening Left…": [
+    "Avataan Leftiä…",
+    "Öppnar Left…"
+  ],
+  "Tomorrow": [
+    "Huomenna",
+    "I morgon"
+  ],
+  "In three days": [
+    "Kolmen päivän päästä",
+    "Om tre dagar"
+  ],
+  "Potluck": [
+    "Nyyttikestit",
+    "Knytkalas"
+  ],
+  "Other": [
+    "Muu",
+    "Annat"
+  ],
+  "Bring a dish": [
+    "Tuo ruokalaji",
+    "Ta med en maträtt"
+  ],
+  "Bring snacks": [
+    "Tuo välipalaa",
+    "Ta med snacks"
+  ],
+  "Bring drinks": [
+    "Tuo juomia",
+    "Ta med dryck"
+  ],
+  "Bring dessert": [
+    "Tuo jälkiruokaa",
+    "Ta med efterrätt"
+  ],
+  "bring something to share": [
+    "tuo jotain jaettavaa",
+    "ta med något att dela"
+  ],
+  "Enter an amount between €0 and €1,000, with up to two decimal places.": [
+    "Kirjoita summa 0–1 000 euroa, enintään kahdella desimaalilla.",
+    "Ange ett belopp mellan 0 och 1 000 euro med högst två decimaler."
+  ],
+  "Choose a verified nearby venue first.": [
+    "Valitse ensin vahvistettu lähipaikka.",
+    "Välj först en bekräftad plats i närheten."
+  ],
+  "Add a short title.": [
+    "Lisää lyhyt otsikko.",
+    "Lägg till en kort rubrik."
+  ],
+  "Add a little more detail so people know what they’re joining.": [
+    "Lisää hieman tietoa, jotta muut tietävät, mihin ovat osallistumassa.",
+    "Lägg till lite mer information så att andra vet vad de deltar i."
+  ],
+  "Choose {count} more interest to finish this section.": [
+    "Valitse vielä {count} kiinnostuksenkohde viimeistelläksesi tämän osion.",
+    "Välj {count} intresse till för att slutföra det här avsnittet."
+  ],
+  "Choose {count} more interests to finish this section.": [
+    "Valitse vielä {count} kiinnostuksenkohdetta viimeistelläksesi tämän osion.",
+    "Välj {count} intressen till för att slutföra det här avsnittet."
+  ],
+  "Choose {count} more interest to continue.": [
+    "Jatka valitsemalla vielä {count} kiinnostuksenkohde.",
+    "Välj {count} intresse till för att fortsätta."
+  ],
+  "Choose {count} more interests to continue.": [
+    "Jatka valitsemalla vielä {count} kiinnostuksenkohdetta.",
+    "Välj {count} intressen till för att fortsätta."
+  ],
+  "Couldn’t load your plans.": [
+    "Suunnitelmiasi ei voitu ladata.",
+    "Kunde inte ladda dina planer."
+  ],
+  "Open a gathering link to view its event": [
+    "Avaa tapaamislinkki nähdäksesi tapahtuman",
+    "Öppna en träfflänk för att visa evenemanget"
+  ],
+  "This gathering could not be loaded. Please try again.": [
+    "Tapaamista ei voitu ladata. Yritä uudelleen.",
+    "Träffen kunde inte laddas. Försök igen."
+  ],
+  "Host": [
+    "Järjestäjä",
+    "Arrangör"
+  ],
+  "Nearby match": [
+    "Lähipaikkaehdotus",
+    "Matchning i närheten"
+  ],
+  "Needs confirmation": [
+    "Vahvistus tarvitaan",
+    "Behöver bekräftas"
+  ],
+  "Left has a confirmed venue match for this place.": [
+    "Left on vahvistanut tämän paikan.",
+    "Left har bekräftat den här platsen."
+  ],
+  "Left found a likely nearby venue, but it has not been fully confirmed yet.": [
+    "Left löysi todennäköisen lähipaikan, mutta sitä ei ole vielä vahvistettu kokonaan.",
+    "Left hittade en trolig plats i närheten, men den har inte bekräftats helt ännu."
+  ],
+  "Left still needs a confirmed venue before visibility can start here.": [
+    "Left tarvitsee vahvistetun paikan ennen kuin näkyvyys voidaan aloittaa täällä.",
+    "Left behöver en bekräftad plats innan synlighet kan aktiveras här."
+  ],
+  "Location access was denied. Allow location in device settings, then try again.": [
+    "Sijaintilupa evättiin. Salli sijainti laitteen asetuksissa ja yritä uudelleen.",
+    "Platsåtkomst nekades. Tillåt platsåtkomst i enhetens inställningar och försök igen."
+  ],
+  "Background location is still off. Enable “Always” access in device settings, then retry.": [
+    "Taustasijainti on edelleen pois käytöstä. Salli ”Aina” laitteen asetuksissa ja yritä uudelleen.",
+    "Bakgrundsplats är fortfarande avstängd. Tillåt ”Alltid” i enhetens inställningar och försök igen."
+  ],
+  "Venue detection could not start on this device yet. Check device settings and try again.": [
+    "Paikan tunnistusta ei voitu aloittaa tällä laitteella. Tarkista laitteen asetukset ja yritä uudelleen.",
+    "Platsidentifieringen kunde inte startas på den här enheten. Kontrollera inställningarna och försök igen."
+  ],
+  "Foreground location is available while this preview is open.": [
+    "Sijainti on käytettävissä etualalla tämän esikatselun ollessa auki.",
+    "Platsåtkomst är tillgänglig i förgrunden medan förhandsvisningen är öppen."
+  ],
+  "Background location is active. Venue matching runs on-device and only venue IDs are used for app state.": [
+    "Taustasijainti on käytössä. Paikkojen tunnistus tapahtuu laitteella ja sovelluksen tilassa käytetään vain paikkojen tunnisteita.",
+    "Bakgrundsplats är aktiv. Platsmatchning sker på enheten och appens tillstånd använder bara plats-ID:n."
+  ],
+  "Background location is not enabled yet.": [
+    "Taustasijaintia ei ole vielä otettu käyttöön.",
+    "Bakgrundsplats är inte aktiverad ännu."
+  ],
+  "Activity will appear when verified signals are available.": [
+    "Aktiivisuus tulee näkyviin, kun vahvistettuja signaaleja on saatavilla.",
+    "Aktivitet visas när bekräftade signaler finns tillgängliga."
+  ],
+  "Popular times temporarily unavailable": [
+    "Suositut ajat ovat tilapäisesti poissa käytöstä",
+    "Populära tider är tillfälligt otillgängliga"
+  ],
+  "We couldn’t load popular times. Please check again later.": [
+    "Suosittuja aikoja ei voitu ladata. Tarkista myöhemmin uudelleen.",
+    "Vi kunde inte ladda populära tider. Försök igen senare."
+  ],
+  "Fetching venue activity…": [
+    "Haetaan paikan aktiivisuustietoja…",
+    "Hämtar platsaktivitet…"
+  ],
+  "Choose a day to see typical activity below.": [
+    "Valitse päivä nähdäksesi tyypillisen aktiivisuuden alla.",
+    "Välj en dag för att se typisk aktivitet nedan."
+  ],
+  "Popular-times data is not available for this venue yet.": [
+    "Tämän paikan suosituista ajoista ei ole vielä tietoja.",
+    "Det finns inga uppgifter om populära tider för den här platsen ännu."
+  ],
+  "Based on typical activity": [
+    "Perustuu tyypilliseen aktiivisuuteen",
+    "Baserat på typisk aktivitet"
+  ],
+  "Live activity is unavailable": [
+    "Reaaliaikainen aktiivisuus ei ole saatavilla",
+    "Aktivitet i realtid är inte tillgänglig"
+  ],
+  "Popular times available": [
+    "Suositut ajat saatavilla",
+    "Populära tider tillgängliga"
+  ],
+  "Popular times unavailable": [
+    "Suosittuja aikoja ei saatavilla",
+    "Populära tider saknas"
+  ],
+  "Loading popular times…": [
+    "Ladataan suosittuja aikoja…",
+    "Laddar populära tider…"
+  ],
+  "View people": [
+    "Näytä ihmiset",
+    "Visa personer"
+  ],
+  "Sign in to take part": [
+    "Kirjaudu osallistuaksesi",
+    "Logga in för att delta"
+  ],
+  "See people here": [
+    "Näytä ihmiset täällä",
+    "Se personer här"
+  ],
+  "Go visible here": [
+    "Tule näkyviin täällä",
+    "Bli synlig här"
+  ],
+  "Use this venue": [
+    "Valitse tämä paikka",
+    "Använd den här platsen"
+  ],
+  "Address": [
+    "Osoite",
+    "Adress"
+  ],
+  "Open now": [
+    "Avoinna nyt",
+    "Öppet nu"
+  ],
+  "Closed now": [
+    "Suljettu nyt",
+    "Stängt nu"
+  ],
+  "Opening hours": [
+    "Aukioloajat",
+    "Öppettider"
+  ],
+  "Hours are available from the venue.": [
+    "Aukioloajat saa paikasta.",
+    "Öppettider finns hos platsen."
+  ],
+  "Google rating": [
+    "Google-arvosana",
+    "Google-betyg"
+  ],
+  "wheelchair-accessible entrance": [
+    "pyörätuolille soveltuva sisäänkäynti",
+    "rullstolstillgänglig entré"
+  ],
+  "wheelchair-accessible parking": [
+    "esteetön pysäköinti",
+    "rullstolstillgänglig parkering"
+  ],
+  "wheelchair-accessible restroom": [
+    "esteetön wc",
+    "rullstolstillgänglig toalett"
+  ],
+  "wheelchair-accessible seating": [
+    "pyörätuolille soveltuvat istumapaikat",
+    "rullstolstillgängliga sittplatser"
+  ],
+  "Coworking": [
+    "Yhteistyötila",
+    "Kontorsgemenskap"
+  ],
+  "Campus": [
+    "Kampus",
+    "Campus"
+  ],
+  "Cafe": [
+    "Kahvila",
+    "Kafé"
+  ],
+  "Restaurant": [
+    "Ravintola",
+    "Restaurang"
+  ],
+  "All": [
+    "Kaikki",
+    "Alla"
+  ],
+  "Places": [
+    "Paikat",
+    "Platser"
+  ],
+  "People": [
+    "Ihmiset",
+    "Personer"
+  ],
+  "A lot happening right now": [
+    "Paljon tapahtuu juuri nyt",
+    "Mycket händer just nu"
+  ],
+  "People are moving around": [
+    "Ihmisiä on liikkeellä",
+    "Personer är i rörelse"
+  ],
+  "Heads-down but social": [
+    "Keskittynyt mutta sosiaalinen",
+    "Fokuserat men socialt"
+  ],
+  "Easy to join": [
+    "Helppo tulla mukaan",
+    "Lätt att delta"
+  ],
+  "Low activity": [
+    "Vähän toimintaa",
+    "Låg aktivitet"
+  ],
+  "Quiet room": [
+    "Rauhallinen paikka",
+    "Lugn plats"
+  ],
+  "Live social signal": [
+    "Reaaliaikainen sosiaalinen signaali",
+    "Social signal i realtid"
+  ],
+  "You are here": [
+    "Olet tässä",
+    "Du är här"
+  ],
+  "Tap to view place": [
+    "Avaa paikka napauttamalla",
+    "Tryck för att visa platsen"
+  ],
+  "Open": [
+    "Avoin",
+    "Öppen"
+  ],
+  "Typically quiet": [
+    "Yleensä rauhallinen",
+    "Vanligtvis lugnt"
+  ],
+  "Typically light": [
+    "Yleensä hieman toimintaa",
+    "Vanligtvis lite aktivitet"
+  ],
+  "Typically active": [
+    "Yleensä aktiivinen",
+    "Vanligtvis aktivt"
+  ],
+  "Typically busy": [
+    "Yleensä vilkas",
+    "Vanligtvis livligt"
+  ],
+  "Typically packed": [
+    "Yleensä täynnä",
+    "Vanligtvis fullsatt"
+  ],
+  "Quiet now": [
+    "Rauhallinen nyt",
+    "Lugnt nu"
+  ],
+  "Light now": [
+    "Hieman toimintaa nyt",
+    "Lite aktivitet nu"
+  ],
+  "Busy now": [
+    "Vilkas nyt",
+    "Livligt nu"
+  ],
+  "Packed now": [
+    "Täynnä nyt",
+    "Fullsatt nu"
+  ],
+  "Venue hidden on this device": [
+    "Paikka piilotettu tällä laitteella",
+    "Platsen är dold på den här enheten"
+  ],
+  "Notifications muted": [
+    "Ilmoitukset mykistetty",
+    "Aviseringarna är tystade"
+  ],
+  "Notifications muted on this device": [
+    "Ilmoitukset mykistetty tällä laitteella",
+    "Aviseringarna är tystade på den här enheten"
+  ],
+  "Venue unhidden": [
+    "Paikan piilotus poistettu",
+    "Platsen visas igen"
+  ],
+  "Venue unhidden on this device": [
+    "Paikan piilotus poistettu tällä laitteella",
+    "Platsen visas igen på den här enheten"
+  ],
+  "Notifications on": [
+    "Ilmoitukset käytössä",
+    "Aviseringar på"
+  ],
+  "Notifications on locally": [
+    "Ilmoitukset käytössä tällä laitteella",
+    "Aviseringar på den här enheten"
+  ],
+  "Notifications are off on this device, but server sync did not complete.": [
+    "Ilmoitukset on poistettu käytöstä tällä laitteella, mutta synkronointi palvelimelle ei valmistunut.",
+    "Aviseringar är avstängda på den här enheten, men synkroniseringen med servern slutfördes inte."
+  ],
+  "Notifications are back on locally, but server sync did not complete.": [
+    "Ilmoitukset ovat taas käytössä tällä laitteella, mutta synkronointi palvelimelle ei valmistunut.",
+    "Aviseringar är påslagna igen på den här enheten, men synkroniseringen med servern slutfördes inte."
+  ],
+  "Complete your profile, {percent}% complete": [
+    "Täydennä profiilisi, {percent} % valmis",
+    "Fyll i din profil, {percent} % klar"
+  ],
+  "Open {count} saved places": [
+    "Avaa {count} tallennettua paikkaa",
+    "Öppna {count} sparade platser"
+  ],
+  "You've been at {venue} a while. Open to chat?": [
+    "Olet ollut paikassa {venue} jo hetken. Oletko avoin juttelulle?",
+    "Du har varit på {venue} en stund. Öppen för samtal?"
+  ],
+  "While visible, people here can see your first name, avatar, venue, intent, vibes, recognition hint and time remaining. Your profile also shares your interests and any offering or conversation style you add. Your precise location stays private.": [
+    "Kun olet näkyvissä, muut täällä näkevät etunimesi, profiilisymbolisi, paikkasi, tarkoituksesi, tunnelmasi, tunnistusvihjeesi ja jäljellä olevan ajan. Profiilisi näyttää myös kiinnostuksesi ja lisäämäsi keskustelutyylin tai sen, mitä tuot keskusteluun. Tarkka sijaintisi pysyy yksityisenä.",
+    "När du är synlig kan andra här se ditt förnamn, din profilfigur, plats, avsikt, stämningar, kännetecken och återstående tid. Din profil visar även dina intressen och det du lägger till om samtalsstil eller vad du bidrar med. Din exakta position förblir privat."
+  ],
+  "Removed from saved places": [
+    "Poistettu tallennetuista paikoista",
+    "Borttagen från sparade platser"
+  ],
+  "Place saved": [
+    "Paikka tallennettu",
+    "Platsen är sparad"
+  ],
+  "You’re going": [
+    "Olet osallistumassa",
+    "Du deltar"
+  ],
+  "Plans updated": [
+    "Suunnitelmat päivitetty",
+    "Planerna är uppdaterade"
+  ],
+  "Great — noted that you went over and used the icebreaker.": [
+    "Hienoa — tallensimme, että menit juttelemaan ja käytit aloituskysymystä.",
+    "Bra — vi noterade att du gick fram och använde samtalsöppnaren."
+  ],
+  "Got it — noted that you went over without using the icebreaker.": [
+    "Selvä — tallensimme, että menit juttelemaan ilman aloituskysymystä.",
+    "Okej — vi noterade att du gick fram utan att använda samtalsöppnaren."
+  ],
+  "Got it — noted that you didn’t end up going over.": [
+    "Selvä — tallensimme, ettet lopulta mennyt juttelemaan.",
+    "Okej — vi noterade att du inte gick fram till slut."
+  ],
+  "Venue added": [
+    "Paikka lisätty",
+    "Platsen har lagts till"
+  ],
+  "Allow 'Always' location access so Left can confirm your venue before you go visible.": [
+    "Salli sijainti ”Aina”, jotta Left voi vahvistaa paikkasi ennen kuin tulet näkyviin.",
+    "Tillåt platsåtkomst ”Alltid” så att Left kan bekräfta din plats innan du blir synlig."
+  ],
+  "Left needs location access to confirm your venue before you go visible.": [
+    "Left tarvitsee sijaintiluvan vahvistaakseen paikkasi ennen kuin tulet näkyviin.",
+    "Left behöver platsåtkomst för att bekräfta din plats innan du blir synlig."
+  ],
+  "Hide this person?": [
+    "Piilotetaanko tämä henkilö?",
+    "Dölja den här personen?"
+  ],
+  "Block this person?": [
+    "Estetäänkö tämä henkilö?",
+    "Blockera den här personen?"
+  ],
+  "Left helps you signal presence at real venues, discover nearby social energy, and control how you are seen.": [
+    "Left auttaa sinua olemaan läsnä oikeissa paikoissa, löytämään lähistön sosiaalisen tunnelman ja hallitsemaan näkyvyyttäsi.",
+    "Left hjälper dig att visa närvaro på verkliga platser, upptäcka social energi i närheten och styra hur du syns."
+  ],
+  "Geometric": [
+    "Geometrinen",
+    "Geometrisk"
+  ],
+  "Abstract": [
+    "Abstrakti",
+    "Abstrakt"
+  ],
+  "Minimal": [
+    "Yksinkertainen",
+    "Minimalistisk"
+  ],
+  "Soft": [
+    "Pehmeä",
+    "Mjuk"
+  ],
+  "Your venue is confirmed.\nSee who's around while you stay visible.": [
+    "Paikkasi on vahvistettu.\nNäe, keitä lähistöllä on, kun olet näkyvissä.",
+    "Din plats är bekräftad.\nSe vilka som är i närheten medan du är synlig."
+  ],
+  "Left found a likely nearby venue.\nIt has not been fully confirmed yet.": [
+    "Left löysi todennäköisen lähipaikan.\nSitä ei vielä ole vahvistettu kokonaan.",
+    "Left hittade en trolig plats i närheten.\nDen har inte bekräftats helt ännu."
+  ],
+  "Illustrative interior photo": [
+    "Havainnekuva sisätilasta",
+    "Illustrativ interiörbild"
+  ],
+  "Illustrative café photo": [
+    "Havainnekuva kahvilasta",
+    "Illustrativ kafébild"
+  ],
+  "Illustrative bar photo": [
+    "Havainnekuva baarista",
+    "Illustrativ barbild"
+  ],
+  "Illustrative restaurant photo": [
+    "Havainnekuva ravintolasta",
+    "Illustrativ restaurangbild"
+  ],
+  "Illustrative library photo": [
+    "Havainnekuva kirjastosta",
+    "Illustrativ biblioteksbild"
+  ],
+  "Illustrative workspace photo": [
+    "Havainnekuva työtilasta",
+    "Illustrativ bild av en arbetsplats"
+  ],
+  "Illustrative park photo": [
+    "Havainnekuva puistosta",
+    "Illustrativ parkbild"
+  ],
+  "Illustrative gym photo": [
+    "Havainnekuva kuntosalista",
+    "Illustrativ gymbild"
+  ],
+  "Illustrative airport photo": [
+    "Havainnekuva lentokentästä",
+    "Illustrativ flygplatsbild"
+  ],
+  "Photo by {author}": [
+    "Kuva: {author}",
+    "Foto av {author}"
+  ],
+  "View {venue}": [
+    "Näytä {venue}",
+    "Visa {venue}"
+  ],
+  "Deletion needs another try": [
+    "Tilin poistamista on yritettävä uudelleen",
+    "Kontot behöver raderas igen"
+  ],
+  "Your request is saved, but deletion has not been confirmed. Stay signed in and retry. Apple may ask you to authorize again.": [
+    "Pyyntösi on tallennettu, mutta poistoa ei ole vahvistettu. Pysy kirjautuneena ja yritä uudelleen. Apple saattaa pyytää uutta valtuutusta.",
+    "Din begäran har sparats, men raderingen har inte bekräftats. Förbli inloggad och försök igen. Apple kan be dig att godkänna igen."
+  ],
+  "Retry account deletion": [
+    "Yritä tilin poistamista uudelleen",
+    "Försök radera kontot igen"
+  ],
+  "Deleting account...": [
+    "Poistetaan tiliä...",
+    "Raderar kontot..."
+  ],
+  "We could not confirm deletion. Please try again.": [
+    "Emme voineet vahvistaa poistoa. Yritä uudelleen.",
+    "Vi kunde inte bekräfta raderingen. Försök igen."
+  ],
+  "Account deletion pending": [
+    "Tilin poisto odottaa",
+    "Kontoradering väntar"
+  ],
+  "Your request is already saved. Retry account deletion to finish processing it.": [
+    "Pyyntösi on jo tallennettu. Viimeistele käsittely yrittämällä tilin poistamista uudelleen.",
+    "Din begäran har redan sparats. Försök radera kontot igen för att slutföra behandlingen."
+  ],
+  "Account deletion failed": [
+    "Tilin poistaminen epäonnistui",
+    "Kontoraderingen misslyckades"
+  ],
+  "Account removed": [
+    "Tili poistettu",
+    "Kontot har tagits bort"
+  ],
+  "Go visible at {venue}?": [
+    "Näytkö paikassa {venue}?",
+    "Bli synlig på {venue}?"
+  ],
+  "Venue: {venue}\nIntent: {intent}\nVibes: {vibes}\nDuration: {duration} min\nHint: {hint}": [
+    "Paikka: {venue}\nTarkoitus: {intent}\nTunnelmat: {vibes}\nKesto: {duration} min\nVihje: {hint}",
+    "Plats: {venue}\nAvsikt: {intent}\nStämningar: {vibes}\nLängd: {duration} min\nLedtråd: {hint}"
+  ],
+  "Change venue": [
+    "Vaihda paikkaa",
+    "Byt plats"
+  ]
+}

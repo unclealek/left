@@ -15,30 +15,6 @@ export const formStyles = {
     minHeight: 110,
     textAlignVertical: "top",
   },
-  toggleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: T.border,
-    borderRadius: T.radius,
-    padding: 16,
-    gap: 16,
-    backgroundColor: T.surfaceCard,
-  },
-  toggleTextWrap: {
-    gap: 2,
-    flex: 1,
-  },
-  toggleLabel: {
-    color: T.textPrimary,
-    fontSize: 15,
-    fontWeight: "500",
-  },
-  toggleSub: {
-    color: T.textSecondary,
-    fontSize: 13,
-  },
   fieldBlock: {
     gap: 12,
   },

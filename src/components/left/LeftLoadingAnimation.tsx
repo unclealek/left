@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, Animated, Easing, View } from "react-native";
+import { useReducedMotion } from "./use-navigation-accessibility";
+import { useEffect, useRef } from "react";
+import { Animated, Easing, View } from "react-native";
 import { LeftLogoMark } from "./LeftLogoMark";
 import { styles } from "../../app/leftTheme";
 
@@ -14,15 +15,9 @@ export function LeftLoadingAnimation({
   size = "large",
   accessible = true,
 }: LeftLoadingAnimationProps) {
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const reduceMotion = useReducedMotion();
   const wave = useRef(new Animated.Value(0)).current;
   const pulse = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    void AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
-    const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduceMotion);
-    return () => subscription.remove();
-  }, []);
 
   useEffect(() => {
     wave.stopAnimation();

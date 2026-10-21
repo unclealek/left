@@ -1,3 +1,5 @@
+import { t } from "../../features/preferences/translation-runtime";
+import { useDistanceFormatter } from "../../features/preferences/use-distance";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
@@ -153,6 +155,7 @@ function resolveDisplayVenueName(
 }
 
 export function VenueScreen({
+  guest = false,
   venue,
   feed,
   socialMomentum,
@@ -173,6 +176,7 @@ export function VenueScreen({
   venueActivityById,
   lastKnownCoords,
 }: {
+  guest?: boolean;
   venue: VenueContextSummary;
   feed: NearbyFeedItem[];
   socialMomentum: {
@@ -309,11 +313,12 @@ export function VenueScreen({
   const selectedPreviewTitle = selectedMapPerson
     ? selectedMapPerson.firstName
     : selectedMapVenue?.name ?? "You are here";
+  const formatDistanceLabel = useDistanceFormatter();
   const selectedPreviewMeta = selectedMapPerson
     ? `${formatIntent(selectedMapPerson.intent)} · ${selectedMapPerson.primaryVibe ?? "Open"}`
     : selectedMapVenue
       ? selectedMapVenue.distanceMeters != null
-        ? `${Math.max(1, Math.round(selectedMapVenue.distanceMeters))} m away · Tap to view`
+        ? `${formatDistanceLabel(selectedMapVenue.distanceMeters)} · Tap to view`
         : "Tap to view place"
       : currentVenueSummary;
   const previewCandidate = selectedMapVenue ?? activeVenueCandidate;
@@ -330,17 +335,17 @@ export function VenueScreen({
     return (
       <View style={[screenStyles.page, { paddingTop: Math.max(insets.top - 52, 10) }]}>
         <View style={screenStyles.titleBlock}>
-          <Text style={screenStyles.heroTitle}>Venue radar</Text>
-          <Text style={screenStyles.heroSubtitle}>Go visible to unlock venue details, room energy, and the social vibes around you.</Text>
+          <Text style={screenStyles.heroTitle}>{guest ? t("Map") : t("Venue radar")}</Text>
+          <Text style={screenStyles.heroSubtitle}>{guest ? t("Sign in for location-based discovery. Guest mode does not access your location.") : t("Go visible to unlock venue details, room energy, and the social vibes around you.")}</Text>
         </View>
         <View style={screenStyles.momentumCard}>
           <View style={screenStyles.insightIconBubble}>
             <LeftIcon name="eye-off" size={22} color={T.visibilityOff} />
           </View>
-          <Text style={screenStyles.momentumTitle}>Your venue is private</Text>
-          <Text style={screenStyles.momentumBody}>When you are visible, you can see the venue’s live energy and vibes without exposing anyone’s headcount.</Text>
+          <Text style={screenStyles.momentumTitle}>{guest ? t("Discover your surroundings") : t("Your venue is private")}</Text>
+          <Text style={screenStyles.momentumBody}>{guest ? t("Explore real places and anonymous social signals after signing in and confirming your venue.") : t("When you are visible, you can see the venue’s live energy and vibes without exposing anyone’s headcount.")}</Text>
           <Pressable onPress={onActivate} style={({ pressed }) => [screenStyles.momentumButton, pressed && screenStyles.pressed]}>
-            <Text style={screenStyles.momentumButtonLabel}>Choose vibes and go visible</Text>
+            <Text style={screenStyles.momentumButtonLabel}>{guest ? t("Sign in to explore") : t("Choose vibes and go visible")}</Text>
           </Pressable>
         </View>
       </View>
@@ -353,9 +358,7 @@ export function VenueScreen({
         <View style={screenStyles.headerRow}>
           <View style={screenStyles.headerCopy}>
             <View style={screenStyles.heroTitleRow}>
-              <Text style={screenStyles.heroTitle} maxFontSizeMultiplier={1.2}>
-                Venue radar
-              </Text>
+              <Text style={screenStyles.heroTitle} maxFontSizeMultiplier={1.2}>{t("Venue radar")}{" "}</Text>
               <Animated.View style={[screenStyles.heroSignalWrap, pulseIconStyle]}>
                 <LeftIcon name="radio" size={18} color={T.primary} active />
               </Animated.View>
@@ -368,7 +371,7 @@ export function VenueScreen({
           >
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={isPubliclyVisible ? "Open nearby feed" : "Go visible"}
+              accessibilityLabel={isPubliclyVisible ? t("Open nearby feed") : t("Go visible")}
               onPress={primaryAction}
               style={({ pressed }) => [
                 screenStyles.compactStatusPill,
@@ -382,12 +385,12 @@ export function VenueScreen({
                 color={isPubliclyVisible ? T.visibilityOn : T.visibilityOff}
                 active={isPubliclyVisible}
               />
-              <Text style={screenStyles.compactStatusLabel}>{statusLabel}</Text>
+              <Text style={screenStyles.compactStatusLabel}>{t(statusLabel)}</Text>
             </Pressable>
             <View style={screenStyles.statusActionDivider} />
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Privacy and safety"
+              accessibilityLabel={t("Privacy and safety")}
               onPress={onOpenSafety}
               hitSlop={8}
               style={({ pressed }) => [
@@ -400,13 +403,11 @@ export function VenueScreen({
           </GlassSurface>
         </View>
         <Text style={screenStyles.heroSubtitle} maxFontSizeMultiplier={1.3}>
-          {radarSubtitle}
+          {t(radarSubtitle)}
         </Text>
         <View style={screenStyles.insightRow}>
           <View style={screenStyles.insightCard}>
-            <Text style={screenStyles.insightLabel} maxFontSizeMultiplier={1.1}>
-              Energy
-            </Text>
+            <Text style={screenStyles.insightLabel} maxFontSizeMultiplier={1.1}>{t("Energy")}{" "}</Text>
             <View style={screenStyles.insightValueRow}>
               <View
                 style={[
@@ -421,17 +422,15 @@ export function VenueScreen({
                 maxFontSizeMultiplier={1.2}
                 numberOfLines={2}
               >
-                {energyTitle}
+                {t(energyTitle)}
               </Text>
             </View>
             <Text style={screenStyles.insightSubtext} maxFontSizeMultiplier={1.2}>
-              {energySubtext}
+              {t(energySubtext)}
             </Text>
           </View>
           <View style={screenStyles.insightCard}>
-            <Text style={screenStyles.insightLabel} maxFontSizeMultiplier={1.1}>
-              Room vibes
-            </Text>
+            <Text style={screenStyles.insightLabel} maxFontSizeMultiplier={1.1}>{t("Room vibes")}{" "}</Text>
             <View style={screenStyles.insightValueRow}>
               <View style={[screenStyles.insightIconBubble, screenStyles.insightIconBubbleIntent]}>
                 <LeftIcon name="users" size={20} color={T.visibilityOff} />
@@ -441,11 +440,11 @@ export function VenueScreen({
                 maxFontSizeMultiplier={1.2}
                 numberOfLines={2}
               >
-                {vibesTitle}
+                {t(vibesTitle)}
               </Text>
             </View>
             <Text style={screenStyles.insightSubtext} maxFontSizeMultiplier={1.2}>
-              {vibesSubtext}
+              {t(vibesSubtext)}
             </Text>
           </View>
         </View>
@@ -478,7 +477,7 @@ export function VenueScreen({
                   ]}
                   numberOfLines={1}
                 >
-                  {filter.label}
+                  {t(filter.label)}
                 </Text>
               </Pressable>
             );
@@ -615,18 +614,14 @@ export function VenueScreen({
           {mapFilter === "people" && !isPubliclyVisible ? (
             <View style={screenStyles.mapPrivacyHint} pointerEvents="none">
               <LeftIcon name="eye-off" size={16} color={T.visibilityOff} />
-              <Text style={screenStyles.mapPrivacyHintText}>
-                Go visible to see people nearby.
-              </Text>
+              <Text style={screenStyles.mapPrivacyHintText}>{t("Go visible to see people nearby.")}{" "}</Text>
             </View>
           ) : null}
 
           {mapFilter === "active" && venuePlacements.length === 0 && personPlacements.length === 0 ? (
             <View style={screenStyles.mapPrivacyHint} pointerEvents="none">
               <LeftIcon name="activity" size={16} color={T.textSecondary} />
-              <Text style={screenStyles.mapPrivacyHintText}>
-                No live activity signal yet.
-              </Text>
+              <Text style={screenStyles.mapPrivacyHintText}>{t("No live activity signal yet.")}{" "}</Text>
             </View>
           ) : null}
 
@@ -639,7 +634,7 @@ export function VenueScreen({
           >
             <LeftLogoMark size={22} />
             <Text style={screenStyles.centerBadgeSubtitle}>
-              {isPubliclyVisible ? "Visible" : "Hidden"}
+              {isPubliclyVisible ? t("Visible") : t("Hidden")}
             </Text>
           </GlassSurface>
 
@@ -687,13 +682,13 @@ export function VenueScreen({
       {socialMomentum && isPubliclyVisible ? (
         <View style={screenStyles.momentumCard}>
           <View style={screenStyles.momentumHeader}>
-            <Text style={screenStyles.momentumEyebrow}>Social momentum</Text>
+            <Text style={screenStyles.momentumEyebrow}>{t("Social momentum")}</Text>
             <Pressable onPress={onDismissSocialMomentum} hitSlop={10}>
-              <Text style={screenStyles.momentumDismiss}>Not now</Text>
+              <Text style={screenStyles.momentumDismiss}>{t("Not now")}</Text>
             </Pressable>
           </View>
-          <Text style={screenStyles.momentumTitle}>{socialMomentum.title}</Text>
-          <Text style={screenStyles.momentumBody}>{socialMomentum.body}</Text>
+          <Text style={screenStyles.momentumTitle}>{t(socialMomentum.title)}</Text>
+          <Text style={screenStyles.momentumBody}>{t(socialMomentum.body)}</Text>
           <Pressable
             onPress={onSocialMomentumPrimary}
             style={({ pressed }) => [
@@ -710,12 +705,12 @@ export function VenueScreen({
 
       {allowVenueActions && canChooseVenue ? (
         <GhostButton
-          label="Choose a different nearby venue"
+          label={t("Choose a different nearby venue")}
           onPress={onChooseVenue}
         />
       ) : null}
       {allowVenueActions ? (
-        <GhostButton label="Can't find your venue? Add +" onPress={onAddVenue} />
+        <GhostButton label={t("Can't find your venue? Add +")} onPress={onAddVenue} />
       ) : null}
     </View>
   );

@@ -8,7 +8,7 @@ vi.mock("@react-native-async-storage/async-storage", () => ({ default: {
 } }));
 import { clearLocationAccountData, clearVenuePreference, getActivationDefaults, getDefaultRuntimeState, getLocationRuntimeState, getVenueApproachPrompts, getVenuePreferences, saveActivationDefaults, saveLocationRuntimeState, saveVenueApproachPrompts, saveVenuePreferences, updateLocationRuntimeState, upsertVenueApproachPrompt, upsertVenuePreference } from "./location-storage";
 const prefs = { v: { venueId: "v", venueName: "Private venue", hidden: true, muted: false, cooldownUntil: null, updatedAt: "today" } };
-beforeEach(() => { m.owner = "a"; m.data.clear(); });
+beforeEach(async () => { vi.useRealTimers(); m.owner = "a"; m.data.clear(); await clearLocationAccountData("a"); });
 it("does not read or migrate ambiguous legacy preferences into an account", async () => {
   m.data.set("left/location/venue-preferences", JSON.stringify(prefs));
   expect(await getVenuePreferences()).toEqual({});
@@ -64,11 +64,21 @@ it("ignores corrupt persisted data", async () => {
   expect(await getVenuePreferences()).toEqual({});
 });
 it("updates runtime within the same owner without persisting photo credentials", async () => {
-  await updateLocationRuntimeState(current => ({ ...current, currentVenueName: "Venue" }));
+  await updateLocationRuntimeState(current => ({ ...current, currentVenueName: "Venue", lastKnownCoords: { latitude: 60, longitude: 24, accuracy: 5 } }));
   const runtime = await getLocationRuntimeState();
   expect(runtime.currentVenueName).toBe("Venue");
   await saveLocationRuntimeState({ ...runtime, nearbyVenues: [{ id: "v", name: "Venue", latitude: 60, longitude: 24,
     radiusMeters: 50, source: "google_places", distanceMeters: 10, photoUrl: "private-url", photo: { uri: "signed-url", attributions: [] } }] });
   expect([...m.data.values()].join()).not.toContain("private-url");
   expect([...m.data.values()].join()).not.toContain("signed-url");
+});
+
+it("does not restore a current venue after its location fix expires", async () => {
+  vi.useFakeTimers();
+  try {
+    await saveLocationRuntimeState({ ...getDefaultRuntimeState(), currentVenueId: "old", currentVenueName: "Old cafe", selectedVenueId: "old", lastKnownCoords: { latitude: 60, longitude: 24, accuracy: 5 } });
+    expect((await getLocationRuntimeState()).currentVenueId).toBe("old");
+    vi.advanceTimersByTime(5 * 60_000);
+    expect(await getLocationRuntimeState()).toMatchObject({ currentVenueId: null, currentVenueName: null, selectedVenueId: null, nearbyVenues: [], lastKnownCoords: null });
+  } finally { vi.useRealTimers(); }
 });

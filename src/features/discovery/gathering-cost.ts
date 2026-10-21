@@ -1,3 +1,4 @@
+import { t, getTranslationLocale } from "../preferences/translation-runtime";
 export type GatheringCostChoice = 'free' | 'own' | 'paid' | 'split' | 'potluck' | 'custom';
 export const COST_CHOICES: Array<{id:GatheringCostChoice; label:string}> = [
   {id:'free',label:'Free'}, {id:'own',label:'Buy your own'}, {id:'paid',label:'Per person'},
@@ -14,9 +15,9 @@ export function parseEuroAmount(value:string):number|null {
   return cents <= 100000 ? cents : null;
 }
 export function costNotesFor(choice:GatheringCostChoice,cents:number,potluck:string,details:string) {
-  const euro=`€${(cents/100).toFixed(cents%100 ? 2 : 0)}`;
-  const base = choice==='free' ? 'Free' : choice==='own' ? 'Buy your own food or drink' :
-    choice==='paid' ? `${euro} per person` : choice==='split' ? `Split costs — about ${euro} per person` :
-    choice==='potluck' ? `Potluck — ${potluck || 'bring something to share'}` : '';
+  const euro = new Intl.NumberFormat(getTranslationLocale(), { style: "currency", currency: "EUR", minimumFractionDigits: cents % 100 ? 2 : 0, maximumFractionDigits: 2 }).format(cents / 100);
+  const base = choice==='free' ? t('Free') : choice==='own' ? t('Buy your own food or drink') :
+    choice==='paid' ? t("{amount} per person", { amount: euro }) : choice==='split' ? t("Split costs — about {amount} per person", { amount: euro }) :
+    choice==='potluck' ? t("Potluck — {dish}", { dish: t(potluck || "bring something to share") }) : '';
   return [base,details.trim()].filter(Boolean).join('. ');
 }

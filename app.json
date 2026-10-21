@@ -5,7 +5,7 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./app-icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "scheme": "left",
     "splash": {
       "image": "./assets/brand/splash-logo.png",
@@ -25,8 +25,8 @@
           "location"
         ]
       },
-      "buildNumber": "6",
-      "runtimeVersion": "1.0.0"
+      "buildNumber": "8",
+      "runtimeVersion": "1.0.1"
     },
     "android": {
       "package": "com.left.mobile",
@@ -70,7 +70,17 @@
           "photosPermission": "Allow Left to attach a photo to a community venue."
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-localization",
+        {
+          "supportedLocales": [
+            "en",
+            "fi",
+            "sv"
+          ]
+        }
+      ]
     ],
     "extra": {
       "eas": {

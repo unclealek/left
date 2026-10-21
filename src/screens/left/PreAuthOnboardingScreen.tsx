@@ -1,3 +1,4 @@
+import { t } from "../../features/preferences/translation-runtime";
 import { Image, ImageBackground, Pressable, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LeftIcon, type LeftIconName } from "../../components/icons";
@@ -38,45 +39,41 @@ export function PreAuthOnboardingScreen({ onComplete }: { onComplete: () => void
             source={require("../../../assets/brand/left-mark-white.png")}
             resizeMode="contain"
             style={styles.preAuthLogo}
-            accessibilityLabel="Left"
+            accessibilityLabel={t("Left")}
             accessibilityIgnoresInvertColors
           />
-          <Text style={styles.preAuthWordmark}>LEFT</Text>
+          <Text style={styles.preAuthWordmark}>{t("LEFT")}</Text>
         </View>
 
         <View style={styles.preAuthHeroBottom}>
           <View style={styles.preAuthCopy}>
-            <Text style={styles.preAuthEyebrow}>MEET THE ROOM</Text>
-            <Text accessibilityRole="header" style={styles.preAuthTitle}>
-              A quieter way to find your people.
-            </Text>
-            <Text style={styles.preAuthBody}>
-              Left helps real conversations begin in the places you already share.
-            </Text>
+            <Text style={styles.preAuthEyebrow}>{t("MEET THE ROOM")}</Text>
+            <Text accessibilityRole="header" style={styles.preAuthTitle}>{t("A quieter way to find your people.")}{" "}</Text>
+            <Text style={styles.preAuthBody}>{t("Left helps real conversations begin in the places you already share.")}{" "}</Text>
           </View>
 
-          <View accessibilityLabel="What Left is for" style={styles.preAuthNotes}>
+          <View accessibilityLabel={t("What Left is for")} style={styles.preAuthNotes}>
             {NOTES.map((note) => (
               <View key={note.label} style={styles.preAuthNoteRow}>
                 <View style={styles.preAuthNoteIcon}>
                   <LeftIcon name={note.icon} size={16} color="#FFFFFF" />
                 </View>
-                <Text style={styles.preAuthNoteText}>{note.label}</Text>
+                <Text style={styles.preAuthNoteText}>{t(note.label)}</Text>
               </View>
             ))}
           </View>
 
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Get started"
+            accessibilityLabel={t("Get started")}
             onPress={onComplete}
             style={({ pressed }) => [styles.preAuthCta, pressed && styles.preAuthPressed]}
           >
-            <Text style={styles.preAuthCtaLabel}>Get started</Text>
+            <Text style={styles.preAuthCtaLabel}>{t("Get started")}</Text>
             <LeftIcon name="arrow-up-right" size={19} color="#11110F" />
           </Pressable>
 
-          <Text style={styles.preAuthFootnote}>18+ · Community first · Private by default</Text>
+          <Text style={styles.preAuthFootnote}>{t("18+ · Community first · Private by default")}</Text>
         </View>
       </View>
     </ImageBackground>

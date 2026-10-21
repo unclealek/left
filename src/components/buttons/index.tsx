@@ -1,9 +1,11 @@
+import { t } from "../../features/preferences/translation-runtime";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
 import { LeftIcon, type LeftIconName } from "../icons";
 import { LeftLogoMark } from "../light_logo/LeftLogoMark";
 import { leftShadows } from "../shadow";
 import { T } from "../theme";
+import { hospitalityColors } from "../theme/hospitality";
 import { radii, spacing, typography } from "../token";
 import { hasCompletedSlide } from "./slide-confirm";
 
@@ -123,12 +125,12 @@ export function PrimaryButton({
   disabled?: boolean;
   loading?: boolean;
   compact?: boolean;
-  tone?: "default" | "onboarding";
+  tone?: "default" | "onboarding" | "hospitality";
   leadingIcon?: LeftIconName;
   trailingIcon?: LeftIconName;
 }) {
   const inactive = disabled || loading;
-  const contentColor = T.actionContent;
+  const contentColor = tone === "hospitality" ? hospitalityColors.surface : T.actionContent;
 
   return (
     <Pressable
@@ -140,6 +142,7 @@ export function PrimaryButton({
       style={({ pressed }) => [
         styles.primaryBtn,
         tone === "onboarding" && styles.primaryBtnOnboarding,
+        tone === "hospitality" && { backgroundColor: hospitalityColors.moss, borderColor: hospitalityColors.moss },
         compact && styles.primaryBtnCompact,
         inactive && styles.primaryBtnDisabled,
         pressed && !inactive && styles.primaryBtnPressed,
@@ -155,6 +158,7 @@ export function PrimaryButton({
           style={[
             styles.primaryBtnLabel,
             tone === "onboarding" && styles.primaryBtnLabelOnboarding,
+            tone === "hospitality" && { color: contentColor },
             inactive && styles.primaryBtnLabelDisabled,
           ]}
         >
@@ -272,7 +276,7 @@ export function SlideToConfirmButton({
       style={[styles.slideConfirmTrack, inactive && styles.slideConfirmTrackDisabled]}
     >
       <View pointerEvents="none" style={styles.slideConfirmCopy}>
-        <Text style={styles.slideConfirmLabel}>{loading ? "Going visible..." : label}</Text>
+        <Text style={styles.slideConfirmLabel}>{loading ? t("Going visible...") : label}</Text>
         {subtitle ? <Text style={styles.slideConfirmSubtitle}>{subtitle}</Text> : null}
       </View>
       <Animated.View
@@ -307,6 +311,7 @@ export function GhostButton({
   disabled = false,
   loading = false,
   selected = false,
+  tone = "default",
   leadingIcon,
   trailingIcon,
 }: {
@@ -317,6 +322,7 @@ export function GhostButton({
   disabled?: boolean;
   loading?: boolean;
   selected?: boolean;
+  tone?: "default" | "hospitality";
   leadingIcon?: LeftIconName;
   trailingIcon?: LeftIconName;
 }) {
@@ -332,6 +338,7 @@ export function GhostButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.ghostBtn,
+        tone === "hospitality" && { backgroundColor: hospitalityColors.surface, borderColor: hospitalityColors.border, minHeight: 44, borderRadius: 24 },
         compact && styles.ghostBtnCompact,
         selected && styles.ghostBtnSelected,
         destructive && styles.ghostBtnDestructive,

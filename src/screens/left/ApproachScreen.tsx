@@ -1,3 +1,4 @@
+import { t } from "../../features/preferences/translation-runtime";
 import { Text, View } from "react-native";
 import type { NearbyFeedItem } from "../../types/left-domain";
 import { styles } from "../../app/leftTheme";
@@ -22,25 +23,25 @@ export function ApproachScreen({
   return (
     <View>
       <View style={styles.navRow}>
-        <BackNavButton label="Back to nearby" onPress={onCancel} />
+        <BackNavButton label={t("Back to nearby")} onPress={onCancel} />
         <SafetyActionButton onPress={onOpenSafety} compact />
       </View>
       <View style={styles.approachHero}>
-        <Text style={styles.approachLabel}>Going over to</Text>
+        <Text style={styles.approachLabel}>{t("Going over to")}</Text>
         <Text style={styles.approachName}>{item.firstName}</Text>
       </View>
       <View style={styles.approachSections}>
-        <InfoBlock label="Look for">
+        <InfoBlock label={t("Look for")}>
           <Text style={styles.approachHint}>{item.hintText || "No recognition hint shared."}</Text>
         </InfoBlock>
-        <InfoBlock label="Icebreaker">
+        <InfoBlock label={t("Icebreaker")}>
           <Text style={[styles.infoText, styles.icebreakerText]}>"{approachPrompt}"</Text>
         </InfoBlock>
       </View>
       <Text style={styles.approachTimeNote}>
         {`${Math.max(0, remainingSeconds)} seconds until you return to people nearby.`}
       </Text>
-      <PrimaryButton label="We connected ✓" onPress={onConfirmConnected} />
+      <PrimaryButton label={t("We connected ✓")} onPress={onConfirmConnected} />
     </View>
   );
 }

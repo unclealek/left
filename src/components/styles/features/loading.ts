@@ -13,20 +13,6 @@ export const loadingStyles = {
     alignItems: "center",
     gap: 16,
   },
-  loadingLogo: {
-    width: 118,
-    height: 28,
-  },
-  loadingRing: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 1,
-    borderColor: T.onboardingAccentFaint,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: T.glassLightSolid,
-  },
   loadingAnimation: {
     width: 150,
     height: 150,
@@ -84,22 +70,6 @@ export const loadingStyles = {
     height: 30,
     borderRadius: 15,
     borderWidth: 3,
-  },
-  loadingChevron: {
-    color: T.primary,
-    fontSize: 44,
-    fontWeight: "200",
-    lineHeight: 52,
-    marginRight: -6,
-  },
-  loadingDot: {
-    position: "absolute",
-    right: 28,
-    top: 38,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: T.secondary,
   },
   loadingWordmark: {
     color: T.textSecondary,

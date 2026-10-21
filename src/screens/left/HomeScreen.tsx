@@ -1,610 +1,252 @@
-import { useEffect, useState } from "react";
-import { LinearGradient } from "expo-linear-gradient";
-import { ActivityIndicator, Image, Linking, Pressable, Text, View } from "react-native";
-import type { RuntimeVenueCandidate } from "../../features/location/location-storage";
-import {
-  getVenueConfidenceLabel,
-  resolveVenueConfidence,
-} from "../../features/location/venue-confidence";
-import { formatIntent, formatRemaining } from "../../app/leftConfig";
-import { styles, T } from "../../app/leftTheme";
-import { LeftIcon } from "../../components/icons";
-import { GlassSurface, glassRadii } from "../../components/glass";
-import { LeftGlass } from "../../components/glass/LeftGlass";
-import { LeftAvatar } from "../../components/left/LeftAvatar";
-import { LeftLogoMark } from "../../components/left/LeftLogoMark";
-import { VenueIdentityBlock } from "../../components/left/ui";
-import type { AppUser, NearbyFeedItem, VenueActivityEnvelope, VenueContextSummary, VenueExperience } from "../../types/left-domain";
-import { fetchVenuePracticalDetails } from "../../features/venues/venue-details-service";
+import { t } from "../../features/preferences/translation-runtime";
+import { useDistanceFormatter } from "../../features/preferences/use-distance";
+import { useEffect, useRef, useState } from 'react';
+import { StatusBar } from 'expo-status-bar';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ActivityIndicator, FlatList, Linking, Pressable, Text, View, useWindowDimensions } from 'react-native';
+import type { RuntimeVenueCandidate } from '../../features/location/location-storage';
+import { getVenuePhotoFallbackLabel, resolveVenuePhotoKind } from '../../components/left/venue-photo-model';
+import { VenuePhoto, PhotoCredits } from '../../components/left/VenuePhoto';
+import { resolveVenueConfidence } from '../../features/location/venue-confidence';
+import { styles } from '../../app/leftTheme';
+import { LeftIcon } from '../../components/icons';
+import { GhostButton, PrimaryButton } from '../../components/buttons';
+import { hospitalityColors as H } from '../../components/theme/hospitality';
+import type { NearbyFeedItem, VenueActivityEnvelope, VenueContextSummary, VenueExperience } from '../../types/left-domain';
+import { fetchVenuePracticalDetails } from '../../features/venues/venue-details-service';
+import { homeActivityLabel, venueCategory } from './home-presentation';
 
-const VENUE_ILLUSTRATIONS = {
-  cafe: require("../../../output/illustrations/venues/cafe.png"),
-  restaurant: require("../../../output/illustrations/venues/restaurant.png"),
-  bar: require("../../../output/illustrations/venues/bar.png"),
-  coworking: require("../../../output/illustrations/venues/coworking.png"),
-  market: require("../../../output/illustrations/venues/market.png"),
-  park: require("../../../output/illustrations/venues/park.png"),
-  library: require("../../../output/illustrations/venues/library.png"),
-  generic: require("../../../output/illustrations/venues/generic-place.png"),
-} as const;
-
-export function HomeScreen({
-  venue,
-  nearbyVenues,
-  venueActivityById,
-  experiences,
-  feed,
-  sessionVisible,
-  venueHidden,
-  activationSubmitting = false,
-  activationError = false,
-  onBecomeVisible,
-  onOpenAllVenues,
-  onOpenVenueDetail,
-  onOpenProfile,
-  onOpenExperience,
-  onCreateExperience,
-  onOpenSafety,
-}: {
-  firstName: string;
+type Photo = NonNullable<RuntimeVenueCandidate['photo']>;
+type HomeProps = {
+  guest?: boolean;
   venue: VenueContextSummary;
   nearbyVenues: RuntimeVenueCandidate[];
   venueActivityById: Record<string, VenueActivityEnvelope>;
   experiences: VenueExperience[];
   feed: NearbyFeedItem[];
-  intent: AppUser["defaultIntent"];
-  vibes: string[];
   sessionVisible: boolean;
   venueHidden: boolean;
   activationSubmitting?: boolean;
-  activationError?: boolean;
+  visibilityPending?: boolean;
+  visibilityError?: string | null;
+  nearbyLoading?: boolean;
+  topInset?: number;
   onBecomeVisible: () => void;
+  onGoPrivate: () => void;
+  onOpenPeople: () => void;
   onOpenAllVenues: () => void;
   onOpenVenueDetail: (venue: RuntimeVenueCandidate) => void;
-  onOpenProfile: (item: NearbyFeedItem) => void;
   onOpenExperience: (experience: VenueExperience) => void;
   onCreateExperience: () => void;
   onOpenSafety: () => void;
-  profileCompletion: number;
-  onCompleteProfile: () => void;
-}) {
-  const venueName = resolveVenueName(venue.venueName, nearbyVenues);
-  const currentVenueCandidate =
-    nearbyVenues.find((candidate) => candidate.id === venue.venueId) ??
-    nearbyVenues.find((candidate) => candidate.name === venueName) ??
-    null;
-  const isVisible = sessionVisible && !venueHidden;
-  const venueConfidence = resolveVenueConfidence(venue, nearbyVenues);
-  const nearbyCards = buildNearbyVenueCards(nearbyVenues, venueName, venueActivityById);
-  const photoVenueIds = JSON.stringify(nearbyCards.map((card) => card.id));
-  const [photos, setPhotos] = useState<Record<string, NonNullable<RuntimeVenueCandidate["photo"]>>>({});
-  const [loadedPhotos, setLoadedPhotos] = useState<Record<string, string>>({});
-  const [failedPhotos, setFailedPhotos] = useState<Record<string, string>>({});
+};
+
+// One bounded photo queue for both hero and carousel. URLs remain memory-only.
+function useHomePhotos(venues: RuntimeVenueCandidate[]) {
+  const ids = JSON.stringify(venues.map(venue => venue.id));
+  const [details, setDetails] = useState<Record<string, Awaited<ReturnType<typeof fetchVenuePracticalDetails>>>>({});
+  const completed = useRef(new Set<string>());
   useEffect(() => {
     let cancelled = false;
-    setPhotos({});
-    setLoadedPhotos({});
-    setFailedPhotos({});
-    void Promise.all((JSON.parse(photoVenueIds) as string[]).map(async (id) => {
-      try {
-        const details = await fetchVenuePracticalDetails(id);
-        if (!cancelled && details?.photo) {
-          const photo = details.photo;
-          setPhotos((current) => ({ ...current, [id]: photo }));
-        }
-      } catch { /* Keep the illustration when photos are unavailable. */ }
-    }));
+    const queue = (JSON.parse(ids) as string[]).filter(id => !completed.current.has(id));
+    async function worker() {
+      while (queue.length && !cancelled) {
+        const id = queue.shift()!;
+        try {
+          const result = await fetchVenuePracticalDetails(id);
+          if (!cancelled && result) {
+            completed.current.add(id);
+            setDetails(current => ({ ...current, [id]: result }));
+          }
+        } catch { /* Keep the local, neutral fallback; venue details can retry later. */ }
+      }
+    }
+    void Promise.all([worker(), worker()]);
     return () => { cancelled = true; };
-  }, [photoVenueIds]);
-  const photoImage = (id: string) => {
-    const photo = photos[id];
-    return photo && failedPhotos[id] !== photo.uri ? (
-      <Image source={{ uri: photo.uri }} resizeMode="cover"
-        style={{ position: "absolute", inset: 0 }}
-        onLoad={() => setLoadedPhotos((current) => ({ ...current, [id]: photo.uri }))}
-        onError={() => {
-          setFailedPhotos((current) => ({ ...current, [id]: photo.uri }));
-          setLoadedPhotos((current) => ({ ...current, [id]: "" }));
-        }} />
-    ) : null;
-  };
-  const photoCredit = (id: string) => {
-    const photo = photos[id];
-    if (!photo || loadedPhotos[id] !== photo.uri) return null;
-    return (
-      <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", paddingHorizontal: 16, paddingVertical: 8, gap: 6 }}>
-        <Text numberOfLines={1} style={{ fontSize: 12, color: T.textSecondary }}>Google Maps</Text>
-        {photo.attributions.map((author, index) => author.uri ? (
-          <Pressable key={index} accessibilityRole="link" accessibilityLabel={`Photo by ${author.displayName}`}
-            style={{ minHeight: 44, justifyContent: "center", flexShrink: 1 }}
-            onPress={(event) => { event.stopPropagation(); void Linking.openURL(author.uri!).catch(() => {}); }}>
-            <Text style={{ fontSize: 12, color: T.textSecondary }}>· {author.displayName}</Text>
-          </Pressable>
-        ) : <Text key={index} style={{ fontSize: 12, color: T.textSecondary }}>· {author.displayName}</Text>)}
-      </View>
-    );
-  };
-  const featuredPlace = nearbyCards[0] ?? null;
-  const morePlaces = nearbyCards.slice(1);
-  const featuredPerson = isVisible ? feed[0] ?? null : null;
-  const confidenceLabel = getVenueConfidenceLabel(venueConfidence);
-  const venueDistanceLabel = currentVenueCandidate?.distanceMeters != null
-    ? formatDistanceLabel(currentVenueCandidate.distanceMeters)
-    : nearbyCards[0]?.distanceLabel ?? "Nearby now";
-  const placesContext =
-    nearbyCards.length === 0
-      ? "No nearby places detected yet"
-      : venueConfidence === "confirmed"
-      ? nearbyCards[0]?.distanceLabel
-        ? `Closest ${nearbyCards[0].distanceLabel}`
-        : "Nearby right now"
-      : venueConfidence === "nearby_guess"
-        ? "Likely places around you"
-        : "Venue confirmation may be needed";
-  const hiddenCardHasError = activationError || venueConfidence === "needs_confirmation";
-  const hiddenMessage = hiddenCardHasError
-    ? "We couldn't confirm this place yet. Check your current place before becoming visible."
-    : "You're private until you choose to be discovered.";
-  const presenceMessage = isVisible ? "You’re sharing this moment here." : hiddenMessage;
-  const primaryLabel = isVisible ? "Manage visibility" : activationSubmitting ? "Going visible..." : "Go visible";
-  return (
-    <View style={styles.homePage}>
-      <View style={styles.homeVenueHeader}>
-        <VenueIdentityBlock
-          icon="map-pin"
-          title={venueName}
-          metaIcon="radio"
-          metaText={`${confidenceLabel} · ${venueDistanceLabel}`}
-        />
-        <View style={styles.homeBrandLockup}>
-          <View style={styles.homeBrandMark}>
-            <LeftLogoMark size={24} tone="light" />
-            <PresenceIndicator isVisible={isVisible} />
-          </View>
-          <Text style={styles.homeBrandLabel}>Left</Text>
-        </View>
-      </View>
-
-      <View
-        style={[
-          styles.homePresenceCard,
-          hiddenCardHasError && styles.homePresenceCardError,
-        ]}
-      >
-        <View style={styles.homePresencePrimaryRow}>
-          <View style={styles.homePresenceCopy}>
-            <View style={styles.homePresenceStateRow}>
-              <View
-                style={[
-                  styles.homePresenceStateDot,
-                  !isVisible && styles.homePresenceStateDotHidden,
-                  hiddenCardHasError && styles.homePresenceStateDotError,
-                ]}
-              />
-              <Text style={styles.homePresenceStateLabel}>
-                {isVisible ? "Visible here" : "Private here"}
-              </Text>
-            </View>
-            <Text style={styles.homePresenceVenue}>{venueName}</Text>
-            <Text style={styles.homePresenceMessage}>{presenceMessage}</Text>
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={primaryLabel}
-            accessibilityHint={hiddenCardHasError ? "Resolve the venue issue before becoming visible." : "Open venue visibility controls."}
-            accessibilityState={{ disabled: (!isVisible && hiddenCardHasError) || activationSubmitting, busy: activationSubmitting }}
-            disabled={(!isVisible && hiddenCardHasError) || activationSubmitting}
-            onPress={onBecomeVisible}
-            style={({ pressed }) => [styles.homeGlassButton, pressed && !activationSubmitting && !hiddenCardHasError && styles.homeGlassButtonPressed]}
-          >
-            <LeftGlass isInteractive radius={15} contentStyle={[styles.homePresenceAction, styles.homeGlassContent, hiddenCardHasError && styles.homePresenceActionError]}>
-              {activationSubmitting ? (
-                <ActivityIndicator size="small" color={hiddenCardHasError ? T.danger : T.primary} />
-              ) : (
-                <LeftIcon
-                  name={isVisible ? "eye-off" : "eye"}
-                  size={18}
-                  color={hiddenCardHasError ? T.danger : T.primary}
-                />
-              )}
-              <Text style={[styles.homePresenceActionText, hiddenCardHasError && styles.homePresenceActionTextError]}>
-                {isVisible ? "Manage visibility" : "Go visible"}
-              </Text>
-            </LeftGlass>
-          </Pressable>
-        </View>
-        <Pressable
-          onPress={onOpenSafety}
-          accessibilityRole="button"
-          accessibilityLabel="Open privacy and safety controls"
-          style={({ pressed }) => [styles.homePresencePrivacyRow, pressed && styles.iconButtonPressed]}
-        >
-          <LeftIcon name="shield" size={15} color={T.primary} />
-          <Text style={styles.homePresencePrivacyText}>Privacy and safety controls</Text>
-          <LeftIcon name="chevron-right" size={16} color={T.textSecondary} />
-        </Pressable>
-      </View>
-
-      <View style={styles.homeEditorialSection}>
-        <View style={styles.homeEditorialSectionHeader}>
-          <View style={styles.homeEditorialSectionCopy}>
-            <Text style={styles.homeEditorialSectionTitle}>People here</Text>
-          </View>
-        </View>
-
-        {featuredPerson ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`View ${featuredPerson.firstName}'s profile`}
-            onPress={() => onOpenProfile(featuredPerson)}
-            style={({ pressed }) => [styles.homeGlassButton, pressed && styles.homeGlassButtonPressed]}
-          >
-            <LeftGlass isInteractive radius={22} contentStyle={[styles.homePersonCard, styles.homeGlassContent]}>
-              <View style={styles.homePersonAvatarShell}>
-                <LeftAvatar name={featuredPerson.firstName} avatarStyle={featuredPerson.avatarStyle} />
-              </View>
-              <View style={styles.homePersonCardCopy}>
-                <View style={styles.homePersonNameRow}>
-                  <Text style={styles.homePersonName}>{featuredPerson.firstName}</Text>
-                  <Text style={styles.homePersonTime}>{formatRemaining(featuredPerson.sessionDurationRemaining)}</Text>
-                </View>
-                <Text style={styles.homePersonIntent}>{formatIntent(featuredPerson.intent)}</Text>
-                <Text numberOfLines={2} style={styles.homePersonHint}>
-                  {featuredPerson.hintText ?? `Open to ${featuredPerson.primaryVibe?.toLowerCase() ?? "a meaningful conversation"}.`}
-                </Text>
-              </View>
-              <View style={styles.homePersonArrow}>
-                <LeftIcon name="chevron-right" size={18} color={T.textPrimary} />
-              </View>
-            </LeftGlass>
-          </Pressable>
-        ) : isVisible ? (
-          <View style={styles.homePeopleEmptyCard}>
-            <View style={styles.homePeopleEmptyIcon}>
-              <LeftIcon name="users" size={20} color={T.primary} />
-            </View>
-            <View style={styles.homePeopleEmptyCopy}>
-              <Text style={styles.homePeopleEmptyTitle}>You’re the first one here</Text>
-              <Text style={styles.homePeopleEmptyText}>We’ll show someone only when they choose to be visible too.</Text>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.homePeoplePrivateCard}>
-            <View style={styles.homePeoplePrivateIcon}>
-              <LeftIcon name="lock" size={20} color={T.primary} />
-            </View>
-            <View style={styles.homePeoplePrivateCopy}>
-              <Text style={styles.homePeoplePrivateTitle}>No profiles are shown while you’re private</Text>
-              <Text style={styles.homePeoplePrivateText}>Become visible when you want to see people who are open to meeting here.</Text>
-            </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Go visible"
-              onPress={onBecomeVisible}
-              style={({ pressed }) => [styles.homeGlassButton, pressed && styles.homeGlassButtonPressed]}
-            >
-              <LeftGlass isInteractive radius={14} contentStyle={[styles.homePeoplePrivateAction, styles.homeGlassContent]}>
-                <Text style={styles.homePeoplePrivateActionText}>Go visible</Text>
-                <LeftIcon name="arrow-right" size={15} color={T.primary} />
-              </LeftGlass>
-            </Pressable>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.homeEditorialSection}>
-        <View style={styles.homeEditorialSectionHeader}>
-          <View style={styles.homeEditorialSectionCopy}>
-            <Text style={styles.homeEditorialSectionTitle}>Around you now</Text>
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="See all nearby venues"
-            onPress={onOpenAllVenues}
-            hitSlop={10}
-            style={({ pressed }) => pressed && styles.iconButtonPressed}
-          >
-            <Text style={styles.homeExploreSideNote}>See all →</Text>
-          </Pressable>
-        </View>
-
-        {featuredPlace ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Open ${featuredPlace.name}`}
-            onPress={() => onOpenVenueDetail(featuredPlace.venue)}
-            style={({ pressed }) => [styles.homeGlassButton, pressed && styles.homeGlassButtonPressed]}
-          >
-            <LeftGlass isInteractive radius={24} contentStyle={[styles.homeFeaturedPlaceCard, styles.homeGlassContent]}>
-              <View style={styles.homeFeaturedPlaceImageWrap}>
-                <Image source={featuredPlace.illustration} style={styles.homeVenueIllustrationImage} resizeMode="cover" />
-                {photoImage(featuredPlace.id)}
-                <LinearGradient
-                  colors={["transparent", "rgba(26,24,21,0.28)"]}
-                  start={{ x: 0.5, y: 0.45 }}
-                  end={{ x: 0.5, y: 1 }}
-                  style={styles.homeFeaturedPlaceShade}
-                />
-                <GlassSurface
-                  variant="soft"
-                  radius={glassRadii.pill}
-                  style={styles.homeFeaturedPlaceSignal}
-                  contentStyle={styles.homeFeaturedPlaceSignalContent}
-                >
-                  <View style={[styles.homeFeaturedPlaceSignalDot, { backgroundColor: featuredPlace.signalBarColor }]} />
-                  <Text style={styles.homeFeaturedPlaceSignalText}>{featuredPlace.energyLabel}</Text>
-                </GlassSurface>
-              </View>
-              {photoCredit(featuredPlace.id)}
-              <View style={styles.homeFeaturedPlaceBody}>
-                <View style={styles.homeFeaturedPlaceCopy}>
-                  <Text style={styles.homeFeaturedPlaceName}>{featuredPlace.name}</Text>
-                  <View style={styles.homeFeaturedPlaceMetaRow}>
-                    <LeftIcon name="map-pin" size={14} color={T.primary} />
-                    <Text style={styles.homeFeaturedPlaceMeta}>{featuredPlace.distanceLabel}</Text>
-                  </View>
-                </View>
-                <View style={styles.homeFeaturedPlaceArrow}>
-                  <LeftIcon name="arrow-up-right" size={19} color={T.actionContent} />
-                </View>
-              </View>
-            </LeftGlass>
-          </Pressable>
-        ) : (
-          <View accessibilityRole="text" style={styles.homeVenueEmptyState}>
-            <LeftIcon name="map-pin" size={21} color={T.textMuted} />
-            <Text style={styles.homeVenueEmptyTitle}>No live venue data yet</Text>
-            <Text style={styles.homeVenueEmptyBody}>Keep location access on. Places detected near you will appear here.</Text>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.homeEditorialSection}>
-        <View style={styles.homeEditorialSectionHeader}>
-          <View style={styles.homeEditorialSectionCopy}>
-            <Text style={styles.homeEditorialSectionTitle}>{experiences[0] ? "Something to join" : "Make a simple plan"}</Text>
-          </View>
-        </View>
-        {experiences[0] ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Open ${experiences[0].title}`}
-            onPress={() => onOpenExperience(experiences[0])}
-            style={({ pressed }) => [styles.homeGlassButton, pressed && styles.homeGlassButtonPressed]}
-          >
-            <LeftGlass isInteractive radius={22} contentStyle={[styles.homeExperienceCard, styles.homeGlassContent]}>
-              <View style={styles.homeExperienceDateBlock}>
-                <Text style={styles.homeExperienceMonth}>{formatExperienceMonth(experiences[0].startsAt)}</Text>
-                <Text style={styles.homeExperienceDay}>{formatExperienceDay(experiences[0].startsAt)}</Text>
-              </View>
-              <View style={styles.homeExperienceCopy}>
-                <Text style={styles.homeExperienceTitle}>{experiences[0].title}</Text>
-                <Text style={styles.homeExperienceMeta}>{`${formatExperienceTime(experiences[0].startsAt)} · ${experiences[0].venueName}`}</Text>
-                <Text style={styles.homeExperienceSeats}>{`${experiences[0].attendeeCount}/${experiences[0].capacity} going`}</Text>
-              </View>
-              <View style={styles.homePersonArrow}>
-                <LeftIcon name="arrow-up-right" size={17} color={T.textPrimary} />
-              </View>
-            </LeftGlass>
-          </Pressable>
-        ) : (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Propose a small gathering"
-            onPress={onCreateExperience}
-            style={({ pressed }) => [styles.homeGlassButton, pressed && styles.homeGlassButtonPressed]}
-          >
-            <LeftGlass isInteractive radius={22} contentStyle={[styles.homeExperienceEmptyCard, styles.homeGlassContent]}>
-              <View style={styles.homeExperienceEmptyIcon}>
-                <LeftIcon name="calendar" size={20} color={T.primary} />
-              </View>
-              <View style={styles.homeExperienceCopy}>
-                <Text style={styles.homeExperienceTitle}>Host something small</Text>
-                <Text style={styles.homeExperienceMeta}>Suggest a place and plan. Left reviews it before it appears nearby.</Text>
-              </View>
-              <View style={styles.homePersonArrow}>
-                <LeftIcon name="arrow-up-right" size={17} color={T.textPrimary} />
-              </View>
-            </LeftGlass>
-          </Pressable>
-        )}
-        {experiences[0] ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Propose a gathering"
-            onPress={onCreateExperience}
-            style={({ pressed }) => [styles.homeExperienceHostLink, pressed && styles.iconButtonPressed]}
-          >
-            <Text style={styles.homeExperienceHostLinkText}>Have an idea? Propose a gathering</Text>
-            <LeftIcon name="arrow-right" size={15} color={T.primary} />
-          </Pressable>
-        ) : null}
-      </View>
-
-      {morePlaces.length > 0 ? (
-        <View style={styles.homeEditorialSection}>
-          <View style={styles.homeEditorialSectionHeader}>
-            <View style={styles.homeEditorialSectionCopy}>
-              <Text style={styles.homeEditorialSectionTitle}>More around you</Text>
-              <Text style={styles.homeEditorialSectionMeta}>{placesContext}</Text>
-            </View>
-          </View>
-          <View style={styles.homeVenueGrid}>
-            {morePlaces.map((item) => (
-              <Pressable
-                key={item.id}
-                accessibilityRole="button"
-                accessibilityLabel={`Open ${item.name}`}
-                accessibilityHint="Shows venue details"
-                onPress={() => onOpenVenueDetail(item.venue)}
-                style={({ pressed }) => [styles.homeGlassButton, pressed && styles.homeGlassButtonPressed]}
-              >
-                <LeftGlass isInteractive radius={22} contentStyle={[styles.homeVenueCard, styles.homeGlassContent]}>
-                  <View style={styles.homeVenueCardRow}>
-                    <View style={styles.homeVenueThumb}>
-                      <Image source={item.illustration} style={styles.homeVenueIllustrationImage} resizeMode="cover" />
-                      {photoImage(item.id)}
-                    </View>
-                    <View style={styles.homeVenueCardBody}>
-                      <View style={styles.homeVenueCardTopGroup}>
-                        <Text style={styles.homeVenueCardName}>{item.name}</Text>
-                        <Text style={[styles.homeVenueStatusText, { color: item.signalBarColor }]}>{item.energyLabel}</Text>
-                      </View>
-                      <View style={styles.homeVenueDistanceRow}>
-                        <LeftIcon name="map-pin" size={15} color={T.textMuted} />
-                        <Text style={styles.homeVenueDistanceText}>{item.distanceLabel}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.homeVenueChevronBubble}>
-                      <LeftIcon name="chevron-right" size={20} color={T.secondary} />
-                    </View>
-                  </View>
-                  {photoCredit(item.id)}
-                </LeftGlass>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      ) : null}
-
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Open privacy and safety controls"
-        onPress={onOpenSafety}
-        style={({ pressed }) => [styles.homeGlassButton, pressed && styles.homeGlassButtonPressed]}
-      >
-        <LeftGlass isInteractive radius={22} contentStyle={[styles.homeSafetyCard, styles.homeGlassContent]}>
-          <View style={styles.homeSafetyCardLeft}>
-            <View style={styles.homeSafetyCardIconWrap}>
-              <LeftIcon name="shield" size={20} color={T.primary} />
-            </View>
-            <View style={styles.homeSafetyCardCopy}>
-              <Text style={styles.homeSafetyCardTitle}>You stay in control</Text>
-              <Text style={styles.homeSafetyCardSubtitle}>Review visibility, hiding, blocking, and reporting.</Text>
-            </View>
-          </View>
-          <LeftIcon name="chevron-right" size={22} color={T.textSecondary} />
-        </LeftGlass>
-      </Pressable>
-    </View>
-  );
+  }, [ids]);
+  return details;
 }
 
-function PresenceIndicator({ isVisible }: { isVisible: boolean }) {
-  return (
-    <View style={styles.homePresenceIndicatorWrap}>
-      <View
-        style={[
-          styles.homePresenceIndicatorDot,
-          isVisible ? styles.homePresenceIndicatorDotVisible : styles.homePresenceIndicatorDotHidden,
-        ]}
-      />
+function SectionHeader({ title, onPress, disabled = false }: { title: string; onPress?: () => void; disabled?: boolean }) {
+  return <View style={styles.homeHeadingRow}>
+    <Text accessibilityRole="header" style={styles.homeSectionTitle}>{title}</Text>
+    {onPress ? <Pressable accessibilityRole="button" accessibilityLabel={`${t("See all")} ${title.toLowerCase()}`}
+      accessibilityState={{ disabled }} disabled={disabled} onPress={onPress}
+      style={[styles.homeSeeAll, disabled && styles.homeDisabled]}>
+      <Text style={styles.homeSeeAllText}>{t("See all")}</Text><LeftIcon name="arrow-right" size={15} color={H.moss} />
+    </Pressable> : null}
+  </View>;
+}
+function VisibilityCard({ visible, confirmed, pending, error, onAction, onOpenSafety, guest = false }: {
+  guest?: boolean; visible: boolean; confirmed: boolean; pending: boolean; error?: string | null;
+  onAction: () => void; onOpenSafety: () => void;
+}) {
+  const Action = visible ? GhostButton : PrimaryButton;
+  const awaitingVenue = !visible && !confirmed;
+  return <View style={styles.homeVisibilityCard}>
+    <View style={styles.homeVisibilityHeading}>
+      <View style={styles.homeVisibilityCopy}>
+        <View style={styles.homeStateRow}><View style={[styles.homeStateDot, !visible && styles.homePrivateDot]} />
+          <Text style={styles.homeStateLabel}>{visible ? t("Visible here") : awaitingVenue ? t("Private right now") : t("Private here")}</Text></View>
+        {!awaitingVenue ? <Text style={styles.homeCardTitle}>{visible ? t("You're visible at this venue") : t("You're private at this venue")}</Text> : null}
+      </View>
+      <View style={styles.homeStateIcon}><LeftIcon name={visible ? "eye" : "eye-off"} size={25} color={H.moss} /></View>
     </View>
-  );
+    <Text style={styles.homeBody}>{guest ? t("Sign in to confirm your venue and discover people nearby.") : awaitingVenue ? t("Confirm your venue to become visible and discover people nearby.") : visible
+      ? t("People here can discover you through your interests and vibe. You stay anonymous.")
+      : t("You're hidden until you choose to be discovered.")}</Text>
+    {error ? <Text accessibilityRole="alert" style={styles.homeError}>{t(error)}</Text> : null}
+    <Action label={guest ? t("Sign in to go visible") : visible ? t("Go private") : t("Go visible")} leadingIcon={visible ? "eye-off" : "eye"}
+      onPress={onAction} loading={pending} disabled={!guest && !visible && !confirmed} tone="hospitality" />
+    <Pressable accessibilityRole="button" onPress={onOpenSafety} style={styles.homeSafety}>
+      <LeftIcon name="shield" size={21} color={H.moss} />
+      <Text style={styles.homeSafetyLabel}>{t("Privacy and safety controls")}</Text><LeftIcon name="chevron-right" size={18} color={H.ink} />
+    </Pressable>
+  </View>;
+}
+const CONNECTION_INTENTS = [
+  { label: 'Open to chat', icon: 'message-circle' },
+  { label: 'Networking', icon: 'users' },
+  { label: 'Group discussion', icon: 'users' },
+  { label: 'Casual chat', icon: 'coffee' },
+] as const;
+function PeopleHereSection({ visible, available, onOpen }: { visible: boolean; available: boolean; onOpen: () => void }) {
+  return <View style={styles.homeSection}>
+    <SectionHeader title={t("People here")} onPress={onOpen} disabled={!visible} />
+    <View style={styles.homePeopleCard}>
+      {visible ? <>
+        <View style={styles.homeIntentRow} accessibilityLabel={t("Connection interests, without availability counts")}>
+          {CONNECTION_INTENTS.map((intent, index) => <View key={intent.label} style={styles.homeIntentItem}>
+            <View style={[styles.homeIntentCircle, { backgroundColor: H.intentTints[index] }]} accessible={false}>
+              <LeftIcon name={intent.icon} size={24} color={H.moss} />
+            </View><Text style={styles.homeIntentLabel}>{t(intent.label)}</Text>
+          </View>)}
+        </View>
+        {!available ? <Text style={styles.homePeopleNote}>{t("No discoverable people here yet. Check back in a moment.")}</Text> : null}
+      </> : <>
+        <View style={styles.homePrivatePeopleRow}><LeftIcon name="lock" size={22} color={H.moss} />
+          <View style={styles.homeVisibilityCopy}>
+            <Text style={styles.homePeopleTitle}>{t("Profiles are hidden while you're private")}</Text>
+            <Text style={styles.homeBody}>{t("Go visible to discover people nearby.")}</Text>
+          </View>
+        </View>
+      </>}
+    </View>
+  </View>;
+}
+function NearbyVenueCard({ venue, photo, activity, onPress }: {
+  venue: RuntimeVenueCandidate; photo?: Photo | null; activity?: VenueActivityEnvelope; onPress: () => void;
+}) {
+  const formatVenueDistance = useDistanceFormatter();
+  const activityLabel = homeActivityLabel(activity);
+  const [loadedPhotoUri, setLoadedPhotoUri] = useState<string | null>(null);
+  return <View style={styles.homeVenueCard}>
+    <Pressable accessibilityRole="button" accessibilityLabel={t("View {venue}", { venue: venue.name })} onPress={onPress}
+      style={({ pressed }) => pressed && styles.homePressed}>
+      <View style={styles.homeVenueImage}><VenuePhoto photo={photo} venue={venue}
+        onPhotoLoad={() => setLoadedPhotoUri(photo?.uri ?? null)} onPhotoError={() => setLoadedPhotoUri(null)} /></View>
+      <View style={styles.homeVenueCopy}>
+        <Text numberOfLines={2} style={styles.homeVenueTitle}>{venue.name}</Text>
+        <Text style={styles.homeVenueMeta}>{t(venueCategory(venue))}</Text>
+        {activityLabel ? <Text style={styles.homeActivity}>{t(activityLabel)}</Text> : null}
+        {formatVenueDistance(venue.distanceMeters) ? <Text style={styles.homeVenueMeta}>{formatVenueDistance(venue.distanceMeters)}</Text> : null}
+      </View>
+    </Pressable>
+    {photo && loadedPhotoUri === photo.uri ? <PhotoCredits photo={photo} /> : null}
+  </View>;
+}
+function HostPlanCard({ onPress }: { onPress: () => void }) {
+  return <Pressable accessibilityRole="button" accessibilityLabel={t("Host something small")} onPress={onPress}
+    style={({ pressed }) => [styles.homeHostRow, pressed && styles.homePressed]}>
+    <View style={styles.homeHostIcon} accessible={false}>
+      <LeftIcon name="calendar" size={24} color={H.moss} /><View style={styles.homeHostPlus}><LeftIcon name="plus" size={13} color={H.moss} /></View>
+    </View>
+    <View style={styles.homeHostCopy}><Text style={styles.homePeopleTitle}>{t("Host something small")}</Text>
+      <Text style={styles.homeBody}>{t("Suggest a place and plan. Left reviews it before it appears nearby.")}</Text></View>
+    <LeftIcon name="arrow-up-right" size={20} color={H.moss} />
+  </Pressable>;
 }
 
-function resolveVenueName(value: string, nearbyVenues: RuntimeVenueCandidate[]) {
-  const trimmed = value.trim();
-  if (trimmed && trimmed !== "Current venue" && trimmed !== "Visibility off") {
-    return trimmed;
+export function HomeScreen(props: HomeProps) {
+  const formatVenueDistance = useDistanceFormatter();
+  const { fontScale } = useWindowDimensions();
+  const { venue, nearbyVenues, venueActivityById, experiences, feed, onOpenAllVenues, onOpenVenueDetail } = props;
+  const currentVenue = nearbyVenues.find(candidate => candidate.id === venue.venueId) ?? null;
+  const confirmed = !!currentVenue && resolveVenueConfidence(venue, nearbyVenues) === 'confirmed';
+  const nearby = nearbyVenues.filter(candidate => candidate.id !== currentVenue?.id);
+  // Bound requests on Home; the existing venue details flow loads the remaining places on demand.
+  const [photoLimit, setPhotoLimit] = useState(3);
+  const photoVenues = [...(currentVenue ? [currentVenue] : []), ...nearby.slice(0, photoLimit)];
+  const details = useHomePhotos(photoVenues);
+  const currentDetails = currentVenue ? details[currentVenue.id] : null;
+  const currentPhoto = currentDetails?.photo ?? currentVenue?.photo;
+  const currentPhotoUri = currentPhoto?.uri ?? currentDetails?.photoUrl ?? currentVenue?.photoUrl;
+  const [loadedHeroPhotoUri, setLoadedHeroPhotoUri] = useState<string | null>(null);
+  const hasRealHeroPhoto = !!currentPhotoUri && loadedHeroPhotoUri === currentPhotoUri;
+  const isVisible = props.sessionVisible && !props.venueHidden;
+  const [mapsError, setMapsError] = useState(false);
+  async function openMaps() {
+    if (!currentVenue) return;
+    setMapsError(false);
+    const placeId = currentDetails?.placeId ?? currentVenue.placeId;
+    const query = [currentVenue.name, currentDetails?.formattedAddress ?? currentVenue.formattedAddress].filter(Boolean).join(', ');
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}${placeId ? `&query_place_id=${encodeURIComponent(placeId)}` : ''}`;
+    try { await Linking.openURL(url); } catch { setMapsError(true); }
   }
-  const fallbackVenue = nearbyVenues.find((candidate) => candidate.name.trim());
-  return fallbackVenue?.name.trim() || "nearby venue";
-}
-
-function buildNearbyVenueCards(
-  nearbyVenues: RuntimeVenueCandidate[],
-  currentVenueName: string,
-  venueActivityById: Record<string, VenueActivityEnvelope>,
-) {
-  const alternatives = nearbyVenues.filter((venue) => venue.name !== currentVenueName);
-  const source = (alternatives.length ? alternatives : nearbyVenues).slice(0, 3);
-
-  return source.map((venue, index) => {
-    const venueType = venue.venueType ?? inferVenueTypeFromName(venue.name);
-    const activity = venueActivityById[venue.id] ?? null;
-    const signalColor = activity
-      ? getActivitySignalColor(activity.activity.displayText, activity.activity.score, T.textMuted)
-      : T.textMuted;
-
-    return {
-      id: venue.id,
-      venue,
-      name: venue.name,
-      venueType,
-      illustration: getVenueIllustrationSource(venue.name, venueType),
-      featured: index === 0,
-      peopleColor: T.textMuted,
-      energyLabel: activity ? activity.activity.displayText : "Live activity unavailable",
-      signalBars: activity?.activity.score != null ? getSignalBarsForScore(activity.activity.score) : null,
-      signalBarColor: signalColor,
-      statusColor: signalColor,
-      tags: [],
-      distanceLabel: venue.distanceMeters != null ? formatDistanceLabel(venue.distanceMeters) : "Distance unavailable",
-    };
-  });
-}
-
-function getVenueIllustrationSource(
-  venueName: string,
-  venueType: RuntimeVenueCandidate["venueType"] | undefined,
-) {
-  const resolvedVenueType = venueType ?? inferVenueTypeFromName(venueName);
-  if (resolvedVenueType === "cafe") return VENUE_ILLUSTRATIONS.cafe;
-  if (resolvedVenueType === "coworking_space") return VENUE_ILLUSTRATIONS.coworking;
-  if (resolvedVenueType === "library") return VENUE_ILLUSTRATIONS.library;
-  if (resolvedVenueType === "university") return VENUE_ILLUSTRATIONS.library;
-  const normalized = venueName.toLowerCase();
-  if (/restaurant|grill|steak|bistro|kitchen|diner|pizza|sushi|brasserie|eatery/.test(normalized)) return VENUE_ILLUSTRATIONS.restaurant;
-  if (/bar|pub|tap|cocktail|wine|brew|club|lounge/.test(normalized)) return VENUE_ILLUSTRATIONS.bar;
-  if (/market|hall|grocery|bazaar/.test(normalized)) return VENUE_ILLUSTRATIONS.market;
-  if (/park|garden|green|square/.test(normalized)) return VENUE_ILLUSTRATIONS.park;
-  return VENUE_ILLUSTRATIONS.generic;
-}
-
-function inferVenueTypeFromName(venueName: string) {
-  const normalized = venueName.toLowerCase();
-  if (/cafe|coffee|espresso|roastery/.test(normalized)) return "cafe" as const;
-  if (/library|books|reading/.test(normalized)) return "library" as const;
-  if (/cowork|co-working|workspace|office|studio|hub/.test(normalized)) return "coworking_space" as const;
-  if (/university|campus|college/.test(normalized)) return "university" as const;
-  return "other" as const;
-}
-
-function getSignalBarsForScore(score: number) {
-  const activeCount =
-    score <= 20 ? 1 :
-    score <= 40 ? 2 :
-    score <= 60 ? 3 :
-    score <= 80 ? 4 : 5;
-  return Array.from({ length: 5 }, (_, index) => index < activeCount);
-}
-
-function getActivitySignalColor(label: string, score: number | null | undefined, fallback: string) {
-  const normalizedLabel = label.toLowerCase();
-  if (/busy|lively|high/.test(normalizedLabel)) return T.visibilityOff;
-  if (/active|steady|warm/.test(normalizedLabel)) return T.visibilityOn;
-  if (/quiet|calm|low/.test(normalizedLabel)) return T.textMuted;
-  if (score == null) return fallback;
-  if (score > 70) return T.visibilityOff;
-  if (score > 30) return T.visibilityOn;
-  return T.textMuted;
-}
-
-function formatDistanceLabel(distanceMeters: number) {
-  if (distanceMeters < 1000) return `${Math.round(distanceMeters)} m away`;
-  const minutes = Math.max(1, Math.round(distanceMeters / 80));
-  return `${minutes} min walk`;
-}
-
-function formatExperienceMonth(value: string) {
-  return new Intl.DateTimeFormat(undefined, { month: "short" }).format(new Date(value)).toUpperCase();
-}
-
-function formatExperienceDay(value: string) {
-  return new Intl.DateTimeFormat(undefined, { day: "numeric" }).format(new Date(value));
-}
-
-function formatExperienceTime(value: string) {
-  return new Intl.DateTimeFormat(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" }).format(new Date(value));
+  return <View key={`home-type-${fontScale}`} style={styles.homePage}>
+    <StatusBar style="light" />
+    <View style={styles.homeHero}>
+      <View style={styles.homeHeroVisual}>
+        <VenuePhoto photo={currentPhoto} uri={currentDetails?.photoUrl ?? currentVenue?.photoUrl} venue={currentVenue} showFallbackLabel={false}
+          onPhotoLoad={() => setLoadedHeroPhotoUri(currentPhotoUri ?? null)} onPhotoError={() => setLoadedHeroPhotoUri(null)} />
+        <LinearGradient pointerEvents="none" colors={['rgba(23,24,18,0.05)', 'rgba(23,24,18,0.92)']}
+          style={styles.homePhoto} />
+        <View style={[styles.homeHeroCopy, { paddingTop: (props.topInset ?? 0) + 4 }]}>
+          <View style={styles.homeHeroBadge}><LeftIcon name={confirmed ? "check-circle" : "map-pin"} size={13} color={H.lime} />
+            <Text style={styles.homeHeroBadgeText}>{confirmed ? t("Confirmed venue") : props.guest ? t("Guest preview") : t("Find your place")}</Text></View>
+          <Text style={styles.homeHeroTitle}>{currentVenue?.name ?? t('Your next little discovery')}</Text>
+          <Text style={styles.homeHeroMeta}>{currentVenue ? t(venueCategory(currentVenue)) : t("Explore nearby places and confirm where you are.")}</Text>
+          <View style={[styles.homeHeroBottomRow, fontScale > 1.3 && { flexDirection: 'column', alignItems: 'stretch' }]}>
+            {currentVenue ? <View style={[styles.homeHeroLocation, fontScale > 1.3 && { flexBasis: 'auto', flexGrow: 0, flexShrink: 0, width: '100%' }]}>
+              {formatVenueDistance(currentVenue.distanceMeters) ? <Text style={styles.homeHeroMeta}>{formatVenueDistance(currentVenue.distanceMeters)}</Text> : null}
+              {(currentDetails?.formattedAddress ?? currentVenue.formattedAddress) ? <Text style={styles.homeHeroAddress}>{currentDetails?.formattedAddress ?? currentVenue.formattedAddress}</Text> : null}
+            </View> : null}
+          <Pressable accessibilityRole="button" onPress={currentVenue ? () => void openMaps() : onOpenAllVenues} style={styles.homeMaps}>
+            <LeftIcon name={currentVenue ? "map-pin" : "search"} size={15} color="#FFFFFF" />
+            <Text style={styles.homeMapsLabel}>{currentVenue ? t("Open in Maps") : t("Explore nearby places")}</Text><LeftIcon name="arrow-up-right" size={16} color="#FFFFFF" />
+          </Pressable>
+          </View>
+          {hasRealHeroPhoto ? <PhotoCredits photo={currentPhoto} onDark />
+            : <Text style={styles.homeHeroAddress}>{getVenuePhotoFallbackLabel(resolveVenuePhotoKind(currentVenue))}</Text>}
+        </View>
+      </View>
+    </View>
+    {mapsError ? <Text accessibilityRole="alert" style={styles.homeError}>{t("Maps could not open. Please try again.")}</Text> : null}
+    <View style={styles.homeBodyContent}>
+    <VisibilityCard guest={props.guest} visible={isVisible} confirmed={confirmed} pending={!!props.activationSubmitting || !!props.visibilityPending}
+      error={props.visibilityError} onAction={isVisible ? props.onGoPrivate : props.onBecomeVisible} onOpenSafety={props.onOpenSafety} />
+    <PeopleHereSection visible={isVisible} available={isVisible && feed.length > 0} onOpen={props.onOpenPeople} />
+    <View style={styles.homeSection}>
+      <SectionHeader title={t("Around you now")} onPress={onOpenAllVenues} />
+      {nearby.length ? <FlatList horizontal data={nearby} keyExtractor={item => item.id}
+        renderItem={({ item }) => <NearbyVenueCard venue={item} photo={details[item.id]?.photo ?? item.photo}
+          activity={venueActivityById[item.id]} onPress={() => onOpenVenueDetail(item)} />}
+        onEndReached={() => setPhotoLimit(limit => Math.min(limit + 3, nearby.length))}
+        onEndReachedThreshold={1} showsHorizontalScrollIndicator={false} snapToInterval={136} decelerationRate="fast"
+        initialNumToRender={3} maxToRenderPerBatch={3} windowSize={3}
+        style={styles.homeCarousel} contentContainerStyle={styles.homeCarouselContent} />
+        : <View style={styles.homeCard}>{props.nearbyLoading ? <ActivityIndicator color={H.moss} /> : null}
+          <Text style={styles.homePeopleTitle}>{props.nearbyLoading ? t("Finding nearby places…") : t("A place to begin")}</Text>
+          <Text style={styles.homeBody}>{props.guest ? t("Preview venue pages or sign in for location-based discovery.") : t("Explore nearby places to check location access and choose your current venue.")}</Text>
+        </View>}
+    </View>
+    <View style={styles.homeSection}><SectionHeader title={t("Bring people together")} /><HostPlanCard onPress={props.onCreateExperience} /></View>
+    {experiences.length ? <View style={styles.homeSection}><SectionHeader title={t("Something to join")} />
+      {experiences.slice(0, 2).map(experience => <Pressable key={experience.id} accessibilityRole="button"
+        onPress={() => props.onOpenExperience(experience)} style={styles.homeCard}>
+        <Text style={styles.homePeopleTitle}>{experience.title}</Text><Text style={styles.homeSeeAllText}>{t("View gathering →")}</Text>
+      </Pressable>)}
+    </View> : null}
+    </View>
+  </View>;
 }

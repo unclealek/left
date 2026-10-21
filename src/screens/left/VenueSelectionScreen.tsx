@@ -1,3 +1,5 @@
+import { t } from "../../features/preferences/translation-runtime";
+import { useDistanceFormatter } from "../../features/preferences/use-distance";
 import { Image, StyleSheet, Text, TextInput, View } from "react-native";
 import { styles, T } from "../../app/leftTheme";
 import { Card, GhostButton, PrimaryButton, SelectChip } from "../../components/left/ui";
@@ -57,7 +59,7 @@ function VenueFieldBlock({
         </View>
       </View>
       {children}
-      <Text style={styles.cardBody}>{helper}</Text>
+      <Text style={styles.cardBody}>{t(helper)}</Text>
     </View>
   );
 }
@@ -75,25 +77,24 @@ export function VenueSelectionScreen({
   onAddVenue: () => void;
   onBack: () => void;
 }) {
+  const formatDistanceLabel = useDistanceFormatter();
   return (
     <Card>
-      <Text style={styles.cardTitle}>Pick your{"\n"}venue.</Text>
-      <Text style={styles.cardBody}>
-        We found more than one nearby place. Choose the one you are actually in so presence and prompts stay accurate.
-      </Text>
+      <Text style={styles.cardTitle}>{t("Pick your")}{"\n"}{t("venue.")}</Text>
+      <Text style={styles.cardBody}>{t("We found more than one nearby place. Choose the one you are actually in so presence and prompts stay accurate.")}{" "}</Text>
       <View style={styles.venueChoiceList}>
         {venues.map((venue) => (
           <GhostButton
             key={venue.id}
-            label={`${venue.name}${venue.distanceMeters ? ` · ${Math.round(venue.distanceMeters)}m` : ""}`}
+            label={`${venue.name}${formatDistanceLabel(venue.distanceMeters) ? ` · ${formatDistanceLabel(venue.distanceMeters)}` : ""}`}
             onPress={() => onSelectVenue(venue.id)}
             selected={currentVenueId === venue.id}
             trailingIcon={currentVenueId === venue.id ? "check" : undefined}
           />
         ))}
       </View>
-      <GhostButton label="Can't find your venue? Add +" onPress={onAddVenue} />
-      <GhostButton label="Back" onPress={onBack} />
+      <GhostButton label={t("Can't find your venue? Add +")} onPress={onAddVenue} />
+      <GhostButton label={t("Back")} onPress={onBack} />
     </Card>
   );
 }
@@ -137,48 +138,46 @@ export function VenueAddScreen({
 }) {
   return (
     <Card>
-      <Text style={styles.cardTitle}>Add this{"\n"}venue.</Text>
-      <Text style={styles.cardBody}>
-        If the right place is missing, add it with enough detail for the next person standing nearby.
-      </Text>
-      <Text style={styles.settingsInfoBody}>Name and address are mandatory before this venue can be saved.</Text>
+      <Text style={styles.cardTitle}>{t("Add this")}{"\n"}{t("venue.")}</Text>
+      <Text style={styles.cardBody}>{t("If the right place is missing, add it with enough detail for the next person standing nearby.")}{" "}</Text>
+      <Text style={styles.settingsInfoBody}>{t("Name and address are mandatory before this venue can be saved.")}</Text>
       <VenueFieldBlock
-        label="Venue name"
+        label={t("Venue name")}
         tone="required"
-        helper="Use the real name people would recognize on arrival."
+        helper={t("Use the real name people would recognize on arrival.")}
       >
         <TextInput
           value={name}
           onChangeText={onChangeName}
-          placeholder="e.g. Workshop Cafe"
+          placeholder={t("e.g. Workshop Cafe")}
           placeholderTextColor={T.textMuted}
           style={styles.input}
         />
       </VenueFieldBlock>
       <VenueFieldBlock
-        label="Venue photo"
+        label={t("Venue photo")}
         tone="required"
-        helper="Add a clear photo of the venue, sign, or entrance. It will be public with this community venue."
+        helper={t("Add a clear photo of the venue, sign, or entrance. It will be public with this community venue.")}
       >
         {photoUri ? <Image source={{ uri: photoUri }} style={localStyles.photoPreview} /> : null}
-        <GhostButton label={photoUri ? "Replace photo" : "Add photo"} onPress={onPickPhoto} />
-        {photoUri ? <GhostButton label="Remove photo" onPress={onClearPhoto} /> : null}
+        <GhostButton label={photoUri ? t("Replace photo") : t("Add photo")} onPress={onPickPhoto} />
+        {photoUri ? <GhostButton label={t("Remove photo")} onPress={onClearPhoto} /> : null}
       </VenueFieldBlock>
       <VenueFieldBlock
-        label="Contributor credit"
+        label={t("Contributor credit")}
         tone="optional"
-        helper={showContributor ? `People will see “Added by: ${contributorName}”.` : "Your name will not be shown on this venue."}
+        helper={showContributor ? `People will see “Added by: ${contributorName}”.` : t("Your name will not be shown on this venue.")}
       >
         <GhostButton
-          label={showContributor ? "Show my name" : "Add anonymously"}
+          label={showContributor ? t("Show my name") : t("Add anonymously")}
           selected={showContributor}
           onPress={onToggleShowContributor}
         />
       </VenueFieldBlock>
       <VenueFieldBlock
-        label="Type"
+        label={t("Type")}
         tone="important"
-        helper="Pick the closest category so discovery and filtering stay accurate."
+        helper={t("Pick the closest category so discovery and filtering stay accurate.")}
       >
         <View style={styles.chipWrap}>
           {venueTypes.map((option) => (
@@ -192,34 +191,34 @@ export function VenueAddScreen({
         </View>
       </VenueFieldBlock>
       <VenueFieldBlock
-        label="Address or landmark"
+        label={t("Address or landmark")}
         tone="required"
-        helper="Add the key detail someone would need to find this exact place."
+        helper={t("Add the key detail someone would need to find this exact place.")}
       >
         <TextInput
           value={address}
           onChangeText={onChangeAddress}
-          placeholder="Street, mall level, corner, or entrance"
+          placeholder={t("Street, mall level, corner, or entrance")}
           placeholderTextColor={T.textMuted}
           style={styles.input}
         />
       </VenueFieldBlock>
       <VenueFieldBlock
-        label="Notes"
+        label={t("Notes")}
         tone="optional"
-        helper="Use notes for anything unusual like floor, entrance, or inside-a-building context."
+        helper={t("Use notes for anything unusual like floor, entrance, or inside-a-building context.")}
       >
         <TextInput
           value={notes}
           onChangeText={onChangeNotes}
-          placeholder="Optional context that helps distinguish the venue"
+          placeholder={t("Optional context that helps distinguish the venue")}
           placeholderTextColor={T.textMuted}
           style={[styles.input, styles.multilineInput]}
           multiline
         />
       </VenueFieldBlock>
-      <PrimaryButton label={submitting ? "Saving venue..." : "Save venue"} onPress={onSubmit} loading={submitting} />
-      <GhostButton label="Back to nearby venues" onPress={onBack} />
+      <PrimaryButton label={submitting ? t("Saving venue...") : t("Save venue")} onPress={onSubmit} loading={submitting} />
+      <GhostButton label={t("Back to nearby venues")} onPress={onBack} />
     </Card>
   );
 }

@@ -13,7 +13,7 @@ const REF = 'xrracivlxgedlzdcrfwx';
 const url = `https://${REF}.supabase.co`;
 const args = process.argv.slice(2);
 const paidPlace = args.find(arg => arg.startsWith('--paid-place-id='))?.split('=')[1];
-assert(args.every(arg => arg === '--allow-paid' || arg.startsWith('--paid-place-id=')), 'Unknown argument');
+assert(args.every(arg => arg === '--allow-paid' || arg === '--cache-only' || arg.startsWith('--paid-place-id=')), 'Unknown argument');
 assert(!paidPlace || (args.includes('--allow-paid') && /^[A-Za-z0-9_-]{5,255}$/.test(paidPlace)), 'Paid mode requires --allow-paid and a valid --paid-place-id');
 assert.equal(readFileSync(new URL('../supabase/.temp/project-ref', import.meta.url), 'utf8').trim(), REF, 'Refusing any project other than left-staging');
 function cli(args) {
@@ -85,6 +85,8 @@ try {
   assert(!('claim_token' in pending.data));
   pass('Deployed authenticated HTTP returns pending cache without internal claim token');
 
+  // Cache verification can run independently of Realtime availability.
+  if (!args.includes('--cache-only')) {
   const rawEvent = waiter('Raw Realtime update', 60_000);
   waits.push(rawEvent);
   const subscribed = waiter('Realtime subscription');
@@ -119,6 +121,27 @@ try {
   assert.equal(ok(await admin.from('rate_limits').select('count').eq('user_id', userId).eq('action', 'popular_times_trigger'), 'Read fixture quota').length, 0);
   pass('Eight concurrent HTTP cache reads succeed without consuming trigger quota');
   stopWatch(); stopWatch = undefined;
+  }
+
+  // A fixture has no canonical venue: any cache miss fails before a paid claim.
+  const histogram = { monday: [{ hour: 12, busyness: 60 }] };
+  for (const expires_at of ['2020-01-01T00:00:00.000Z', null]) {
+    for (const has_data of [true, false]) {
+      const popular_times = has_data ? histogram : null;
+      ok(await admin.from('venue_popular_times').update({ status: 'ready', has_data, popular_times, expires_at })
+        .eq('place_id', fixturePlace), 'Set indefinite cache fixture');
+      const response = await http(body(fixturePlace));
+      assert.equal(response.status, 200);
+      assert.equal(response.data.status, 'ready');
+      assert.equal(response.data.has_data, has_data);
+      assert.deepEqual(response.data.popular_times, popular_times);
+      if (expires_at === null) assert.equal(response.data.expires_at, null);
+      else assert.equal(Date.parse(response.data.expires_at), Date.parse(expires_at));
+    }
+  }
+  assert.equal(ok(await admin.from('rate_limits').select('count').eq('user_id', userId)
+    .eq('action', 'popular_times_trigger'), 'Check indefinite cache quota').length, 0);
+  pass('Legacy expired and null-expiry HTTP cache results reused, with and without data, without lookup quota');
 
   if (paidPlace) {
     assert(cli(['secrets', 'list']).some(secret => secret.name === 'APIFY_TOKEN'), 'APIFY_TOKEN missing in staging');

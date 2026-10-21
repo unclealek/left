@@ -141,10 +141,6 @@ export const activationStyles = {
     lineHeight: 19,
     fontFamily: T.fontBodyBold,
   },
-  activationHintOptional: {
-    color: T.textSecondary,
-    fontFamily: T.fontBody,
-  },
   activationHintEditor: {
     borderRadius: 18,
     borderWidth: 1,
@@ -347,10 +343,6 @@ export const activationStyles = {
   activationLiveSummaryCopy: {
     flex: 1,
     gap: 2,
-  },
-  activationLiveSummaryDivider: {
-    width: 1,
-    backgroundColor: T.border,
   },
   activationLiveSummaryLabel: {
     color: T.textMuted,

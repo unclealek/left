@@ -1,12 +1,11 @@
+import { t } from "../features/preferences/translation-runtime";
 import type { AppUser, AuthProvider, AvatarStyle } from "../types/left-domain";
 
 export type Screen =
   | "loading"
-  | "legal"
   | "preauth"
   | "auth"
   | "onboarding-name"
-  | "onboarding-avatar"
   | "onboarding-legal"
   | "onboarding-notifications"
   | "onboarding-location"
@@ -91,7 +90,7 @@ export const NATIVE_AUTH_REDIRECT = "left://auth/callback";
 export const SESSION_NAV_SCREENS: Screen[] = ["home", "venue", "saved", "activate", "feed", "me", "profile", "approach", "safety", "settings"];
 
 export function formatIntent(intent: string) {
-  return intent.replaceAll("_", " ");
+  return t(intent.replaceAll("_", " "));
 }
 
 export function formatRemaining(value: string) {

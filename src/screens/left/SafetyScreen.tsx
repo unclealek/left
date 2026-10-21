@@ -1,3 +1,4 @@
+import { t } from "../../features/preferences/translation-runtime";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { T } from "../../app/leftTheme";
 import { ScreenHeader } from "../../components/left/navigation";
@@ -69,14 +70,14 @@ export function SafetyScreen({
       showsVerticalScrollIndicator={false}
     >
       <ScreenHeader
-        title="Privacy and safety"
-        subtitle="Choose when, where, and how you can be discovered."
+        title={t("Privacy and safety")}
+        subtitle={t("Choose when, where, and how you can be discovered.")}
         onBack={onBack}
         variant="utility"
       />
 
       <View style={screenStyles.card}>
-        <Text style={screenStyles.sectionTitle}>Current visibility</Text>
+        <Text style={screenStyles.sectionTitle}>{t("Current visibility")}</Text>
         <View style={screenStyles.statusPill}>
           <View
             style={[
@@ -85,13 +86,13 @@ export function SafetyScreen({
             ]}
           />
           <Text style={screenStyles.statusPillText}>
-            {sessionVisible ? "Visible nearby" : "Not currently visible"}
+            {sessionVisible ? t("Visible nearby") : t("Not currently visible")}
           </Text>
         </View>
         <Text style={screenStyles.bodyText}>
           {sessionVisible
-            ? "You’re discoverable nearby only for the moment you chose."
-            : "You’re private until you choose to be discovered."}
+            ? t("You’re discoverable nearby only for the moment you chose.")
+            : t("You’re private until you choose to be discovered.")}
         </Text>
 
         <View style={screenStyles.divider} />
@@ -113,9 +114,9 @@ export function SafetyScreen({
           <Text style={screenStyles.primaryActionText}>
             {sessionVisible
               ? visibilityAction === "pause"
-                ? "Pausing..."
-                : "Pause visibility"
-              : "Go visible"}
+                ? t("Pausing...")
+                : t("Pause visibility")
+              : t("Go visible")}
           </Text>
         </Pressable>
 
@@ -129,20 +130,18 @@ export function SafetyScreen({
           ]}
         >
           <Text style={screenStyles.secondaryActionText}>
-            {visibilityAction === "end" ? "Ending..." : "End session"}
+            {visibilityAction === "end" ? t("Ending...") : t("End session")}
           </Text>
         </Pressable>
       </View>
 
       <View style={screenStyles.card}>
-        <Text style={screenStyles.sectionTitle}>Venue privacy</Text>
-        <Text style={screenStyles.bodyText}>
-          Choose where you can be seen and where alerts are allowed.
-        </Text>
+        <Text style={screenStyles.sectionTitle}>{t("Venue privacy")}</Text>
+        <Text style={screenStyles.bodyText}>{t("Choose where you can be seen and where alerts are allowed.")}{" "}</Text>
 
         <RowAction
           icon="shield"
-          label={venueHidden ? "Venue already hidden" : "Hide this venue"}
+          label={venueHidden ? t("Venue already hidden") : t("Hide this venue")}
           onPress={confirmHideVenue}
           disabled={!!venueAction || venueHidden}
         />
@@ -150,10 +149,10 @@ export function SafetyScreen({
           icon="bell"
           label={
             venueAction === "muting"
-              ? "Muting alerts here"
+              ? t("Muting alerts here")
               : venueMuted
-                ? "Alerts already muted here"
-                : "Mute alerts here"
+                ? t("Alerts already muted here")
+                : t("Mute alerts here")
           }
           onPress={onMuteVenue}
           disabled={!!venueAction || venueMuted}
@@ -168,7 +167,7 @@ export function SafetyScreen({
                 : screenStyles.inlineMessageError,
             ]}
           >
-            {venueMessage.text}
+            {t(venueMessage.text)}
           </Text>
         ) : null}
 
@@ -176,14 +175,12 @@ export function SafetyScreen({
           <View style={screenStyles.privateVenueIcon}>
             <LeftIcon name="lock" size={16} color={T.white} />
           </View>
-          <Text style={screenStyles.privateVenueText}>
-            Your venue stays private until you're visible.
-          </Text>
+          <Text style={screenStyles.privateVenueText}>{t("Your venue stays private until you're visible.")}{" "}</Text>
         </View>
       </View>
 
       <View style={screenStyles.card}>
-        <Text style={screenStyles.sectionTitle}>Hidden & muted venues</Text>
+        <Text style={screenStyles.sectionTitle}>{t("Hidden & muted venues")}</Text>
         {venuePreferenceMessage ? (
           <Text
             style={[
@@ -193,7 +190,7 @@ export function SafetyScreen({
                 : screenStyles.inlineMessageError,
             ]}
           >
-            {venuePreferenceMessage.text}
+            {t(venuePreferenceMessage.text)}
           </Text>
         ) : null}
 
@@ -202,10 +199,8 @@ export function SafetyScreen({
             <View style={screenStyles.emptyIconBubble}>
               <LeftIcon name="archive" size={24} color={T.primary} />
             </View>
-            <Text style={screenStyles.emptyTitle}>No hidden or muted venues yet.</Text>
-            <Text style={screenStyles.emptyBody}>
-              Places you hide or mute will appear here.
-            </Text>
+            <Text style={screenStyles.emptyTitle}>{t("No hidden or muted venues yet.")}</Text>
+            <Text style={screenStyles.emptyBody}>{t("Places you hide or mute will appear here.")}{" "}</Text>
           </View>
         ) : (
           <View style={screenStyles.preferenceList}>
@@ -227,23 +222,23 @@ export function SafetyScreen({
                     <Text style={screenStyles.preferenceVenueName}>{preference.venueName}</Text>
                     <Text style={screenStyles.preferenceMeta}>
                       {preference.hidden && preference.muted
-                        ? "Hidden and alerts muted"
+                        ? t("Hidden and alerts muted")
                         : preference.hidden
-                          ? "Hidden venue"
-                          : "Alerts muted"}
+                          ? t("Hidden venue")
+                          : t("Alerts muted")}
                     </Text>
                   </View>
                   <View style={screenStyles.preferenceActions}>
                     {preference.hidden ? (
                       <MiniActionButton
-                        label={activeAction === "unhide" ? "Unhiding..." : "Unhide"}
+                        label={activeAction === "unhide" ? t("Unhiding...") : t("Unhide")}
                         onPress={() => onClearVenueHidden(preference.venueId, preference.venueName)}
                         disabled={!!activeAction}
                       />
                     ) : null}
                     {preference.muted ? (
                       <MiniActionButton
-                        label={activeAction === "unmute" ? "Turning on..." : "Unmute"}
+                        label={activeAction === "unmute" ? t("Turning on...") : t("Unmute")}
                         onPress={() => onClearVenueMuted(preference.venueId, preference.venueName)}
                         disabled={!!activeAction}
                       />
@@ -255,7 +250,7 @@ export function SafetyScreen({
           </View>
         )}
 
-        <Text style={screenStyles.footerMeta}>{locationStatus}</Text>
+        <Text style={screenStyles.footerMeta}>{t(locationStatus)}</Text>
       </View>
     </ScrollView>
   );

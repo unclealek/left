@@ -1,4 +1,10 @@
-# First TestFlight build
+# TestFlight readiness
+
+## Current candidate — October 21, 2026
+
+Version 0.1.0 (8), runtime 1.0.1, targets staging. See [release record](releases/2026-10-21-testflight-build-8.md) for current checks, submission status and limitations. Older preparation notes below are historical, not current build status.
+
+# Historical first-build preparation
 
 ## Confirmed October 7, 2026
 

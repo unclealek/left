@@ -25,6 +25,9 @@ begin
   if before_runs <> 1 then raise exception 'duplicate consumed budget'; end if;
   update public.venue_popular_times set status='ready', expires_at=now()-interval '1 second' where place_id='test_budget_fixture';
   result := public.claim_popular_times_budgeted('test_budget_fixture',venue,'google_scrape',test_user);
+  if (result->>'claimed')::boolean or coalesce((result->>'limited')::boolean,false) then raise exception 'saved cache was not reused at budget'; end if;
+  update public.venue_popular_times set status='failed', retry_at=now()-interval '1 second' where place_id='test_budget_fixture';
+  result := public.claim_popular_times_budgeted('test_budget_fixture',venue,'google_scrape',test_user);
   if (result->>'claimed')::boolean or not (result->>'limited')::boolean then raise exception 'daily budget bypassed'; end if;
   update public.venue_popular_times set source='own_telemetry',status='pending',pending_until=now()-interval '1 second' where place_id='test_budget_fixture';
   result := public.claim_popular_times_budgeted('test_budget_fixture',venue,'google_scrape',test_user);

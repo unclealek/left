@@ -38,3 +38,8 @@ it("rejects a stale UI account", async () => {
   expect(await submitIdentityRemovalRequest(user)).toBe("failed");
   expect(m.apple).not.toHaveBeenCalled();
 });
+
+it("keeps a saved request retryable when processing throws", async () => {
+  m.invoke.mockRejectedValue(new Error("offline"));
+  expect(await submitIdentityRemovalRequest(user)).toBe("queued");
+});

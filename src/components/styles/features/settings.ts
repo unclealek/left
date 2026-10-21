@@ -4,12 +4,6 @@ export const settingsStyles = {
   settingsPage: {
     gap: 18,
   },
-  settingsTopBar: {
-    minHeight: 48,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
   settingsGroupTitle: {
     color: T.textPrimary,
     fontSize: 15,
@@ -63,6 +57,16 @@ export const settingsStyles = {
     fontSize: 12,
     lineHeight: 17,
   },
+  settingsMenuDestructiveLabel: {
+    color: T.dangerText,
+  },
+  settingsMenuDisabled: {
+    opacity: 0.55,
+  },
+  settingsDeletionFeedback: {
+    paddingHorizontal: 18,
+    paddingBottom: 16,
+  },
   settingsMenuValue: {
     color: T.textSecondary,
     fontSize: 13,
@@ -84,6 +88,27 @@ export const settingsStyles = {
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
+  },
+  settingsSessionActions: {
+    marginTop: 12,
+    gap: 16,
+  },
+  settingsSessionAction: {
+    minHeight: 60,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: T.border,
+  },
+  settingsSessionActionLabel: {
+    color: T.textPrimary,
+    fontSize: 15,
+    lineHeight: 22,
+    fontFamily: T.fontBody,
+    textAlign: "center",
   },
   settingsActionSection: {
     gap: 10,

@@ -1,3 +1,4 @@
+import { t } from "../../features/preferences/translation-runtime";
 import { Text, TextInput, View } from "react-native";
 import type { NearbyFeedItem, ReportCategory } from "../../types/left-domain";
 import { formatIntent } from "../../app/leftConfig";
@@ -74,7 +75,7 @@ export function ProfileScreen({
   return (
     <View>
       <View style={styles.navRow}>
-        <BackNavButton label="Back to nearby" onPress={onBack} />
+        <BackNavButton label={t("Back to nearby")} onPress={onBack} />
         <SafetyActionButton onPress={onOpenSafety} compact />
       </View>
       <View style={styles.profileHeroBlock}>
@@ -87,39 +88,39 @@ export function ProfileScreen({
         </View>
       </View>
       <View style={styles.profileSections}>
-        <InfoBlock label="Hint">
+        <InfoBlock label={t("Hint")}>
           <Text style={styles.infoText}>{item.hintText ?? "No hint set."}</Text>
         </InfoBlock>
         {item.offering ? (
-          <InfoBlock label="What I bring">
+          <InfoBlock label={t("What I bring")}>
             <Text style={styles.infoText}>{item.offering}</Text>
           </InfoBlock>
         ) : null}
         {item.conversationStyle ? (
-          <InfoBlock label="Conversation style">
+          <InfoBlock label={t("Conversation style")}>
             <Text style={styles.infoText}>{item.conversationStyle}</Text>
           </InfoBlock>
         ) : null}
         {sharedInterests.length > 0 ? (
-          <InfoBlock label="Shared alignment">
+          <InfoBlock label={t("Shared alignment")}>
             <Text style={styles.infoText}>{`You’re both drawn to ${sharedInterests.join(" and ")}.`}</Text>
           </InfoBlock>
         ) : null}
       </View>
       <View style={styles.profileActions}>
-        <PrimaryButton label="I'm going over" onPress={onApproach} trailingIcon="arrow-up-right" />
+        <PrimaryButton label={t("I'm going over")} onPress={onApproach} trailingIcon="arrow-up-right" />
       </View>
       <View style={styles.profileDestructive}>
-        <Text style={styles.profileActionHint}>Need space? These controls update your nearby feed right away.</Text>
+        <Text style={styles.profileActionHint}>{t("Need space? These controls update your nearby feed right away.")}</Text>
         <GhostButton
-          label={profileAction === "hide" ? "Hiding..." : "Hide this person"}
+          label={profileAction === "hide" ? t("Hiding...") : t("Hide this person")}
           onPress={confirmHide}
           destructive
           disabled={!!profileAction && profileAction !== "hide"}
           loading={profileAction === "hide"}
         />
         <GhostButton
-          label={profileAction === "block" ? "Blocking..." : "Block"}
+          label={profileAction === "block" ? t("Blocking...") : t("Block")}
           onPress={confirmBlock}
           destructive
           disabled={!!profileAction && profileAction !== "block"}
@@ -127,8 +128,8 @@ export function ProfileScreen({
         />
       </View>
       <View style={styles.reportPanel}>
-        <Text style={styles.reportPanelTitle}>Report {item.firstName}</Text>
-        <Text style={styles.reportPanelHint}>Use this for safety issues, harassment, spam, or impersonation.</Text>
+        <Text style={styles.reportPanelTitle}>{t("Report")}{" "}{item.firstName}</Text>
+        <Text style={styles.reportPanelHint}>{t("Use this for safety issues, harassment, spam, or impersonation.")}</Text>
         <View style={styles.reportChipWrap}>
           {reportCategories.map((category) => (
             <SelectChip
@@ -142,13 +143,13 @@ export function ProfileScreen({
         <TextInput
           value={reportNotes}
           onChangeText={onChangeReportNotes}
-          placeholder="Add optional context"
+          placeholder={t("Add optional context")}
           placeholderTextColor={T.textMuted}
           style={[styles.input, styles.multilineInput]}
           multiline
         />
         <GhostButton
-          label={reportSubmitting ? "Sending..." : "Send report"}
+          label={reportSubmitting ? t("Sending...") : t("Send report")}
           onPress={onReport}
           destructive
           loading={reportSubmitting}

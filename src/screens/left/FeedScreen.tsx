@@ -1,3 +1,4 @@
+import { t } from "../../features/preferences/translation-runtime";
 import { Pressable, Text, View } from "react-native";
 import type { NearbyFeedItem, VenueContextSummary } from "../../types/left-domain";
 import { formatIntent, formatRemaining } from "../../app/leftConfig";
@@ -25,9 +26,9 @@ export function FeedScreen({
     <View style={styles.feedPage}>
       <View style={styles.feedHead}>
         <View style={styles.feedHeadCopy}>
-          <Text style={styles.feedTitle}>People nearby</Text>
+          <Text style={styles.feedTitle}>{t("People nearby")}</Text>
           <Text style={styles.feedSubtitle}>
-            {sessionVisible ? "People choosing to be visible at this venue." : "Go visible to see people at your venue."}
+            {sessionVisible ? t("People choosing to be visible at this venue.") : t("Go visible to see people at your venue.")}
           </Text>
         </View>
         <SafetyActionButton onPress={onOpenSafety} compact />
@@ -43,11 +44,11 @@ export function FeedScreen({
           <LeftIcon name={sessionVisible ? "map-pin" : "lock"} size={18} color={sessionVisible ? T.venueAccent : T.textSecondary} active={sessionVisible} />
         </View>
         <View style={styles.feedVenueCopy}>
-          <Text numberOfLines={1} style={styles.feedHeadVenue}>{sessionVisible ? venue.venueName : "Venue private"}</Text>
+          <Text numberOfLines={1} style={styles.feedHeadVenue}>{sessionVisible ? venue.venueName : t("Venue private")}</Text>
           <View style={styles.feedCountRow}>
             <View style={[styles.feedCountDot, sessionVisible && styles.feedCountDotVisible]} />
             <Text style={styles.feedHeadCount}>
-              {sessionVisible ? "Live social signals are private and aggregated" : "Your venue stays private until visible"}
+              {sessionVisible ? t("Live social signals are private and aggregated") : t("Your venue stays private until visible")}
             </Text>
           </View>
         </View>
@@ -59,11 +60,11 @@ export function FeedScreen({
           <View style={styles.emptyGlyphWrap}>
             <LeftIcon name={sessionVisible ? "users" : "lock"} size={28} color={T.venueAccent} />
           </View>
-          <Text style={styles.emptyTitle}>{sessionVisible ? "No one else is visible yet" : "Your nearby feed is private"}</Text>
+          <Text style={styles.emptyTitle}>{sessionVisible ? t("No one else is visible yet") : t("Your nearby feed is private")}</Text>
           <Text style={styles.emptyText}>
             {sessionVisible
-              ? "No shared profiles are available yet. Venue energy and vibes update as people go visible."
-              : "Start a presence when you are ready to see and be seen by people at your venue."}
+              ? t("No shared profiles are available yet. Venue energy and vibes update as people go visible.")
+              : t("Start a presence when you are ready to see and be seen by people at your venue.")}
           </Text>
         </View>
       ) : (
@@ -116,7 +117,7 @@ function PersonCard({ item, onPress }: { item: NearbyFeedItem; onPress: () => vo
           <Text style={styles.feedVibeText}>{item.primaryVibe ?? "Open"}</Text>
         </View>
         <View style={styles.feedProfileAction}>
-          <Text style={styles.feedProfileActionText}>View profile</Text>
+          <Text style={styles.feedProfileActionText}>{t("View profile")}</Text>
           <LeftIcon name="chevron-right" size={16} color={T.textPrimary} />
         </View>
       </View>

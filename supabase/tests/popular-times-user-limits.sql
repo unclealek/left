@@ -28,8 +28,16 @@ begin
  if result->'row'->>'status'<>'ready' then raise exception 'cache hit limited'; end if;
  update venue_popular_times set expires_at=now()-interval '1 second' where place_id='quota_test_1';
  result:=public.claim_popular_times_budgeted('quota_test_1',v,'google_scrape',u);
- if result->>'limit_scope'<>'user' then raise exception 'expired refresh bypassed quota'; end if;
- if (select status from venue_popular_times where place_id='quota_test_1')<>'ready' then raise exception 'denial mutated existing cache'; end if;
+ if (result->>'claimed')::boolean or coalesce((result->>'limited')::boolean,false) or result->'row'->>'status'<>'ready' then raise exception 'legacy expired cache was not reused'; end if;
+ update venue_popular_times set expires_at=null where place_id='quota_test_1';
+ result:=public.claim_popular_times_budgeted('quota_test_1',v,'google_scrape',u);
+ if (result->>'claimed')::boolean or coalesce((result->>'limited')::boolean,false) then raise exception 'indefinite cache was not reused'; end if;
+ select count into n from rate_limits where user_id=u;
+ if n<>10 then raise exception 'cache reuse consumed quota'; end if;
+ -- Failed rows can still retry, subject to the original quota and budget.
+ update venue_popular_times set status='failed',retry_at=now()-interval '1 second' where place_id='quota_test_1';
+ result:=public.claim_popular_times_budgeted('quota_test_1',v,'google_scrape',u);
+ if result->>'limit_scope'<>'user' then raise exception 'failed retry bypassed quota'; end if;
  update rate_limits set window_start=now()-interval '1 hour' where user_id=u;
  result:=public.claim_popular_times_budgeted('quota_test_1',v,'google_scrape',u);
  if not (result->>'claimed')::boolean then raise exception 'window failed to reset'; end if;
@@ -37,7 +45,7 @@ begin
  if n<>1 then raise exception 'reset count wrong'; end if;
  update popular_times_run_budget set daily_limit=0 where id;
  select id into v from venues where google_place_id='quota_test_2';
- update venue_popular_times set status='ready',expires_at=now()-interval '1 second' where place_id='quota_test_2';
+ update venue_popular_times set status='failed',retry_at=now()-interval '1 second' where place_id='quota_test_2';
  result:=public.claim_popular_times_budgeted('quota_test_2',v,'google_scrape',u);
  if result->>'limit_scope'<>'global' then raise exception 'global cap bypassed'; end if;
  select count into n from rate_limits where user_id=u;

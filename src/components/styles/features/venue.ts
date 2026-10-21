@@ -282,24 +282,6 @@ export const venueRadarStyles = StyleSheet.create({
     borderColor: T.borderBlackSoft,
     transform: [{ rotate: "32deg" }],
   },
-  ringOuter: {
-    position: "absolute",
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: T.border,
-  },
-  ringMid: {
-    position: "absolute",
-    width: 204,
-    height: 204,
-    borderRadius: 102,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: T.border,
-  },
   ringInner: {
     position: "absolute",
     width: 132,
@@ -311,16 +293,6 @@ export const venueRadarStyles = StyleSheet.create({
   },
   ringInnerVisible: {
     borderColor: T.visibilityOnSoft,
-  },
-  centerVenueGlow: {
-    position: "absolute",
-    width: 146,
-    height: 146,
-    borderRadius: 73,
-    backgroundColor: T.visibilityOffSoft,
-  },
-  centerVenueGlowVisible: {
-    backgroundColor: T.visibilityOnSoft,
   },
   centerVenueBoundary: {
     position: "absolute",

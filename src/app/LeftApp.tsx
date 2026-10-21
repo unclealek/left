@@ -1,12 +1,18 @@
+import { resolveActivationVenue } from "./activation-venue";
+import { t } from "../features/preferences/translation-runtime";
+import { isUuid } from "../lib/validation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AppState, BackHandler, Linking, Platform, RefreshControl, ScrollView, Text, View } from "react-native";
+import { AppState, BackHandler, Linking, Platform, RefreshControl, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import * as Notifications from "expo-notifications";
 import * as ImagePicker from "expo-image-picker";
 import type { Session } from "@supabase/supabase-js";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { VenueBackground } from "../components/left/VenueBackground";
+import { selectVenueBackground } from "../components/left/venue-background-model";
 import { BackgroundWaveLayer } from "../components/left/BackgroundWaveLayer";
 import { LeftRefreshIndicator } from "../components/left/LeftRefreshIndicator";
 import { SessionFooterNav } from "../components/left/navigation";
+import { getTabBarContentInset } from "../components/left/tab-bar-model";
 import { AppDialog } from "../components/left/ui";
 import {
   SESSION_NAV_SCREENS,
@@ -20,6 +26,9 @@ import {
 import { styles } from "./leftTheme";
 import { createForegroundVenueRefresh, resolveRuntimeVenueSummary } from "./venue-runtime";
 import { supabase } from "../lib/supabase";
+import { posthog, resetAnalyticsIdentity } from "../lib/posthog";
+import { posthogLog } from "../lib/posthog-logger";
+import { usePostHogScreen } from "../lib/use-posthog-screen";
 import { signOutSafely } from "../features/auth/sign-out";
 import { endOwnPresenceBeforeSignOut } from "../features/presence/presence-service";
 import { stopLocationForAccount } from "../features/location/location-service";
@@ -172,7 +181,7 @@ import {
   startGoogleAuthSession,
   UnsupportedAuthProviderError,
 } from "../features/auth/auth-service";
-import { getRemainingSeconds, hasExpired } from "../features/lifecycle/session-lifecycle";
+import { completePresenceEnd, getRemainingSeconds, hasExpired } from "../features/lifecycle/session-lifecycle";
 
 function logAuthDebug(step: string, payload?: Record<string, unknown>) {
   if (payload) {
@@ -186,9 +195,6 @@ function normalizeVenueName(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-function isUuid(value: string | null | undefined): value is string {
-  return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-}
 
 function describeSaveError(error: unknown, fallback: string) {
   const record = error && typeof error === "object" ? error as { message?: string; code?: string } : null;
@@ -259,13 +265,17 @@ const PRIVATE_VENUE_SUMMARY: VenueContextSummary = {
   pulseCopy: "Your venue stays private until you become visible. Turn on visibility to detect your venue and unlock nearby people.",
 };
 
-export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,startAtAuth=false}:{onBrowseGuest?:()=>void;sharedGatheringId?:string|null;sharedLinkRevision?:number;startAtAuth?:boolean} = {}) {
+export function LeftApp({sharedGatheringId,sharedLinkRevision=0,startAtAuth=false}:{sharedGatheringId?:string|null;sharedLinkRevision?:number;startAtAuth?:boolean} = {}) {
   const deliveredGatheringRef = useRef<string|null>(null);
   const localAccountIdRef = useRef<string | null>(null);
+  const identifiedUserIdRef = useRef<string | null>(null);
   const sessionSyncEpochRef = useRef(0);
   const signOutInProgressRef = useRef(false);
   const insets = useSafeAreaInsets();
+  const { fontScale } = useWindowDimensions();
+  const [footerHeight, setFooterHeight] = useState(0);
   const [screen, setScreen] = useState<Screen>("loading");
+  usePostHogScreen(screen);
   const [activationReturnScreen, setActivationReturnScreen] = useState<Screen>("home");
   const [safetyReturnScreen, setSafetyReturnScreen] = useState<Screen>("home");
   const [venueFooterDestination, setVenueFooterDestination] = useState<"nearby" | "session">("session");
@@ -301,7 +311,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
   const [authError, setAuthError] = useState<string | null>(null);
   const [authBusy, setAuthBusy] = useState(false);
   const [settingsSaveState, setSettingsSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [deletionRequestState, setDeletionRequestState] = useState<"idle" | "submitting" | "submitted" | "error">("idle");
+  const [deletionRequestState, setDeletionRequestState] = useState<"idle" | "submitting" | "pending" | "error">("idle");
   const [venuePreferences, setVenuePreferences] = useState<Record<string, VenuePreference>>({});
   const [venuePreferenceAction, setVenuePreferenceAction] = useState<{
     venueId: string;
@@ -319,6 +329,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
   const preAuthSeenRef = useRef(false);
   const preAuthReadyRef = useRef(false);
   const activationAttemptRef = useRef(false);
+  const resumeActivationAfterVenuePickRef = useRef(false);
   const foregroundVenueRefreshRef = useRef(createForegroundVenueRefresh());
   const [nearbyVenueOptions, setNearbyVenueOptions] = useState<RuntimeVenueCandidate[]>([]);
   const [lastKnownCoords, setLastKnownCoords] = useState<RuntimeCoords | null>(null);
@@ -354,6 +365,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [activationSubmitting, setActivationSubmitting] = useState(false);
   const [profileAction, setProfileAction] = useState<"hide" | "block" | null>(null);
+  const [visibilityError, setVisibilityError] = useState<string | null>(null);
   const [visibilityAction, setVisibilityAction] = useState<"pause" | "end" | null>(null);
 
   useEffect(() => {
@@ -433,7 +445,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
 
   function showToast(message: string) {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToastMessage(message);
+    setToastMessage(t(message));
     toastTimerRef.current = setTimeout(() => {
       setToastMessage(null);
       toastTimerRef.current = null;
@@ -442,9 +454,9 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
 
   function showDialog(title: string, message: string, actions?: DialogAction[]) {
     setDialogState({
-      title,
-      message,
-      actions: actions?.length ? actions : [{ label: "OK", variant: "primary" }],
+      title: t(title),
+      message: t(message),
+      actions: actions?.length ? actions.map(action => ({ ...action, label: t(action.label) })) : [{ label: "OK", variant: "primary" }],
     });
   }
 
@@ -453,6 +465,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
   }
 
   function openActivationFrom(origin: Screen) {
+    resumeActivationAfterVenuePickRef.current = false;
     setActivationReturnScreen(origin);
     setScreen("activate");
   }
@@ -618,6 +631,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
         return;
       }
       setSavedVenues(await fetchSavedVenues(user.id));
+      posthog?.capture(isSaved ? "venue_removed" : "venue_saved");
       showToast(isSaved ? "Removed from saved places" : "Place saved");
     } finally {
       setSavingVenueId(null);
@@ -664,6 +678,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
         : experience;
       setExperiences((current) => current.map(updateExperience));
       setSelectedExperience((current) => current ? updateExperience(current) : null);
+      posthog?.capture("gathering_attendance_updated", { attending: nextAttending });
       showToast(nextAttending ? "You’re going" : "Plans updated");
     } finally {
       setAttendanceBusy(false);
@@ -937,6 +952,9 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
         provider: session?.user.app_metadata.provider ?? null,
       });
       await syncSession(session, true);
+      posthogLog.info("session bootstrap completed", {
+        session_restored: Boolean(session),
+      });
     } catch (error) {
       console.warn("[auth] bootstrap failed", error);
       setBootError("Check your connection, then try again.");
@@ -1366,12 +1384,17 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
       setVenueDraftType("other");
       showDialog(
         "Add this venue first",
-        `${chosenVenue.name} was detected nearby, but it is not in Left's venue database yet. Add it once before you can go visible there.`,
+        t("{venue} was detected nearby, but it is not in Left's venue database yet. Add it once before you can go visible there.", { venue: chosenVenue.name }),
         [
           { label: "Cancel", onPress: () => setScreen("venue-select") },
           { label: "Add venue", variant: "primary", onPress: () => setScreen("venue-add") },
         ],
       );
+      return;
+    }
+    if (resumeActivationAfterVenuePickRef.current && !sessionVisible) {
+      resumeActivationAfterVenuePickRef.current = false;
+      await activatePresence();
       return;
     }
     setScreen(sessionVisible ? "venue" : "activate");
@@ -1410,7 +1433,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
     if (duplicateVenue) {
       setVenueDraftSubmitting(false);
       await confirmVenueSelection(duplicateVenue.id);
-      showDialog("Venue already exists", `${duplicateVenue.name} is already pinned nearby, so Left reused it instead of creating a duplicate.`);
+      showDialog("Venue already exists", t("{venue} is already pinned nearby, so Left reused it instead of creating a duplicate.", { venue: duplicateVenue.name }));
       return;
     }
 
@@ -1444,8 +1467,8 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
     showDialog(
       submittedVenue.created ? "Venue added" : "Venue already exists",
       submittedVenue.created
-        ? `${submittedVenue.name} is now available to people nearby.`
-        : `${submittedVenue.name} was already in the community venue list, so Left reused it instead of creating a duplicate.`,
+        ? t("{venue} is now available to people nearby.", { venue: submittedVenue.name })
+        : t("{venue} was already in the community venue list, so Left reused it instead of creating a duplicate.", { venue: submittedVenue.name }),
       [
         { label: "Done", variant: "primary", onPress: () => setScreen("home") },
       ],
@@ -1488,6 +1511,10 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
       provider: session?.user.app_metadata.provider ?? null,
     });
     if (!session) {
+      if (identifiedUserIdRef.current) {
+        resetAnalyticsIdentity();
+        identifiedUserIdRef.current = null;
+      }
       setUser(null);
       setOnboardingUserId(null);
       setScreen(!startAtAuth && preAuthReadyRef.current && !preAuthSeenRef.current ? "preauth" : "auth");
@@ -1495,6 +1522,17 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
     }
 
     const inferredFirstName = getFirstNameFromSession(session);
+    if (identifiedUserIdRef.current !== session.user.id) {
+      if (identifiedUserIdRef.current) resetAnalyticsIdentity();
+      posthog?.identify(session.user.id, {
+        $set: {
+          ...(session.user.email ? { email: session.user.email } : {}),
+          ...(inferredFirstName ? { first_name: inferredFirstName } : {}),
+          auth_provider: session.user.app_metadata.provider ?? "unknown",
+        },
+      });
+      identifiedUserIdRef.current = session.user.id;
+    }
     setFirstNameDraft(inferredFirstName);
 
     const { profile, error } = await fetchUserProfile(session.user.id);
@@ -1730,6 +1768,10 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
       setSelectedVibes(onboardingInterests);
       setOnboardingUserId(null);
       await clearOnboardingDraft(session.user.id);
+      posthogLog.info("onboarding profile completed", {
+        auth_provider: authProvider,
+        interest_count: onboardingInterests.length,
+      });
       setScreen("home");
     } catch (error) {
       console.warn("[onboarding] completion failed", error);
@@ -1793,18 +1835,19 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
     });
   }
 
-  async function activatePresence() {
-    if (!user) return;
+  async function activatePresence(confirmedVenueId?: string) {
+    if (!user || user.id !== localAccountIdRef.current) return;
     if (selectedVibes.length === 0 || !hintDraft.trim()) {
       showDialog("Finish your visibility details", "Choose at least one vibe and add a short hint so people can identify you in the venue.");
       return;
     }
     if (activationAttemptRef.current || signOutInProgressRef.current) return;
     activationAttemptRef.current = true;
+    setVisibilityError(null);
     setActivationSubmitting(true);
 
     try {
-      await performPresenceActivation();
+      await performPresenceActivation(confirmedVenueId);
     } catch {
       showDialog("Could not start visibility", "Left could not complete the location check. Please try again.");
     } finally {
@@ -1813,7 +1856,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
     }
   }
 
-  async function performPresenceActivation() {
+  async function performPresenceActivation(confirmedVenueId?: string) {
     if (!user) return;
     let runtime = await getLocationRuntimeState();
     console.info("[activation] starting presence activation", {
@@ -1857,32 +1900,13 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
       nearbyVenues: summarizeVenueCandidates(runtime.nearbyVenues),
     });
 
-    const matchedCanonicalVenue =
-      runtime.selectedVenueId && isUuid(runtime.selectedVenueId)
-        ? runtime.nearbyVenues.find((venue) => venue.id === runtime.selectedVenueId) ?? null
-        : runtime.nearbyVenues.find((venue) => isUuid(venue.id)) ?? null;
-    const resolvedVenueId = isUuid(venueSummary.venueId)
-      ? venueSummary.venueId
-      : matchedCanonicalVenue?.id ?? null;
-    const resolvedVenueName =
-      venueSummary.venueName !== "Visibility off"
-        ? venueSummary.venueName
-        : matchedCanonicalVenue?.name ?? runtime.currentVenueName ?? runtime.selectedVenueName ?? venueSummary.venueName;
-
-    console.info("[activation] resolved venue candidate", {
-      venueSummaryVenueId: venueSummary.venueId,
-      venueSummaryVenueName: venueSummary.venueName,
-      matchedCanonicalVenueId: matchedCanonicalVenue?.id ?? null,
-      matchedCanonicalVenueName: matchedCanonicalVenue?.name ?? null,
-      resolvedVenueId,
-      resolvedVenueName,
-    });
-
-    if (venueSelectionRequired) {
-      setScreen("venue-select");
-      return;
-    }
-    if (venueHidden) {
+    if (user.id !== localAccountIdRef.current) return;
+    const candidate = resolveActivationVenue(runtime);
+    const resolvedVenueId = candidate?.id ?? null;
+    const resolvedVenueName = candidate?.name ?? runtime.currentVenueName ?? "";
+    const preferences = await getVenuePreferences(user.id);
+    if (user.id !== localAccountIdRef.current) return;
+    if (resolvedVenueId && preferences[resolvedVenueId]?.hidden) {
       showDialog("Venue hidden", "Unhide this venue in Settings before becoming visible here again.");
       return;
     }
@@ -1914,7 +1938,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
         setVenueDraftType("other");
         showDialog(
           "Venue found nearby",
-          `${detectedVenue.name} was detected nearby, but it is not a confirmed Left venue yet. Add it first, then you can go visible there.`,
+          t("{venue} was detected nearby, but it is not a confirmed Left venue yet. Add it first, then you can go visible there.", { venue: detectedVenue.name }),
           [
             { label: "Cancel" },
             { label: "Add venue", variant: "primary", onPress: () => setScreen("venue-add") },
@@ -1936,6 +1960,31 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
       showDialog("Venue not ready", "Left could not confirm a nearby venue from your current location yet.");
       return;
     }
+    if (confirmedVenueId !== resolvedVenueId) {
+      showDialog(
+        t("Go visible at {venue}?", { venue: resolvedVenueName }),
+        t("Venue: {venue}\nIntent: {intent}\nVibes: {vibes}\nDuration: {duration} min\nHint: {hint}", {
+          venue: resolvedVenueName,
+          intent: t((selectedIntent ?? "networking").replaceAll("_", " ")),
+          vibes: normalizeVibes(selectedVibes).map(value => t(value)).join(", "),
+          duration: selectedDuration,
+          hint: hintDraft.trim(),
+        }),
+        [
+          { label: "Cancel", variant: "ghost" },
+          { label: t("Change venue"), variant: "ghost", onPress: () => { resumeActivationAfterVenuePickRef.current = true; setScreen("venue-select"); } },
+          { label: "Go visible", variant: "primary", onPress: () => { void activatePresence(resolvedVenueId); } },
+        ],
+      );
+      return;
+    }
+    // Persist the venue the user just confirmed so the multi-venue monitor does
+    // not send them back to the picker after activation.
+    if (!await selectNearbyVenue(resolvedVenueId)) {
+      showDialog("Venue unavailable", "That nearby venue is no longer available. Try again from the refreshed list.");
+      return;
+    }
+    await refreshVenueFromRuntime();
     const startedAtDate = new Date();
     const startedAt = startedAtDate.toISOString();
     const expiresAt = new Date(startedAtDate.getTime() + selectedDuration * 60_000).toISOString();
@@ -1985,6 +2034,14 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
         venueName: resolvedVenueName,
         pulseCopy: "You are now visible at this venue.",
       }));
+      posthog?.capture("presence_activated", {
+        duration_minutes: selectedDuration,
+        vibe_count: vibes.length,
+      });
+      posthogLog.info("presence activation completed", {
+        duration_minutes: selectedDuration,
+        vibe_count: vibes.length,
+      });
       showToast("You are visible");
       setVenueFooterDestination("session");
       setScreen("venue");
@@ -2017,6 +2074,11 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
         setExperienceProposalError("We couldn’t submit this plan. Check your connection and try again.");
         return;
       }
+      posthog?.capture("gathering_submitted", {
+        capacity: draft.capacity,
+        has_accessibility_notes: Boolean(draft.accessibilityNotes.trim()),
+        has_cost_notes: Boolean(draft.costNotes?.trim()),
+      });
       showToast("Sent for review. You can track it under Your plans.");
       setScreen("home");
     } catch (error) {
@@ -2065,6 +2127,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
       expiresAt: expiresAt.toISOString(),
     });
 
+    posthog?.capture("approach_started");
     void recordSocialInteractionEvent("approach_started", {
       targetUserId: selectedProfile.profileUserId,
       visibilitySessionId: activePresenceSessionId ?? selectedProfile.presenceSessionId,
@@ -2104,6 +2167,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
       }
     }
 
+    posthog?.capture("approach_connected");
     void recordSocialInteractionEvent("approach_connected", {
       targetUserId: approach?.toUserId ?? selectedProfile?.profileUserId ?? null,
       visibilitySessionId: activePresenceSessionId ?? approach?.presenceSessionId ?? null,
@@ -2128,6 +2192,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
     await clearStoredActiveApproach();
     await clearPendingApproachFeedback();
     setPendingApproachFeedback(null);
+    posthog?.capture("approach_cancelled");
     void recordSocialInteractionEvent("approach_cancelled", {
       targetUserId: approach?.toUserId ?? selectedProfile?.profileUserId ?? null,
       visibilitySessionId: activePresenceSessionId ?? approach?.presenceSessionId ?? null,
@@ -2155,6 +2220,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
         }
       }
 
+      posthog?.capture("user_hidden");
       void recordSocialInteractionEvent("user_hidden", {
         targetUserId,
         visibilitySessionId: activePresenceSessionId ?? selectedProfile.presenceSessionId,
@@ -2188,6 +2254,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
         }
       }
 
+      posthog?.capture("user_blocked");
       void recordSocialInteractionEvent("user_blocked", {
         targetUserId,
         visibilitySessionId: activePresenceSessionId ?? selectedProfile.presenceSessionId,
@@ -2224,6 +2291,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
       }
     }
 
+    posthog?.capture("user_reported", { category });
     void recordSocialInteractionEvent("user_reported", {
       targetUserId,
       visibilitySessionId: activePresenceSessionId ?? presenceSessionId,
@@ -2270,16 +2338,17 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
         venueId,
         tone: synced ? "success" : "error",
         text: synced
-          ? `${venueName} is hidden. You will not be visible there until you unhide it.`
-          : `${venueName} is hidden on this device, but server sync did not complete.`,
+          ? t("{venue} is hidden. You will not be visible there until you unhide it.", { venue: venueName })
+          : t("{venue} is hidden on this device, but server sync did not complete.", { venue: venueName }),
       });
+      posthog?.capture("venue_hidden", { sync_completed: synced });
       showToast(synced ? "Venue hidden" : "Venue hidden on this device");
       setScreen("home");
     } catch {
       setVenuePreferenceMessage({
         venueId,
         tone: "error",
-        text: `We could not hide ${venueName}. Please try again.`,
+        text: t("We could not hide {venue}. Please try again.", { venue: venueName }),
       });
     } finally {
       setVenuePreferenceAction(null);
@@ -2313,15 +2382,16 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
         venueId,
         tone: synced ? "success" : "error",
         text: synced
-          ? `Notifications are off at ${venueName}.`
+          ? t("Notifications are off at {venue}.", { venue: venueName })
           : `Notifications are off on this device, but server sync did not complete.`,
       });
+      posthog?.capture("venue_notifications_muted", { sync_completed: synced });
       showToast(synced ? "Notifications muted" : "Notifications muted on this device");
     } catch {
       setVenuePreferenceMessage({
         venueId,
         tone: "error",
-        text: `We could not mute ${venueName}. Please try again.`,
+        text: t("We could not mute {venue}. Please try again.", { venue: venueName }),
       });
     } finally {
       setVenuePreferenceAction(null);
@@ -2356,15 +2426,15 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
         venueId,
         tone: synced ? "success" : "error",
         text: synced
-          ? `${venueName} is unhidden. You can become visible there again.`
-          : `${venueName} is unhidden on this device, but server sync did not complete.`,
+          ? t("{venue} is unhidden. You can become visible there again.", { venue: venueName })
+          : t("{venue} is unhidden on this device, but server sync did not complete.", { venue: venueName }),
       });
       showToast(synced ? "Venue unhidden" : "Venue unhidden on this device");
     } catch {
       setVenuePreferenceMessage({
         venueId,
         tone: "error",
-        text: `We could not unhide ${venueName}. Please try again.`,
+        text: t("We could not unhide {venue}. Please try again.", { venue: venueName }),
       });
     } finally {
       setVenuePreferenceAction(null);
@@ -2396,7 +2466,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
         venueId,
         tone: synced ? "success" : "error",
         text: synced
-          ? `Notifications are back on for ${venueName}.`
+          ? t("Notifications are back on for {venue}.", { venue: venueName })
           : `Notifications are back on locally, but server sync did not complete.`,
       });
       showToast(synced ? "Notifications on" : "Notifications on locally");
@@ -2404,7 +2474,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
       setVenuePreferenceMessage({
         venueId,
         tone: "error",
-        text: `We could not update notifications for ${venueName}. Please try again.`,
+        text: t("We could not update notifications for {venue}. Please try again.", { venue: venueName }),
       });
     } finally {
       setVenuePreferenceAction(null);
@@ -2534,6 +2604,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
     setActivationSubmitting(false);
     activationAttemptRef.current = false;
     setProfileAction(null);
+    setVisibilityError(null);
     setVisibilityAction(null);
     setReportCategory("unsafe_behavior");
     setReportNotes("");
@@ -2545,42 +2616,46 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
     options: { toast?: boolean; toastMessage?: string } = {},
   ) {
     if (visibilityAction) return;
+    setVisibilityError(null);
     setVisibilityAction(status === "paused" ? "pause" : "end");
     const sessionId = activePresenceSessionId;
     try {
-      setSessionVisible(false);
-      setSessionStartedAt(null);
-      setSessionExpiresAt(null);
-      setActivePresenceSessionId(null);
-      setSocialMomentumEvents([]);
-      setSessionNowMs(Date.now());
-      setSelectedProfile(null);
-      setFeed([]);
-
-      if (isUuid(sessionId)) {
-        const updated = await updatePresenceSessionEndState(sessionId, status);
-
-        if (!updated) {
-          showDialog("Could not update visibility", "Your local session is hidden, but the server did not confirm the change.");
-        }
-      }
+      await completePresenceEnd({
+        endPresence: () => isUuid(sessionId)
+          ? updatePresenceSessionEndState(sessionId, status)
+          : Promise.resolve(!sessionVisible),
+        expired: hasExpired(sessionExpiresAt),
+        clearLocal: () => {
+          setSessionVisible(false);
+          setSessionStartedAt(null);
+          setSessionExpiresAt(null);
+          setActivePresenceSessionId(null);
+          setSocialMomentumEvents([]);
+          setSessionNowMs(Date.now());
+          setSelectedProfile(null);
+          setFeed([]);
+        },
+      });
       if (options.toast !== false) {
         showToast(options.toastMessage ?? (status === "paused" ? "Visibility paused" : "Session ended"));
       }
+    } catch {
+      setVisibilityError("We couldn't confirm the visibility change. Please try again.");
+      showDialog("Could not update visibility", "The server did not confirm the change. Please try again.");
     } finally {
       setVisibilityAction(null);
     }
   }
 
   async function requestAccountDeletion() {
-    if (!user) return;
+    if (!user || deletionRequestState === "submitting") return;
     showDialog(
-      "Remove your identity from Left?",
-      "This requests removal of your direct identity details and may sign you out when processing completes. Retained safety and operational records remain under the current policy.",
+      "Delete your Left account?",
+      "This requests deletion of your account and direct identity details. You will be signed out when processing completes. Some safety and operational records may be retained under the Privacy Policy.",
       [
-        { label: "Keep my identity", variant: "ghost" },
+        { label: "Keep my account", variant: "ghost" },
         {
-          label: "Request removal",
+          label: "Request account deletion",
           variant: "destructive",
           onPress: () => {
             void submitAccountDeletionRequest();
@@ -2593,7 +2668,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
   async function submitAccountDeletionRequest() {
     if (!user) return;
     setDeletionRequestState("submitting");
-    const result = await submitIdentityRemovalRequest(user);
+    const result = await submitIdentityRemovalRequest(user).catch(() => "failed" as const);
 
     if (result === "cancelled") {
       setDeletionRequestState("idle");
@@ -2601,21 +2676,21 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
     }
 
     if (result === "duplicate") {
-      setDeletionRequestState("error");
-      showDialog("Identity removal", "Your request is already saved. Try removal again to finish processing it.");
+      setDeletionRequestState("pending");
+      showDialog("Account deletion pending", "Your request is already saved. Retry account deletion to finish processing it.");
       return;
     }
 
     if (result === "failed") {
       setDeletionRequestState("error");
-      showDialog("Identity removal failed", "We could not complete the authorization or save your request. Please try again.");
+      showDialog("Account deletion failed", "We could not complete the authorization or save your request. Please try again.");
       return;
     }
 
     if (result === "queued") {
-      setDeletionRequestState("error");
+      setDeletionRequestState("pending");
       showDialog(
-        "Identity removal not completed",
+        "Account deletion pending",
         "Your request is saved, but removal did not finish. Please stay signed in and try again. Apple accounts may need fresh authorization.",
       );
       return;
@@ -2623,7 +2698,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
 
     await forceLocalSignOut(true);
     showDialog(
-      "Identity removed",
+      "Account removed",
       "Direct identity fields were removed. Your retained records stay in place under the current policy.",
       [
         {
@@ -2688,9 +2763,6 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
   const venueConfidence = resolveVenueConfidence(venueSummary, nearbyVenueOptions);
   const venueConfidenceLabel = getVenueConfidenceLabel(venueConfidence);
   const venueConfidenceCopy = getVenueConfidenceCopy(venueConfidence);
-  const profileCompletion = user
-    ? Math.round(([user.interests.length >= 3, Boolean(user.offering), Boolean(user.socialRhythm), Boolean(user.conversationStyle)].filter(Boolean).length / 4) * 100)
-    : 0;
   const locationStatus = locationEnabled
     ? Platform.OS === "web"
       ? "Foreground location is available while this preview is open."
@@ -2714,19 +2786,21 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
   const isOnboardingScreen = screen.startsWith("onboarding-") || screen === "legal-consent";
   const isPreAuthScreen = screen === "preauth";
   const isFullBleedScreen = screen === "auth" || screen === "loading" || isPreAuthScreen;
+  const backgroundVenue = selectVenueBackground(nearbyVenueOptions, venueSummary.venueId, locationEnabled && !!lastKnownCoords);
   const isSessionNavScreen = SESSION_NAV_SCREENS.includes(screen);
   const isRefreshableScreen = REFRESHABLE_SCREENS.includes(screen);
   const scrollContentPaddingTop =
-    isSessionNavScreen ? 20 : screen === "venue-detail" || isFullBleedScreen ? 0 : Math.max(56, insets.top + 20);
+    screen === "home" || screen === "me" ? 0 : isSessionNavScreen ? 20 : screen === "venue-detail" || isFullBleedScreen ? 0 : Math.max(56, insets.top + 20);
   const scrollContentPaddingBottom = isSessionNavScreen
-    ? 98 + insets.bottom
+    ? Math.max(getTabBarContentInset(insets.bottom, fontScale), footerHeight + 24)
     : isOnboardingScreen || screen === "venue-detail"
     ? 24 + insets.bottom
     : 72 + insets.bottom;
 
   return (
     <View style={styles.shell}>
-      {screen !== "me" && !isOnboardingScreen && !isFullBleedScreen ? <BackgroundWaveLayer /> : null}
+      {!isOnboardingScreen && !isFullBleedScreen ?
+        SESSION_NAV_SCREENS.includes(screen) ? <VenueBackground venue={backgroundVenue} /> : <BackgroundWaveLayer /> : null}
       {isRefreshableScreen ? (
         <LeftRefreshIndicator
           pullDistance={refreshPullDistance}
@@ -2737,7 +2811,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
       <ScrollView
         ref={mainScrollRef}
         contentInsetAdjustmentBehavior={isFullBleedScreen || isSessionNavScreen || screen === "venue-detail" ? "never" : "automatic"}
-        style={isSessionNavScreen ? { marginTop: insets.top } : undefined}
+        style={isSessionNavScreen && screen !== "home" ? { marginTop: insets.top } : undefined}
         bounces={isRefreshableScreen}
         alwaysBounceVertical={isRefreshableScreen}
         refreshControl={isRefreshableScreen ? (
@@ -2771,7 +2845,6 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
           <AuthScreen
             authError={authError}
             busy={authBusy}
-            onBrowseGuest={onBrowseGuest}
             onAuth={startGoogleAuth}
             onAppleAuth={startAppleAuth}
             onBack={() => setScreen("preauth")}
@@ -2837,7 +2910,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
             currentVenueId={venueSummary.venueId}
             onSelectVenue={(venueId) => void confirmVenueSelection(venueId)}
             onAddVenue={() => setScreen("venue-add")}
-            onBack={() => setScreen(sessionVisible ? "venue" : "home")}
+            onBack={() => { resumeActivationAfterVenuePickRef.current = false; setScreen(sessionVisible ? "venue" : "home"); }}
           />
         )}
         {screen === "venue-add" && (
@@ -2863,32 +2936,32 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
         )}
         {screen === "home" && (
           <HomeScreen
-            firstName={user?.firstName ?? "there"}
+            topInset={insets.top}
             venue={venueSummary}
             nearbyVenues={nearbyVenueOptions}
             venueActivityById={venueActivityById}
             experiences={experiences}
             feed={visibleFeed}
-            intent={selectedIntent}
-            vibes={selectedVibes}
             sessionVisible={sessionVisible}
             venueHidden={venueHidden}
             activationSubmitting={activationSubmitting}
+            visibilityPending={visibilityAction !== null}
+            visibilityError={visibilityError}
+            nearbyLoading={discoveryRefreshing}
+            onGoPrivate={() => void endSessionState("paused")}
+            onOpenPeople={() => setScreen(sessionVisible ? "feed" : "venue")}
             onBecomeVisible={() => openActivationFrom("home")}
             onOpenAllVenues={() => {
               setVenueFooterDestination("session");
               setScreen("venue");
             }}
             onOpenVenueDetail={(venueCandidate) => openVenueDetail(venueCandidate, "home")}
-            onOpenProfile={openProfile}
             onOpenExperience={(experience) => openExperience(experience, "home")}
             onCreateExperience={() => {
               setExperienceProposalError(null);
               setScreen("experience-create");
             }}
             onOpenSafety={() => openSafetyFrom("home")}
-            profileCompletion={profileCompletion}
-            onCompleteProfile={() => setScreen("me")}
           />
         )}
         {screen === "venue" && (
@@ -3070,9 +3143,9 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
             saveState={settingsSaveState}
             onSave={(input) => void saveSettings(input)}
             onOpenSettings={() => setScreen("settings")}
+            onOpenSafety={() => openSafetyFrom("me")}
             sessionVisible={sessionVisible}
             currentVenueName={displayVenueSummary.venueName}
-            currentVibes={selectedVibes}
             nearbyVenueCount={nearbyVenueOptions.length}
             approachCount={socialMomentumEvents.filter((eventType) => eventType === "approach_started").length}
             savedVenueCount={savedVenues.length}
@@ -3090,6 +3163,7 @@ export function LeftApp({onBrowseGuest,sharedGatheringId,sharedLinkRevision=0,st
           activeDestination={footerSummary.activeDestination}
           showContextSummary={false}
           bottomInset={insets.bottom}
+          onHeightChange={setFooterHeight}
           onNavigate={goToFooterDestination}
         />
       )}

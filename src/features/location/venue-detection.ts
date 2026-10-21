@@ -101,6 +101,8 @@ export async function detectVenueFromCoords(
   preferredVenueId?: string | null,
   discoveredVenues?: DetectedVenue[],
 ) {
+  // A coarse fix can put the nearest candidate on a different street.
+  if (coords.accuracy == null || !Number.isFinite(coords.accuracy) || coords.accuracy < 0 || coords.accuracy > 100) return null;
   const venues = discoveredVenues ?? await getNearbyVenues(coords);
   const confirmableVenues = venues.filter(isVenueWithinConfirmationRange);
   if (!confirmableVenues.length) {

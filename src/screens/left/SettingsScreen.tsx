@@ -1,9 +1,11 @@
+import { SettingsTools } from "../../features/settings/SettingsTools";
+import { useTranslation } from "../../features/preferences/use-translation";
 import { useState } from "react";
 import { Linking, Pressable, Text, View } from "react-native";
 import type { AppUser } from "../../types/left-domain";
 import { T, styles } from "../../app/leftTheme";
 import { LeftIcon, type LeftIconName } from "../../components/icons";
-import { GhostButton, type ShowAppDialog } from "../../components/left/ui";
+import { type ShowAppDialog } from "../../components/left/ui";
 import { ScreenHeader } from "../../components/left/navigation";
 import type { LegalDocumentId } from "../../features/legal/legal-content";
 
@@ -14,6 +16,8 @@ type SettingsMenuRowProps = {
   value?: string;
   onPress?: () => void;
   last?: boolean;
+  destructive?: boolean;
+  disabled?: boolean;
 };
 
 export function SettingsScreen({
@@ -27,7 +31,7 @@ export function SettingsScreen({
   onOpenLegal,
 }: {
   user: AppUser;
-  deletionState: "idle" | "submitting" | "submitted" | "error";
+  deletionState: "idle" | "submitting" | "pending" | "error";
   onOpenSafety: () => void;
   onSignOut: () => void;
   onRequestDeletion: () => void;
@@ -35,12 +39,13 @@ export function SettingsScreen({
   onBack: () => void;
   onOpenLegal: (document: LegalDocumentId) => void;
 }) {
+  const { t } = useTranslation();
   const [settingsActionMessage, setSettingsActionMessage] = useState<string | null>(null);
 
   function openNotificationPreferences() {
     setSettingsActionMessage(null);
     void Linking.openSettings().catch(() => {
-      setSettingsActionMessage("Couldn't open phone settings.");
+      setSettingsActionMessage(t("Couldn't open phone settings."));
     });
   }
 
@@ -54,96 +59,105 @@ export function SettingsScreen({
 
   function confirmSignOut() {
     onShowDialog(
-      "Log out?",
-      "You can sign back in anytime.",
+      t("Log out?"),
+      t("You can sign back in anytime."),
       [
-        { label: "Cancel", variant: "ghost" },
-        { label: "Log out", variant: "destructive", onPress: onSignOut },
+        { label: t("Cancel"), variant: "ghost" },
+        { label: t("Log out"), variant: "destructive", onPress: onSignOut },
       ],
     );
   }
 
   return (
     <View style={styles.settingsPage}>
-      <ScreenHeader title="Settings" onBack={onBack} variant="utility" />
+      <ScreenHeader title={t("Settings")} onBack={onBack} variant="utility" />
 
-      <Text style={styles.settingsGroupTitle}>Account</Text>
+      <Text style={styles.settingsGroupTitle}>{t('Account')}</Text>
       <View style={styles.settingsMenuCard}>
-        <SettingsMenuRow icon="user" label="Account information" value={user.firstName} />
-        <SettingsMenuRow icon="shield" label="Privacy and safety" helper="Manage blocks and hidden venues." onPress={onOpenSafety} />
-        <SettingsMenuRow icon="radio" label="Notifications" helper="Manage alerts." onPress={openNotificationPreferences} last />
+        <SettingsMenuRow icon="user" label={t("Account information")} value={user.firstName} />
+        <SettingsMenuRow icon="shield" label={t("Privacy and safety")} helper={t("Manage hidden venues and muted alerts.")} onPress={onOpenSafety} />
+        <SettingsMenuRow icon="radio" label={t("Notifications")} helper={t("Manage alerts.")} onPress={openNotificationPreferences} last />
       </View>
 
-      <Text style={styles.settingsGroupTitle}>Legal</Text>
+      <SettingsTools userId={user.id} onShowDialog={onShowDialog} onOpenVenuePreferences={onOpenSafety} />
+      <Text style={styles.settingsGroupTitle}>{t('Legal')}</Text>
       <View style={styles.settingsMenuCard}>
-        <SettingsMenuRow icon="file-text" label="Terms of Service" onPress={() => onOpenLegal("terms")} />
-        <SettingsMenuRow icon="lock" label="Privacy Policy" onPress={() => onOpenLegal("privacy")} />
-        <SettingsMenuRow icon="users" label="Community Guidelines" onPress={() => onOpenLegal("community")} last />
+        <SettingsMenuRow icon="file-text" label={t("Terms of Service")} onPress={() => onOpenLegal("terms")} />
+        <SettingsMenuRow icon="lock" label={t("Privacy Policy")} onPress={() => onOpenLegal("privacy")} />
+        <SettingsMenuRow icon="users" label={t("Community Guidelines")} onPress={() => onOpenLegal("community")} last />
       </View>
-      <Text style={styles.settingsGroupTitle}>General</Text>
+      <Text style={styles.settingsGroupTitle}>{t('General')}</Text>
       <View style={styles.settingsMenuCard}>
-        <SettingsMenuRow icon="activity" label="About Left" helper="App info and updates." onPress={openAboutLeft} last />
+        <SettingsMenuRow icon="activity" label={t("About Left")} helper={t("App info and updates.")} onPress={openAboutLeft} last />
       </View>
       {settingsActionMessage ? <Text style={styles.settingsInfoBody}>{settingsActionMessage}</Text> : null}
 
-      <View style={styles.settingsActionSection}>
-        <Text style={styles.settingsGroupTitle}>Session</Text>
-        <Text style={styles.settingsActionHint}>Sign out on this device. You can sign back in anytime.</Text>
-        <GhostButton label="Log out" onPress={confirmSignOut} leadingIcon="log-out" />
-      </View>
-
-      <View style={styles.settingsDangerCard}>
-        <View style={styles.settingsDangerHeader}>
-          <View style={styles.settingsDangerIconWrap}>
-            <LeftIcon name="user-x" size={19} color={T.dangerText} />
-          </View>
-          <View style={styles.settingsDangerCopy}>
-            <Text style={styles.settingsDangerTitle}>Identity removal</Text>
-            <Text style={styles.settingsDangerBody}>
-              Request removal of your direct identity details from Left. Retained safety and operational records remain under the current policy.
-            </Text>
-          </View>
-        </View>
-
-        {deletionState === "submitted" ? (
+      <View style={styles.settingsSessionActions}>
+        <SettingsSessionAction
+          label={t("Log out")}
+          onPress={confirmSignOut}
+          disabled={deletionState === "submitting"}
+        />
+        <SettingsSessionAction
+          label={t(
+            deletionState === "submitting"
+              ? "Deleting account..."
+              : deletionState === "pending" || deletionState === "error"
+                ? "Retry account deletion"
+                : "Delete account"
+          )}
+          onPress={onRequestDeletion}
+          disabled={deletionState === "submitting"}
+          busy={deletionState === "submitting"}
+        />
+        {deletionState === "pending" ? (
           <View style={styles.settingsRemovalStatus} accessibilityRole="text">
-            <LeftIcon name="check-circle" size={19} color={T.visibilityOn} />
+            <LeftIcon name="clock" size={19} color={T.textSecondary} />
             <View style={styles.settingsRemovalStatusCopy}>
-              <Text style={styles.settingsRemovalStatusTitle}>Removal requested</Text>
-              <Text style={styles.settingsSuccessText}>Your request is recorded and ready for processing.</Text>
+              <Text style={[styles.settingsRemovalStatusTitle, { color: T.textPrimary }]}>{t('Deletion needs another try')}</Text>
+              <Text style={styles.settingsSuccessText}>{t('Your request is saved, but deletion has not been confirmed. Stay signed in and retry. Apple may ask you to authorize again.')}</Text>
             </View>
           </View>
-        ) : (
-          <GhostButton
-            label={
-              deletionState === "submitting"
-                ? "Sending request..."
-                : deletionState === "error"
-                  ? "Try request again"
-                  : "Request identity removal"
-            }
-            onPress={onRequestDeletion}
-            destructive
-            loading={deletionState === "submitting"}
-            leadingIcon="user-x"
-          />
-        )}
+        ) : null}
         {deletionState === "error" ? (
-          <Text style={styles.errorText}>We could not submit your request. Nothing was removed.</Text>
+          <Text accessibilityLiveRegion="polite" style={[styles.errorText, styles.settingsDeletionFeedback]}>{t('We could not confirm deletion. Please try again.')}</Text>
         ) : null}
       </View>
     </View>
   );
 }
 
-function SettingsMenuRow({ icon, label, helper, value, onPress, last = false }: SettingsMenuRowProps) {
+function SettingsSessionAction({ label, onPress, disabled, busy = false }: {
+  label: string;
+  onPress: () => void;
+  disabled: boolean;
+  busy?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityState={{ disabled, busy }}
+      style={({ pressed }) => [
+        styles.settingsSessionAction,
+        pressed && styles.iconButtonPressed,
+        disabled && styles.settingsMenuDisabled,
+      ]}
+    >
+      <Text style={styles.settingsSessionActionLabel}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function SettingsMenuRow({ icon, label, helper, value, onPress, last = false, destructive = false, disabled = false }: SettingsMenuRowProps) {
   const rowContent = (
     <>
       <View style={styles.settingsMenuIconWrap}>
-        <LeftIcon name={icon} size={19} color={T.textPrimary} />
+        <LeftIcon name={icon} size={19} color={destructive ? T.dangerText : T.textPrimary} />
       </View>
       <View style={styles.settingsMenuTextBlock}>
-        <Text style={styles.settingsMenuLabel}>{label}</Text>
+        <Text style={[styles.settingsMenuLabel, destructive && styles.settingsMenuDestructiveLabel]}>{label}</Text>
         {helper ? <Text style={styles.settingsMenuHelper}>{helper}</Text> : null}
       </View>
       {value ? <Text style={styles.settingsMenuValue}>{value}</Text> : null}
@@ -155,11 +169,14 @@ function SettingsMenuRow({ icon, label, helper, value, onPress, last = false }: 
     return (
       <Pressable
         onPress={onPress}
+        disabled={disabled}
+        accessibilityState={{ disabled, busy: disabled }}
         accessibilityRole="button"
         style={({ pressed }) => [
           styles.settingsMenuRow,
           last && styles.settingsMenuRowLast,
           pressed && styles.iconButtonPressed,
+          disabled && styles.settingsMenuDisabled,
         ]}
       >
         {rowContent}

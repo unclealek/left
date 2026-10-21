@@ -88,29 +88,6 @@ export const uiStyles = {
     color: T.textPrimary,
     fontFamily: T.fontBodyBold,
   },
-  statusPillBase: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    minHeight: 36,
-    paddingHorizontal: 14,
-  },
-  statusPillDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  statusPillDotVisible: {
-    backgroundColor: T.visibilityOn,
-  },
-  statusPillDotHidden: {
-    backgroundColor: T.visibilityOff,
-  },
-  statusPillLabel: {
-    color: T.textPrimary,
-    fontSize: 16,
-    fontFamily: T.fontBodyMedium,
-  },
   utilityIconButton: {
     minWidth: 74,
     height: 74,

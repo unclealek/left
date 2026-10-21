@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Animated, Easing, View } from "react-native";
+import { VenueBackground } from "./VenueBackground";
 import { styles } from "../../app/leftTheme";
 
 const SEGMENT_COUNT = 8;
@@ -73,7 +74,8 @@ function WaveTrack({
   );
 }
 
-export function BackgroundWaveLayer() {
+export function BackgroundWaveLayer({ variant = "waves" }: { variant?: "waves" | "hospitality" }) {
+  if (variant === "hospitality") return <VenueBackground />;
   return (
     <View pointerEvents="none" style={styles.waveLayer}>
       <WaveTrack top={118} duration={22000} opacity={0.24} />

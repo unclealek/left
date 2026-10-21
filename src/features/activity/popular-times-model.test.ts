@@ -5,9 +5,9 @@ it('uses venue-local typical hours, never the cached live snapshot', () => {
   expect(popularTimesActivity(row,'Europe/Helsinki',new Date('2026-09-28T09:00:00Z')).score).toBe(60);
   expect(popularTimesActivity(row,'Europe/Helsinki',new Date('2026-09-28T09:00:00Z')).liveAvailable).toBe(false);
 });
-it('handles pending, no data, missing timezone, expired and failed without invented scores', () => {
+it('handles pending, no data, missing timezone and failed without invented scores', () => {
   expect(popularTimesActivity(null,null).refreshing).toBe(true);
-  for (const value of [{...row,has_data:false},{...row,status:'failed'},{...row,expires_at:'2020-01-01'}]) {
+  for (const value of [{...row,has_data:false},{...row,status:'failed'}]) {
     expect(popularTimesActivity(value as PopularTimesRow,'UTC').score).toBeNull();
   }
   expect(popularTimesActivity(row,null).score).toBeNull();
@@ -20,4 +20,9 @@ it('builds a stable Google Maps URL from the cache identity', async () => {
 it('distinguishes provider failure from successful no-data results', () => {
  expect(popularTimesActivity({...row,status:'failed'},'UTC').displayText).toBe('Popular times temporarily unavailable');
  expect(popularTimesActivity({...row,has_data:false},'UTC',new Date('2026-09-29')) .displayText).toBe('Popular times unavailable');
+});
+
+it.each(['2020-01-01', null])('reuses ready histograms with expiry %s indefinitely', expires_at => {
+ const result = popularTimesActivity({...row,expires_at},'Europe/Helsinki',new Date('2026-09-28T09:00:00Z'));
+ expect(result.score).toBe(60); expect(result.isStale).toBe(false);
 });

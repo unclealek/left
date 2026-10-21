@@ -23,9 +23,7 @@ import { uiStyles } from "../components/styles/ui";
 
 export { T };
 
-const CONTENT_RAIL_WIDTH = "92%" as const;
-const CONTENT_RAIL_MAX = 392;
-const navigationStyles = createNavigationStyles(CONTENT_RAIL_WIDTH, CONTENT_RAIL_MAX);
+const navigationStyles = createNavigationStyles();
 
 export const styles = StyleSheet.create({
   ...layoutStyles,
