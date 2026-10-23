@@ -22,7 +22,7 @@ beforeEach(() => { vi.stubGlobal('React', React); state.values = []; state.curso
 it('gives a missing-photo panel the existing illustrative café image', () => {
   const elements = render({ variant: 'panel', venue: { name: 'A café', venueType: 'cafe' } });
   expect(elements.some(node => node.type === 'Image' && node.props.source === 777)).toBe(true);
-  expect(elements.some(node => node.type === 'Text' && node.props.children === 'Illustrative café photo')).toBe(true);
+  expect(elements.some(node => node.type === 'Text' && node.props.children === 'Illustrative café photo')).toBe(false);
 });
 it('supports a community photo URL and falls back after a failed load', () => {
   const onPhotoError = vi.fn(); const props = { uri: 'https://example.com/community.jpg', onPhotoError };
@@ -32,7 +32,7 @@ it('supports a community photo URL and falls back after a failed load', () => {
   expect(render(props).some(node => node.type === 'Image' && node.props.source.uri)).toBe(false);
   expect(render(props).some(node => node.type === 'Image' && node.props.source === 777)).toBe(true);
 });
-it('prefers the real venue photo and removes the illustrative label only after loading', () => {
+it('prefers the real venue photo and calls the load callback', () => {
   const onPhotoLoad = vi.fn(); const props = { photo: { uri: 'https://example.com/actual.jpg', attributions: [] }, uri: 'https://example.com/other.jpg', onPhotoLoad };
   const image = render(props).find(node => node.type === 'Image' && node.props.source.uri)!;
   expect(image.props.source.uri).toBe(props.photo.uri);
@@ -47,8 +47,10 @@ it.each([
 ] as const)('retains the correct %s placeholder after a real photo fails', (venueType, label) => {
   const props = { venue: { name: 'A place', venueType }, uri: 'https://example.com/failed.jpg' };
   render(props).find(node => node.type === 'Image' && node.props.source.uri)!.props.onError();
-  expect(render(props).some(node => node.type === 'Text' && node.props.children === label)).toBe(true);
+  expect(render(props).some(node => node.type === 'Text' && node.props.children === label)).toBe(false);
+  expect(render(props).some(node => node.type === 'Image' && node.props.source === 777)).toBe(true);
 });
 it('uses the neutral interior when no place is perceived', () => {
-  expect(render({}).some(node => node.type === 'Text' && node.props.children === 'Illustrative interior photo')).toBe(true);
+  expect(render({}).some(node => node.type === 'Image' && node.props.source === 777)).toBe(true);
+  expect(render({}).some(node => node.type === 'Text')).toBe(false);
 });

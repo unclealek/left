@@ -1,10 +1,18 @@
 # Next release fixes — after TestFlight 0.1.0
 
-Updated: 2026-10-21
+Updated: 2026-10-23
 
 The user is testing version 0.1.0 on a physical device. Its build number has not been confirmed in this conversation. Fixes made from this point forward are intended for the next release; the next version number is not yet chosen. Local changes are not changes to the installed TestFlight build.
 
 Maintain this log as fixes are made. For each entry, record the symptom, change, validation, and outstanding device checks. Finish and verify the accumulated fixes before preparing the next release.
+
+## 2026-10-23 — TestFlight build 9 preparation
+
+- **Scope:** Latest local HERE branding and catchphrases, Here navigation, icon updates, Settings Help Center with English/Finnish/Swedish copy, and venue fallback caption cleanup.
+- **Version:** 0.1.0 (9), runtime 1.0.1, bundle ID `com.left.mobile`; existing staging TestFlight profile. No native dependency change.
+- **Validation:** TypeScript and all 417 tests across 72 files pass; production iOS/Android/web bundle export passes. Expo dependency alignment passes against the bundled offline map; online validation unavailable in sandbox.
+- **Release status:** Prepared locally; cloud build and upload pending. See `docs/releases/2026-10-23-testflight-build-9.md`.
+- **Pending device checks:** Upgrade/session retention, HERE display name and icons, all tabs, Help Center expansion/dismissal/scrolling and translations, venue photos/credits, location accuracy and confirmation, legacy links, data export/share. Existing legal drafts block new-user legal completion; no backend/admin/website deployment is part of this mobile release.
 
 ## 2026-10-21 — TestFlight build 8 preparation
 
@@ -21,6 +29,45 @@ Maintain this log as fixes are made. For each entry, record the symptom, change,
 - **Pending:** Authenticated HTTP export and physical-device file saving/share/cancel tests. Legal publication/onboarding limitations remain unchanged. See the build-8 release record for evidence.
 
 ## Fixed locally, awaiting the next build
+
+### 2026-10-22 — Help Center in Settings and website
+
+- **Symptom:** Settings had no Help Center or dedicated help content.
+- **Change:** Added Settings → General → Help Center with eight expandable topics, offline content, and English/Finnish/Swedish copy. Added matching English website `/help` page and links from the homepage footer and legal pages. Covers visibility, location, gatherings, reporting/blocking, notifications, data download/deletion and troubleshooting; beta feedback directs TestFlight users to TestFlight.
+- **Validation:** App TypeScript and six translation tests pass. Website production build passes with `/help` prerendered; browser confirmed location FAQ expands and displays its answer. React quality review checked unconditional hooks, stable list keys, accessible expanded state and native HTML disclosure controls.
+- **Release status/pending:** Local source only; no push, website deployment or TestFlight submission. Device checks pending for Settings entry, modal dismissal/scrolling, FAQ expansion and regional copy.
+
+### 2026-10-21 — Remove illustrative photo captions
+
+- **Request/change:** Removed all “Illustrative … photo” labels from shared venue photos, Here hero and venue details. Kept fallback images, category selection, load/error behavior and Google/author credits. Removed retired caption props/styles/helper and translation entries; adjusted existing tests.
+- **Validation:** TypeScript and all 417 tests across 72 files pass (one retired caption-localization test removed). Here hero visually verified without its caption on iPhone 18 Pro / iOS 27; fallback-image/error tests pass. React review found no conditional hooks or navigation changes.
+- **Release status/pending:** Local next-release change only; no deployment or TestFlight upload. Venue-detail visual and physical-device checks pending.
+
+### 2026-10-21 — Remove remaining Left text branding
+
+- **Request/change:** Changed shared gathering HTML title, heading, open/download actions and installation guidance from LEFT to HERE. Replaced admin email placeholder with `you@example.com` without inventing a HERE email domain. Retained the legacy `left://g/` link.
+- **Validation:** Gathering page/handler tests and admin production build pass; existing escaping, download allowlist and invitation URL checks retained.
+- **Release status/pending:** Local source only; shared-page backend deployment and hosted admin publication have not occurred. Existing logo artwork and external store/provider branding remain pending.
+
+### 2026-10-21 — Here navigation label
+
+- **Request/change:** Renamed the Home tab to “Here”, including its accessibility label. Keep “Here” as the brand label in all three languages; existing route and icon retained.
+- **Validation:** Focused navigation/translation tests and TypeScript pass. “Here” tab verified on iPhone 18 Pro / iOS 27 simulator.
+- **Release status/pending:** Local next-release copy change only; no upload or deployment. Physical-device check pending.
+
+### 2026-10-21 — HERE catchphrases
+
+- **Request/change:** Give HERE a recurring voice: “Start HERE” in the introduction, “wHERE are you?” on Home before venue confirmation, “You are HERE” only for a confirmed venue, and “There you are.” above the Profile name. Added Finnish/Swedish equivalents while keeping safety, legal, permission and visibility action copy explicit.
+- **Validation:** TypeScript and all 418 tests pass. Home’s unconfirmed phrase and Profile greeting/layout verified on iPhone 18 Pro / iOS 27 through the running development app. Confirmed-venue and introduction phrases reviewed in code; not exercised on device. React review: no hook, navigation or data changes.
+- **Release status/pending:** Local next-release copy only; no push, deployment, version change or upload. Physical-device, introduction/confirmed-venue presentation and native-speaker review pending.
+
+### 2026-10-21 — Begin Left to HERE rebrand
+
+- **Request:** Start updating the app from Left to HERE.
+- **Change:** Updated visible name/wordmarks, accessibility/loading/onboarding/Settings/Profile copy, venue/location copy and background notification title, local legal drafts, English/Finnish/Swedish catalog, Expo/iOS display name and admin title. Retained existing icon/mark/splash artwork, bundle/package ID, EAS identity, legacy links, storage keys, backend and account data. See `docs/here-rebrand.md` for rollout scope.
+- **Validation:** TypeScript, all 418 tests across 72 files, admin production build, plist validation and diff whitespace checks pass. React review found copy-only changes with no component/hook behavior changes. Native build/launch passed on iPhone 18 Pro / iOS 27; existing session restored, Home loaded, and Profile “On HERE since”, Settings “About HERE” and About dialog copy were verified. Simulator has no location configured; its background task reported a location error, so this does not verify location behavior.
+- **Release status:** Local next-release work only. Version/build/runtime unchanged; no push, deployment, migration, OTA update or TestFlight upload. Hosted pages and external provider/store labels have not been updated.
+- **Pending:** HERE artwork and visual review, Finnish/Swedish native-speaker review, external branding and physical-device/Android checks. Verify retained session/data/preferences and legacy links when upgrading the installed TestFlight app.
 
 ### 2026-10-20 — Clarify venue privacy list
 
@@ -445,3 +492,27 @@ physical-device acceptance remain separate from automated selection tests.
   coordinates and out-of-range candidates. No real visibility session created.
   Simulator/physical-device flow checks remain pending. Local only; no deployment
   or TestFlight upload.
+
+
+### 2026-10-22 — Apply the core icon study
+
+- Replaced Home, Profile, Venues, Lock, Visible, Invisible and Location SVGs
+  with the reviewed study designs; added a folded Map icon distinct from the pin.
+- Navigation uses the custom icons on iOS as well as Android, including selected
+  variants. Existing glass layout, destinations, accessibility and colors remain.
+- Validation: TypeScript, 28 targeted navigation/Home tests and diff checks pass.
+- Loaded the updated Metro bundle in the installed iPhone 18 Pro / iOS 27.0
+  simulator app. Visually checked all four navigation icons and their selected
+  states, plus the Home lock/visibility controls. Left Home open for review.
+- Local development change only; no TestFlight upload or version bump. Physical-
+  device, dark-mode and live visibility/location-state checks remain pending.
+
+
+### 2026-10-22 — Home greeting copy
+
+- Changed the unconfirmed-venue Home greeting from “wHERE are you?” to
+  “Here you are”, with Finnish and Swedish translations. Confirmed venue and
+  guest-preview labels retain their existing behavior.
+- Validation: 15 Home/translation tests pass; confirmed “Here you are” in the
+  running iPhone 18 Pro / iOS 27.0 simulator.
+- Local copy change; no version bump or TestFlight upload.

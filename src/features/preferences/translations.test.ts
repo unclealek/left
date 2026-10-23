@@ -52,7 +52,7 @@ it("has Finnish and Swedish copy for every literal translation call", async () =
     }
   }
   scanDirectory("src"); scanFile("App.tsx");
-  const unchanged = new Set(["Google", "Google Maps", "Left", "LEFT", ""]);
+  const unchanged = new Set(["Google", "Google Maps", "HERE", ""]);
   expect([...keys].filter(key => !unchanged.has(key) && !hasTranslation(key))).toEqual([]);
 });
 

@@ -1,4 +1,3 @@
-import { t } from "../../features/preferences/translation-runtime";
 import type { RuntimeVenueCandidate } from '../../features/location/location-storage';
 export type VenuePhotoContext = Pick<RuntimeVenueCandidate, 'name' | 'venueType'>;
 export type VenuePhotoKind = 'hospitality' | 'cafe' | 'bar' | 'restaurant' | 'library' | 'coworking' | 'park' | 'gym' | 'airport';
@@ -23,11 +22,4 @@ export function resolveVenuePhotoKind(venue?: VenuePhotoContext | null): VenuePh
   if (/\b(?:gym|fitness)\b/u.test(name)) return 'gym';
   if (/\b(?:airport)\b/u.test(name)) return 'airport';
   return 'hospitality';
-}
-const descriptions: Record<VenuePhotoKind, string> = {
-  hospitality: 'interior', cafe: 'café', bar: 'bar', restaurant: 'restaurant', library: 'library',
-  coworking: 'workspace', park: 'park', gym: 'gym', airport: 'airport',
-};
-export function getVenuePhotoFallbackLabel(kind: VenuePhotoKind) {
-  return t(`Illustrative ${descriptions[kind]} photo`);
 }

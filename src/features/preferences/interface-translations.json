@@ -1,4 +1,24 @@
 {
+  "Here": [
+    "Here",
+    "Here"
+  ],
+  "Start HERE": [
+    "Aloita HEREstä",
+    "Börja med HERE"
+  ],
+  "Here you are": [
+    "Tässä olet",
+    "Här är du"
+  ],
+  "You are HERE": [
+    "Olet tässä",
+    "Du är här"
+  ],
+  "There you are.": [
+    "Siinähän sinä olet.",
+    "Där är du ju."
+  ],
   "remaining": [
     "jäljellä",
     "kvar"
@@ -235,9 +255,9 @@
     "TARKISTETAAN ENNEN JULKAISUA",
     "GRANSKAS FÖRE PUBLICERING"
   ],
-  "Left checks the plan, place, and wording first. Submitting does not publish it automatically.": [
-    "Left tarkistaa ensin suunnitelman, paikan ja tekstin. Lähetys ei julkaise sitä automaattisesti.",
-    "Left granskar planen, platsen och texten först. Den publiceras inte automatiskt när du skickar in den."
+  "HERE checks the plan, place, and wording first. Submitting does not publish it automatically.": [
+    "HERE tarkistaa ensin suunnitelman, paikan ja tekstin. Lähetys ei julkaise sitä automaattisesti.",
+    "HERE granskar planen, platsen och texten först. Den publiceras inte automatiskt när du skickar in den."
   ],
   "Place": [
     "Paikka",
@@ -355,9 +375,9 @@
     "Tule näkyviin löytääksesi ihmisiä läheltä.",
     "Bli synlig för att upptäcka personer i närheten."
   ],
-  "Suggest a place and plan. Left reviews it before it appears nearby.": [
-    "Ehdota paikkaa ja suunnitelmaa. Left tarkistaa sen ennen julkaisua.",
-    "Föreslå en plats och en plan. Left granskar den innan den visas i närheten."
+  "Suggest a place and plan. HERE reviews it before it appears nearby.": [
+    "Ehdota paikkaa ja suunnitelmaa. HERE tarkistaa sen ennen julkaisua.",
+    "Föreslå en plats och en plan. HERE granskar den innan den visas i närheten."
   ],
   "Maps could not open. Please try again.": [
     "Karttaa ei voitu avata. Yritä uudelleen.",
@@ -383,9 +403,9 @@
     "Tuodaan lähistön hetket esiin",
     "Lyfter fram stunder i närheten"
   ],
-  "We couldn’t open Left": [
-    "Leftiä ei voitu avata",
-    "Vi kunde inte öppna Left"
+  "We couldn’t open HERE": [
+    "HEREä ei voitu avata",
+    "Vi kunde inte öppna HERE"
   ],
   "Restoring your private session…": [
     "Palautetaan yksityistä istuntoasi…",
@@ -527,9 +547,9 @@
     "Pysy mukana, rauhassa.",
     "Håll dig uppdaterad, i lugn och ro."
   ],
-  "Notifications are optional. Left only uses them for moments that help you act, connect, or stay safe.": [
-    "Ilmoitukset ovat valinnaisia. Left käyttää niitä vain hetkiin, jotka auttavat sinua toimimaan, kohtaamaan tai pysymään turvassa.",
-    "Aviseringar är valfria. Left använder dem för tillfällen som hjälper dig att agera, få kontakt eller vara trygg."
+  "Notifications are optional. HERE only uses them for moments that help you act, connect, or stay safe.": [
+    "Ilmoitukset ovat valinnaisia. HERE käyttää niitä vain hetkiin, jotka auttavat sinua toimimaan, kohtaamaan tai pysymään turvassa.",
+    "Aviseringar är valfria. HERE använder dem för tillfällen som hjälper dig att agera, få kontakt eller vara trygg."
   ],
   "Notification types": [
     "Ilmoitustyypit",
@@ -543,17 +563,17 @@
     "Hyväksy ja jatka",
     "Godkänn och fortsätt"
   ],
-  "Before you join Left": [
-    "Ennen kuin liityt Leftiin",
-    "Innan du går med i Left"
+  "Before you join HERE": [
+    "Ennen kuin liityt HEREen",
+    "Innan du går med i HERE"
   ],
   "Welcome to a community designed for real-world social discovery.": [
     "Tervetuloa yhteisöön, jossa kohdataan oikeassa elämässä.",
     "Välkommen till en gemenskap för att möta människor i verkligheten."
   ],
-  "By continuing, you agree to Left’s Terms of Service and Community Guidelines, and acknowledge that our Privacy Policy has been made available to you.": [
-    "Jatkamalla hyväksyt Leftin käyttöehdot ja yhteisön säännöt sekä vahvistat, että tietosuojakäytäntö on ollut saatavillasi.",
-    "Genom att fortsätta godkänner du Lefts användarvillkor och gemenskapsregler och bekräftar att du har fått tillgång till integritetspolicyn."
+  "By continuing, you agree to HERE’s Terms of Service and Community Guidelines, and acknowledge that our Privacy Policy has been made available to you.": [
+    "Jatkamalla hyväksyt HEREn käyttöehdot ja yhteisön säännöt sekä vahvistat, että tietosuojakäytäntö on ollut saatavillasi.",
+    "Genom att fortsätta godkänner du HEREs användarvillkor och gemenskapsregler och bekräftar att du har fått tillgång till integritetspolicyn."
   ],
   "Legal documents": [
     "Oikeudelliset asiakirjat",
@@ -571,13 +591,13 @@
     "Hyväksyn käyttöehdot ja yhteisön säännöt.",
     "Jag godkänner användarvillkoren och gemenskapsreglerna."
   ],
-  "The Privacy Policy explains how Left uses personal data. Location and notification permissions remain separate.": [
-    "Tietosuojakäytäntö kertoo, miten Left käyttää henkilötietoja. Sijainti- ja ilmoitusluvat annetaan erikseen.",
-    "Integritetspolicyn beskriver hur Left använder personuppgifter. Plats- och aviseringsbehörigheter ges separat."
+  "The Privacy Policy explains how HERE uses personal data. Location and notification permissions remain separate.": [
+    "Tietosuojakäytäntö kertoo, miten HERE käyttää henkilötietoja. Sijainti- ja ilmoitusluvat annetaan erikseen.",
+    "Integritetspolicyn beskriver hur HERE använder personuppgifter. Plats- och aviseringsbehörigheter ges separat."
   ],
-  "Left’s legal documents are not available yet. Please try again after the next update.": [
-    "Leftin oikeudelliset asiakirjat eivät ole vielä saatavilla. Yritä uudelleen seuraavan päivityksen jälkeen.",
-    "Lefts juridiska dokument är inte tillgängliga ännu. Försök igen efter nästa uppdatering."
+  "HERE’s legal documents are not available yet. Please try again after the next update.": [
+    "HEREn oikeudelliset asiakirjat eivät ole vielä saatavilla. Yritä uudelleen seuraavan päivityksen jälkeen.",
+    "HEREs juridiska dokument är inte tillgängliga ännu. Försök igen efter nästa uppdatering."
   ],
   "MEET THE ROOM": [
     "KOHTAA IHMISET",
@@ -587,13 +607,13 @@
     "Rauhallisempi tapa löytää omat ihmiset.",
     "Ett lugnare sätt att hitta dina människor."
   ],
-  "Left helps real conversations begin in the places you already share.": [
-    "Left auttaa aloittamaan aitoja keskusteluja paikoissa, joissa jo käyt.",
-    "Left hjälper riktiga samtal att börja på platser ni redan delar."
+  "HERE helps real conversations begin in the places you already share.": [
+    "HERE auttaa aloittamaan aitoja keskusteluja paikoissa, joissa jo käyt.",
+    "HERE hjälper riktiga samtal att börja på platser ni redan delar."
   ],
-  "What Left is for": [
-    "Mihin Left on tarkoitettu",
-    "Vad Left är till för"
+  "What HERE is for": [
+    "Mihin HERE on tarkoitettu",
+    "Vad HERE är till för"
   ],
   "Get started": [
     "Aloita",
@@ -863,9 +883,9 @@
     "Profiilin valmius",
     "Profilens färdigställande"
   ],
-  "On Left since": [
-    "Leftissä alkaen",
-    "På Left sedan"
+  "On HERE since": [
+    "HEREssä alkaen",
+    "På HERE sedan"
   ],
   "My social compass": [
     "Sosiaalinen kompassini",
@@ -1271,9 +1291,9 @@
     "Sijaintisi pysyy suojattuna",
     "Din plats förblir skyddad"
   ],
-  "Left uses venue context. Your precise coordinates are never shown to other people.": [
-    "Left käyttää paikkatietoa. Tarkkoja koordinaattejasi ei näytetä muille.",
-    "Left använder platsens sammanhang. Dina exakta koordinater visas aldrig för andra."
+  "HERE uses venue context. Your precise coordinates are never shown to other people.": [
+    "HERE käyttää paikkatietoa. Tarkkoja koordinaattejasi ei näytetä muille.",
+    "HERE använder platsens sammanhang. Dina exakta koordinater visas aldrig för andra."
   ],
   "Block and report": [
     "Estä ja ilmoita",
@@ -1339,9 +1359,9 @@
     "Valinnainen",
     "Valfritt"
   ],
-  "Delete your Left account?": [
-    "Poistetaanko Left-tilisi?",
-    "Radera ditt Left-konto?"
+  "Delete your HERE account?": [
+    "Poistetaanko HERE-tilisi?",
+    "Radera ditt HERE-konto?"
   ],
   "Keep my account": [
     "Säilytä tilini",
@@ -1767,9 +1787,9 @@
     "Yleiset",
     "Allmänt"
   ],
-  "About Left": [
-    "Tietoa Leftistä",
-    "Om Left"
+  "About HERE": [
+    "Tietoa HEREstä",
+    "Om HERE"
   ],
   "App info and updates.": [
     "Sovelluksen tiedot ja päivitykset.",
@@ -2043,9 +2063,9 @@
     "Paikkaa ei voitu tallentaa",
     "Kunde inte spara platsen"
   ],
-  "Left can save a place after it has been confirmed in the venue directory.": [
-    "Left voi tallentaa paikan, kun se on vahvistettu paikkahakemistossa.",
-    "Left kan spara en plats när den har bekräftats i platskatalogen."
+  "HERE can save a place after it has been confirmed in the venue directory.": [
+    "HERE voi tallentaa paikan, kun se on vahvistettu paikkahakemistossa.",
+    "HERE kan spara en plats när den har bekräftats i platskatalogen."
   ],
   "Could not update saved places": [
     "Tallennettuja paikkoja ei voitu päivittää",
@@ -2099,9 +2119,9 @@
     "Paikan sijainti puuttuu",
     "Platsens position saknas"
   ],
-  "Move around the venue once so Left has a recent device location.": [
-    "Liiku hieman paikassa, jotta Left saa tuoreen sijaintitiedon.",
-    "Rör dig lite på platsen så att Left får en aktuell position."
+  "Move around the venue once so HERE has a recent device location.": [
+    "Liiku hieman paikassa, jotta HERE saa tuoreen sijaintitiedon.",
+    "Rör dig lite på platsen så att HERE får en aktuell position."
   ],
   "Missing venue details": [
     "Paikan tietoja puuttuu",
@@ -2163,9 +2183,9 @@
     "Kirjaudu uudelleen viimeistelläksesi käyttöönoton.",
     "Logga in igen för att slutföra kontoinställningen."
   ],
-  "Left could not finish the permission check. Try again, or review device settings.": [
-    "Left ei voinut viimeistellä lupien tarkistusta. Yritä uudelleen tai tarkista laitteen asetukset.",
-    "Left kunde inte slutföra behörighetskontrollen. Försök igen eller kontrollera enhetens inställningar."
+  "HERE could not finish the permission check. Try again, or review device settings.": [
+    "HERE ei voinut viimeistellä lupien tarkistusta. Yritä uudelleen tai tarkista laitteen asetukset.",
+    "HERE kunde inte slutföra behörighetskontrollen. Försök igen eller kontrollera enhetens inställningar."
   ],
   "Agree to the Terms of Service and Community Guidelines once the legal documents are available.": [
     "Hyväksy käyttöehdot ja yhteisön säännöt, kun oikeudelliset asiakirjat ovat saatavilla.",
@@ -2179,9 +2199,9 @@
     "Valitse vähintään kolme kiinnostuksenkohdetta, joista voit valita tunnelmasi.",
     "Välj minst tre intressen så att du har meningsfulla stämningar att dela."
   ],
-  "Open your device settings and allow location access for Left.": [
-    "Avaa laitteen asetukset ja salli Leftin sijaintilupa.",
-    "Öppna enhetens inställningar och tillåt platsåtkomst för Left."
+  "Open your device settings and allow location access for HERE.": [
+    "Avaa laitteen asetukset ja salli HEREn sijaintilupa.",
+    "Öppna enhetens inställningar och tillåt platsåtkomst för HERE."
   ],
   "Agree to the Terms of Service and Community Guidelines to continue.": [
     "Jatka hyväksymällä käyttöehdot ja yhteisön säännöt.",
@@ -2199,9 +2219,9 @@
     "Näkyvyyttä ei voitu aloittaa",
     "Kunde inte aktivera synlighet"
   ],
-  "Left could not complete the location check. Please try again.": [
-    "Left ei voinut viimeistellä sijainnin tarkistusta. Yritä uudelleen.",
-    "Left kunde inte slutföra platskontrollen. Försök igen."
+  "HERE could not complete the location check. Please try again.": [
+    "HERE ei voinut viimeistellä sijainnin tarkistusta. Yritä uudelleen.",
+    "HERE kunde inte slutföra platskontrollen. Försök igen."
   ],
   "Location needed": [
     "Sijainti tarvitaan",
@@ -2219,25 +2239,25 @@
     "Lähipaikka löytyi",
     "Plats i närheten hittad"
   ],
-  "Left does not have location permission yet, so it cannot confirm your venue.": [
-    "Leftillä ei vielä ole sijaintilupaa, joten paikkaasi ei voida vahvistaa.",
-    "Left har inte platsbehörighet ännu och kan därför inte bekräfta din plats."
+  "HERE does not have location permission yet, so it cannot confirm your venue.": [
+    "HEREllä ei vielä ole sijaintilupaa, joten paikkaasi ei voida vahvistaa.",
+    "HERE har inte platsbehörighet ännu och kan därför inte bekräfta din plats."
   ],
   "Location not ready": [
     "Sijainti ei ole valmis",
     "Positionen är inte klar"
   ],
-  "Left does not have a recent location fix yet. Wait a moment and try again.": [
-    "Leftillä ei vielä ole tuoretta sijaintitietoa. Odota hetki ja yritä uudelleen.",
-    "Left har ingen aktuell position ännu. Vänta en stund och försök igen."
+  "HERE does not have a recent location fix yet. Wait a moment and try again.": [
+    "HEREllä ei vielä ole tuoretta sijaintitietoa. Odota hetki ja yritä uudelleen.",
+    "HERE har ingen aktuell position ännu. Vänta en stund och försök igen."
   ],
   "Venue not ready": [
     "Paikka ei ole valmis",
     "Platsen är inte klar"
   ],
-  "Left could not confirm a nearby venue from your current location yet.": [
-    "Left ei vielä voinut vahvistaa lähipaikkaa nykyisen sijaintisi perusteella.",
-    "Left kunde ännu inte bekräfta en plats i närheten utifrån din aktuella position."
+  "HERE could not confirm a nearby venue from your current location yet.": [
+    "HERE ei vielä voinut vahvistaa lähipaikkaa nykyisen sijaintisi perusteella.",
+    "HERE kunde ännu inte bekräfta en plats i närheten utifrån din aktuella position."
   ],
   "Your session was not saved. Try again before becoming visible.": [
     "Istuntoasi ei tallennettu. Yritä uudelleen ennen kuin tulet näkyviin.",
@@ -2483,25 +2503,25 @@
     "Kirjaudu sisään",
     "Logga in"
   ],
-  "{venue} was detected nearby, but it is not in Left's venue database yet. Add it once before you can go visible there.": [
-    "{venue} löytyi läheltä, mutta sitä ei vielä ole Leftin paikkahakemistossa. Lisää se ensin, jotta voit tulla näkyviin siellä.",
-    "{venue} hittades i närheten men finns ännu inte i Lefts platskatalog. Lägg till platsen innan du blir synlig där."
+  "{venue} was detected nearby, but it is not in HERE's venue database yet. Add it once before you can go visible there.": [
+    "{venue} löytyi läheltä, mutta sitä ei vielä ole HEREn paikkahakemistossa. Lisää se ensin, jotta voit tulla näkyviin siellä.",
+    "{venue} hittades i närheten men finns ännu inte i HEREs platskatalog. Lägg till platsen innan du blir synlig där."
   ],
-  "{venue} is already pinned nearby, so Left reused it instead of creating a duplicate.": [
-    "{venue} on jo merkitty lähelle, joten Left käytti olemassa olevaa paikkaa.",
-    "{venue} finns redan markerad i närheten, så Left använde den befintliga platsen."
+  "{venue} is already pinned nearby, so HERE reused it instead of creating a duplicate.": [
+    "{venue} on jo merkitty lähelle, joten HERE käytti olemassa olevaa paikkaa.",
+    "{venue} finns redan markerad i närheten, så HERE använde den befintliga platsen."
   ],
   "{venue} is now available to people nearby.": [
     "{venue} on nyt lähellä olevien saatavilla.",
     "{venue} är nu tillgänglig för personer i närheten."
   ],
-  "{venue} was already in the community venue list, so Left reused it instead of creating a duplicate.": [
-    "{venue} oli jo yhteisön paikkalistalla, joten Left käytti olemassa olevaa paikkaa.",
-    "{venue} fanns redan i gemenskapens platslista, så Left använde den befintliga platsen."
+  "{venue} was already in the community venue list, so HERE reused it instead of creating a duplicate.": [
+    "{venue} oli jo yhteisön paikkalistalla, joten HERE käytti olemassa olevaa paikkaa.",
+    "{venue} fanns redan i gemenskapens platslista, så HERE använde den befintliga platsen."
   ],
-  "{venue} was detected nearby, but it is not a confirmed Left venue yet. Add it first, then you can go visible there.": [
-    "{venue} löytyi läheltä, mutta sitä ei vielä ole vahvistettu Leftissä. Lisää se ensin, niin voit tulla näkyviin siellä.",
-    "{venue} hittades i närheten men är ännu inte en bekräftad Left-plats. Lägg till den först så kan du bli synlig där."
+  "{venue} was detected nearby, but it is not a confirmed HERE venue yet. Add it first, then you can go visible there.": [
+    "{venue} löytyi läheltä, mutta sitä ei vielä ole vahvistettu HEREssä. Lisää se ensin, niin voit tulla näkyviin siellä.",
+    "{venue} hittades i närheten men är ännu inte en bekräftad HERE-plats. Lägg till den först så kan du bli synlig där."
   ],
   "{venue} is hidden. You will not be visible there until you unhide it.": [
     "{venue} on piilotettu. Et näy siellä ennen kuin poistat piilotuksen.",
@@ -2587,17 +2607,17 @@
     "Perustuu {count} Google-arvioon",
     "Baserat på {count} Google-betyg"
   ],
-  "Loading Left": [
-    "Ladataan Leftiä",
-    "Laddar Left"
+  "Loading HERE": [
+    "Ladataan HEREä",
+    "Laddar HERE"
   ],
-  "Left couldn’t load its interface.": [
-    "Leftin käyttöliittymää ei voitu ladata.",
-    "Left kunde inte ladda gränssnittet."
+  "HERE couldn’t load its interface.": [
+    "HEREn käyttöliittymää ei voitu ladata.",
+    "HERE kunde inte ladda gränssnittet."
   ],
-  "Opening Left…": [
-    "Avataan Leftiä…",
-    "Öppnar Left…"
+  "Opening HERE…": [
+    "Avataan HEREä…",
+    "Öppnar HERE…"
   ],
   "Tomorrow": [
     "Huomenna",
@@ -2691,17 +2711,17 @@
     "Vahvistus tarvitaan",
     "Behöver bekräftas"
   ],
-  "Left has a confirmed venue match for this place.": [
-    "Left on vahvistanut tämän paikan.",
-    "Left har bekräftat den här platsen."
+  "HERE has a confirmed venue match for this place.": [
+    "HERE on vahvistanut tämän paikan.",
+    "HERE har bekräftat den här platsen."
   ],
-  "Left found a likely nearby venue, but it has not been fully confirmed yet.": [
-    "Left löysi todennäköisen lähipaikan, mutta sitä ei ole vielä vahvistettu kokonaan.",
-    "Left hittade en trolig plats i närheten, men den har inte bekräftats helt ännu."
+  "HERE found a likely nearby venue, but it has not been fully confirmed yet.": [
+    "HERE löysi todennäköisen lähipaikan, mutta sitä ei ole vielä vahvistettu kokonaan.",
+    "HERE hittade en trolig plats i närheten, men den har inte bekräftats helt ännu."
   ],
-  "Left still needs a confirmed venue before visibility can start here.": [
-    "Left tarvitsee vahvistetun paikan ennen kuin näkyvyys voidaan aloittaa täällä.",
-    "Left behöver en bekräftad plats innan synlighet kan aktiveras här."
+  "HERE still needs a confirmed venue before visibility can start here.": [
+    "HERE tarvitsee vahvistetun paikan ennen kuin näkyvyys voidaan aloittaa täällä.",
+    "HERE behöver en bekräftad plats innan synlighet kan aktiveras här."
   ],
   "Location access was denied. Allow location in device settings, then try again.": [
     "Sijaintilupa evättiin. Salli sijainti laitteen asetuksissa ja yritä uudelleen.",
@@ -3019,13 +3039,13 @@
     "Paikka lisätty",
     "Platsen har lagts till"
   ],
-  "Allow 'Always' location access so Left can confirm your venue before you go visible.": [
-    "Salli sijainti ”Aina”, jotta Left voi vahvistaa paikkasi ennen kuin tulet näkyviin.",
-    "Tillåt platsåtkomst ”Alltid” så att Left kan bekräfta din plats innan du blir synlig."
+  "Allow 'Always' location access so HERE can confirm your venue before you go visible.": [
+    "Salli sijainti ”Aina”, jotta HERE voi vahvistaa paikkasi ennen kuin tulet näkyviin.",
+    "Tillåt platsåtkomst ”Alltid” så att HERE kan bekräfta din plats innan du blir synlig."
   ],
-  "Left needs location access to confirm your venue before you go visible.": [
-    "Left tarvitsee sijaintiluvan vahvistaakseen paikkasi ennen kuin tulet näkyviin.",
-    "Left behöver platsåtkomst för att bekräfta din plats innan du blir synlig."
+  "HERE needs location access to confirm your venue before you go visible.": [
+    "HERE tarvitsee sijaintiluvan vahvistaakseen paikkasi ennen kuin tulet näkyviin.",
+    "HERE behöver platsåtkomst för att bekräfta din plats innan du blir synlig."
   ],
   "Hide this person?": [
     "Piilotetaanko tämä henkilö?",
@@ -3035,9 +3055,9 @@
     "Estetäänkö tämä henkilö?",
     "Blockera den här personen?"
   ],
-  "Left helps you signal presence at real venues, discover nearby social energy, and control how you are seen.": [
-    "Left auttaa sinua olemaan läsnä oikeissa paikoissa, löytämään lähistön sosiaalisen tunnelman ja hallitsemaan näkyvyyttäsi.",
-    "Left hjälper dig att visa närvaro på verkliga platser, upptäcka social energi i närheten och styra hur du syns."
+  "HERE helps you signal presence at real venues, discover nearby social energy, and control how you are seen.": [
+    "HERE auttaa sinua olemaan läsnä oikeissa paikoissa, löytämään lähistön sosiaalisen tunnelman ja hallitsemaan näkyvyyttäsi.",
+    "HERE hjälper dig att visa närvaro på verkliga platser, upptäcka social energi i närheten och styra hur du syns."
   ],
   "Geometric": [
     "Geometrinen",
@@ -3059,45 +3079,9 @@
     "Paikkasi on vahvistettu.\nNäe, keitä lähistöllä on, kun olet näkyvissä.",
     "Din plats är bekräftad.\nSe vilka som är i närheten medan du är synlig."
   ],
-  "Left found a likely nearby venue.\nIt has not been fully confirmed yet.": [
-    "Left löysi todennäköisen lähipaikan.\nSitä ei vielä ole vahvistettu kokonaan.",
-    "Left hittade en trolig plats i närheten.\nDen har inte bekräftats helt ännu."
-  ],
-  "Illustrative interior photo": [
-    "Havainnekuva sisätilasta",
-    "Illustrativ interiörbild"
-  ],
-  "Illustrative café photo": [
-    "Havainnekuva kahvilasta",
-    "Illustrativ kafébild"
-  ],
-  "Illustrative bar photo": [
-    "Havainnekuva baarista",
-    "Illustrativ barbild"
-  ],
-  "Illustrative restaurant photo": [
-    "Havainnekuva ravintolasta",
-    "Illustrativ restaurangbild"
-  ],
-  "Illustrative library photo": [
-    "Havainnekuva kirjastosta",
-    "Illustrativ biblioteksbild"
-  ],
-  "Illustrative workspace photo": [
-    "Havainnekuva työtilasta",
-    "Illustrativ bild av en arbetsplats"
-  ],
-  "Illustrative park photo": [
-    "Havainnekuva puistosta",
-    "Illustrativ parkbild"
-  ],
-  "Illustrative gym photo": [
-    "Havainnekuva kuntosalista",
-    "Illustrativ gymbild"
-  ],
-  "Illustrative airport photo": [
-    "Havainnekuva lentokentästä",
-    "Illustrativ flygplatsbild"
+  "HERE found a likely nearby venue.\nIt has not been fully confirmed yet.": [
+    "HERE löysi todennäköisen lähipaikan.\nSitä ei vielä ole vahvistettu kokonaan.",
+    "HERE hittade en trolig plats i närheten.\nDen har inte bekräftats helt ännu."
   ],
   "Photo by {author}": [
     "Kuva: {author}",
@@ -3154,5 +3138,105 @@
   "Change venue": [
     "Vaihda paikkaa",
     "Byt plats"
+  ],
+  "Help Center": [
+    "Ohjekeskus",
+    "Hjälpcenter"
+  ],
+  "A little guidance for your next moment HERE.": [
+    "Ohjeita seuraavaan hetkeesi HEREssä.",
+    "Lite vägledning för din nästa stund med HERE."
+  ],
+  "Answers and troubleshooting.": [
+    "Vastauksia ja vianmääritystä.",
+    "Svar och felsökning."
+  ],
+  "Getting started": [
+    "Aloittaminen",
+    "Kom igång"
+  ],
+  "Visibility": [
+    "Näkyvyys",
+    "Synlighet"
+  ],
+  "Location": [
+    "Sijainti",
+    "Plats"
+  ],
+  "Gatherings": [
+    "Tapaamiset",
+    "Träffar"
+  ],
+  "Account and privacy": [
+    "Tili ja tietosuoja",
+    "Konto och integritet"
+  ],
+  "Troubleshooting": [
+    "Vianmääritys",
+    "Felsökning"
+  ],
+  "What is HERE?": [
+    "Mikä HERE on?",
+    "Vad är HERE?"
+  ],
+  "How do I control my visibility?": [
+    "Miten hallitsen näkyvyyttäni?",
+    "Hur styr jag min synlighet?"
+  ],
+  "Why is my venue missing or incorrect?": [
+    "Miksi paikkani puuttuu tai on väärä?",
+    "Varför saknas min plats eller visas fel plats?"
+  ],
+  "How do gathering invitations work?": [
+    "Miten tapaamiskutsut toimivat?",
+    "Hur fungerar inbjudningar till träffar?"
+  ],
+  "How do I report or block someone?": [
+    "Miten ilmoitan henkilöstä tai estän hänet?",
+    "Hur anmäler eller blockerar jag någon?"
+  ],
+  "How do I change notifications?": [
+    "Miten muutan ilmoituksia?",
+    "Hur ändrar jag aviseringar?"
+  ],
+  "Where can I download my data or delete my account?": [
+    "Mistä voin ladata tietoni tai poistaa tilini?",
+    "Var kan jag ladda ner mina uppgifter eller radera mitt konto?"
+  ],
+  "What should I do if something is not working?": [
+    "Mitä teen, jos jokin ei toimi?",
+    "Vad gör jag om något inte fungerar?"
+  ],
+  "HERE helps you discover venues, people and gatherings nearby. Explore a venue, choose whether to be visible, and decide when to connect.": [
+    "HERE auttaa löytämään lähistön paikkoja, ihmisiä ja tapaamisia. Tutustu paikkaan, valitse näkyvyytesi ja päätä, milloin haluat ottaa yhteyttä.",
+    "HERE hjälper dig att upptäcka platser, människor och träffar i närheten. Utforska en plats, välj om du vill vara synlig och bestäm när du vill ta kontakt."
+  ],
+  "Use the visibility controls in the Here tab to choose when you appear to others. Check your current status before leaving the app. You can browse without turning visibility on.": [
+    "Valitse Here-välilehden näkyvyysasetuksilla, milloin näyt muille. Tarkista tilasi ennen sovelluksesta poistumista. Voit selailla ottamatta näkyvyyttä käyttöön.",
+    "Använd synlighetsreglagen på fliken Here för att välja när du visas för andra. Kontrollera din status innan du lämnar appen. Du kan utforska utan att slå på synligheten."
+  ],
+  "Check that location access and Precise Location are enabled for HERE in your phone settings. Open HERE at the venue and allow your location to refresh. If the venue is still incorrect, use Change venue when available. Nearby results do not automatically mean you are checked in.": [
+    "Tarkista puhelimen asetuksista, että HEREllä on sijaintilupa ja tarkka sijainti käytössä. Avaa HERE paikan päällä ja odota sijainnin päivittymistä. Jos paikka on edelleen väärä, käytä Vaihda paikka -toimintoa, kun se on saatavilla. Lähellä näkyvät tulokset eivät tarkoita automaattista sisäänkirjautumista paikkaan.",
+    "Kontrollera i telefonens inställningar att HERE har platsåtkomst och exakt plats aktiverade. Öppna HERE på plats och låt positionen uppdateras. Om platsen fortfarande är fel, använd Byt plats när det är tillgängligt. Resultat i närheten innebär inte att du automatiskt är incheckad."
+  ],
+  "Open a gathering invitation to view the available details and join through HERE. You may need to sign in. Check the time, venue and any cost notes before joining.": [
+    "Avaa tapaamiskutsu nähdäksesi saatavilla olevat tiedot ja liittyäksesi HEREssä. Saatat joutua kirjautumaan sisään. Tarkista aika, paikka ja mahdolliset kustannukset ennen liittymistä.",
+    "Öppna en inbjudan för att se tillgängliga uppgifter och gå med via HERE. Du kan behöva logga in. Kontrollera tid, plats och eventuella kostnader innan du går med."
+  ],
+  "Open the person’s profile to use Block or Report. For a report, choose the reason, add relevant details and select Send report. You can manage hidden venues and muted alerts in Settings → Privacy and safety.": [
+    "Avaa henkilön profiili ja valitse Estä tai Ilmianna. Valitse ilmoituksen syy, lisää olennaiset tiedot ja lähetä ilmoitus. Piilotettuja paikkoja ja mykistettyjä ilmoituksia voit hallita kohdassa Asetukset → Yksityisyys ja turvallisuus.",
+    "Öppna personens profil och välj Blockera eller Anmäl. Välj orsak, lägg till relevanta uppgifter och skicka anmälan. Hantera dolda platser och tystade aviseringar under Inställningar → Integritet och säkerhet."
+  ],
+  "Open Settings → Notifications to manage HERE alerts in your phone settings. Check your phone’s notification permissions if alerts are not arriving.": [
+    "Avaa Asetukset → Ilmoitukset hallitaksesi HEREn ilmoituksia puhelimen asetuksissa. Tarkista puhelimen ilmoitusluvat, jos ilmoitukset eivät saavu.",
+    "Öppna Inställningar → Aviseringar för att hantera HEREs aviseringar i telefonens inställningar. Kontrollera telefonens aviseringsbehörigheter om aviseringar inte kommer fram."
+  ],
+  "In Settings, choose Download my data to save a copy of your account records. To remove your account, choose Delete account and follow the confirmation steps. If deletion asks you to retry, keep the app open and follow the instructions until deletion is confirmed.": [
+    "Valitse asetuksista Lataa tietoni tallentaaksesi kopion tilitiedoistasi. Poista tili valitsemalla Poista tili ja seuraamalla vahvistusohjeita. Jos poisto pyytää yrittämään uudelleen, pidä sovellus auki ja noudata ohjeita, kunnes poisto on vahvistettu.",
+    "Välj Ladda ner mina uppgifter i inställningarna för att spara en kopia av dina kontouppgifter. Välj Radera konto och följ bekräftelsestegen för att ta bort kontot. Om du uppmanas att försöka igen, håll appen öppen och följ instruktionerna tills raderingen bekräftats."
+  ],
+  "Close and reopen HERE, check your internet connection and install the latest available app update. Note the steps that caused the issue, your phone model and the app version shown in Settings. If you use TestFlight, open TestFlight, select HERE and use Send Beta Feedback. Avoid including passwords or other people’s private information.": [
+    "Sulje HERE ja avaa se uudelleen, tarkista internetyhteys ja asenna uusin saatavilla oleva sovelluspäivitys. Kirjaa ongelmaan johtaneet vaiheet, puhelinmalli ja asetuksissa näkyvä sovellusversio. Jos käytät TestFlightia, avaa TestFlight, valitse HERE ja käytä Send Beta Feedback -toimintoa. Älä sisällytä salasanoja tai muiden yksityisiä tietoja.",
+    "Stäng och öppna HERE igen, kontrollera internetanslutningen och installera den senaste tillgängliga appuppdateringen. Anteckna stegen som orsakade problemet, telefonmodellen och appversionen som visas i inställningarna. Om du använder TestFlight, öppna TestFlight, välj HERE och använd Send Beta Feedback. Ta inte med lösenord eller andras privata uppgifter."
   ]
 }

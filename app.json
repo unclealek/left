@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Left",
+    "name": "HERE",
     "slug": "left-mobile",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -25,7 +25,7 @@
           "location"
         ]
       },
-      "buildNumber": "8",
+      "buildNumber": "9",
       "runtimeVersion": "1.0.1"
     },
     "android": {
@@ -67,7 +67,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Left to attach a photo to a community venue."
+          "photosPermission": "Allow HERE to attach a photo to a community venue."
         }
       ],
       "expo-font",

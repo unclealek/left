@@ -21,7 +21,8 @@ export function ProfileHero({ name, onEdit, onSettings, joinedAt }: {
         <LeftIcon name="edit" size={17} color={T.textSecondary} />
       </Pressable> : null}
     </View>
+    <Text style={{ color: T.textSecondary, fontSize: 13, lineHeight: 18 }}>{t("There you are.")}</Text>
     <Text style={[styles.profileDisplayName, { color: T.textPrimary, fontSize: 25, lineHeight: 30 }]}>{name}</Text>
-    {Number.isFinite(joinedYear) ? <Text style={{ color: T.textSecondary, fontSize: 12, lineHeight: 18 }}>{t("On Left since")}{" "}{joinedYear}</Text> : null}
+    {Number.isFinite(joinedYear) ? <Text style={{ color: T.textSecondary, fontSize: 12, lineHeight: 18 }}>{t("On HERE since")}{" "}{joinedYear}</Text> : null}
   </View>;
 }

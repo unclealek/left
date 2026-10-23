@@ -1,8 +1,8 @@
 import type { FooterDestination } from '../../app/leftConfig';
 
 export const TAB_DESTINATIONS = [
-  { key: 'home', label: 'Home', icon: 'home', symbol: 'house', selectedSymbol: 'house.fill' },
-  { key: 'nearby', label: 'Map', icon: 'map-pin', symbol: 'map', selectedSymbol: 'map.fill' },
+  { key: 'home', label: 'Here', icon: 'home', symbol: 'house', selectedSymbol: 'house.fill' },
+  { key: 'nearby', label: 'Map', icon: 'map', symbol: 'map', selectedSymbol: 'map.fill' },
   { key: 'session', label: 'Venues', icon: 'venue', symbol: 'building.2', selectedSymbol: 'building.2.fill' },
   { key: 'account', label: 'Profile', icon: 'user', symbol: 'person.crop.circle', selectedSymbol: 'person.crop.circle.fill' },
 ] as const satisfies ReadonlyArray<{key: FooterDestination; label: string; icon: string; symbol: string; selectedSymbol: string}>;

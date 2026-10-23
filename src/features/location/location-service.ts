@@ -29,7 +29,7 @@ function backgroundLocationOptions(): Location.LocationTaskOptions {
   return {
     accuracy: Location.Accuracy.Balanced, distanceInterval: 35, timeInterval: 60_000,
     showsBackgroundLocationIndicator: false, pausesUpdatesAutomatically: false,
-    foregroundService: { notificationTitle: "Left is checking for social venues",
+    foregroundService: { notificationTitle: "HERE is checking for social venues",
       notificationBody: "Your location is used to find nearby venues." },
   };
 }

@@ -11,7 +11,7 @@ export function VenueBackground({ venue }: { venue?: RuntimeVenueCandidate | nul
   const insets = useSafeAreaInsets();
   return <View pointerEvents="box-none" style={[StyleSheet.absoluteFillObject, { backgroundColor: H.ivory }]}>
     {!opaque ? <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={StyleSheet.absoluteFillObject}>
-      <VenuePhoto venue={venue} photo={venue?.photo} uri={venue?.photoUrl} blurRadius={14} showFallbackLabel={false} />
+      <VenuePhoto venue={venue} photo={venue?.photo} uri={venue?.photoUrl} blurRadius={14} />
       <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(247,244,238,0.60)' }]} />
     </View> : null}
     {!opaque && venue?.photo ? <View pointerEvents="box-none" style={{ position: 'absolute', bottom: insets.bottom + 102, right: 12, maxWidth: '65%' }}>

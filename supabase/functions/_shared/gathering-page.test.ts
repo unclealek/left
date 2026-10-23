@@ -8,6 +8,6 @@ it('escapes public content and exposes no attendance action',()=>{
 });
 it('only uses official app download destinations',()=>{
  const plan={title:'Coffee',description:'A small plan',venueName:'Cafe',startsAt:'2099-01-01',costNotes:'Free',accessibilityNotes:'',capacity:8};
- expect(gatheringPage(plan,'abc','https://testflight.apple.com/join/test')).toContain('Get LEFT');
+ expect(gatheringPage(plan,'abc','https://testflight.apple.com/join/test')).toContain('Get HERE');
  expect(gatheringPage(plan,'abc','https://evil.test/download')).not.toContain('evil.test');
 });

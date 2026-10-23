@@ -619,7 +619,7 @@ export function LeftApp({sharedGatheringId,sharedLinkRevision=0,startAtAuth=fals
   async function toggleSavedVenue(candidate: RuntimeVenueCandidate) {
     if (!user || savingVenueId) return;
     if (!isUuid(candidate.id)) {
-      showDialog("Could not save this place", "Left can save a place after it has been confirmed in the venue directory.");
+      showDialog("Could not save this place", "HERE can save a place after it has been confirmed in the venue directory.");
       return;
     }
     const isSaved = savedVenues.some((entry) => entry.venueId === candidate.id);
@@ -1384,7 +1384,7 @@ export function LeftApp({sharedGatheringId,sharedLinkRevision=0,startAtAuth=fals
       setVenueDraftType("other");
       showDialog(
         "Add this venue first",
-        t("{venue} was detected nearby, but it is not in Left's venue database yet. Add it once before you can go visible there.", { venue: chosenVenue.name }),
+        t("{venue} was detected nearby, but it is not in HERE's venue database yet. Add it once before you can go visible there.", { venue: chosenVenue.name }),
         [
           { label: "Cancel", onPress: () => setScreen("venue-select") },
           { label: "Add venue", variant: "primary", onPress: () => setScreen("venue-add") },
@@ -1420,7 +1420,7 @@ export function LeftApp({sharedGatheringId,sharedLinkRevision=0,startAtAuth=fals
 
   async function submitVenueSuggestion() {
     if (!user || !lastKnownCoords) {
-      showDialog("Venue location missing", "Move around the venue once so Left has a recent device location.");
+      showDialog("Venue location missing", "Move around the venue once so HERE has a recent device location.");
       return;
     }
     if (!venueDraftName.trim() || !venueDraftAddress.trim() || !venueDraftPhotoUri) {
@@ -1433,7 +1433,7 @@ export function LeftApp({sharedGatheringId,sharedLinkRevision=0,startAtAuth=fals
     if (duplicateVenue) {
       setVenueDraftSubmitting(false);
       await confirmVenueSelection(duplicateVenue.id);
-      showDialog("Venue already exists", t("{venue} is already pinned nearby, so Left reused it instead of creating a duplicate.", { venue: duplicateVenue.name }));
+      showDialog("Venue already exists", t("{venue} is already pinned nearby, so HERE reused it instead of creating a duplicate.", { venue: duplicateVenue.name }));
       return;
     }
 
@@ -1468,7 +1468,7 @@ export function LeftApp({sharedGatheringId,sharedLinkRevision=0,startAtAuth=fals
       submittedVenue.created ? "Venue added" : "Venue already exists",
       submittedVenue.created
         ? t("{venue} is now available to people nearby.", { venue: submittedVenue.name })
-        : t("{venue} was already in the community venue list, so Left reused it instead of creating a duplicate.", { venue: submittedVenue.name }),
+        : t("{venue} was already in the community venue list, so HERE reused it instead of creating a duplicate.", { venue: submittedVenue.name }),
       [
         { label: "Done", variant: "primary", onPress: () => setScreen("home") },
       ],
@@ -1677,7 +1677,7 @@ export function LeftApp({sharedGatheringId,sharedLinkRevision=0,startAtAuth=fals
       else setScreen("legal-consent");
     } catch (error) {
       console.warn("[onboarding] location step failed", error);
-      setLocationError("Left could not finish the permission check. Try again, or review device settings.");
+      setLocationError("HERE could not finish the permission check. Try again, or review device settings.");
     } finally {
       setLocationBusy(false);
     }
@@ -1787,7 +1787,7 @@ export function LeftApp({sharedGatheringId,sharedLinkRevision=0,startAtAuth=fals
 
   function openDeviceSettings() {
     void Linking.openSettings().catch(() => {
-      showDialog("Open device settings", "Open your device settings and allow location access for Left.");
+      showDialog("Open device settings", "Open your device settings and allow location access for HERE.");
     });
   }
 
@@ -1849,7 +1849,7 @@ export function LeftApp({sharedGatheringId,sharedLinkRevision=0,startAtAuth=fals
     try {
       await performPresenceActivation(confirmedVenueId);
     } catch {
-      showDialog("Could not start visibility", "Left could not complete the location check. Please try again.");
+      showDialog("Could not start visibility", "HERE could not complete the location check. Please try again.");
     } finally {
       activationAttemptRef.current = false;
       setActivationSubmitting(false);
@@ -1875,8 +1875,8 @@ export function LeftApp({sharedGatheringId,sharedLinkRevision=0,startAtAuth=fals
         showDialog(
           "Location needed",
           locationResult.reason === "background_denied"
-            ? "Allow 'Always' location access so Left can confirm your venue before you go visible."
-            : "Left needs location access to confirm your venue before you go visible.",
+            ? "Allow 'Always' location access so HERE can confirm your venue before you go visible."
+            : "HERE needs location access to confirm your venue before you go visible.",
         );
         return;
       }
@@ -1938,7 +1938,7 @@ export function LeftApp({sharedGatheringId,sharedLinkRevision=0,startAtAuth=fals
         setVenueDraftType("other");
         showDialog(
           "Venue found nearby",
-          t("{venue} was detected nearby, but it is not a confirmed Left venue yet. Add it first, then you can go visible there.", { venue: detectedVenue.name }),
+          t("{venue} was detected nearby, but it is not a confirmed HERE venue yet. Add it first, then you can go visible there.", { venue: detectedVenue.name }),
           [
             { label: "Cancel" },
             { label: "Add venue", variant: "primary", onPress: () => setScreen("venue-add") },
@@ -1948,16 +1948,16 @@ export function LeftApp({sharedGatheringId,sharedLinkRevision=0,startAtAuth=fals
       }
 
       if (!runtime.permissionGranted) {
-        showDialog("Location needed", "Left does not have location permission yet, so it cannot confirm your venue.");
+        showDialog("Location needed", "HERE does not have location permission yet, so it cannot confirm your venue.");
         return;
       }
 
       if (!runtime.lastKnownCoords) {
-        showDialog("Location not ready", "Left does not have a recent location fix yet. Wait a moment and try again.");
+        showDialog("Location not ready", "HERE does not have a recent location fix yet. Wait a moment and try again.");
         return;
       }
 
-      showDialog("Venue not ready", "Left could not confirm a nearby venue from your current location yet.");
+      showDialog("Venue not ready", "HERE could not confirm a nearby venue from your current location yet.");
       return;
     }
     if (confirmedVenueId !== resolvedVenueId) {
@@ -2650,7 +2650,7 @@ export function LeftApp({sharedGatheringId,sharedLinkRevision=0,startAtAuth=fals
   async function requestAccountDeletion() {
     if (!user || deletionRequestState === "submitting") return;
     showDialog(
-      "Delete your Left account?",
+      "Delete your HERE account?",
       "This requests deletion of your account and direct identity details. You will be signed out when processing completes. Some safety and operational records may be retained under the Privacy Policy.",
       [
         { label: "Keep my account", variant: "ghost" },

@@ -28,10 +28,10 @@ export function getVenueConfidenceLabel(confidence: VenueConfidence) {
 export function getVenueConfidenceCopy(confidence: VenueConfidence) {
   switch (confidence) {
     case "confirmed":
-      return "Left has a confirmed venue match for this place.";
+      return "HERE has a confirmed venue match for this place.";
     case "nearby_guess":
-      return "Left found a likely nearby venue, but it has not been fully confirmed yet.";
+      return "HERE found a likely nearby venue, but it has not been fully confirmed yet.";
     default:
-      return "Left still needs a confirmed venue before visibility can start here.";
+      return "HERE still needs a confirmed venue before visibility can start here.";
   }
 }

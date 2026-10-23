@@ -44,16 +44,18 @@ beforeEach(() => {
 it.each(['home', 'nearby', 'session', 'account'] as const)('keeps %s selected and all four existing callbacks functional', selected => {
   const { navigate, elements } = render(selected);
   const tabs = elements.filter(node => node.props.accessibilityRole === 'tab');
-  expect(tabs.map(tab => tab.props.accessibilityLabel)).toEqual(['Home', 'Map', 'Venues', 'Profile']);
+  expect(tabs.map(tab => tab.props.accessibilityLabel)).toEqual(['Here', 'Map', 'Venues', 'Profile']);
   tabs.forEach(tab => tab.props.onPress());
   expect(navigate.mock.calls.flat()).toEqual(['home', 'nearby', 'session', 'account']);
   expect(tabs.filter(tab => tab.props.accessibilityState.selected)).toHaveLength(1);
   expect(tabs[['home', 'nearby', 'session', 'account'].indexOf(selected)].props.accessibilityState.selected).toBe(true);
 });
-it('uses native glass for the container and selection, with SF Symbols on iOS', () => {
+it('uses native glass with the custom navigation icons on iOS', () => {
   const { elements } = render();
   expect(elements.filter(node => node.type === 'NativeGlass')).toHaveLength(2);
-  expect(elements.filter(node => node.type === 'SFSymbol')).toHaveLength(4);
+  const icons = elements.filter(node => node.type === 'LeftIcon');
+  expect(icons.map(icon => icon.props.name)).toEqual(['home', 'map', 'venue', 'user']);
+  expect(icons.map(icon => icon.props.active)).toEqual([true, false, false, false]);
   expect(elements.some(node => node.type === 'SystemBlur')).toBe(false);
 });
 it('uses system blur on an older iOS build', () => {

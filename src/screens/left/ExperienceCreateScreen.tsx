@@ -117,7 +117,7 @@ export function ExperienceCreateScreen({
 
       <View style={styles.experienceReviewNotice}>
         <Text style={styles.experienceReviewEyebrow}>{t("REVIEWED, NOT INSTANT")}</Text>
-        <Text style={styles.experienceReviewText}>{t("Left checks the plan, place, and wording first. Submitting does not publish it automatically.")}{" "}</Text>
+        <Text style={styles.experienceReviewText}>{t("HERE checks the plan, place, and wording first. Submitting does not publish it automatically.")}{" "}</Text>
       </View>
 
       <FieldBlock label={t("Place")} hint="Choose where the gathering will actually happen.">

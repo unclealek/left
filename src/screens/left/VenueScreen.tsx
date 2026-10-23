@@ -277,7 +277,7 @@ export function VenueScreen({
   const radarSubtitle = isPubliclyVisible
     ? "Your venue is confirmed.\nSee who's around while you stay visible."
     : venueConfidence === "nearby_guess"
-      ? "Left found a likely nearby venue.\nIt has not been fully confirmed yet."
+      ? "HERE found a likely nearby venue.\nIt has not been fully confirmed yet."
       : confidenceCopy;
   const energyTitle =
     venue.energyLevel === "busy"

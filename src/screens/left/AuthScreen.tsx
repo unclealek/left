@@ -182,7 +182,7 @@ export function AuthScreen({
           <View style={styles.authMarkRing}>
             <LeftLogoMark size={47} />
           </View>
-          <Text style={styles.authWordmark}>{t("LEFT")}</Text>
+          <Text style={styles.authWordmark}>{t("HERE")}</Text>
         </View>
 
         <GlassSurface

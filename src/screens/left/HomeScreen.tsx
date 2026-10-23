@@ -5,7 +5,6 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityIndicator, FlatList, Linking, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import type { RuntimeVenueCandidate } from '../../features/location/location-storage';
-import { getVenuePhotoFallbackLabel, resolveVenuePhotoKind } from '../../components/left/venue-photo-model';
 import { VenuePhoto, PhotoCredits } from '../../components/left/VenuePhoto';
 import { resolveVenueConfidence } from '../../features/location/venue-confidence';
 import { styles } from '../../app/leftTheme';
@@ -162,7 +161,7 @@ function HostPlanCard({ onPress }: { onPress: () => void }) {
       <LeftIcon name="calendar" size={24} color={H.moss} /><View style={styles.homeHostPlus}><LeftIcon name="plus" size={13} color={H.moss} /></View>
     </View>
     <View style={styles.homeHostCopy}><Text style={styles.homePeopleTitle}>{t("Host something small")}</Text>
-      <Text style={styles.homeBody}>{t("Suggest a place and plan. Left reviews it before it appears nearby.")}</Text></View>
+      <Text style={styles.homeBody}>{t("Suggest a place and plan. HERE reviews it before it appears nearby.")}</Text></View>
     <LeftIcon name="arrow-up-right" size={20} color={H.moss} />
   </Pressable>;
 }
@@ -197,13 +196,13 @@ export function HomeScreen(props: HomeProps) {
     <StatusBar style="light" />
     <View style={styles.homeHero}>
       <View style={styles.homeHeroVisual}>
-        <VenuePhoto photo={currentPhoto} uri={currentDetails?.photoUrl ?? currentVenue?.photoUrl} venue={currentVenue} showFallbackLabel={false}
+        <VenuePhoto photo={currentPhoto} uri={currentDetails?.photoUrl ?? currentVenue?.photoUrl} venue={currentVenue}
           onPhotoLoad={() => setLoadedHeroPhotoUri(currentPhotoUri ?? null)} onPhotoError={() => setLoadedHeroPhotoUri(null)} />
         <LinearGradient pointerEvents="none" colors={['rgba(23,24,18,0.05)', 'rgba(23,24,18,0.92)']}
           style={styles.homePhoto} />
         <View style={[styles.homeHeroCopy, { paddingTop: (props.topInset ?? 0) + 4 }]}>
           <View style={styles.homeHeroBadge}><LeftIcon name={confirmed ? "check-circle" : "map-pin"} size={13} color={H.lime} />
-            <Text style={styles.homeHeroBadgeText}>{confirmed ? t("Confirmed venue") : props.guest ? t("Guest preview") : t("Find your place")}</Text></View>
+            <Text style={styles.homeHeroBadgeText}>{confirmed ? t("You are HERE") : props.guest ? t("Guest preview") : t("Here you are")}</Text></View>
           <Text style={styles.homeHeroTitle}>{currentVenue?.name ?? t('Your next little discovery')}</Text>
           <Text style={styles.homeHeroMeta}>{currentVenue ? t(venueCategory(currentVenue)) : t("Explore nearby places and confirm where you are.")}</Text>
           <View style={[styles.homeHeroBottomRow, fontScale > 1.3 && { flexDirection: 'column', alignItems: 'stretch' }]}>
@@ -217,7 +216,7 @@ export function HomeScreen(props: HomeProps) {
           </Pressable>
           </View>
           {hasRealHeroPhoto ? <PhotoCredits photo={currentPhoto} onDark />
-            : <Text style={styles.homeHeroAddress}>{getVenuePhotoFallbackLabel(resolveVenuePhotoKind(currentVenue))}</Text>}
+            : null}
         </View>
       </View>
     </View>

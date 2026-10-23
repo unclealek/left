@@ -362,7 +362,7 @@ export function LocationScreen({
       <View accessibilityLabel={t("Privacy and safety controls")} style={styles.onboardingSafetyFeatureList}>
         {[
           { icon: "eye" as const, title: "Control your visibility", body: "Choose when people can discover you at a shared venue." },
-          { icon: "lock" as const, title: "Your location stays protected", body: "Left uses venue context. Your precise coordinates are never shown to other people." },
+          { icon: "lock" as const, title: "Your location stays protected", body: "HERE uses venue context. Your precise coordinates are never shown to other people." },
           { icon: "shield" as const, title: "Block and report", body: "Quickly block or quietly report behaviour that makes you uncomfortable." },
           { icon: "settings" as const, title: "Change settings anytime", body: "Privacy controls remain available inside your profile." },
         ].map((item) => (
@@ -456,7 +456,7 @@ export function NotificationScreen({
           <Text style={styles.onboardingEyebrowBadgeText}>{t("QUIET UPDATES")}</Text>
         </View>
         <Text accessibilityRole="header" style={styles.onboardingTitle}>{t("Stay in the loop, quietly.")}</Text>
-        <Text style={styles.onboardingBody}>{t("Notifications are optional. Left only uses them for moments that help you act, connect, or stay safe.")}{" "}</Text>
+        <Text style={styles.onboardingBody}>{t("Notifications are optional. HERE only uses them for moments that help you act, connect, or stay safe.")}{" "}</Text>
       </View>
 
       <View accessibilityLabel={t("Notification types")} style={styles.onboardingMomentList}>
@@ -503,9 +503,9 @@ export function LegalAcknowledgementScreen({
       }
     >
       <View style={styles.onboardingIntroBlock}>
-        <Text accessibilityRole="header" style={styles.onboardingTitle}>{t("Before you join Left")}</Text>
+        <Text accessibilityRole="header" style={styles.onboardingTitle}>{t("Before you join HERE")}</Text>
         <Text style={styles.onboardingBody}>{t("Welcome to a community designed for real-world social discovery.")}</Text>
-        <Text style={styles.onboardingBody}>{t("By continuing, you agree to Left’s Terms of Service and Community Guidelines, and acknowledge that our Privacy Policy has been made available to you.")}{" "}</Text>
+        <Text style={styles.onboardingBody}>{t("By continuing, you agree to HERE’s Terms of Service and Community Guidelines, and acknowledge that our Privacy Policy has been made available to you.")}{" "}</Text>
       </View>
       <View style={styles.onboardingLegalSection}>
         <View accessibilityLabel={t("Legal documents")} style={styles.onboardingFinalPolicyList}>
@@ -534,11 +534,11 @@ export function LegalAcknowledgementScreen({
           </View>
           <View style={styles.onboardingPledgeCopy}>
             <Text style={styles.onboardingPledgeTitle}>{t("I agree to the Terms of Service and Community Guidelines.")}</Text>
-            <Text style={styles.onboardingPledgeBody}>{t("The Privacy Policy explains how Left uses personal data. Location and notification permissions remain separate.")}</Text>
+            <Text style={styles.onboardingPledgeBody}>{t("The Privacy Policy explains how HERE uses personal data. Location and notification permissions remain separate.")}</Text>
           </View>
         </Pressable>
         {!legalContentReady ? <View accessibilityRole="alert" style={styles.onboardingLegalPending}>
-          <Text style={styles.onboardingLegalPendingText}>{t("Left’s legal documents are not available yet. Please try again after the next update.")}</Text>
+          <Text style={styles.onboardingLegalPendingText}>{t("HERE’s legal documents are not available yet. Please try again after the next update.")}</Text>
         </View> : null}
       </View>
       {error ? <Text accessibilityRole="alert" style={styles.onboardingError}>{t(error)}</Text> : null}

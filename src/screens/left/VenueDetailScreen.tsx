@@ -1,6 +1,5 @@
 import { t, getTranslationLocale } from "../../features/preferences/translation-runtime";
 import { useDistanceFormatter } from "../../features/preferences/use-distance";
-import { getVenuePhotoFallbackLabel, resolveVenuePhotoKind } from "../../components/left/venue-photo-model";
 import { VenuePhoto, PhotoCredits } from "../../components/left/VenuePhoto";
 import { VISIBILITY_DISCLOSURE } from "../../features/presence/visibility-copy";
 import { PopularTimesChart } from "../../components/left/PopularTimesChart";
@@ -92,7 +91,7 @@ export function VenueDetailScreen({
   return (
     <View style={styles.page}>
       <View style={[styles.hero, { height: 252 + insets.top }]}>
-        <VenuePhoto venue={venue} photo={venue.photo} uri={venue.photoUrl} showFallbackLabel={false}
+        <VenuePhoto venue={venue} photo={venue.photo} uri={venue.photoUrl}
           onPhotoLoad={() => setLoadedPhotoUri(photoUri)} onPhotoError={() => setLoadedPhotoUri(null)} />
         <View style={[styles.heroBackButton, { top: insets.top + 12 }]}>
           <BackNavButton label="" onPress={onBack} />
@@ -119,7 +118,7 @@ export function VenueDetailScreen({
       </View>
 
       {photoLoaded && isGooglePhoto ? <PhotoCredits photo={venue.photo} />
-        : !photoLoaded ? <Text style={styles.photoFallbackCaption}>{getVenuePhotoFallbackLabel(resolveVenuePhotoKind(venue))}</Text> : null}
+        : null}
 
       <View style={styles.content}>
         <View style={styles.identityBlock}>

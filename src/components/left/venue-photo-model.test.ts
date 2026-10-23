@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { resolveVenuePhotoKind, getVenuePhotoFallbackLabel } from './venue-photo-model';
+import { resolveVenuePhotoKind } from './venue-photo-model';
 it.each([
  ['cafe', 'cafe'], ['library', 'library'], ['university', 'library'],
  ['coworking_space', 'coworking'], ['gym', 'gym'], ['airport', 'airport'],
@@ -18,16 +18,4 @@ it('does not guess a category for missing or ambiguous venue context', () => {
  expect(resolveVenuePhotoKind({ name: 'Starbucks', venueType: 'other' })).toBe('hospitality');
  expect(resolveVenuePhotoKind({ name: 'Parkinson House', venueType: 'other' })).toBe('hospitality');
  expect(resolveVenuePhotoKind({ name: 'Garden Café', venueType: 'cafe' })).toBe('cafe');
- expect(getVenuePhotoFallbackLabel('hospitality')).toBe('Illustrative interior photo');
- expect(getVenuePhotoFallbackLabel('library')).toBe('Illustrative library photo');
-});
-
-it('localizes illustrative-photo labels without changing venue classification', async () => {
- const { setTranslationLanguage } = await import('../../features/preferences/translation-runtime');
- try {
-  setTranslationLanguage('fi');
-  expect(getVenuePhotoFallbackLabel('library')).toBe('Havainnekuva kirjastosta');
-  setTranslationLanguage('sv');
-  expect(getVenuePhotoFallbackLabel('hospitality')).toBe('Illustrativ interiörbild');
- } finally { setTranslationLanguage('en'); }
 });

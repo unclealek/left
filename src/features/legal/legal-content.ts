@@ -20,7 +20,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocument> = {
     id: "terms",
     title: "Terms of Service",
     shortTitle: "Terms",
-    summary: "The rules for using Left and participating in the community.",
+    summary: "The rules for using HERE and participating in the community.",
     version: null,
     publishedAt: null,
     status: "draft",
@@ -30,7 +30,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocument> = {
     id: "privacy",
     title: "Privacy Policy",
     shortTitle: "Privacy",
-    summary: "How Left uses account, location, venue, presence, and notification data.",
+    summary: "How HERE uses account, location, venue, presence, and notification data.",
     version: "2026-08-28",
     publishedAt: "28 August 2026",
     status: "draft",
@@ -38,22 +38,22 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocument> = {
       {
         heading: "Overview",
         body:
-          "This draft explains how Left collects, uses, discloses, retains, and deletes personal data. Left currently operates in Finland and is intended only for people aged 18 or older. The controller and contact details still need to be completed before publication.",
+          "This draft explains how HERE collects, uses, discloses, retains, and deletes personal data. HERE currently operates in Finland and is intended only for people aged 18 or older. The controller and contact details still need to be completed before publication.",
       },
       {
         heading: "Location and presence",
         body:
-          "With permission, Left may access precise location, approximate location, background location, and—where supported—significant location changes or Bluetooth/beacon signals. This supports nearby venue detection, temporary venue presence, approximate distance, safety zones, visibility controls, and ending stale presence. Precise coordinates are not ordinarily shown to other users and are not used for third-party behavioural advertising.",
+          "With permission, HERE may access precise location, approximate location, background location, and—where supported—significant location changes or Bluetooth/beacon signals. This supports nearby venue detection, temporary venue presence, approximate distance, safety zones, visibility controls, and ending stale presence. Precise coordinates are not ordinarily shown to other users and are not used for third-party behavioural advertising.",
       },
       {
         heading: "Account and product data",
         body:
-          "Left may receive account information from Google or Apple, including name, email address, authentication identifiers, and technical authentication information. Left may also process venue associations, visibility settings, notification preferences, saved venues, safety-zone configuration, venue interactions, and other settings you intentionally select.",
+          "HERE may receive account information from Google or Apple, including name, email address, authentication identifiers, and technical authentication information. HERE may also process venue associations, visibility settings, notification preferences, saved venues, safety-zone configuration, venue interactions, and other settings you intentionally select.",
       },
       {
-        heading: "How Left uses data",
+        heading: "How HERE uses data",
         body:
-          "Left uses data to provide authentication, venue discovery, social discovery, temporary presence, privacy controls, safety features, security and fraud prevention, legal compliance, and reliability improvements. Left is not designed to provide a permanent user-facing history of another person’s movements.",
+          "HERE uses data to provide authentication, venue discovery, social discovery, temporary presence, privacy controls, safety features, security and fraud prevention, legal compliance, and reliability improvements. HERE is not designed to provide a permanent user-facing history of another person’s movements.",
       },
       {
         heading: "Legal bases",
@@ -63,7 +63,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocument> = {
       {
         heading: "Who may receive information",
         body:
-          "Depending on settings and current features, other users may see limited identity information, a venue, approximate area or distance, presence status, or visibility-related information. Left may use Google and Apple for sign-in, Google for venue content, Google Maps data obtained through Apify for venue activity information, and infrastructure, database, networking, and mobile-platform providers as needed to operate the service.",
+          "Depending on settings and current features, other users may see limited identity information, a venue, approximate area or distance, presence status, or visibility-related information. HERE may use Google and Apple for sign-in, Google for venue content, Google Maps data obtained through Apify for venue activity information, and infrastructure, database, networking, and mobile-platform providers as needed to operate the service.",
       },
       {
         heading: "Retention and deletion",
@@ -78,7 +78,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocument> = {
       {
         heading: "Adults, security, and changes",
         body:
-          "Left is intended only for adults aged 18 or older. Left describes technical and organisational security measures but cannot guarantee absolute security. The policy should be updated when functionality, processing, providers, law, or platform requirements materially change.",
+          "HERE is intended only for adults aged 18 or older. HERE describes technical and organisational security measures but cannot guarantee absolute security. The policy should be updated when functionality, processing, providers, law, or platform requirements materially change.",
       },
     ],
   },
@@ -86,7 +86,7 @@ export const LEGAL_DOCUMENTS: Record<LegalDocumentId, LegalDocument> = {
     id: "community",
     title: "Community Guidelines",
     shortTitle: "Guidelines",
-    summary: "The standards for respectful, safe participation in Left.",
+    summary: "The standards for respectful, safe participation in HERE.",
     version: null,
     publishedAt: null,
     status: "draft",

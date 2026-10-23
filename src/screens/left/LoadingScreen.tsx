@@ -14,11 +14,11 @@ export function LoadingScreen({
     <View style={styles.loadingWrap} accessibilityRole={error ? "alert" : undefined}>
       <View style={styles.loadingCenter}>
         <LeftLoadingAnimation label={t("Bringing nearby moments into focus")} />
-        <Text style={styles.loadingWordmark}>{t("LEFT")}</Text>
+        <Text style={styles.loadingWordmark}>{t("HERE")}</Text>
       </View>
       {error ? (
         <>
-          <Text style={styles.loadingErrorTitle}>{t("We couldn’t open Left")}</Text>
+          <Text style={styles.loadingErrorTitle}>{t("We couldn’t open HERE")}</Text>
           <Text style={styles.loadingCaption}>{t(error)}</Text>
           {onRetry ? (
             <Pressable

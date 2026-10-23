@@ -39,20 +39,20 @@ export function PreAuthOnboardingScreen({ onComplete }: { onComplete: () => void
             source={require("../../../assets/brand/left-mark-white.png")}
             resizeMode="contain"
             style={styles.preAuthLogo}
-            accessibilityLabel={t("Left")}
+            accessibilityLabel={t("HERE")}
             accessibilityIgnoresInvertColors
           />
-          <Text style={styles.preAuthWordmark}>{t("LEFT")}</Text>
+          <Text style={styles.preAuthWordmark}>{t("HERE")}</Text>
         </View>
 
         <View style={styles.preAuthHeroBottom}>
           <View style={styles.preAuthCopy}>
-            <Text style={styles.preAuthEyebrow}>{t("MEET THE ROOM")}</Text>
+            <Text style={styles.preAuthEyebrow}>{t("Start HERE")}</Text>
             <Text accessibilityRole="header" style={styles.preAuthTitle}>{t("A quieter way to find your people.")}{" "}</Text>
-            <Text style={styles.preAuthBody}>{t("Left helps real conversations begin in the places you already share.")}{" "}</Text>
+            <Text style={styles.preAuthBody}>{t("HERE helps real conversations begin in the places you already share.")}{" "}</Text>
           </View>
 
-          <View accessibilityLabel={t("What Left is for")} style={styles.preAuthNotes}>
+          <View accessibilityLabel={t("What HERE is for")} style={styles.preAuthNotes}>
             {NOTES.map((note) => (
               <View key={note.label} style={styles.preAuthNoteRow}>
                 <View style={styles.preAuthNoteIcon}>

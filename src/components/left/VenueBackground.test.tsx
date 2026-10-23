@@ -22,7 +22,6 @@ it('reuses the photo renderer as a fixed blurred full-screen background',()=>{
 it('keeps decorative placeholders free of caption overlays',()=>{
  const elements=nodes(VenueBackground({venue:{name:'Park',venueType:'other'} as RuntimeVenueCandidate}));
  expect(elements.some(n=>n.type==='Text'||n.type==='Credits')).toBe(false);
- expect(elements.find(n=>n.type==='Photo')!.props.showFallbackLabel).toBe(false);
 });
 it('removes background photography for Reduce Transparency',()=>{
  m.opaque=true;expect(nodes(VenueBackground({})).some(n=>n.type==='Photo'||n.type==='Credits')).toBe(false);

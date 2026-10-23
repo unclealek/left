@@ -69,8 +69,8 @@ it('keeps hidden venues private and disables visibility until a current venue is
   const screen = render({ sessionVisible: true, venueHidden: true, venue: { venueId: '', venueName: '' } as VenueContextSummary });
   expect(screen.primary.props.label).toBe('Go visible');
   expect(screen.primary.props.disabled).toBe(true);
-  expect(screen.text).toContain('Find your place');
-  expect(screen.text).not.toContain('Confirmed venue');
+  expect(screen.text).toContain('Here you are');
+  expect(screen.text).not.toContain('You are HERE');
 });
 it('keeps loading/errors reviewable and forwards real venue navigation', () => {
   const screen = render({ visibilityPending: true, visibilityError: 'Please retry' });
@@ -85,8 +85,8 @@ it('keeps loading/errors reviewable and forwards real venue navigation', () => {
 it('shows a bundled real café photo without inventing a current venue', () => {
   const screen = render({ nearbyVenues: [], venue: { venueId: '', venueName: '' } as VenueContextSummary });
   expect(screen.elements.some(e => e.type === 'Image' && e.props.source === 777)).toBe(true);
-  expect(screen.text).toContain('Illustrative interior photo');
-  expect(screen.text).not.toContain('Confirmed venue');
+  expect(screen.text).not.toContain('Illustrative interior photo');
+  expect(screen.text).not.toContain('You are HERE');
   expect(screen.primary.props.disabled).toBe(true);
 });
 it('keeps actual venue photos while private, and falls back when a remote image fails', () => {
@@ -101,7 +101,7 @@ it('keeps actual venue photos while private, and falls back when a remote image 
   const failed = screen.rerender();
   expect(failed.some(e => e.type === 'Image' && e.props.source === 777)).toBe(true);
   expect(failed.some(e => e.type === 'Image' && e.props.source?.uri === actual.photo.uri)).toBe(false);
-  expect(failed.some(e => e.type === 'Text' && e.props.children === 'Illustrative café photo')).toBe(true);
+  expect(failed.some(e => e.type === 'Text' && e.props.children === 'Illustrative café photo')).toBe(false);
 });
 
 it('simplifies the unconfirmed venue state and keeps visibility and people discovery gated', () => {
@@ -114,7 +114,7 @@ it('simplifies the unconfirmed venue state and keeps visibility and people disco
 });
 it('uses the actual confirmed venue data and keeps the nearby carousel available', () => {
   const screen = render();
-  expect(screen.text).toContain('Confirmed venue');
+  expect(screen.text).toContain('You are HERE');
   expect(screen.text).toContain('Actual venue');
   expect(screen.text).toContain('Café');
   expect(screen.text).toContain('103 m away');
@@ -128,5 +128,5 @@ it('guest Home sends visibility to sign-in instead of enabling member presence',
   screen.primary.props.onPress();
   expect(screen.callbacks.onBecomeVisible).toHaveBeenCalledOnce();
   expect(screen.text).toContain('Guest preview');
-  expect(screen.text).not.toContain('Confirmed venue');
+  expect(screen.text).not.toContain('You are HERE');
 });

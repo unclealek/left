@@ -17,7 +17,6 @@ export const venueDetailStyles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: T.primarySoft,
   },
-  photoFallbackCaption: { color: T.textSecondary, fontFamily: T.fontBody, fontSize: 11, lineHeight: 17, backgroundColor: T.surfaceCard, paddingHorizontal: spacing[5], paddingVertical: 6 },
   heroBackButton: {
     position: "absolute",
     top: 12,

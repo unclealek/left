@@ -1,3 +1,4 @@
+import { HelpCenter } from "../../features/help/HelpCenter";
 import { SettingsTools } from "../../features/settings/SettingsTools";
 import { useTranslation } from "../../features/preferences/use-translation";
 import { useState } from "react";
@@ -40,6 +41,7 @@ export function SettingsScreen({
   onOpenLegal: (document: LegalDocumentId) => void;
 }) {
   const { t } = useTranslation();
+  const [helpVisible, setHelpVisible] = useState(false);
   const [settingsActionMessage, setSettingsActionMessage] = useState<string | null>(null);
 
   function openNotificationPreferences() {
@@ -52,8 +54,8 @@ export function SettingsScreen({
   function openAboutLeft() {
     setSettingsActionMessage(null);
     onShowDialog(
-      "About Left",
-      "Left helps you signal presence at real venues, discover nearby social energy, and control how you are seen.",
+      "About HERE",
+      "HERE helps you signal presence at real venues, discover nearby social energy, and control how you are seen.",
     );
   }
 
@@ -70,6 +72,7 @@ export function SettingsScreen({
 
   return (
     <View style={styles.settingsPage}>
+      <HelpCenter visible={helpVisible} onClose={() => setHelpVisible(false)} />
       <ScreenHeader title={t("Settings")} onBack={onBack} variant="utility" />
 
       <Text style={styles.settingsGroupTitle}>{t('Account')}</Text>
@@ -88,7 +91,8 @@ export function SettingsScreen({
       </View>
       <Text style={styles.settingsGroupTitle}>{t('General')}</Text>
       <View style={styles.settingsMenuCard}>
-        <SettingsMenuRow icon="activity" label={t("About Left")} helper={t("App info and updates.")} onPress={openAboutLeft} last />
+        <SettingsMenuRow icon="file-text" label={t("Help Center")} helper={t("Answers and troubleshooting.")} onPress={() => setHelpVisible(true)} />
+        <SettingsMenuRow icon="activity" label={t("About HERE")} helper={t("App info and updates.")} onPress={openAboutLeft} last />
       </View>
       {settingsActionMessage ? <Text style={styles.settingsInfoBody}>{settingsActionMessage}</Text> : null}
 

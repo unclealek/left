@@ -4,7 +4,7 @@ import { TAB_DESTINATIONS, getTabBarGeometry, getTabBarContentInset } from './ta
 describe('floating tab bar layout', () => {
   it('retains the four existing destinations in order', () => {
     expect(TAB_DESTINATIONS.map(item => [item.key, item.label])).toEqual([
-      ['home', 'Home'], ['nearby', 'Map'], ['session', 'Venues'], ['account', 'Profile'],
+      ['home', 'Here'], ['nearby', 'Map'], ['session', 'Venues'], ['account', 'Profile'],
     ]);
   });
   it.each([272, 320, 393, 430])('keeps all four touch targets and the indicator inside a %s point bar', width => {

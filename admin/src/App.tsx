@@ -154,10 +154,10 @@ export function App() {
     <div className="shell">
       <div className="hero">
         <div>
-          <p className="eyebrow">Left Admin</p>
+          <p className="eyebrow">HERE Admin</p>
           <h1>Moderation console</h1>
           <p className="lede">
-            Review small gathering proposals before they appear in Left.
+            Review small gathering proposals before they appear in HERE.
           </p>
         </div>
         {session ? (
@@ -183,7 +183,7 @@ export function App() {
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="admin@left.app"
+                placeholder="you@example.com"
                 autoComplete="email"
               />
             </label>

@@ -16,6 +16,8 @@ import LeftEye from "./assets/left-eye.svg";
 import LeftHomeActive from "./assets/left-home-active.svg";
 import LeftHome from "./assets/left-home.svg";
 import LeftLock from "./assets/left-lock.svg";
+import LeftMap from "./assets/left-map.svg";
+import LeftMapActive from "./assets/left-map-active.svg";
 import LeftMapPinActive from "./assets/left-map-pin-active.svg";
 import LeftMapPin from "./assets/left-map-pin.svg";
 import LeftMinus from "./assets/left-minus.svg";
@@ -45,6 +47,7 @@ const leftIcons = {
   "eye-off": LeftEyeOff,
   home: LeftHome,
   lock: LeftLock,
+  map: LeftMap,
   "map-pin": LeftMapPin,
   minus: LeftMinus,
   radio: LeftRadio,
@@ -57,6 +60,7 @@ const leftIcons = {
 const leftActiveIcons = {
   eye: LeftEyeActive,
   home: LeftHomeActive,
+  map: LeftMapActive,
   "map-pin": LeftMapPinActive,
   radio: LeftRadioActive,
   user: LeftUserActive,

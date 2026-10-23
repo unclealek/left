@@ -1,11 +1,10 @@
 import { t } from "../../features/preferences/translation-runtime";
 import { useEffect, useRef, useState } from 'react';
 import {
-  Animated, I18nManager, Platform, Pressable, StyleSheet, Text, View,
+  Animated, I18nManager, Pressable, StyleSheet, Text, View,
   useColorScheme, useWindowDimensions,
 } from 'react-native';
 import { GlassMaterial } from '../glass/LeftGlass';
-import { SymbolView } from 'expo-symbols';
 import type { FooterDestination } from '../../app/leftConfig';
 import { LeftIcon } from '../icons';
 import { navigationColors } from '../theme/navigation';
@@ -69,12 +68,7 @@ export function LiquidGlassTabBar({ activeDestination, onNavigate }: {
               style={s.item}>
               {({ pressed }) => (
                 <View style={[s.itemContent, pressed && s.pressed]}>
-                  {Platform.OS === 'ios' ? (
-                    <SymbolView name={active ? item.selectedSymbol : item.symbol} size={23}
-                      weight={active ? 'semibold' : 'regular'} tintColor={color} style={s.icon} />
-                  ) : (
-                    <LeftIcon name={item.icon} active={active} size={23} color={color} />
-                  )}
+                  <LeftIcon name={item.icon} active={active} size={23} color={color} />
                   <Text maxFontSizeMultiplier={1.5} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}
                     style={[s.label, { color: active ? colors.content : colors.inactive, fontWeight: active ? '600' : '500' }]}>{t(item.label)}</Text>
                 </View>
@@ -100,6 +94,5 @@ const s = StyleSheet.create({
   item: { flex: 1, minHeight: 44, minWidth: 44, borderRadius: 999, justifyContent: 'center' },
   itemContent: { alignItems: 'center', justifyContent: 'center', gap: 3 },
   pressed: { opacity: 0.65 },
-  icon: { width: 25, height: 25 },
   label: { width: '100%', fontSize: 11, lineHeight: 14, textAlign: 'center' },
 });

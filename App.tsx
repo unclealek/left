@@ -68,7 +68,7 @@ export default function App() {
 
     return (
       <View
-        accessibilityLabel={t("Loading Left")}
+        accessibilityLabel={t("Loading HERE")}
         style={{
           flex: 1,
           alignItems: "center",
@@ -79,7 +79,7 @@ export default function App() {
       >
         {fontError ? null : <ActivityIndicator color={leftColors.creoleBrown} />}
         <Text style={{ color: leftColors.charcoal, fontSize: 14 }}>
-          {fontError ? t("Left couldn’t load its interface.") : t("Opening Left…")}
+          {fontError ? t("HERE couldn’t load its interface.") : t("Opening HERE…")}
         </Text>
         {fontError ? (
           <Pressable
